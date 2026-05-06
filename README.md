@@ -4,37 +4,22 @@ Yasuaki Omokawa の Claude Code 用 skills / commands / agents 集。**プラン
 
 ## クイックスタート
 
-### 推奨：`npx skills` でインストール
+Claude Code 内で次の 2 ステップを実行：
+
+```
+/plugin marketplace add YasuakiOmokawa/skills
+/plugin install omokawa-skills@omokawa-skills
+```
+
+これで **11 skills + 1 command + 4 agents** が一括でインストールされます。続けてターミナルで設定値を生成：
 
 ```bash
-# 1. インストーラ起動（mattpocock らが配布している汎用 skills CLI）
-npx skills@latest add YasuakiOmokawa/skills
-
-# 2. インストールしたいスキル/コマンド/エージェントを対話で選択
-
-# 3. グローバル設定値を対話生成（マシンに 1 回だけ・bash で実行）
-git clone https://github.com/YasuakiOmokawa/skills.git ~/.skills-source
-bash ~/.skills-source/scripts/setup.sh
+bash ~/.claude/plugins/marketplaces/omokawa-skills/scripts/setup.sh
 ```
 
 これで `~/.claude/skills-config/jira.md` などが生成されます。**全プロジェクト横断で参照されるグローバル設定**で、プロジェクトを切り替えても同じ設定が効きます。
 
-> ⚠️ **セキュリティ設計**：セットアップは Claude を介さず bash で実行します。Jira Cloud ID などの設定値が AI のコンテキスト（transcript / API ログ）に乗らないように、`scripts/setup.sh` がローカルで対話受付してファイルに直接書き込みます。
-
-### 代替：手動 clone + シンボリックリンク
-
-```bash
-git clone https://github.com/YasuakiOmokawa/skills.git ~/projects/skills
-cd ~/projects/skills
-./scripts/link-skills.sh    # ~/.claude/skills/ にリンク
-./scripts/link-commands.sh  # ~/.claude/commands/ にリンク
-./scripts/link-agents.sh    # ~/.claude/agents/ にリンク
-
-# 設定値の対話生成（bash で実行、Claude は介在しない）
-bash ./scripts/setup.sh
-```
-
-`npx` を使えない環境（オフライン・社内 npm registry 制限など）はこちらを推奨。
+> ⚠️ **セキュリティ設計**：セットアップは Claude を介さず bash で実行します。Jira Cloud ID などの設定値が AI のコンテキスト（transcript / API ログ）に乗らないよう、`scripts/setup.sh` がローカルで対話受付してファイルに直接書き込みます。
 
 ## Skills（11 個）
 
