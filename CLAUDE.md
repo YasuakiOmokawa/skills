@@ -1,5 +1,9 @@
 # omokawa-skills 開発ガイド
 
+## 文脈把握
+
+スキル本文を読む場合、前提知識としてCONTEXT.mdを参照。
+
 ## ディレクトリ構成
 
 Claude Code の自動 discovery が **`skills/<name>/SKILL.md` の 1 階層**しか見ないため、フラット構造を採用する：

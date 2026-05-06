@@ -1,7 +1,6 @@
 # omokawa-skills
 
-Claude Code 用 skills / commands / agents 集
-プラン駆動開発を推進するためのもの。
+Claude Code 用。プラン駆動開発を推進するためのもの。
 
 ## クイックスタート
 
@@ -24,11 +23,11 @@ bash ~/.claude/plugins/marketplaces/omokawa-skills/scripts/setup.sh
 
 ### engineering 系（プロジェクト非依存）
 
-プラン駆動開発の流れ（**spec → AC → MECE → finalize → implement → review**）に対応：
+プラン駆動開発に対応：
 
 | スキル | 役割 |
 |---|---|
-| [`model-data`](./skills/model-data/SKILL.md) | 要求文書から DBML 形式の ER 図を生成。Requirements → Conceptual → Logical のパイプライン |
+| [`model-data`](./skills/model-data/SKILL.md) | 要求文書から DBML 形式の ER 図を生成 |
 | [`map-user-stories`](./skills/map-user-stories/SKILL.md) | 設計書から UserStory/Task を分解。後段の `create-jira-issues` と契約フォーマットで連携 |
 | [`define-acceptance-criteria`](./skills/define-acceptance-criteria/SKILL.md) | プランに受け入れ条件 を定義。`mece-plan-review` の検証ターゲット |
 | [`mece-plan-review`](./skills/mece-plan-review/SKILL.md) | 受け入れ条件 に対し3視点（QA / Tech / Red Team）で MECE 検証 |
