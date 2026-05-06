@@ -4,17 +4,22 @@ Yasuaki Omokawa の Claude Code 用 skills / commands / agents 集。**プラン
 
 ## クイックスタート
 
-```bash
-# 1. プラグインとして導入
-claude plugin install YasuakiOmokawa/skills
+### 推奨：`npx skills` でインストール
 
-# 2. プロジェクトごとの設定値を生成（初回のみ）
+```bash
+# 1. インストーラ起動（mattpocock らが配布している汎用 skills CLI）
+npx skills@latest add YasuakiOmokawa/skills
+
+# 2. インストールしたいスキル/コマンド/エージェントを対話で選択
+#    （`/setup-omokawa-skills` を必ず含めること）
+
+# 3. プロジェクトごとの設定値を対話生成
 /setup-omokawa-skills
 ```
 
-これで `docs/agents/jira.md` などが対話式で作成され、各スキルが透過的に動きます。
+これで `docs/agents/jira.md` などが生成され、各スキルが透過的に動きます。
 
-または、シンボリックリンクで手元の `~/.claude/` に直接展開する場合：
+### 代替：手動 clone + シンボリックリンク
 
 ```bash
 git clone https://github.com/YasuakiOmokawa/skills.git ~/projects/skills
@@ -22,7 +27,12 @@ cd ~/projects/skills
 ./scripts/link-skills.sh    # ~/.claude/skills/ にリンク
 ./scripts/link-commands.sh  # ~/.claude/commands/ にリンク
 ./scripts/link-agents.sh    # ~/.claude/agents/ にリンク
+
+# その後 Claude Code を起動して
+/setup-omokawa-skills
 ```
+
+`npx` を使えない環境（オフライン・社内 npm registry 制限など）はこちらを推奨。
 
 ## なぜこのリポジトリが存在するか
 
