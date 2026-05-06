@@ -2,7 +2,7 @@
 
 ## このファイルの使い方
 
-このファイルを `~/.claude/skills-config/environments.md` にコピーし、自社の値で書き換えてください。`/setup-omokawa-skills` で対話生成も可能です。
+このファイルを `~/.claude/skills-config/environments.md` にコピーし、自社の値で書き換えてください。`bash scripts/setup.sh` で対話生成も可能です。
 
 omokawa-skills の `/create-pr` コマンドがこのファイルを Read して、Revert 手順に列挙する環境名を取得します。
 

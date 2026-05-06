@@ -11,13 +11,15 @@ Yasuaki Omokawa の Claude Code 用 skills / commands / agents 集。**プラン
 npx skills@latest add YasuakiOmokawa/skills
 
 # 2. インストールしたいスキル/コマンド/エージェントを対話で選択
-#    （`/setup-omokawa-skills` を必ず含めること）
 
-# 3. グローバル設定値を対話生成（マシンに 1 回だけ）
-/setup-omokawa-skills
+# 3. グローバル設定値を対話生成（マシンに 1 回だけ・bash で実行）
+git clone https://github.com/YasuakiOmokawa/skills.git ~/.skills-source
+bash ~/.skills-source/scripts/setup.sh
 ```
 
 これで `~/.claude/skills-config/jira.md` などが生成されます。**全プロジェクト横断で参照されるグローバル設定**で、プロジェクトを切り替えても同じ設定が効きます。
+
+> ⚠️ **セキュリティ設計**：セットアップは Claude を介さず bash で実行します。Jira Cloud ID などの設定値が AI のコンテキスト（transcript / API ログ）に乗らないように、`scripts/setup.sh` がローカルで対話受付してファイルに直接書き込みます。
 
 ### 代替：手動 clone + シンボリックリンク
 
@@ -28,8 +30,8 @@ cd ~/projects/skills
 ./scripts/link-commands.sh  # ~/.claude/commands/ にリンク
 ./scripts/link-agents.sh    # ~/.claude/agents/ にリンク
 
-# その後 Claude Code を起動して
-/setup-omokawa-skills
+# 設定値の対話生成（bash で実行、Claude は介在しない）
+bash ./scripts/setup.sh
 ```
 
 `npx` を使えない環境（オフライン・社内 npm registry 制限など）はこちらを推奨。
@@ -59,12 +61,13 @@ cd ~/projects/skills
 | [`create-jira-issues`](./skills/personal/create-jira-issues/SKILL.md) | プランファイルから Jira チケット一括作成。`~/.claude/skills-config/jira.md` を参照 |
 | [`set-jira-story-points`](./skills/personal/set-jira-story-points/SKILL.md) | Jira キー → SP マップから一括設定。Atlassian MCP 必須 |
 
-## Commands（2 個）
+## Commands（1 個）
 
 | コマンド | 役割 |
 |---|---|
 | [`/create-pr`](./commands/create-pr/create-pr.md) | カレントブランチからドラフト PR を作成。Conventional Commits タイトル + テンプレ準拠 + ラベル自動付与（`~/.claude/skills-config/release-labels.md` から動的取得） |
-| [`/setup-omokawa-skills`](./commands/setup-omokawa-skills/setup-omokawa-skills.md) | 初回利用時の対話セットアップ。`~/.claude/skills-config/*.md` を生成 |
+
+初回セットアップは Claude のスラッシュコマンドではなく bash スクリプト（[`scripts/setup.sh`](./scripts/setup.sh)）で行います。理由は上記「セキュリティ設計」の節を参照。
 
 ## Agents（4 個）
 
@@ -85,7 +88,7 @@ cd ~/projects/skills
 - [`examples/skills-config/release-labels.example.md`](./examples/skills-config/release-labels.example.md) — Productivity / AI Contribution / Release Level ラベル定義
 - [`examples/skills-config/environments.example.md`](./examples/skills-config/environments.example.md) — integration 環境名
 
-`/setup-omokawa-skills` で対話生成するのが推奨。手動なら `*.example.md` を `~/.claude/skills-config/*.md` にコピーして編集。詳細は [`CONTEXT.md`](./CONTEXT.md) を参照。
+`bash scripts/setup.sh` で対話生成するのが推奨。手動なら `*.example.md` を `~/.claude/skills-config/*.md` にコピーして編集。詳細は [`CONTEXT.md`](./CONTEXT.md) を参照。
 
 ## 開発ワークフローの推奨例
 

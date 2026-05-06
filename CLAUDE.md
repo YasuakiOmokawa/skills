@@ -38,7 +38,7 @@ ${CLAUDE_PLUGIN_ROOT}/skills/<bucket>/<name>/<file>
 
 機密ではない**ユーザーマシンごとのグローバル設定値**は `~/.claude/skills-config/*.md` に書く。全プロジェクト横断で参照される（プロジェクトを切り替えても同じ設定が効く）。各スキルは「このファイルを Read で取得」と SKILL.md に書く。`.env` はほぼ使わない（SKILL.md は AI が読む文書なのでシェル変数展開は機能しない）。
 
-サンプルは `examples/skills-config/` 配下に置く。利用者は `/setup-omokawa-skills` で対話生成、または手動でコピーして `~/.claude/skills-config/` に配置する。
+サンプルは `examples/skills-config/` 配下に置く。利用者は `bash scripts/setup.sh` で対話生成、または手動でコピーして `~/.claude/skills-config/` に配置する。
 
 ## スキル間相互参照
 

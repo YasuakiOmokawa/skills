@@ -2,7 +2,7 @@
 
 ## このファイルの使い方
 
-このファイルを `~/.claude/skills-config/jira.md` にコピーし、自社の値で書き換えてください。`/setup-omokawa-skills` で対話生成も可能です。
+このファイルを `~/.claude/skills-config/jira.md` にコピーし、自社の値で書き換えてください。`bash scripts/setup.sh` で対話生成も可能です。
 
 omokawa-skills の `create-jira-issues` / `set-jira-story-points` / `map-user-stories` がこのファイルを Read して値を取得します。
 

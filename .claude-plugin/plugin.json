@@ -22,8 +22,7 @@
     "./skills/personal/set-jira-story-points"
   ],
   "commands": [
-    "./commands/create-pr/create-pr.md",
-    "./commands/setup-omokawa-skills/setup-omokawa-skills.md"
+    "./commands/create-pr/create-pr.md"
   ],
   "agents": [
     "./agents/finalize-plan.md",

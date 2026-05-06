@@ -290,7 +290,7 @@ model: inherit
    - `release_level_labels`: リリースレベルのラベル一覧（4段階推奨）と判定基準
    - `core_features`: プロジェクトの根幹機能リスト（ReleaseLevel 高レベル判定に使用）
 
-   `~/.claude/skills-config/release-labels.md` が見つからない場合のフォールバック: `/setup-omokawa-skills` の実行をユーザーに促し、ラベル付与をスキップしてドラフトPRを作成。
+   `~/.claude/skills-config/release-labels.md` が見つからない場合のフォールバック: `bash scripts/setup.sh` の実行をユーザーに促し、ラベル付与をスキップしてドラフトPRを作成。
 
    a. **Productivityラベル（1つ選択）**:
    `release-labels.md` の `productivity_labels` から1つ選択。判定基準は同ファイルに従う。一般的な判定優先順位は以下（実環境のラベル名は `release-labels.md` を参照）:

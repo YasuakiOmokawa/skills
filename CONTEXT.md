@@ -34,7 +34,7 @@
 
 ## ~/.claude/skills-config/*.md
 
-**ユーザーマシンに 1 セットだけ存在するグローバル設定**の保管場所。`/setup-omokawa-skills` で初期生成。**全プロジェクト横断**で参照される（プロジェクトを切り替えても同じ設定が効く）。**機密ではない**前提（テナント識別子レベル）。
+**ユーザーマシンに 1 セットだけ存在するグローバル設定**の保管場所。`bash scripts/setup.sh` で初期生成。**全プロジェクト横断**で参照される（プロジェクトを切り替えても同じ設定が効く）。**機密ではない**前提（テナント識別子レベル）。
 
 - `jira.md` — Jira Cloud ID, プロジェクトキー, MCP プレフィックス
 - `release-labels.md` — Productivity / AI Contribution / Release Level ラベル定義
