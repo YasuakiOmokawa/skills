@@ -50,7 +50,7 @@ bash ~/.claude/plugins/marketplaces/omokawa-skills/scripts/setup.sh
 
 | コマンド | 役割 |
 |---|---|
-| [`/create-pr`](./commands/create-pr/create-pr.md) | カレントブランチからドラフト PR を作成。Conventional Commits タイトル + テンプレ準拠 + ラベル自動付与（`~/.claude/skills-config/release-labels.md` から動的取得） |
+| [`/create-pr`](./commands/create-pr.md) | カレントブランチからドラフト PR を作成。Conventional Commits タイトル + テンプレ準拠 + ラベル自動付与（`~/.claude/skills-config/release-labels.md` から動的取得） |
 
 初回セットアップは Claude のスラッシュコマンドではなく bash スクリプト（[`scripts/setup.sh`](./scripts/setup.sh)）で行います。理由は上記「セキュリティ設計」の節を参照。
 

@@ -5,7 +5,7 @@ set -euo pipefail
 # Claude Code recognizes them as user-level commands.
 #
 # After running:
-#   ~/.claude/commands/<name>.md -> <repo>/commands/<name>/<name>.md
+#   ~/.claude/commands/<name>.md -> <repo>/commands/<name>.md
 
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
 DEST="$HOME/.claude/commands"
@@ -13,17 +13,10 @@ DEST="$HOME/.claude/commands"
 mkdir -p "$DEST"
 
 linked=0
-for cmd_dir in "$REPO/commands"/*/; do
-  [ -d "$cmd_dir" ] || continue
-  name="$(basename "$cmd_dir")"
-  src="$cmd_dir$name.md"
-
-  if [ ! -f "$src" ]; then
-    echo "warn: expected $src, skipping" >&2
-    continue
-  fi
-
-  target="$DEST/$name.md"
+for src in "$REPO/commands"/*.md; do
+  [ -f "$src" ] || continue
+  name="$(basename "$src")"
+  target="$DEST/$name"
 
   if [ -e "$target" ] && [ ! -L "$target" ]; then
     echo "warn: $target exists as a real file, removing" >&2
@@ -31,7 +24,7 @@ for cmd_dir in "$REPO/commands"/*/; do
   fi
 
   ln -sfn "$src" "$target"
-  echo "linked $name.md -> $src"
+  echo "linked $name -> $src"
   linked=$((linked + 1))
 done
 
