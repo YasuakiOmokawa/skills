@@ -16,11 +16,11 @@ description: JiraキーとStory Pointsのマップデータを受け取り、Jir
 ## 前提情報
 
 - **Jira Cloud ID**: 以下の優先順位で取得（このスキル内にハードコードしない）
-  1. プロジェクトの `docs/agents/jira.md` の `cloud_id` フィールド（`/setup-omokawa-skills` で生成）
+  1. プロジェクトの `~/.claude/skills-config/jira.md` の `cloud_id` フィールド（`/setup-omokawa-skills` で生成）
   2. `~/.claude/CLAUDE.md` の `Jira Cloud ID:` 行（ユーザー個人値）
   3. 上記が無ければ `mcp__<atlassian-mcp>__getAccessibleAtlassianResources` で動的取得
 - **Story Points フィールドID**: `customfield_10005`（Jira 標準）
-- **MCP プレフィックス（`<atlassian-mcp>`）**: `docs/agents/jira.md` の `atlassian_mcp` フィールド、または `ToolSearch("+atlassian")` で実環境のプレフィックスを確認
+- **MCP プレフィックス（`<atlassian-mcp>`）**: `~/.claude/skills-config/jira.md` の `atlassian_mcp` フィールド、または `ToolSearch("+atlassian")` で実環境のプレフィックスを確認
 - **使用ツール**: `mcp__<atlassian-mcp>__editJiraIssue`
 
 ## 入力仕様

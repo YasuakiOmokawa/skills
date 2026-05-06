@@ -1,32 +1,32 @@
 ---
-allowed-tools: Read, Write, Glob, Bash(mkdir *), Bash(ls *), Bash(git *), AskUserQuestion
-description: omokawa-skills を使うリポジトリ用の設定値を docs/agents/*.md に生成する初期セットアップ
+allowed-tools: Read, Write, Glob, Bash(mkdir *), Bash(ls *), AskUserQuestion
+description: omokawa-skills のグローバル設定値を ~/.claude/skills-config/*.md に生成する初期セットアップ
 argument-hint: ""
 model: inherit
 ---
 
 # Setup Omokawa Skills
 
-omokawa-skills プラグインに含まれる create-jira-issues / set-jira-story-points / create-pr などのスキル/コマンドが必要とする**プロジェクト固有の設定値**を、対話的に質問して `docs/agents/*.md` に書き出す。
+omokawa-skills プラグインに含まれる create-jira-issues / set-jira-story-points / create-pr などのスキル/コマンドが必要とする**グローバル設定値**を、対話的に質問して `~/.claude/skills-config/*.md` に書き出す。
 
-このコマンドはプロジェクトごとに**1回だけ**実行する。次回以降は生成された `docs/agents/*.md` を直接編集すれば調整できる。
+このコマンドはユーザーマシンごとに**1回だけ**実行する。生成されたファイルは**全プロジェクト横断で参照される**（プロジェクトを切り替えても同じ設定が効く）。次回以降は `~/.claude/skills-config/*.md` を直接編集すれば調整できる。
 
 ## 出力するファイル
 
-- `docs/agents/jira.md` — Jira Cloud ID, プロジェクトキー, MCP プレフィックス
-- `docs/agents/release-labels.md` — Productivity/AI Contribution/Release Level ラベル定義 + 根幹機能リスト
-- `docs/agents/environments.md` — integration 環境名リスト（rollback 対象）
+- `~/.claude/skills-config/jira.md` — Jira Cloud ID, プロジェクトキー, MCP プレフィックス
+- `~/.claude/skills-config/release-labels.md` — Productivity/AI Contribution/Release Level ラベル定義 + 根幹機能リスト
+- `~/.claude/skills-config/environments.md` — integration 環境名リスト（rollback 対象）
 
 ## ワークフロー
 
 ### Step 1: 既存状態の確認
 
 ```
-git rev-parse --show-toplevel  # リポジトリルート取得
-ls docs/agents/ 2>/dev/null    # 既存ファイル確認
+mkdir -p ~/.claude/skills-config/    # 配置先ディレクトリ確保
+ls ~/.claude/skills-config/ 2>/dev/null    # 既存ファイル確認
 ```
 
-既に `docs/agents/jira.md` などが存在する場合は、各セクションで「現在の値」を提示し「上書きするか」を1つずつ確認。
+既に `~/.claude/skills-config/jira.md` などが存在する場合は、各セクションで「現在の値」を提示し「上書きするか」を1つずつ確認。**プロジェクトの場所には依存しない**（`git rev-parse` 不要）。
 
 ### Step 2: 質問を3セクションに分けて順に進める
 
@@ -34,7 +34,7 @@ ls docs/agents/ 2>/dev/null    # 既存ファイル確認
 
 #### Section A — Jira 設定
 
-> Jira を使うか聞く。Jira を使わないなら `docs/agents/jira.md` は生成しない。
+> Jira を使うか聞く。Jira を使わないなら `~/.claude/skills-config/jira.md` は生成しない。
 
 `AskUserQuestion` で以下を確認:
 
@@ -80,7 +80,7 @@ ls docs/agents/ 2>/dev/null    # 既存ファイル確認
 
 `Write` ツールで以下を順に作成:
 
-#### `docs/agents/jira.md` のテンプレート
+#### `~/.claude/skills-config/jira.md` のテンプレート
 
 ```markdown
 # Jira 設定
@@ -100,7 +100,7 @@ omokawa-skills の create-jira-issues / set-jira-story-points / map-user-stories
 スキル本体は `<atlassian-mcp>` / `<jira-mcp>` プレースホルダーを使う。実行時に上記の値で展開すること。
 ```
 
-#### `docs/agents/release-labels.md` のテンプレート
+#### `~/.claude/skills-config/release-labels.md` のテンプレート
 
 ```markdown
 # リリースラベル設定
@@ -131,7 +131,7 @@ omokawa-skills の create-pr コマンドが参照するラベル定義。
 - ...
 ```
 
-#### `docs/agents/environments.md` のテンプレート
+#### `~/.claude/skills-config/environments.md` のテンプレート
 
 ```markdown
 # 環境設定
@@ -153,9 +153,9 @@ production / sandbox / staging に追加して列挙する integration 環境:
 
 ```
 ✅ 設定完了。以下を生成しました:
-- docs/agents/jira.md
-- docs/agents/release-labels.md
-- docs/agents/environments.md
+- ~/.claude/skills-config/jira.md
+- ~/.claude/skills-config/release-labels.md
+- ~/.claude/skills-config/environments.md
 
 次の操作:
 - /create-jira-issues でJiraチケットを作成
@@ -166,11 +166,10 @@ production / sandbox / staging に追加して列挙する integration 環境:
 ## エラーハンドリング
 
 - ユーザーが Section A〜C をすべて「使わない」と答えた場合 → 「設定するものがありません」と表示して終了
-- リポジトリ外で実行された場合 → `git rev-parse --show-toplevel` が失敗するので、`カレントディレクトリ`に作成するか聞く
 - 既存ファイルが存在する場合 → 各セクション開始時に「上書きする/スキップする/マージする」を確認
 
 ## 注意事項
 
 - このコマンドは**ファイル書き込みのみ**。Jira API などへの実通信はしない
 - 入力された Cloud ID は UUID 形式バリデーションのみ。実在性は確認しない
-- 設定後は `docs/agents/*.md` をリポジトリにコミットすることを推奨（チーム全員で共有する値）
+- 配置先 `~/.claude/skills-config/` は**マシンユーザーごとのグローバル設定**。dotfiles で symlink 管理する運用も推奨

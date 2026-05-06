@@ -7,7 +7,7 @@
 - `engineering/` — 日常の開発作業で使う汎用スキル（プロジェクト非依存）
 - `personal/` — 環境依存・組織依存のスキル（公開はするが README/plugin.json から除外しない方針 = 利用者が自社設定で使う前提）
 
-`skills/engineering/` のスキルは **設定不要で動く**ことを目標に作る。設定が必要なものは `docs/agents/*.md` から読み込み、なければエラーで止めるのではなく**フォールバック**を提示する（例: `core_features` が空なら CLAUDE.md / README.md から推定）。
+`skills/engineering/` のスキルは **設定不要で動く**ことを目標に作る。設定が必要なものは `~/.claude/skills-config/*.md` から読み込み、なければエラーで止めるのではなく**フォールバック**を提示する（例: `core_features` が空なら CLAUDE.md / README.md から推定）。
 
 ## ファイル種別と配置
 
@@ -34,9 +34,11 @@ ${CLAUDE_PLUGIN_ROOT}/skills/<bucket>/<name>/<file>
 
 絶対パス `~/.claude/skills/...` を**直接書かない**。プラグイン化されたとき動かなくなる。
 
-## 設定値の保管
+## 設定値の保管（グローバル）
 
-機密ではない**プロジェクト共有値**は `docs/agents/*.md` に書く。各スキルは「このファイルを Read で取得」と SKILL.md に書く。`.env` はほぼ使わない（SKILL.md は AI が読む文書なのでシェル変数展開は機能しない）。
+機密ではない**ユーザーマシンごとのグローバル設定値**は `~/.claude/skills-config/*.md` に書く。全プロジェクト横断で参照される（プロジェクトを切り替えても同じ設定が効く）。各スキルは「このファイルを Read で取得」と SKILL.md に書く。`.env` はほぼ使わない（SKILL.md は AI が読む文書なのでシェル変数展開は機能しない）。
+
+サンプルは `examples/skills-config/` 配下に置く。利用者は `/setup-omokawa-skills` で対話生成、または手動でコピーして `~/.claude/skills-config/` に配置する。
 
 ## スキル間相互参照
 

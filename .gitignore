@@ -1,7 +1,3 @@
-# Real config values (committed by individual projects, not this plugin repo)
-docs/agents/*.md
-!docs/agents/*.example.md
-
 # OS / editor
 .DS_Store
 *.swp

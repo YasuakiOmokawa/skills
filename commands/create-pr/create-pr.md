@@ -256,13 +256,13 @@ model: inherit
    - Revert手順（以下のルールに従う）
      - スキーマ変更がない場合：「スキーマ変更はありません. Revert PR を作成してマージしてください」にチェック
      - 不可逆な変更の場合：「Revert できません. 不可逆な変更となります」にチェック
-     - migration が含まれる場合：「各環境のデータベースのロールバック...」にチェックし、以下の形式でrollbackコマンドを明記。**環境名リスト**は `docs/agents/environments.md` の `rollback_targets` から取得（無ければ `production` / `sandbox` / `staging` のみで構成）。
+     - migration が含まれる場合：「各環境のデータベースのロールバック...」にチェックし、以下の形式でrollbackコマンドを明記。**環境名リスト**は `~/.claude/skills-config/environments.md` の `rollback_targets` から取得（無ければ `production` / `sandbox` / `staging` のみで構成）。
        ```
        各環境にアクセスして以下を実行してください
        - production
        - sandbox
        - staging
-       - <docs/agents/environments.md の integration_envs を1行ずつ列挙、無ければ省略>
+       - <~/.claude/skills-config/environments.md の integration_envs を1行ずつ列挙、無ければ省略>
 
        # 1. 現在の状態確認
        bundle exec rails db:migrate:status
@@ -284,13 +284,13 @@ model: inherit
 
 7. **ラベルの付与**
 
-   ラベル定義は `docs/agents/release-labels.md` を Read で取得して使用する。同ファイルには以下のキーが定義されている前提:
+   ラベル定義は `~/.claude/skills-config/release-labels.md` を Read で取得して使用する。同ファイルには以下のキーが定義されている前提:
    - `productivity_labels`: 開発生産性カテゴリのラベル一覧と判定基準
    - `ai_contribution_labels`: AI貢献度のラベル一覧（4段階推奨）と判定基準
    - `release_level_labels`: リリースレベルのラベル一覧（4段階推奨）と判定基準
    - `core_features`: プロジェクトの根幹機能リスト（ReleaseLevel 高レベル判定に使用）
 
-   `docs/agents/release-labels.md` が見つからない場合のフォールバック: `/setup-omokawa-skills` の実行をユーザーに促し、ラベル付与をスキップしてドラフトPRを作成。
+   `~/.claude/skills-config/release-labels.md` が見つからない場合のフォールバック: `/setup-omokawa-skills` の実行をユーザーに促し、ラベル付与をスキップしてドラフトPRを作成。
 
    a. **Productivityラベル（1つ選択）**:
    `release-labels.md` の `productivity_labels` から1つ選択。判定基準は同ファイルに従う。一般的な判定優先順位は以下（実環境のラベル名は `release-labels.md` を参照）:

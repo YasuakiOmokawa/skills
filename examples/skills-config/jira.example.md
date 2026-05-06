@@ -2,7 +2,7 @@
 
 ## このファイルの使い方
 
-このファイルを `docs/agents/jira.md` にコピーし、自社の値で書き換えてください。`/setup-omokawa-skills` で対話生成も可能です。
+このファイルを `~/.claude/skills-config/jira.md` にコピーし、自社の値で書き換えてください。`/setup-omokawa-skills` で対話生成も可能です。
 
 omokawa-skills の `create-jira-issues` / `set-jira-story-points` / `map-user-stories` がこのファイルを Read して値を取得します。
 
@@ -26,4 +26,4 @@ omokawa-skills の `create-jira-issues` / `set-jira-story-points` / `map-user-st
 
 - このファイルは**機密値ではない**前提（テナント識別子であり、漏洩しても直接攻撃にはならない）
 - 真に機密な API トークンなどは `.env` に保管し、このファイルに混ぜないこと
-- チームメンバー全員で共有する値なのでリポジトリにコミット推奨
+- 配置先は `~/.claude/skills-config/jira.md`（**マシンユーザーごとのグローバル設定**）。dotfiles で管理する場合はこの場所を symlink にする運用を推奨

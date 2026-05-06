@@ -2,7 +2,7 @@
 
 ## このファイルの使い方
 
-このファイルを `docs/agents/release-labels.md` にコピーし、自社の値で書き換えてください。`/setup-omokawa-skills` で対話生成も可能です。
+このファイルを `~/.claude/skills-config/release-labels.md` にコピーし、自社の値で書き換えてください。`/setup-omokawa-skills` で対話生成も可能です。
 
 omokawa-skills の `/create-pr` コマンドがこのファイルを Read してラベル定義を取得します。
 

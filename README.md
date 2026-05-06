@@ -13,11 +13,11 @@ npx skills@latest add YasuakiOmokawa/skills
 # 2. インストールしたいスキル/コマンド/エージェントを対話で選択
 #    （`/setup-omokawa-skills` を必ず含めること）
 
-# 3. プロジェクトごとの設定値を対話生成
+# 3. グローバル設定値を対話生成（マシンに 1 回だけ）
 /setup-omokawa-skills
 ```
 
-これで `docs/agents/jira.md` などが生成され、各スキルが透過的に動きます。
+これで `~/.claude/skills-config/jira.md` などが生成されます。**全プロジェクト横断で参照されるグローバル設定**で、プロジェクトを切り替えても同じ設定が効きます。
 
 ### 代替：手動 clone + シンボリックリンク
 
@@ -33,10 +33,6 @@ cd ~/projects/skills
 ```
 
 `npx` を使えない環境（オフライン・社内 npm registry 制限など）はこちらを推奨。
-
-## なぜこのリポジトリが存在するか
-
-Claude Code に「**何をする道具か**」を動詞で名付け、`docs/agents/*.md` で**プロジェクト固有値を外出し**することで、自分の開発フロー全体を**他人にも他リポにも持ち運べる形**にする。元は freee 社内向けに育てた skills だったが、社内固有部分を剥がして再利用可能にした。
 
 ## Skills（11 個）
 
@@ -60,15 +56,15 @@ Claude Code に「**何をする道具か**」を動詞で名付け、`docs/agen
 
 | スキル | 役割 |
 |---|---|
-| [`create-jira-issues`](./skills/personal/create-jira-issues/SKILL.md) | プランファイルから Jira チケット一括作成。`docs/agents/jira.md` を参照 |
+| [`create-jira-issues`](./skills/personal/create-jira-issues/SKILL.md) | プランファイルから Jira チケット一括作成。`~/.claude/skills-config/jira.md` を参照 |
 | [`set-jira-story-points`](./skills/personal/set-jira-story-points/SKILL.md) | Jira キー → SP マップから一括設定。Atlassian MCP 必須 |
 
 ## Commands（2 個）
 
 | コマンド | 役割 |
 |---|---|
-| [`/create-pr`](./commands/create-pr/create-pr.md) | カレントブランチからドラフト PR を作成。Conventional Commits タイトル + テンプレ準拠 + ラベル自動付与（`docs/agents/release-labels.md` から動的取得） |
-| [`/setup-omokawa-skills`](./commands/setup-omokawa-skills/setup-omokawa-skills.md) | 初回利用時の対話セットアップ。`docs/agents/*.md` を生成 |
+| [`/create-pr`](./commands/create-pr/create-pr.md) | カレントブランチからドラフト PR を作成。Conventional Commits タイトル + テンプレ準拠 + ラベル自動付与（`~/.claude/skills-config/release-labels.md` から動的取得） |
+| [`/setup-omokawa-skills`](./commands/setup-omokawa-skills/setup-omokawa-skills.md) | 初回利用時の対話セットアップ。`~/.claude/skills-config/*.md` を生成 |
 
 ## Agents（4 個）
 
@@ -81,15 +77,15 @@ Claude Code に「**何をする道具か**」を動詞で名付け、`docs/agen
 | [`finalize-plan`](./agents/finalize-plan.md) | 4（Branch-planner / PR-splitter / Manual-QA / Auto-QA） |
 | [`polish-before-commit`](./agents/polish-before-commit.md) | 1+α（外部 `code-simplifier` / `feature-dev` プラグインがあれば連携） |
 
-## 設定値の保管
+## 設定値の保管（グローバル）
 
-これらのスキル/コマンドが必要とする**プロジェクト固有値**は `docs/agents/*.md` に保管：
+これらのスキル/コマンドが必要とする設定値は `~/.claude/skills-config/*.md` に保管します。**ユーザーマシンに 1 セット**だけあれば、全プロジェクトから同じ設定が読まれます。サンプルは `examples/skills-config/` 配下：
 
-- [`docs/agents/jira.example.md`](./docs/agents/jira.example.md) — Jira Cloud ID, プロジェクトキー, MCP プレフィックス
-- [`docs/agents/release-labels.example.md`](./docs/agents/release-labels.example.md) — Productivity / AI Contribution / Release Level ラベル定義
-- [`docs/agents/environments.example.md`](./docs/agents/environments.example.md) — integration 環境名
+- [`examples/skills-config/jira.example.md`](./examples/skills-config/jira.example.md) — Jira Cloud ID, プロジェクトキー, MCP プレフィックス
+- [`examples/skills-config/release-labels.example.md`](./examples/skills-config/release-labels.example.md) — Productivity / AI Contribution / Release Level ラベル定義
+- [`examples/skills-config/environments.example.md`](./examples/skills-config/environments.example.md) — integration 環境名
 
-`*.example.md` をコピーして `*.md` を作るか、`/setup-omokawa-skills` で対話生成。詳細は [`CONTEXT.md`](./CONTEXT.md) を参照。
+`/setup-omokawa-skills` で対話生成するのが推奨。手動なら `*.example.md` を `~/.claude/skills-config/*.md` にコピーして編集。詳細は [`CONTEXT.md`](./CONTEXT.md) を参照。
 
 ## 開発ワークフローの推奨例
 
