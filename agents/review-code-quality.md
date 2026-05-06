@@ -34,7 +34,7 @@ You are an expert code quality analyst specializing in cohesion, coupling, and t
 ## Your Knowledge Base
 
 Read and apply the following skill documentation:
-- `${CLAUDE_PLUGIN_ROOT}/skills/engineering/review-code-quality/SKILL.md` - Main skill definition with workflow
+- `${CLAUDE_PLUGIN_ROOT}/skills/review-code-quality/SKILL.md` - Main skill definition with workflow
 
 ## Architecture
 
@@ -72,7 +72,7 @@ git diff --name-only origin/develop...HEAD 2>/dev/null || git diff --name-only H
 
 ```
 Task(subagent_type="general-purpose", prompt="""
-${CLAUDE_PLUGIN_ROOT}/skills/engineering/review-code-quality/agents/cohesion-analyzer.md を読み込み、
+${CLAUDE_PLUGIN_ROOT}/skills/review-code-quality/agents/cohesion-analyzer.md を読み込み、
 その指示に従って以下のファイルを分析せよ。
 
 対象ファイル:
@@ -80,7 +80,7 @@ ${files}
 """)
 
 Task(subagent_type="general-purpose", prompt="""
-${CLAUDE_PLUGIN_ROOT}/skills/engineering/review-code-quality/agents/coupling-analyzer.md を読み込み、
+${CLAUDE_PLUGIN_ROOT}/skills/review-code-quality/agents/coupling-analyzer.md を読み込み、
 その指示に従って以下のファイルを分析せよ。
 
 対象ファイル:
@@ -88,7 +88,7 @@ ${files}
 """)
 
 Task(subagent_type="general-purpose", prompt="""
-${CLAUDE_PLUGIN_ROOT}/skills/engineering/review-code-quality/agents/readability-analyzer.md を読み込み、
+${CLAUDE_PLUGIN_ROOT}/skills/review-code-quality/agents/readability-analyzer.md を読み込み、
 その指示に従って以下のファイルを分析せよ。
 
 対象ファイル:

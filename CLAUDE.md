@@ -1,27 +1,42 @@
 # omokawa-skills 開発ガイド
 
-## バケット構成
+## ディレクトリ構成
 
-スキルは `skills/` 配下に**バケット**で分類する：
+Claude Code の自動 discovery が **`skills/<name>/SKILL.md` の 1 階層**しか見ないため、フラット構造を採用する：
 
-- `engineering/` — 日常の開発作業で使う汎用スキル（プロジェクト非依存）
-- `personal/` — 環境依存・組織依存のスキル（公開はするが README/plugin.json から除外しない方針 = 利用者が自社設定で使う前提）
+```
+skills/<name>/SKILL.md      # SKILL.md は必ず 1 階層直下
+agents/<name>.md             # エージェント定義は agents/ 直下
+commands/<name>/<name>.md    # スラッシュコマンドは commands/ 直下
+```
 
-`skills/engineering/` のスキルは **設定不要で動く**ことを目標に作る。設定が必要なものは `~/.claude/skills-config/*.md` から読み込み、なければエラーで止めるのではなく**フォールバック**を提示する（例: `core_features` が空なら CLAUDE.md / README.md から推定）。
+サブディレクトリ（`skills/engineering/<name>/` 等）にすると Claude Code が**未認識**になる。これは superpowers / anthropic-agent-skills など Anthropic 公式プラグインで実証されている標準パターン。
+
+## バケット分類（説明上のみ）
+
+スキルを「engineering 系」「personal 系」のバケットで**説明上**分類する。物理ディレクトリでは分けない：
+
+- **engineering 系** — 日常の開発作業で使う汎用スキル（プロジェクト非依存）
+- **personal 系** — 環境依存・組織依存のスキル（利用者が自社設定で使う前提）
+
+`engineering 系` のスキルは **設定不要で動く**ことを目標に作る。設定が必要なものは `~/.claude/skills-config/*.md` から読み込み、なければエラーで止めるのではなく**フォールバック**を提示する（例: `core_features` が空なら CLAUDE.md / README.md から推定）。
+
+README のスキル一覧でこの分類を明示し、利用者の理解を助ける。
 
 ## ファイル種別と配置
 
-| 種別 | 配置 | 配布対象 |
+| 種別 | 配置 | discovery |
 |---|---|---|
-| Skill | `skills/<bucket>/<name>/SKILL.md` (+ `references/`, `agents/`) | `plugin.json` の `skills` |
-| Slash command | `commands/<name>/<name>.md` | `plugin.json` の `commands` |
-| Agent | `agents/<name>.md` | `plugin.json` の `agents` |
+| Skill | `skills/<name>/SKILL.md` (+ `references/`, `agents/`) | 自動（plugin.json への列挙不要） |
+| Slash command | `commands/<name>/<name>.md` | 自動 |
+| Agent | `agents/<name>.md` | 自動 |
+
+`plugin.json` には `skills/commands/agents` 配列を**書かない**。Claude Code はファイル構造から自動 discovery する。
 
 ## 命名規約
 
 - **動詞ベース**で命名する：`define-acceptance-criteria`, `review-design`, `finalize-plan`, `qa-ui` など
 - `self-*` プレフィックスは使わない（誰が使うかではなく**何をするか**を名前で示す）
-- バケットは「engineering = 動詞 / personal = 動詞 + 目的語」を緩く守る
 - 1スキル1ディレクトリ。SKILL.md 必須、`references/`/`agents/` は必要に応じて
 
 ## パス参照
@@ -29,7 +44,7 @@
 エージェント定義（`agents/*.md`）からスキル内ファイルを参照する場合：
 
 ```markdown
-${CLAUDE_PLUGIN_ROOT}/skills/<bucket>/<name>/<file>
+${CLAUDE_PLUGIN_ROOT}/skills/<name>/<file>
 ```
 
 絶対パス `~/.claude/skills/...` を**直接書かない**。プラグイン化されたとき動かなくなる。
@@ -46,12 +61,11 @@ ${CLAUDE_PLUGIN_ROOT}/skills/<bucket>/<name>/<file>
 
 ## 改名時のチェックリスト
 
-1. `skills/<bucket>/<name>/` のディレクトリ名
+1. `skills/<name>/` のディレクトリ名
 2. `SKILL.md` の `name:` フィールド
 3. 他スキル/エージェント/コマンドからの `/<旧名>` 参照
-4. `agents/*.md` 内の `${CLAUDE_PLUGIN_ROOT}/skills/.../<旧名>/` パス
-5. `.claude-plugin/plugin.json` のリスト
-6. `README.md` のリンク
+4. `agents/*.md` 内の `${CLAUDE_PLUGIN_ROOT}/skills/<旧名>/` パス
+5. `README.md` のリンク
 
 ## 公開前チェック
 

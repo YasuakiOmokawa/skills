@@ -1,33 +1,20 @@
 {
   "name": "omokawa-skills",
-  "description": "Yasuaki Omokawa's reusable skills, commands, and agents for Claude Code. Focuses on plan-driven development: AC definition, MECE plan review, plan finalization, and design/quality/UI review with sub-agent fan-out.",
-  "version": "0.1.0",
+  "description": "Plan-driven development workflow for Claude Code: AC definition, MECE plan review, finalization, and design/quality/UI review with sub-agent fan-out.",
+  "version": "0.2.0",
   "author": {
     "name": "Yasuaki Omokawa",
     "url": "https://github.com/YasuakiOmokawa"
-  },
+    },
   "homepage": "https://github.com/YasuakiOmokawa/skills",
+  "repository": "https://github.com/YasuakiOmokawa/skills",
   "license": "MIT",
-  "skills": [
-    "./skills/engineering/define-acceptance-criteria",
-    "./skills/engineering/finalize-plan",
-    "./skills/engineering/map-user-stories",
-    "./skills/engineering/mece-plan-review",
-    "./skills/engineering/model-data",
-    "./skills/engineering/polish-before-commit",
-    "./skills/engineering/qa-ui",
-    "./skills/engineering/review-code-quality",
-    "./skills/engineering/review-design",
-    "./skills/personal/create-jira-issues",
-    "./skills/personal/set-jira-story-points"
-  ],
-  "commands": [
-    "./commands/create-pr/create-pr.md"
-  ],
-  "agents": [
-    "./agents/finalize-plan.md",
-    "./agents/polish-before-commit.md",
-    "./agents/review-code-quality.md",
-    "./agents/review-design.md"
+  "keywords": [
+    "skills",
+    "plan-driven-development",
+    "ac",
+    "mece",
+    "code-review",
+    "ui-qa"
   ]
 }

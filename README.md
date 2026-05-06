@@ -23,28 +23,28 @@ bash ~/.claude/plugins/marketplaces/omokawa-skills/scripts/setup.sh
 
 ## Skills（11 個）
 
-### `skills/engineering/` — 日常開発のスキル
+### engineering 系（プロジェクト非依存）
 
 プラン駆動開発の流れ（**spec → AC → MECE → finalize → implement → review**）に対応：
 
 | スキル | 役割 |
 |---|---|
-| [`map-user-stories`](./skills/engineering/map-user-stories/SKILL.md) | 設計書/Jira epic から US/Task を分解。後段の `create-jira-issues` と契約フォーマットで連携 |
-| [`define-acceptance-criteria`](./skills/engineering/define-acceptance-criteria/SKILL.md) | プランに **4カテゴリ × 観点マトリクス**で AC を定義。`mece-plan-review` の検証ターゲット |
-| [`mece-plan-review`](./skills/engineering/mece-plan-review/SKILL.md) | AC に対し3視点（QA / Tech / Red Team）で MECE 検証。サブエージェント並列分析 |
-| [`finalize-plan`](./skills/engineering/finalize-plan/SKILL.md) | プラン→実装可能形式へ変換。**4 サブエージェント並列**（Branch / PR-split / Manual-QA / Auto-QA） |
-| [`review-design`](./skills/engineering/review-design/SKILL.md) | 「どこに・どう作るか」を **4 reviewer 並列**で判定（Clean Architecture / Hexagonal / DDD / Anti-pattern） |
-| [`model-data`](./skills/engineering/model-data/SKILL.md) | 要求文書から DBML 形式の ER 図を生成。Requirements → Conceptual → Logical のパイプライン |
-| [`polish-before-commit`](./skills/engineering/polish-before-commit/SKILL.md) | コミット前にプロジェクト規約への準拠とパターン一貫性を**自動修正** |
-| [`review-code-quality`](./skills/engineering/review-code-quality/SKILL.md) | 設計レベルの問題（凝集度/結合度/可読性）を**3 analyzer 並列**で検出。提案のみ |
-| [`qa-ui`](./skills/engineering/qa-ui/SKILL.md) | ChromeDevTools MCP で UI 検証。**Generator-Evaluator 分離**で別コンテキストが判定 |
+| [`map-user-stories`](./skills/map-user-stories/SKILL.md) | 設計書/Jira epic から US/Task を分解。後段の `create-jira-issues` と契約フォーマットで連携 |
+| [`define-acceptance-criteria`](./skills/define-acceptance-criteria/SKILL.md) | プランに **4カテゴリ × 観点マトリクス**で AC を定義。`mece-plan-review` の検証ターゲット |
+| [`mece-plan-review`](./skills/mece-plan-review/SKILL.md) | AC に対し3視点（QA / Tech / Red Team）で MECE 検証。サブエージェント並列分析 |
+| [`finalize-plan`](./skills/finalize-plan/SKILL.md) | プラン→実装可能形式へ変換。**4 サブエージェント並列**（Branch / PR-split / Manual-QA / Auto-QA） |
+| [`review-design`](./skills/review-design/SKILL.md) | 「どこに・どう作るか」を **4 reviewer 並列**で判定（Clean Architecture / Hexagonal / DDD / Anti-pattern） |
+| [`model-data`](./skills/model-data/SKILL.md) | 要求文書から DBML 形式の ER 図を生成。Requirements → Conceptual → Logical のパイプライン |
+| [`polish-before-commit`](./skills/polish-before-commit/SKILL.md) | コミット前にプロジェクト規約への準拠とパターン一貫性を**自動修正** |
+| [`review-code-quality`](./skills/review-code-quality/SKILL.md) | 設計レベルの問題（凝集度/結合度/可読性）を**3 analyzer 並列**で検出。提案のみ |
+| [`qa-ui`](./skills/qa-ui/SKILL.md) | ChromeDevTools MCP で UI 検証。**Generator-Evaluator 分離**で別コンテキストが判定 |
 
-### `skills/personal/` — 環境依存スキル
+### personal 系（環境依存）
 
 | スキル | 役割 |
 |---|---|
-| [`create-jira-issues`](./skills/personal/create-jira-issues/SKILL.md) | プランファイルから Jira チケット一括作成。`~/.claude/skills-config/jira.md` を参照 |
-| [`set-jira-story-points`](./skills/personal/set-jira-story-points/SKILL.md) | Jira キー → SP マップから一括設定。Atlassian MCP 必須 |
+| [`create-jira-issues`](./skills/create-jira-issues/SKILL.md) | プランファイルから Jira チケット一括作成。`~/.claude/skills-config/jira.md` を参照 |
+| [`set-jira-story-points`](./skills/set-jira-story-points/SKILL.md) | Jira キー → SP マップから一括設定。Atlassian MCP 必須 |
 
 ## Commands（1 個）
 

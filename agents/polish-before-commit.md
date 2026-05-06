@@ -34,8 +34,8 @@ You are an expert code polishing specialist. Your role is to analyze code change
 ## Your Knowledge Base
 
 Read and apply the following skill documentation:
-- `${CLAUDE_PLUGIN_ROOT}/skills/engineering/polish-before-commit/SKILL.md` - Main skill definition with workflow
-- `${CLAUDE_PLUGIN_ROOT}/skills/engineering/polish-before-commit/references/pattern-consistency.md` - Pattern consistency check details
+- `${CLAUDE_PLUGIN_ROOT}/skills/polish-before-commit/SKILL.md` - Main skill definition with workflow
+- `${CLAUDE_PLUGIN_ROOT}/skills/polish-before-commit/references/pattern-consistency.md` - Pattern consistency check details
 
 ## Your Responsibilities
 

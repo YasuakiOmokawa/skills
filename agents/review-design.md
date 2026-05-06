@@ -34,19 +34,19 @@ You are an expert software architect specializing in code placement and dependen
 ## Your Knowledge Base
 
 Read and apply the following skill documentation:
-- `${CLAUDE_PLUGIN_ROOT}/skills/engineering/review-design/SKILL.md` - Main skill definition with workflow
-- `${CLAUDE_PLUGIN_ROOT}/skills/engineering/review-design/references/clean-architecture.md` - Clean Architecture principles
-- `${CLAUDE_PLUGIN_ROOT}/skills/engineering/review-design/references/hexagonal-architecture.md` - Port/Adapter patterns
-- `${CLAUDE_PLUGIN_ROOT}/skills/engineering/review-design/references/domain-driven-design.md` - DDD tactical patterns
-- `${CLAUDE_PLUGIN_ROOT}/skills/engineering/review-design/references/anti-patterns.md` - Anti-patterns to avoid
+- `${CLAUDE_PLUGIN_ROOT}/skills/review-design/SKILL.md` - Main skill definition with workflow
+- `${CLAUDE_PLUGIN_ROOT}/skills/review-design/references/clean-architecture.md` - Clean Architecture principles
+- `${CLAUDE_PLUGIN_ROOT}/skills/review-design/references/hexagonal-architecture.md` - Port/Adapter patterns
+- `${CLAUDE_PLUGIN_ROOT}/skills/review-design/references/domain-driven-design.md` - DDD tactical patterns
+- `${CLAUDE_PLUGIN_ROOT}/skills/review-design/references/anti-patterns.md` - Anti-patterns to avoid
 
 ## Parallel Reviewer Agents
 
 設計検証時に並列起動するReviewerエージェント:
-- `${CLAUDE_PLUGIN_ROOT}/skills/engineering/review-design/agents/clean-architecture-reviewer.md`
-- `${CLAUDE_PLUGIN_ROOT}/skills/engineering/review-design/agents/hexagonal-reviewer.md`
-- `${CLAUDE_PLUGIN_ROOT}/skills/engineering/review-design/agents/ddd-reviewer.md`
-- `${CLAUDE_PLUGIN_ROOT}/skills/engineering/review-design/agents/anti-pattern-checker.md`
+- `${CLAUDE_PLUGIN_ROOT}/skills/review-design/agents/clean-architecture-reviewer.md`
+- `${CLAUDE_PLUGIN_ROOT}/skills/review-design/agents/hexagonal-reviewer.md`
+- `${CLAUDE_PLUGIN_ROOT}/skills/review-design/agents/ddd-reviewer.md`
+- `${CLAUDE_PLUGIN_ROOT}/skills/review-design/agents/anti-pattern-checker.md`
 
 ## Quick Start: 3つの質問
 
@@ -117,7 +117,7 @@ Q1-Q3 の結果に基づき、適切な Reviewer を選択する。
 Task 1 (ddd-reviewer):
   subagent_type: "general-purpose"
   prompt: |
-    ${CLAUDE_PLUGIN_ROOT}/skills/engineering/review-design/agents/ddd-reviewer.md を読み込み、
+    ${CLAUDE_PLUGIN_ROOT}/skills/review-design/agents/ddd-reviewer.md を読み込み、
     以下の設計を検証してください:
 
     [設計判断の内容]
@@ -127,7 +127,7 @@ Task 1 (ddd-reviewer):
 Task 2 (anti-pattern-checker):
   subagent_type: "general-purpose"
   prompt: |
-    ${CLAUDE_PLUGIN_ROOT}/skills/engineering/review-design/agents/anti-pattern-checker.md を読み込み、
+    ${CLAUDE_PLUGIN_ROOT}/skills/review-design/agents/anti-pattern-checker.md を読み込み、
     以下の設計を検証してください:
 
     [設計判断の内容]

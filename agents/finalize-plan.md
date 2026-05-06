@@ -34,15 +34,15 @@ You are an expert at preparing implementation plans for execution. Your role is 
 ## Your Knowledge Base
 
 Read and apply the following skill documentation:
-- `${CLAUDE_PLUGIN_ROOT}/skills/engineering/finalize-plan/SKILL.md` - Main skill definition with workflow
+- `${CLAUDE_PLUGIN_ROOT}/skills/finalize-plan/SKILL.md` - Main skill definition with workflow
 
 ## Parallel Agents
 
 実装準備時に並列起動するサブエージェント:
-- `${CLAUDE_PLUGIN_ROOT}/skills/engineering/finalize-plan/agents/branch-planner.md` - ブランチ戦略
-- `${CLAUDE_PLUGIN_ROOT}/skills/engineering/finalize-plan/agents/pr-splitter.md` - PR分割計画
-- `${CLAUDE_PLUGIN_ROOT}/skills/engineering/finalize-plan/agents/manual-qa-planner.md` - 手動QA手順（AC/MECE駆動）
-- `${CLAUDE_PLUGIN_ROOT}/skills/engineering/finalize-plan/agents/auto-qa-planner.md` - 自動QA仕様（AC/MECE駆動）
+- `${CLAUDE_PLUGIN_ROOT}/skills/finalize-plan/agents/branch-planner.md` - ブランチ戦略
+- `${CLAUDE_PLUGIN_ROOT}/skills/finalize-plan/agents/pr-splitter.md` - PR分割計画
+- `${CLAUDE_PLUGIN_ROOT}/skills/finalize-plan/agents/manual-qa-planner.md` - 手動QA手順（AC/MECE駆動）
+- `${CLAUDE_PLUGIN_ROOT}/skills/finalize-plan/agents/auto-qa-planner.md` - 自動QA仕様（AC/MECE駆動）
 
 ## Workflow
 
@@ -67,7 +67,7 @@ Read and apply the following skill documentation:
 Task 1 (branch-planner):
   subagent_type: "general-purpose"
   prompt: |
-    ${CLAUDE_PLUGIN_ROOT}/skills/engineering/finalize-plan/agents/branch-planner.md を読み込み、
+    ${CLAUDE_PLUGIN_ROOT}/skills/finalize-plan/agents/branch-planner.md を読み込み、
     以下のプランに基づいてブランチ戦略を策定してください:
 
     [プランファイルの内容]
@@ -75,7 +75,7 @@ Task 1 (branch-planner):
 Task 2 (pr-splitter):
   subagent_type: "general-purpose"
   prompt: |
-    ${CLAUDE_PLUGIN_ROOT}/skills/engineering/finalize-plan/agents/pr-splitter.md を読み込み、
+    ${CLAUDE_PLUGIN_ROOT}/skills/finalize-plan/agents/pr-splitter.md を読み込み、
     以下のプランに基づいてPR分割計画を策定してください:
 
     [プランファイルの内容]
@@ -83,7 +83,7 @@ Task 2 (pr-splitter):
 Task 3 (manual-qa-planner):
   subagent_type: "general-purpose"
   prompt: |
-    ${CLAUDE_PLUGIN_ROOT}/skills/engineering/finalize-plan/agents/manual-qa-planner.md を読み込み、
+    ${CLAUDE_PLUGIN_ROOT}/skills/finalize-plan/agents/manual-qa-planner.md を読み込み、
     以下のプランとAC・MECE分析結果に基づいて手動QA手順を策定してください:
 
     ## プラン:
@@ -98,7 +98,7 @@ Task 3 (manual-qa-planner):
 Task 4 (auto-qa-planner):
   subagent_type: "general-purpose"
   prompt: |
-    ${CLAUDE_PLUGIN_ROOT}/skills/engineering/finalize-plan/agents/auto-qa-planner.md を読み込み、
+    ${CLAUDE_PLUGIN_ROOT}/skills/finalize-plan/agents/auto-qa-planner.md を読み込み、
     以下のプランとAC・MECE分析結果に基づいてテストコード仕様を策定してください:
 
     ## プラン:
