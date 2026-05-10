@@ -170,3 +170,63 @@ Step 5 で revision-log を記録するため、各 revise の内容を内部的
 ユーザーが「OK」「これで完了」「いいよ」と発話したら Step 5 へ進む。
 
 → Step 5 へ。
+
+### Step 5: 完了処理
+
+#### 最終版保存
+
+最終版をそのまま保存 (revise loop の最後の Edit / Write 結果が最終版)。
+
+#### revision-log のコメント挿入
+
+ファイル末尾に HTML コメント形式で revision-log を埋め込む (Zenn 記事として publish 時には表示されない、再 revise 時の参考資料)。
+
+```markdown
+<!-- revision-log
+- (revise 1) ユーザー FB: "○○強調" → 該当段落を厚くした
+- (revise 2) ユーザー FB: "V_x への繋がり弱い" → 該当ビジョン要素について追記
+-->
+```
+
+#### ビジョン要素タグ付与 (オプション)
+
+ユーザーが希望すれば、各 H2 段落の冒頭に整合するビジョン要素を HTML コメントで付与する:
+
+```markdown
+## 取り組み
+<!-- vision: V1, V4 -->
+
+(段落本文)
+```
+
+#### 完了メッセージ
+
+```
+記事下書きが完成しました: <output-path>
+
+次にやること:
+1. このファイルを Zenn ローカル CLI で preview する
+2. 必要に応じて手動で文章を磨く
+3. publish 準備が整ったら frontmatter の `published: true` に変更
+```
+
+skill 終了。
+
+## エラーハンドリング
+
+| 状況 | 動作 |
+|---|---|
+| `~/.claude/skills-config/vision.md` が存在しない | `references/vision-config-template.md` を `~/.claude/skills-config/vision.md` にコピーする提案。ユーザー承認後コピー、編集を促してから skill 再実行を案内 |
+| `<project-path>` に git history が無い | 「`README.md` とディレクトリ構造から推定して進めますか? それとも abort?」と確認 |
+| ビジョン整合点ゼロ | 「このプロジェクトはビジョンに整合しないかもしれません。それでも記事化を続けますか? 整合しない理由自体が記事ネタになる場合もあります」と確認 |
+| 出力先ディレクトリが書き込み不可 | 別パスを提案、または abort |
+
+## 既存 skill との関係
+
+- `define-acceptance-criteria` / `mece-plan-review` / `finalize-plan` 等の「プラン駆動開発」スキル群とは別レイヤー (career 系)
+- 既存スキルがプロジェクト**内部**のフェーズを扱うのに対し、本スキルはプロジェクト**全体**を入力に取りキャリアレイヤーで物語化する
+
+## 関連 ADR / spec
+
+- spec: `~/.claude/plans/translate-to-vision-story.md`
+- ADR-003 (要修正): session-handoff の代替として本スキルを優先実装
