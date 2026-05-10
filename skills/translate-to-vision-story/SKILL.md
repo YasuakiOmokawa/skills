@@ -89,3 +89,49 @@ description: プロジェクト活動 (commits/PRs/README/ADR) を `~/.claude/sk
 ```
 
 → Step 3 へ。
+
+### Step 3: 下書き生成
+
+#### 出力先パスの決定
+
+デフォルト: `<project-path>/docs/draft/YYYY-MM-DD-<title>.md`
+
+- `<title>` は柱から自動生成 (例: 「taimei-auth-separation」「freee-mcp-namespace-pattern」)
+- ファイル名候補をユーザーに提示し、変更を許可
+- `<project-path>/docs/draft/` ディレクトリが存在しなければ作成する
+
+#### 下書きの 3 段構成
+
+`${CLAUDE_PLUGIN_ROOT}/skills/translate-to-vision-story/references/zenn-article-structure.md` の構造に従う:
+
+1. **背景** (200-400 字) — なぜこのプロジェクトを始めたか / 解決したい課題 / ビジョン要素との繋がりを 1 文
+2. **取り組み** (1500-3000 字) — 技術詳細 / 重要な設計判断 (検討した代替案と却下理由) / コード例
+3. **ビジョンへの繋がり** (200-400 字) — どのビジョン要素を前進させたか / 次の手
+
+「ビジョンに整合しなかった柱」がある場合は、3. の前に「失敗した点 / ビジョンに整合しなかった点」セクションを追加する。
+
+#### Frontmatter
+
+```yaml
+---
+title: "(自動生成)"
+emoji: "💭"
+type: "tech"
+topics: ["claudecode"]  # 柱から推定して追加
+published: false
+---
+```
+
+#### ファイル書き出し
+
+Write ツールでファイル作成。書き出し後、ユーザーに以下を提示:
+
+```
+下書きを生成しました: <output-path>
+
+変更したい箇所があれば教えてください:
+- 「ここ弱い」「ここ強調」「この技術詳細追加」「カット」 などの FB を受け付けます
+- 「OK」と言えば完了処理に進みます
+```
+
+→ Step 4 へ。
