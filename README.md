@@ -44,6 +44,14 @@ bash ~/.claude/plugins/marketplaces/omokawa-skills/scripts/setup.sh
 | [`create-jira-issues`](./skills/create-jira-issues/SKILL.md) | プランファイルから Jira チケット一括作成。`~/.claude/skills-config/jira.md` を参照 |
 | [`set-jira-story-points`](./skills/set-jira-story-points/SKILL.md) | Jira キー → StoryPoint マップから一括設定。Atlassian MCP 必須 |
 
+### career 系（キャリア戦略・ビジョン整合・branding）
+
+`~/.claude/skills-config/vision.md` 等のユーザー個人設定を入力に取り、外部表現 (記事下書き / 履歴書実績欄 / 登壇 outline 等) を生成する。プロジェクト**内部**のフェーズを扱う engineering 系とは別レイヤー。
+
+| スキル | 役割 |
+|---|---|
+| [`translate-to-vision-story`](./skills/translate-to-vision-story/SKILL.md) | プロジェクト活動 (commits/PRs/README/ADR) をビジョン整合した Zenn 記事下書きに翻訳。対話型 draft → revise loop |
+
 ## Commands
 
 | コマンド | 役割 |
