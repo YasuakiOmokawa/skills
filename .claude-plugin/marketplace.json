@@ -1,8 +1,8 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "omokawa-skills",
-  "version": "0.2.0",
-  "description": "Plan-driven development workflow for Claude Code: AC definition, MECE plan review, finalization, and design/quality/UI review with sub-agent fan-out.",
+  "version": "0.3.0",
+  "description": "Plan-driven development workflow for Claude Code: AC definition, MECE plan review, finalization, and design/quality/UI review with sub-agent fan-out. Now includes career-bucket skill (translate-to-vision-story).",
   "owner": {
     "name": "Yasuaki Omokawa",
     "url": "https://github.com/YasuakiOmokawa"
@@ -11,7 +11,7 @@
     {
       "name": "omokawa-skills",
       "description": "12 skills (define-acceptance-criteria, mece-plan-review, finalize-plan, review-design, review-code-quality, polish-before-commit, model-data, map-user-stories, qa-ui, create-jira-issues, set-jira-story-points, translate-to-vision-story), 1 command (/create-pr), and 4 agents (review-design, review-code-quality, finalize-plan, polish-before-commit) for plan-driven development and career storytelling.",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "author": {
         "name": "Yasuaki Omokawa",
         "url": "https://github.com/YasuakiOmokawa"
