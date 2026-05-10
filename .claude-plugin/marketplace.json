@@ -10,7 +10,7 @@
   "plugins": [
     {
       "name": "omokawa-skills",
-      "description": "11 skills (define-acceptance-criteria, mece-plan-review, finalize-plan, review-design, review-code-quality, polish-before-commit, model-data, map-user-stories, qa-ui, create-jira-issues, set-jira-story-points), 1 command (/create-pr), and 4 agents (review-design, review-code-quality, finalize-plan, polish-before-commit) for plan-driven development.",
+      "description": "12 skills (define-acceptance-criteria, mece-plan-review, finalize-plan, review-design, review-code-quality, polish-before-commit, model-data, map-user-stories, qa-ui, create-jira-issues, set-jira-story-points, translate-to-vision-story), 1 command (/create-pr), and 4 agents (review-design, review-code-quality, finalize-plan, polish-before-commit) for plan-driven development and career storytelling.",
       "version": "0.2.0",
       "author": {
         "name": "Yasuaki Omokawa",
