@@ -33,16 +33,43 @@ description: プロジェクト活動 (commits/PRs/README/ADR) を `~/.claude/sk
 
 #### 必須読み込み
 
+各ステップは「成功 / 空・件数不足 / 欠落」の 3 分岐を明示する。skip した情報源は肝推定時に「○○ 由来情報なし」と内部メモする (後続 Step で証拠の偏りを判断するため)。
+
 1. `~/.claude/skills-config/vision.md` を Read
-   - 存在しなければ `${CLAUDE_PLUGIN_ROOT}/skills/translate-to-vision-story/references/vision-config-template.md` をコピーする旨をユーザーに提案、ユーザー承認後にコピー、編集を促してから skill を再実行
-2. `<project-path>/README.md` を Read (存在すれば)
-3. `<project-path>` の `git log --oneline -50` で直近 50 コミットを取得
-4. `<project-path>` の `gh pr list --state merged --limit 30` で直近 30 PR を取得 (gh が利用可能な場合)
-5. `<project-path>/docs/adr/` または親ディレクトリの ADR ファイルを Glob で探索
+   - 成功 → ビジョン要素 (V1-V10) を把握
+   - 不在 → エラーハンドリング表 1 行目に従う (skill を一旦中断)
+2. `<project-path>/README.md` を Read
+   - 成功 → 肝推定の主要証拠として使用
+   - 不在 → skip (内部メモ: README 由来情報なし)
+3. `<project-path>` で `git log --oneline -50` を実行し直近コミットを取得
+   - 50 件以上 → そのまま使う
+   - 50 件未満 → 全件を使う (リポが小さくても abort しない)
+   - git history 自体が無い → エラーハンドリング表 2 行目に従う
+4. `<project-path>` で `gh pr list --state merged --limit 30 --json number,title,mergedAt` を実行 (gh 利用可能時のみ)
+   - 利用するフィールド: `number` (関連活動表記用), `title` (柱抽出用), `mergedAt` (時系列把握用)
+   - gh 利用不可 → skip (内部メモ: PR 由来情報なし)
+   - 0 件 → skip (内部メモ: PR 駆動開発でない)
+5. ADR ファイルを以下 3 パターンの Glob で探索 (これ以外には掘らない: 親ディレクトリの再帰探索は対象外)
+   - `<project-path>/docs/adr/*.md`
+   - `<project-path>/adr/*.md`
+   - `<project-path>/../docs/adr/*.md`
+   - 1 件以上見つかった → 各ファイルを Read し肝推定の重み付け証拠に使う (代替案・却下理由が書かれている率が高いため)
+   - 全パターン 0 件 → skip (内部メモ: ADR 由来情報なし)
 
 #### 「肝 3 点」初期提案
 
-収集した情報から、AI が「このプロジェクトの肝はこの 3 点」を初期提案する。形式:
+収集した情報から、AI が「このプロジェクトの肝はこの 3 点」を初期提案する。
+
+ビジョン要素紐付けの優先順位:
+- Tier 1 (V1-V7 などの確定要素) を優先採用、Tier 2 (V8-V10 などの候補要素) は Tier 1 で説明できない場合の補完として使う
+- 1 柱あたり 1-3 個の要素を紐付ける (4 個以上は柱として広すぎるサインなので柱を分割するか粒度を揃える)
+- vision.md 内に Tier 区分が無い場合は ID 順に上位優先
+
+整合点の分岐:
+- 全柱で整合要素ゼロ → 初期提案フォーマットを送らずエラーハンドリング表「ビジョン整合点ゼロ」行に分岐
+- 一部の柱のみ整合要素ゼロ (他柱は整合あり) → 通常フォーマットで提示し、Step 2 の確定後処理で「失敗談として扱う」マーク付け
+
+形式:
 
 ```
 このプロジェクトの肝は以下の 3 点と推定しました:
@@ -216,10 +243,47 @@ skill 終了。
 
 | 状況 | 動作 |
 |---|---|
-| `~/.claude/skills-config/vision.md` が存在しない | `references/vision-config-template.md` を `~/.claude/skills-config/vision.md` にコピーする提案。ユーザー承認後コピー、編集を促してから skill 再実行を案内 |
-| `<project-path>` に git history が無い | 「`README.md` とディレクトリ構造から推定して進めますか? それとも abort?」と確認 |
-| ビジョン整合点ゼロ | 「このプロジェクトはビジョンに整合しないかもしれません。それでも記事化を続けますか? 整合しない理由自体が記事ネタになる場合もあります」と確認 |
+| `~/.claude/skills-config/vision.md` が存在しない | エラーメッセージ最低含有要素 (1) に従いユーザー提示。承認後コピー → 編集 → skill 再実行 |
+| `<project-path>` に git history が無い | エラーメッセージ最低含有要素 (2) に従いユーザー提示 |
+| ビジョン整合点ゼロ (全柱で整合要素ゼロのとき) | エラーメッセージ最低含有要素 (3) に従いユーザー提示 |
 | 出力先ディレクトリが書き込み不可 | 別パスを提案、または abort |
+
+### エラーメッセージ最低含有要素
+
+各エラー提示メッセージに以下を必ず含める。要素の欠落は不可。
+- 提示順序: 下記の箇条書き順を推奨 (executor が UX 上必要なら入れ替え可)
+- 文言: 意味が同等なら自由に言い換え可 (鍵括弧表記は固定文言ではなく例示)
+- Markdown 装飾 (見出し / 太字 / リスト): executor 裁量
+- 変数表記 (`${CLAUDE_PLUGIN_ROOT}` 等): ユーザー提示メッセージ内ではそのまま展開せず変数表記のままで可
+
+#### (1) vision.md 不在時
+
+- 検知結果: `~/.claude/skills-config/vision.md` が存在しない旨を明示
+- 必須理由 1 文: 「ビジョン要素とプロジェクト活動を照合するため設定ファイルが必須」
+- コピー元パス: `${CLAUDE_PLUGIN_ROOT}/skills/translate-to-vision-story/references/vision-config-template.md`
+- コピー先パス: `~/.claude/skills-config/vision.md`
+- 承認待ちで停止する旨 (承認なしにコピーしない)
+- 承認後の 3 段手順:
+  1. AI がテンプレートをコピー
+  2. ユーザーがテンプレート内「ビジョン要素 (判定基準)」セクションの V1-V7 等を自分の言葉で記入 (Tier 区分があれば Tier 1 を最優先で埋める)
+  3. ユーザーが `/translate-to-vision-story <project-path>` を再実行
+- 拒否選択肢の明示 (「やめる」「中断」等で skill 終了)
+
+#### (2) git history 不在時
+
+- 検知結果: `<project-path>` に git history が無い旨
+- 代替案 1: README.md とディレクトリ構造から推定して進める
+- 代替案 2: abort
+- ユーザー選択待ちで停止する旨
+
+#### (3) ビジョン整合点ゼロ時
+
+- 検知結果: 抽出した柱と vision.md の要素が 1 つも整合しなかった旨
+- 解釈の提示: 「ビジョンに整合しない理由自体が記事ネタになる場合もある」
+- 選択肢:
+  - 続行 (「失敗した点 / ビジョンに整合しなかった点」セクション中心の記事として下書き生成)
+  - abort
+- ユーザー選択待ちで停止する旨
 
 ## 既存 skill との関係
 
