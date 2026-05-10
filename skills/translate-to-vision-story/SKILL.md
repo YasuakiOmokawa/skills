@@ -25,4 +25,36 @@ description: プロジェクト活動 (commits/PRs/README/ADR) を `~/.claude/sk
 
 ## 5 ステップ対話フロー
 
-(続く section で各ステップを定義)
+### Step 1: 文脈把握
+
+#### 入力受け取り
+
+ユーザーが `/translate-to-vision-story <project-path>` または「物語化したい」と発話したら起動する。`<project-path>` を引数または対話で受け取る。
+
+#### 必須読み込み
+
+1. `~/.claude/skills-config/vision.md` を Read
+   - 存在しなければ `${CLAUDE_PLUGIN_ROOT}/skills/translate-to-vision-story/references/vision-config-template.md` をコピーする旨をユーザーに提案、ユーザー承認後にコピー、編集を促してから skill を再実行
+2. `<project-path>/README.md` を Read (存在すれば)
+3. `<project-path>` の `git log --oneline -50` で直近 50 コミットを取得
+4. `<project-path>` の `gh pr list --state merged --limit 30` で直近 30 PR を取得 (gh が利用可能な場合)
+5. `<project-path>/docs/adr/` または親ディレクトリの ADR ファイルを Glob で探索
+
+#### 「肝 3 点」初期提案
+
+収集した情報から、AI が「このプロジェクトの肝はこの 3 点」を初期提案する。形式:
+
+```
+このプロジェクトの肝は以下の 3 点と推定しました:
+
+1. **(技術的判断 1)** — (1-2 行の説明)
+   - 関連活動: (commit hash / PR# / ADR-N 等)
+   - 推定整合ビジョン要素: V_x
+
+2. **(技術的判断 2)** — ...
+3. **(技術的判断 3)** — ...
+
+この 3 点で物語化を進めて良いですか? 違うなら指摘してください。
+```
+
+→ Step 2 (柱確認) へ。
