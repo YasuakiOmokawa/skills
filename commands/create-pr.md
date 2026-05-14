@@ -42,6 +42,55 @@ model: inherit
    - `git log [base-branch]..HEAD --oneline`（コミット一覧）
    - `git diff [base-branch]...HEAD --stat`（差分の概要）
 
+   **1.5. カレントブランチの妥当性検証（必須・コミット前に実行）**
+
+   ステップ 1 で取得したカレントブランチ名を、以下の判定基準で検証する。**いずれかに該当する場合は新ブランチに切替必須**:
+
+   1. **同名禁止**: カレントブランチが `[base-branch]` と同一（例: `develop` チェックアウト中で base が `develop`）
+   2. **規約違反**: カレントブランチ名が conventional prefix を持たない。conventional prefix は以下のいずれか:
+      - `feature/` / `feat/`
+      - `fix/`
+      - `refactor/`
+      - `docs/`
+      - `chore/`
+      - `test/`
+      - `perf/`
+      - `style/`
+      - `ci/`
+      - `build/`
+      - 例: `omo/gtr-2`, `wip-test`, `tmp`, worktree ディレクトリ名そのまま等は **規約違反**として扱う
+   3. **プロジェクト規約違反**: リポジトリの `.github/CLAUDE.md` / `<repo>/CLAUDE.md` / `<repo>/.claude/rules/git-branch*.md` にブランチ命名規約が明記されている場合、それに従わないブランチ名は規約違反として扱う（前準備として該当ファイルを Read で確認）
+      - **「命名規約明記」の定義**: ブランチ名の **prefix / pattern / 正規表現** がファイル内で明示されていること（例: `feature/機能名`, `^(feat|fix|refactor)/.+`）
+      - base ブランチ指定のみ（例: 「PR base は `develop`」）は **命名規約ではない**ため、本判定では対象外
+
+   **該当時の自動切替手順**:
+
+   1. ステップ 1 の `git diff [base-branch]...HEAD --stat` と `git status` の出力から **変更ドメイン** を推定
+      - **diff 取得方法**: HEAD==base または uncommitted のみのケースでは `git diff [base-branch]...HEAD --stat` が空を返すため、`git diff --stat`（unstaged）と `git diff --cached --stat`（staged）の **合算** で最大 dir / module 名を採用
+      - **scope 候補の優先順位** (複数候補が同程度のとき):
+        1. **ユーザ向け価値を生む機能ドメイン** を優先 (例: `order` / `license` / `auth`)
+        2. **技術手段** は非優先 (例: `mailer` / `flipper` / `middleware` は scope にしない)
+        3. モデル名 / コントローラ名の prefix がある場合はそれを採用 (ステップ 5 の scope 規則と整合)
+   2. ステップ 5 の `type` / `scope` 決定ロジックを前借りして branch 名を組み立てる:
+      ```
+      <type>/<scope>-<short-desc-kebab-case>
+      ```
+      - `<type>`: ステップ 5 の type 優先順位（`feat` > `fix` > ...）から仮選定
+      - `<scope>`: 上で推定した変更ドメイン
+      - `<short-desc-kebab-case>`: 変更の主目的を英小文字 kebab-case で 2〜4 単語
+   3. 生成例:
+      - 注文確定通知メーラー追加 → `feature/order-notification-mailer`
+      - 認証 token rotation バグ修正 → `fix/auth-token-rotation`
+      - rubocop 違反修正 → `refactor/rubocop-cleanup`
+   4. `git switch -c <new-branch-name>` を実行
+   5. 切替後、ステップ 1 の `git branch --show-current` を再取得（以降のステップで使う）
+
+   **該当しない場合**: そのまま続行（既に `feature/order-notification` 等で正しいブランチ名を持っている場合は no-op）
+
+   **重要事項**:
+   - **切替はコミット前に実行する**。コミット後の rename は GitHub Branch Rename API の副作用で関連 PR が CLOSED されてしまう事故が観測されている。事後に修正する手段は「force push」または「PR 再作成」のみで、いずれも reviewable な PR 履歴を損なう
+   - `git switch -c` で切替できる前提として、ステップ 1 の `git status` で worktree が clean か uncommitted のみであることを確認しておく（merge / rebase の最中などで状態が複雑な場合はユーザに状況確認を促す）
+
 2. **未コミットファイルのコミット（必要な場合のみ）**
    ステップ1で未コミットファイルがあれば、以下のルールに従ってコミットを作成：
 
