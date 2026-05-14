@@ -5,6 +5,27 @@ All notable changes to omokawa-skills will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v2.0.0 (BREAKING) - 2026-05-14
+
+**破壊的変更:** モノリス plugin `omokawa-skills` (v0.11.0) を廃止し、14 個の独立 plugin に分割。
+
+### 移行手順
+
+```
+/plugin uninstall omokawa-skills@omokawa-skills
+/plugin marketplace update omokawa-skills
+/plugin install <必要な skill>@omokawa-skills
+```
+
+### 新規 plugin (各 v0.1.0)
+
+- `define-acceptance-criteria`, `mece-plan-review`, `finalize-plan` (+ agent), `review-design` (+ agent), `review-code-quality` (+ agent), `polish-before-commit` (+ agent), `model-data`, `map-user-stories`, `qa-ui`, `create-jira-issues`, `set-jira-story-points`, `translate-to-vision-story`, `dry-ssot-text`
+- `create-pr` (slash command-only plugin)
+
+### 理由
+
+ユーザーが必要な skill だけを選択的に install できるようにするため。Jira/ChromeDevTools/個人 vision 関連は利用者によっては不要だが、旧構造ではすべて同梱されていた。
+
 ## [0.8.0] - 2026-05-14
 
 ### Added
