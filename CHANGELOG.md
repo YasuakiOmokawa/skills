@@ -5,6 +5,17 @@ All notable changes to omokawa-skills will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2026-05-14
+
+### Added
+
+- **`dry-ssot-text` skill 新設 (engineering bucket)**: AI 生成長文を DRY/SSOT 形式に refactor する。必要重複 (TOC / progress table / checklist) と不要重複 (説明文の二重書き) を判定基準 table で識別、不要重複のみ canonical location (文書末尾 §設計詳細) に集約してアンカーリンクで参照置換する。実証例: 1074 行 plan を 328 行に圧縮。
+  - `empirical-prompt-tuning` skill で 3 iteration 検証済 (Accuracy 3 連続 100%、新 unclear points は iter 2 以降 0 件で plateau 確認)。
+
+### Fixed
+
+- `.claude-plugin/marketplace.json` の version が `.claude-plugin/plugin.json` と乖離していた問題を解消 (両方 0.6.0 に統一)。
+
 ## [0.2.0] - 2026-05-06
 
 ### Added
