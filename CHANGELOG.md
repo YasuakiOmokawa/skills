@@ -5,6 +5,12 @@ All notable changes to omokawa-skills will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2026-05-14
+
+### Added
+
+- **`/omokawa-skills:create-pr`: カレントブランチ妥当性検証ステップ (1.5) 追加**: PR 作成前に current branch が conventional prefix (`feature/`, `fix/`, `refactor/`, `docs/`, `chore/`, `test/`, `perf/`, `style/`, `ci/`, `build/`) を持つか / default branch と同名か / プロジェクト規約 (`.github/CLAUDE.md` 等) に合致するかを検証し、雑なブランチ名 (worktree 名等) や default branch にいる場合は変更ドメインから推定した `<type>/<scope>-<short-desc>` で `git switch -c` を自動実行する。コミット後の rename は GitHub Branch Rename API の副作用で関連 PR が CLOSED される事故が観測されたため、コミット **前** に切替する設計。`empirical-prompt-tuning` skill で 2 iteration 検証済 (iter 1 baseline accuracy 43% → iter 2 で全 3 シナリオ accuracy 100% + [critical] 全 ○、iter 3 で micro-fix を bundle 適用)。
+
 ## [0.6.0] - 2026-05-14
 
 ### Added
