@@ -25,7 +25,7 @@ fi
 mkdir -p "$DEST"
 
 linked=0
-find "$REPO/skills" -name SKILL.md -not -path '*/node_modules/*' -print0 |
+find "$REPO/plugins" -path '*/skills/*/SKILL.md' -not -path '*/node_modules/*' -print0 |
 while IFS= read -r -d '' skill_md; do
   src="$(dirname "$skill_md")"
   name="$(basename "$src")"

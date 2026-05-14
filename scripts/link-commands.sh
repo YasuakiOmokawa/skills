@@ -13,7 +13,7 @@ DEST="$HOME/.claude/commands"
 mkdir -p "$DEST"
 
 linked=0
-for src in "$REPO/commands"/*.md; do
+for src in "$REPO"/plugins/*/commands/*.md; do
   [ -f "$src" ] || continue
   name="$(basename "$src")"
   target="$DEST/$name"
