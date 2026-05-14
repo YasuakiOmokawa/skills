@@ -2,10 +2,10 @@
 set -euo pipefail
 
 # Links all skills in this repository to ~/.claude/skills/, so that Claude Code
-# recognizes them as user-level skills.
+# recognizes them as user-level skills during local development.
 #
 # After running:
-#   ~/.claude/skills/<name> -> <repo>/skills/<bucket>/<name>
+#   ~/.claude/skills/<name> -> <repo>/plugins/<name>/skills/<name>
 
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
 DEST="$HOME/.claude/skills"
