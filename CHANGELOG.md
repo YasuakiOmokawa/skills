@@ -5,6 +5,17 @@ All notable changes to omokawa-skills will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] - 2026-05-14
+
+### Added
+
+- **`polish-before-commit` skill: Dead mock 削除ステップ (Step 6) 追加**: 実装側で `delegate :X` / `def X` を撤去した PR で、spec の対応 mock (`receive(:X)` / `receive_messages(X:)` / `instance_double(..., X:)` / `double(..., X:)`) が残置していないか検証し、orphaned mock を user 承認後に削除する。CI も lint も検出できない「dead mock 残置」によるレビュー差し戻しを構造的に防ぐ。
+  - 削除単位の分類 (auto / Manual Review) を明文化: `receive(:X)` 単独 + `receive_messages` 全 key 削除済 → auto / `receive_messages` 部分削除 → Manual Review (書換え候補併記可)。
+  - 同一 PR 内で同名 method が `+` で再追加されている場合は除外する exclusion ロジック。
+  - 編集後は触った spec 全件を `bundle exec rspec <file1> <file2> ...` で検証し 0 failures を確認。
+  - 非 Ruby プロジェクト (`*.rb` 変更なし or `spec/` 不在) では `[dead mock: スキップ (Ruby/RSpec 対象外)]` を最終レポートに明記してスキップ。
+- `empirical-prompt-tuning` skill で 3 iteration 検証: median / partial-removal / non-Ruby-skip の 3 シナリオで Accuracy 100%、iter 3 で plateau。出典: `~/.claude/plans/ebis/plan.md` §B-1 (yamoto r3231525409 指摘)。
+
 ## [0.7.0] - 2026-05-14
 
 ### Added
