@@ -1,0 +1,10 @@
+{
+  "name": "translate-to-vision-story",
+  "description": "プロジェクト活動 (commits/PRs/README/ADR) を `~/.claude/skills-config/vision.md` のビジョン要素と照合し、対話型 draft → revise loop で Zenn 記事下書きを生成する。プロジェクト単位の物語化・キャリアブランディング・月次記事執筆時に使用。",
+  "version": "0.1.0",
+  "author": { "name": "Yasuaki Omokawa", "url": "https://github.com/YasuakiOmokawa" },
+  "homepage": "https://github.com/YasuakiOmokawa/skills",
+  "repository": "https://github.com/YasuakiOmokawa/skills",
+  "license": "MIT",
+  "keywords": ["career", "branding", "writing", "zenn"]
+}
