@@ -61,7 +61,7 @@ Phase分類の基準:
 | 受入条件 | ✅ | `AC1: ... / AC2: ...` スラッシュ区切り | ユーザー視点の完了条件。技術的TODOにしない |
 | 依存US | | `US-XXX` カンマ区切り | このUSの前に完了すべきUS |
 | Jira | | チケットキー or 空文字 | 既存チケットがあれば記入。`create-jira-issues` が書き戻す列 |
-| 技術メモ | | 自由テキスト | 実装上の留意点、既存コードパターンへの参照等 |
+| 技術メモ | | 自由テキスト | 実装上の留意点、既存コードパターンへの参照等。**具体ファイルパスは設計が進むと stale 化するため最小限**。コンポーネント名・ディレクトリレベルに留める。例外: プロトタイプから得た decision-encoding snippet（state machine / schema / type shape）はインライン化可 |
 
 ### `## スプリントマッピング`
 
@@ -196,6 +196,8 @@ AC3: フィーチャーフラグOFF時はメニューに表示されない
 ## タスク粒度の判断（finalize-plan PR ガイドラインとの整合）
 
 タスクリストは後段 `create-jira-issues` で Jira 化され、その後 `finalize-plan` で PR 分割される。タスク粒度を `finalize-plan` の PR ガイドライン（**2コミット以内 / 5ファイル以下 / 1つの論理的変更単位**）に合わせて出力すると、後段の PR 分割が自然に 1 タスク = 1 PR に収まる。
+
+**原理: Tracer Bullet Vertical Slice** — 各タスクは特定ユーザー価値に対して全層（schema/API/UI/test）を貫く end-to-end な薄切り。層ごとの水平分割（model だけ・view だけ・test だけ）にしない。Vertical なら 1 PR で 1 ユーザー価値が demoable / verifiable。
 
 ### ❌ 粒度過剰（同一 PR に収まるべき要素を分解しすぎ）
 
