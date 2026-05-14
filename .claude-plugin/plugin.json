@@ -1,7 +1,7 @@
 {
   "name": "omokawa-skills",
   "description": "Plan-driven development workflow for Claude Code: AC definition, MECE plan review, finalization, and design/quality/UI review with sub-agent fan-out. Includes career-bucket skill (translate-to-vision-story) and engineering-bucket skill (dry-ssot-text).",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "author": {
     "name": "Yasuaki Omokawa",
     "url": "https://github.com/YasuakiOmokawa"
