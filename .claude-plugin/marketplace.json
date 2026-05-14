@@ -1,22 +1,132 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "omokawa-skills",
-  "version": "0.8.0",
-  "description": "Plan-driven development workflow for Claude Code: AC definition, MECE plan review, finalization, and design/quality/UI review with sub-agent fan-out. Includes career-bucket skill (translate-to-vision-story) and engineering-bucket skill (dry-ssot-text).",
-  "owner": {
-    "name": "Yasuaki Omokawa",
-    "url": "https://github.com/YasuakiOmokawa"
-  },
+  "version": "1.0.0",
+  "description": "Plan-driven development workflow を構成する個別 skill 群。必要なものだけ install 可能",
+  "owner": { "name": "Yasuaki Omokawa", "url": "https://github.com/YasuakiOmokawa" },
   "plugins": [
     {
-      "name": "omokawa-skills",
-      "description": "13 skills (define-acceptance-criteria, mece-plan-review, finalize-plan, review-design, review-code-quality, polish-before-commit, model-data, map-user-stories, qa-ui, create-jira-issues, set-jira-story-points, translate-to-vision-story, dry-ssot-text), 1 command (/create-pr), and 4 agents (review-design, review-code-quality, finalize-plan, polish-before-commit) for plan-driven development, career storytelling, and AI-generated text refactoring.",
-      "version": "0.8.0",
-      "author": {
-        "name": "Yasuaki Omokawa",
-        "url": "https://github.com/YasuakiOmokawa"
-      },
-      "source": "./",
+      "name": "define-acceptance-criteria",
+      "description": "プランモード中にプランファイルの受け入れ条件・技術リスクを定義する時に使用。",
+      "version": "0.1.0",
+      "source": "./plugins/define-acceptance-criteria",
+      "category": "productivity",
+      "homepage": "https://github.com/YasuakiOmokawa/skills",
+      "license": "MIT"
+    },
+    {
+      "name": "mece-plan-review",
+      "description": "プランファイルの受け入れ条件（AC）に対しMECE完全性検証を実施。",
+      "version": "0.1.0",
+      "source": "./plugins/mece-plan-review",
+      "category": "productivity",
+      "homepage": "https://github.com/YasuakiOmokawa/skills",
+      "license": "MIT"
+    },
+    {
+      "name": "finalize-plan",
+      "description": "プランモードで設計が確定した後、ブランチ・PR分割・QA手順を追記する。",
+      "version": "0.1.0",
+      "source": "./plugins/finalize-plan",
+      "category": "productivity",
+      "homepage": "https://github.com/YasuakiOmokawa/skills",
+      "license": "MIT"
+    },
+    {
+      "name": "review-design",
+      "description": "新機能の実装開始前、「このコードはどこに置くべきか」と迷った時に使用。",
+      "version": "0.1.0",
+      "source": "./plugins/review-design",
+      "category": "productivity",
+      "homepage": "https://github.com/YasuakiOmokawa/skills",
+      "license": "MIT"
+    },
+    {
+      "name": "review-code-quality",
+      "description": "実装完了後のセルフチェック時、PRレビュー前の品質確認時に使用。",
+      "version": "0.1.0",
+      "source": "./plugins/review-code-quality",
+      "category": "productivity",
+      "homepage": "https://github.com/YasuakiOmokawa/skills",
+      "license": "MIT"
+    },
+    {
+      "name": "polish-before-commit",
+      "description": "コミット前やPR作成前に、プロジェクト規約への準拠・パターン一貫性を確認・修正する。",
+      "version": "0.1.0",
+      "source": "./plugins/polish-before-commit",
+      "category": "productivity",
+      "homepage": "https://github.com/YasuakiOmokawa/skills",
+      "license": "MIT"
+    },
+    {
+      "name": "model-data",
+      "description": "要求文書からDBML形式のER図を生成し、SQLアンチパターンを検出。",
+      "version": "0.1.0",
+      "source": "./plugins/model-data",
+      "category": "productivity",
+      "homepage": "https://github.com/YasuakiOmokawa/skills",
+      "license": "MIT"
+    },
+    {
+      "name": "map-user-stories",
+      "description": "設計書からユーザーストーリーマップを作成しタスク分解・スプリント計画まで行う。",
+      "version": "0.1.0",
+      "source": "./plugins/map-user-stories",
+      "category": "productivity",
+      "homepage": "https://github.com/YasuakiOmokawa/skills",
+      "license": "MIT"
+    },
+    {
+      "name": "qa-ui",
+      "description": "実装完了後にChromeDevTools MCPでUI検証を行う。",
+      "version": "0.1.0",
+      "source": "./plugins/qa-ui",
+      "category": "productivity",
+      "homepage": "https://github.com/YasuakiOmokawa/skills",
+      "license": "MIT"
+    },
+    {
+      "name": "create-jira-issues",
+      "description": "ユーザーストーリーマップやタスク分解プランからJiraチケットを一括作成。",
+      "version": "0.1.0",
+      "source": "./plugins/create-jira-issues",
+      "category": "productivity",
+      "homepage": "https://github.com/YasuakiOmokawa/skills",
+      "license": "MIT"
+    },
+    {
+      "name": "set-jira-story-points",
+      "description": "JiraキーとStory Pointsのマップから一括でStory Pointsを設定する。",
+      "version": "0.1.0",
+      "source": "./plugins/set-jira-story-points",
+      "category": "productivity",
+      "homepage": "https://github.com/YasuakiOmokawa/skills",
+      "license": "MIT"
+    },
+    {
+      "name": "translate-to-vision-story",
+      "description": "プロジェクト活動をビジョン整合した Zenn 記事下書きに翻訳。",
+      "version": "0.1.0",
+      "source": "./plugins/translate-to-vision-story",
+      "category": "personal",
+      "homepage": "https://github.com/YasuakiOmokawa/skills",
+      "license": "MIT"
+    },
+    {
+      "name": "dry-ssot-text",
+      "description": "AI-generated document (plan / design doc / RFC / PR description) を single source of truth に統合。",
+      "version": "0.1.0",
+      "source": "./plugins/dry-ssot-text",
+      "category": "productivity",
+      "homepage": "https://github.com/YasuakiOmokawa/skills",
+      "license": "MIT"
+    },
+    {
+      "name": "create-pr",
+      "description": "カレントブランチをもとにConventional Commits形式のドラフトPRを作成する slash command。",
+      "version": "0.1.0",
+      "source": "./plugins/create-pr",
       "category": "productivity",
       "homepage": "https://github.com/YasuakiOmokawa/skills",
       "license": "MIT"
