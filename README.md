@@ -53,7 +53,6 @@ v2.0.0 で破壊的変更があり、モノリス plugin `omokawa-skills` は廃
 | Plugin | 役割 |
 |---|---|
 | [`translate-to-vision-story`](./plugins/translate-to-vision-story/skills/translate-to-vision-story/SKILL.md) | プロジェクト活動を Zenn 記事下書きに翻訳 |
-| [`dry-ssot-text`](./plugins/dry-ssot-text/skills/dry-ssot-text/SKILL.md) | AI-generated document を SSOT に統合 |
 
 ### 単独動作 (engineering / プロジェクト非依存)
 
@@ -62,6 +61,7 @@ v2.0.0 で破壊的変更があり、モノリス plugin `omokawa-skills` は廃
 | [`qa-ui`](./plugins/qa-ui/skills/qa-ui/SKILL.md) | ChromeDevTools MCP で UI 検証 |
 | [`review-code-quality`](./plugins/review-code-quality/skills/review-code-quality/SKILL.md) | 設計レベルの品質問題を検出 |
 | [`create-pr`](./plugins/create-pr/commands/create-pr.md) | カレントブランチからドラフト PR 作成 (slash command) |
+| [`dry-ssot-text`](./plugins/dry-ssot-text/skills/dry-ssot-text/SKILL.md) | AI-generated document を SSOT に統合 |
 
 ## 設定値の保管 (グローバル)
 

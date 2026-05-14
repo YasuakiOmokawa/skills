@@ -87,7 +87,7 @@ plugin 間に依存関係がある場合 (例: `define-acceptance-criteria` → 
 2. `plugins/<name>/.claude-plugin/plugin.json` の `name` フィールド
 3. `plugins/<name>/skills/<name>/SKILL.md` の `name:` フィールド
 4. 他 plugin / SKILL.md / agent / README からの `/<旧名>` 参照
-5. `agents/*.md` 内の `${CLAUDE_PLUGIN_ROOT}/skills/<旧名>/` パス
+5. `plugins/<name>/agents/*.md` 内の `${CLAUDE_PLUGIN_ROOT}/skills/<旧名>/` パス
 6. `.claude-plugin/marketplace.json` の対応 entry (`name` と `source`)
 7. `README.md` のリンク
 
