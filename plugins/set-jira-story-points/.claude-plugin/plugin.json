@@ -1,0 +1,10 @@
+{
+  "name": "set-jira-story-points",
+  "description": "JiraキーとStory Pointsのマップデータを受け取り、Jiraチケットに一括でStory Pointsを設定する。「ストーリーポイント設定」「SP設定」「story points」などのキーワードでトリガーされる。",
+  "version": "0.1.0",
+  "author": { "name": "Yasuaki Omokawa", "url": "https://github.com/YasuakiOmokawa" },
+  "homepage": "https://github.com/YasuakiOmokawa/skills",
+  "repository": "https://github.com/YasuakiOmokawa/skills",
+  "license": "MIT",
+  "keywords": ["jira", "atlassian", "story-points"]
+}

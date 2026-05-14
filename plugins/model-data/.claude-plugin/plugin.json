@@ -1,0 +1,10 @@
+{
+  "name": "model-data",
+  "description": "要求文書からDBML形式のER図を生成し、SQLアンチパターンを検出。DB設計、ER図作成、スキーマ正規化、既存設計レビュー時に使用。",
+  "version": "0.1.0",
+  "author": { "name": "Yasuaki Omokawa", "url": "https://github.com/YasuakiOmokawa" },
+  "homepage": "https://github.com/YasuakiOmokawa/skills",
+  "repository": "https://github.com/YasuakiOmokawa/skills",
+  "license": "MIT",
+  "keywords": ["er-diagram", "dbml", "database-design", "sql"]
+}

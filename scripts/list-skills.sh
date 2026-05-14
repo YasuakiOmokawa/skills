@@ -1,25 +1,22 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Lists all skills, commands, and agents in this repository.
+# Lists all skills, commands, and agents across all plugins in this repository.
 
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
-
-echo "=== Skills ==="
 cd "$REPO"
-find skills -name SKILL.md -not -path '*/node_modules/*' | sed 's|/SKILL.md$||' | sort
+
+echo "=== Plugins ==="
+ls -1 plugins/ 2>/dev/null | sort
+
+echo ""
+echo "=== Skills ==="
+find plugins -path '*/skills/*/SKILL.md' | sed 's|/SKILL.md$||' | sort
 
 echo ""
 echo "=== Commands ==="
-for cmd_dir in commands/*/; do
-  [ -d "$cmd_dir" ] || continue
-  name="$(basename "$cmd_dir")"
-  echo "commands/$name/$name.md"
-done | sort
+find plugins -path '*/commands/*.md' | sort
 
 echo ""
-echo "=== Agents ==="
-for f in agents/*.md; do
-  [ -f "$f" ] || continue
-  echo "$f"
-done | sort
+echo "=== Top-level Agents ==="
+find plugins -path '*/agents/*.md' -not -path '*/skills/*' | sort

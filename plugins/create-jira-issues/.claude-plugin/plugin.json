@@ -1,0 +1,10 @@
+{
+  "name": "create-jira-issues",
+  "description": "ユーザーストーリーマップやタスク分解プランからJiraチケットを一括作成する場合に使用。ストーリーマップ完成後のチケット化、プランファイルからの一括作成、計画済みストーリー・タスクのJiraへの移行が必要な場合にトリガーされる。",
+  "version": "0.1.0",
+  "author": { "name": "Yasuaki Omokawa", "url": "https://github.com/YasuakiOmokawa" },
+  "homepage": "https://github.com/YasuakiOmokawa/skills",
+  "repository": "https://github.com/YasuakiOmokawa/skills",
+  "license": "MIT",
+  "keywords": ["jira", "atlassian", "ticket"]
+}

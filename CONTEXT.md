@@ -2,6 +2,10 @@
 
 このリポジトリで頻出する独自用語の定義。スキル本文を読む前提知識として参照。
 
+## リポジトリ構造
+
+omokawa-skills は **monorepo + N plugins** 構造。各 skill / command は `plugins/<name>/` 配下の独立 plugin として配置される。`marketplace.json` が 14 plugins を列挙する。詳細は CLAUDE.md 参照。
+
 ## プラン駆動開発
 
 このリポジトリのスキル群は「**プラン駆動開発**」（plan-driven development）を前提に設計されている。Claude Code のプランモードで設計を立て → 受け入れ条件を定義 → MECE 検証 → 実装準備 → 実装、という流れ。
