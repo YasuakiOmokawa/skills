@@ -139,3 +139,8 @@ Task(subagent_type="feature-dev:code-reviewer", prompt="変更ファイルの gi
 - **Safety**: 既存の機能を壊さない
 - **Completeness**: 変更されたファイルをすべてチェック
 - **Respect**: プロジェクトの規約に従う
+
+## 併用推奨 skill
+
+- `/review-code-quality` — 設計レベルの品質課題をコミット前に検出する
+- `/create-pr` — 仕上げが完了したらカレントブランチから PR を作成する

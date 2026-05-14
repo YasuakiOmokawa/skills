@@ -126,3 +126,10 @@ develop
 - **PRガイドライン準拠**: 2コミット以内、ファイル数5以下
 - **実行可能性**: Chrome DevTools MCPで実行可能な手動QA手順
 - **ACトレーサビリティ**: 全AC項目が手動QAまたは自動QAのいずれかでカバーされていること
+
+## 併用推奨 skill
+
+- `/define-acceptance-criteria` — 入力となる AC を定義する
+- `/mece-plan-review` — AC の網羅性を 3 視点で検証してから本スキルに引き継ぐ
+- `/qa-ui` — 実装完了後、本スキルで定めた QA 手順を用いて UI 検証する
+- `/create-pr` — finalize で固めた PR 分割をもとに PR を作成する

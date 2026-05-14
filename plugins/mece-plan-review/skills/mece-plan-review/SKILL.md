@@ -260,3 +260,8 @@ AskUserQuestion でパス確認を依頼。
 - [references/tech-analyst-prompt.md](references/tech-analyst-prompt.md) - Tech Analyst 分析プロンプト
 - [references/red-team-checklist.md](references/red-team-checklist.md) - Red Team クロスリファレンスチェックリスト
 - [references/output-format.md](references/output-format.md) - プラン修正・追記フォーマット
+
+## 併用推奨 skill
+
+- `/define-acceptance-criteria` — MECE 検証の対象となる AC を事前に定義する
+- `/finalize-plan` — MECE 検証結果を反映してプランを実装フェーズに進める

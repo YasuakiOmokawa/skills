@@ -178,3 +178,7 @@ Quick Start + Parallel Review (Step 1-6) で解決しない場合のみ、[refer
 - **Consistency**: 既存パターンとの一貫性を重視
 - **Simplicity**: 最小限の構成で目的を達成
 - **Criticism**: 問題を見つけることを優先（デフォルトは「問題あり」）
+
+## 併用推奨 skill
+
+- `/define-acceptance-criteria` — 設計レビュー後、実装前に AC を定義する

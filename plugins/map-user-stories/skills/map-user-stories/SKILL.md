@@ -175,3 +175,8 @@ US_ID	Task_ID	タスク名	説明	依存タスク	Jira	備考
 
 ユーザーが修正を求めたら Step 3-6 を該当箇所のみ更新して再出力。承認まで反復。
 
+
+## 併用推奨 skill
+
+- `/create-jira-issues` — マッピングしたユーザーストーリーを Jira チケットに一括変換する
+- `/define-acceptance-criteria` — 各ストーリーに対する AC を定義する

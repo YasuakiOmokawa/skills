@@ -309,3 +309,8 @@ OK パターン:
   → ユーザーが問題解決後、未作成分のみ手動で再指示
 ```
 
+
+## 併用推奨 skill
+
+- `/map-user-stories` — チケット化前のユーザーストーリー分解に使う
+- `/set-jira-story-points` — 作成済み Jira チケットに Story Points を一括設定する
