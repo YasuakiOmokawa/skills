@@ -25,7 +25,7 @@ allowedTools:
 ## 参照ドキュメント
 
 起動時に必ず以下を読み込む:
-- `~/.claude/skills/review-code-quality/references/coupling.md`
+- `${CLAUDE_PLUGIN_ROOT}/skills/review-code-quality/references/coupling.md`
 
 ## 検出基準
 

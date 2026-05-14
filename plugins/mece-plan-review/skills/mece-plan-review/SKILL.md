@@ -108,8 +108,8 @@ gh repo list <YOUR_GITHUB_ORG> --limit 200 --json name,description --jq '.[] | "
 ### 1-1: プロンプト読み込み
 
 ```
-qa_prompt = Read("~/.claude/skills/mece-plan-review/references/qa-analyst-prompt.md")
-tech_prompt = Read("~/.claude/skills/mece-plan-review/references/tech-analyst-prompt.md")
+qa_prompt = Read("${CLAUDE_PLUGIN_ROOT}/skills/mece-plan-review/references/qa-analyst-prompt.md")
+tech_prompt = Read("${CLAUDE_PLUGIN_ROOT}/skills/mece-plan-review/references/tech-analyst-prompt.md")
 ```
 
 ### 1-2: 2つのTask subagentを同一メッセージ内で並列起動
@@ -158,7 +158,7 @@ Task の戻り値として自動的に取得。変数 `${QA_RESULT}` と `${TECH
 ### 2-1: チェックリスト読み込み
 
 ```
-red_team_checklist = Read("~/.claude/skills/mece-plan-review/references/red-team-checklist.md")
+red_team_checklist = Read("${CLAUDE_PLUGIN_ROOT}/skills/mece-plan-review/references/red-team-checklist.md")
 ```
 
 ### 2-2: 事前分析

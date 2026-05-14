@@ -67,7 +67,7 @@ Task ツール（`subagent_type: "general-purpose"`）で以下を**同一メッ
 **QA系エージェントへのプロンプト例:**
 
 ```
-~/.claude/skills/finalize-plan/agents/manual-qa-planner.md を読み込み、
+${CLAUDE_PLUGIN_ROOT}/skills/finalize-plan/agents/manual-qa-planner.md を読み込み、
 以下のプランとAC・MECE分析結果に基づいて手動QA手順を策定してください:
 
 ## プラン:

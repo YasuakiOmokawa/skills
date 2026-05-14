@@ -16,7 +16,7 @@ allowedTools:
 ## 参照ドキュメント
 
 起動時に必ず以下を読み込む:
-- `~/.claude/skills/review-design/references/clean-architecture.md`
+- `${CLAUDE_PLUGIN_ROOT}/skills/review-design/references/clean-architecture.md`
 
 ## 判定の原則
 

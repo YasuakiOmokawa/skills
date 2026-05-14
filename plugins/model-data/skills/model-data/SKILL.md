@@ -39,7 +39,7 @@ Task ツールで各エージェントを起動し、前フェーズの出力を
 Task ツール:
   subagent_type: "general-purpose"
   prompt: |
-    ~/.claude/skills/model-data/agents/<agent-name>.md を読み込み、
+    ${CLAUDE_PLUGIN_ROOT}/skills/model-data/agents/<agent-name>.md を読み込み、
     以下の入力に対して処理を実行してください:
     [前フェーズの出力]
 ```

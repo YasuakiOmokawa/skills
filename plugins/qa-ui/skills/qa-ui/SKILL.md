@@ -92,7 +92,7 @@ Agent tool:
     あなたはUI検証エージェントです。
     以下の指示ファイルを読み、その内容に厳密に従って検証を実行してください。
 
-    指示ファイル: ~/.claude/skills/qa-ui/agents/ui-evaluator.md
+    指示ファイル: ${CLAUDE_PLUGIN_ROOT}/skills/qa-ui/agents/ui-evaluator.md
 
     ## 入力
     - ACファイルパス: {ACファイルパス or "なし（AC無しモード）"}
