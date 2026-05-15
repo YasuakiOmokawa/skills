@@ -1,6 +1,6 @@
 # omokawa-skills
 
-Claude Code 用 plan-driven development plugin 群。**14 個の独立 plugin** に分かれており、必要な skill だけを選択的に install できる。
+Claude Code 用 plan-driven development plugin 群。**15 個の独立 plugin** に分かれており、必要な skill だけを選択的に install できる。
 
 ## クイックスタート
 
@@ -27,7 +27,7 @@ v2.0.0 で破壊的変更があり、モノリス plugin `omokawa-skills` は廃
 /plugin install <必要な skill>@omokawa-skills
 ```
 
-## Plugins (14)
+## Plugins (15)
 
 ### プラン駆動 7-skill セット (engineering / プロジェクト非依存)
 
@@ -62,6 +62,7 @@ v2.0.0 で破壊的変更があり、モノリス plugin `omokawa-skills` は廃
 | [`review-code-quality`](./plugins/review-code-quality/skills/review-code-quality/SKILL.md) | 設計レベルの品質問題を検出 |
 | [`create-pr`](./plugins/create-pr/commands/create-pr.md) | カレントブランチからドラフト PR 作成 (slash command) |
 | [`dry-ssot-text`](./plugins/dry-ssot-text/skills/dry-ssot-text/SKILL.md) | AI-generated document を SSOT に統合 |
+| [`purge-private-vocab`](./plugins/purge-private-vocab/skills/purge-private-vocab/SKILL.md) | plan 由来の固有語を対外文書から除染 |
 
 ## 設定値の保管 (グローバル)
 
