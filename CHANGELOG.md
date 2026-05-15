@@ -5,6 +5,13 @@ All notable changes to omokawa-skills will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v2.2.0 (BREAKING for map-user-stories consumers) - 2026-05-15
+
+### Changed
+
+- **`map-user-stories` skill: タスク TSV カラム構造を再設計 (0.1.0 → 0.2.0, BREAKING)**: 旧フォーマットの「説明」列にプレフィックス記法（`完了条件: ` / `AC: `）を、「備考」列に `やらない: ` / `対象外: ` を書く運用を廃止し、専用列 `やること / やらないこと / 完了条件` の 3 列を新設。タスク TSV は 7 列 → 9 列に拡張。カラム順は Jira description のセクション順（`着手条件 → やること → やらないこと → 完了条件`）に揃え、`US_ID	Task_ID	タスク名	やること	やらないこと	完了条件	依存タスク	Jira	備考` とする。「備考」列は Ready 条件・参考リンク等の自由テキスト枠として残置（プレフィックス禁止）。US テーブル側の「技術メモ」列はプレフィックス記法を維持（後方互換）。`empirical-prompt-tuning` で 2 シナリオ（中規模 DD / 小規模仕様）を subagent 派遣検証して全 [critical] ○、accuracy 100%。
+- **影響範囲**: `create-jira-issues` 側のパース仕様は別途追従が必要（タスク description の「やること」「やらないこと」「完了条件」の抽出元列名が変わる）。`map-user-stories` から出力された旧 7 列フォーマットのファイルは `create-jira-issues` で正しくパースされなくなる可能性があるため、本 bump 以降は新フォーマットでの再生成を推奨。
+
 ## v2.0.0 (BREAKING) - 2026-05-14
 
 **破壊的変更:** モノリス plugin `omokawa-skills` (v0.11.0) を廃止し、14 個の独立 plugin に分割。
