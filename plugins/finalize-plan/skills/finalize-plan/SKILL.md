@@ -80,6 +80,17 @@ ${CLAUDE_PLUGIN_ROOT}/skills/finalize-plan/agents/manual-qa-planner.md を読み
 [${MECE_CONTENT} — 存在する場合]
 ```
 
+**Task ツールが利用不可な環境** (既に subagent として動作中 / tool が deferred / dispatch 権限なし):
+1. 4 つの agent 定義ファイル (`agents/branch-planner.md`, `agents/pr-splitter.md`, `agents/manual-qa-planner.md`, `agents/auto-qa-planner.md`) を Read で順次読み込む
+2. 本 agent 自身が各 agent の判定基準・出力フォーマットを適用し、各サブセクション (ブランチ戦略 / PR 分割 / 手動 QA / 自動 QA) を内部処理として生成する (中間出力をユーザーへ出さない)
+3. Step 3 の「実装準備」追記時に、セクションの**冒頭 1 行**として以下を必ず挿入する:
+
+   ```
+   > **備考**: 本実行は Task ツール利用不可のため in-context 代替モードで実行 (4 agent 定義をメイン agent が逐次適用)。
+   ```
+
+   これにより並列 dispatch との実行履歴の透明性を確保する。AC トレーサビリティ・PR ガイドライン (≤2 commits / ≤5 files) は通常モードと同じく守ること。
+
 ### Step 3: 結果統合
 
 各エージェントの結果を統合し、プランファイルに「実装準備」セクションとして追記する。
