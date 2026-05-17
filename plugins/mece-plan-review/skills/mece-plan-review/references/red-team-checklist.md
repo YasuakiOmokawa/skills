@@ -126,37 +126,63 @@ BB / WB / Red Team 独自検出の各指摘について、統合 Severity を以
 - BB / WB のいずれも Nice-to-have → **Nice-to-have**
 - Red Team お見合い検出 → 該当 Critical 閾値があるなら **Critical**、なければ Important / Nice-to-have
 
-## 統合評価レポートのフォーマット
+## 入力フォーマット
+
+BB / WB Analyst の出力は **JSONLines** (findings + AC 判定) と **Markdown** (Self-report 等) の併用。本チェックリストは:
+
+- findings JSONLines を `id`, `severity`, `area`, `issue`, `evidence`, `suggestion` フィールドで読み取る
+- `area` フィールドで peer 候補を機械集約 (4 分類クロスリファレンス)
+- AC 判定 JSONLines を AC-ID で join
+
+## 統合評価レポートのフォーマット (JSONLines + Markdown 併用)
+
+機械処理しやすさのため 4 分類クロスリファレンス / お見合い / 純技術リスク / 統合 Critical は **JSONLines**、人間可読の MECE 判定サマリーと Self-report は **Markdown** で出力する。
 
 ```markdown
 ### [Red Team] 統合評価レポート
 
-#### 4 分類クロスリファレンス
-| # | BB 指摘 ID | WB 指摘 ID | 分類 (真の合意/実装漏れ/仕様漏れ/お見合い) | 統合 Severity | 統合内容 |
-|---|------|------|------|---------|---------|
+#### 4 分類クロスリファレンス (JSONLines)
+\`\`\`jsonl
+{"id":"X1","area":"auth","bb_id":"BB-C1","wb_id":"WB-C2","class":"真の合意","severity":"critical","content":"<統合内容、両者の根拠を併記>"}
+{"id":"X2","area":"security","bb_id":"BB-C2","wb_id":null,"class":"実装漏れ","severity":"critical","content":"..."}
+{"id":"X3","area":"data","bb_id":null,"wb_id":"WB-C1","class":"仕様漏れ","severity":"critical","content":"..."}
+\`\`\`
 
-#### お見合い検出 (両者言及ゼロの領域)
-| # | 領域 | チェックリスト観点 | 発見事項 | Severity |
-|---|------|------|---------|---------|
+**class 値**: `真の合意` / `補強し合う合意` / `実装漏れ` / `仕様漏れ`。
+**severity 値**: `critical` / `important` / `nice`。
+**bb_id / wb_id**: 該当する BB/WB findings の id (`BB-C1` 等)。片側のみの場合は反対側を `null`。
 
-#### 純技術リスク補完 (セキュリティ / パフォーマンス / 依存ライブラリ)
-| # | 観点 | 発見事項 | Severity |
-|---|------|---------|---------|
+#### お見合い検出 (JSONLines、両者言及ゼロの領域)
+\`\`\`jsonl
+{"id":"M1","area":"security","perspective":"純技術リスク補完","content":"<発見事項>","severity":"critical"}
+{"id":"M2","area":"observability","perspective":"責任の継ぎ目","content":"...","severity":"important"}
+\`\`\`
 
-#### 統合 Critical 一覧 (重複マージ後)
-| # | 統合タイトル | 根拠 (BB/WB/Red Team) | Suggestion |
-|---|------|------|---------|
+**perspective 値**: 「事前分析チェック観点」(曖昧表現 / 責任の継ぎ目 / 暗黙の前提 / スコープ外 / 楽観的見積もり) または「純技術リスク補完」(セキュリティ / パフォーマンス / 依存ライブラリ / 並行性 / 観測性)。
 
-#### 統合 Important / Nice-to-have (重複マージ後)
-| # | Severity | 統合タイトル | 根拠 | Suggestion |
-|---|---|------|------|---------|
+#### 純技術リスク補完 (JSONLines、お見合いの一部)
+\`\`\`jsonl
+{"id":"T1","category":"security","subcategory":"A07-Replay","content":"<発見事項>","severity":"critical"}
+{"id":"T2","category":"performance","subcategory":"N+1","content":"...","severity":"important"}
+\`\`\`
 
-#### MECE 判定
-- 漏れ件数: N (お見合い検出された件数)
-- 重複件数: M (BB ↔ WB が完全に同じ問題を別角度で言及した件数 = 真の合意)
+**category 値**: `security` / `performance` / `deps` / `concurrency` / `observability`。
+
+#### 統合 Critical / Important / Nice (JSONLines、重複マージ後)
+\`\`\`jsonl
+{"id":"CR1","severity":"critical","title":"<統合タイトル>","sources":["BB-C1","WB-C2"],"suggestion":"<推奨対応>"}
+{"id":"IM1","severity":"important","title":"...","sources":["BB-I3"],"suggestion":"..."}
+{"id":"N1","severity":"nice","title":"...","sources":["M2"],"suggestion":"..."}
+\`\`\`
+
+**sources**: 統合元の id 配列 (BB/WB/M/T のいずれか)。
+
+#### MECE 判定 (Markdown)
+- 漏れ件数: N (お見合い検出された件数 = M1, M2, ... の数)
+- 重複件数: K (4 分類クロスリファレンスのうち class が `真の合意` または `補強し合う合意` の数)
 - 判定: MECE OK / 要修正 (Critical N件)
 
-#### Self-report
+#### Self-report (Markdown)
 - 分析所要 (体感): <短>
 - BB と WB の独立性の質: 高 / 中 / 低 + 1 文で理由
 - プラン本文 / AC 本文を欲しいと思った場面: <あれば、なければ「なし」>

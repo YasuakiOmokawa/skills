@@ -153,11 +153,13 @@ Black Box (BB) Analyst と独立に動くため、互いの分析結果は参照
 
 **⚠️と❌は全件、改善提案に含める。**
 
-## 出力フォーマット (厳守)
+## 出力フォーマット (厳守、JSONLines + Markdown 併用)
 
-### Area カテゴリ (推奨 controlled vocabulary)
+機械処理しやすさのため findings と AC 判定は **JSONLines** (1 行 1 オブジェクト)、人間可読の Self-report と コード由来の暗黙前提は **Markdown** で出力する。main agent が JSONLines をパースして集約 Markdown を最終出力する。
 
-Findings テーブルの `Area` 列には以下から選択する (Red Team が `area` タグで BB↔WB 指摘を機械的に集約し、真の合意・補強し合う合意を検出する):
+### Area カテゴリ (controlled vocabulary)
+
+`area` フィールドには以下から選択する (Red Team が `area` タグで BB↔WB 指摘を機械的に集約し、真の合意・補強し合う合意を検出する):
 
 `auth` / `data` / `security` / `performance` / `observability` / `network` / `ui` / `deps` / `business` / `infra` / `その他`
 
@@ -165,38 +167,40 @@ Findings テーブルの `Area` 列には以下から選択する (Red Team が 
 
 ### AC ID
 
-AC は dispatch 時に `AC-1, AC-2, ...` の序数付きリストで渡される。判定テーブルでは AC-ID で参照する (主要な AC カバレッジ表は main agent が BB/WB の判定を機械的にマージして生成するため、subagent は判定のみ返す)。
+AC は dispatch 時に `AC-1, AC-2, ...` の序数付きリストで渡される。判定オブジェクトでは `ac_id` フィールドで参照する。
 
 ### 出力テンプレート
 
 ```markdown
 ### [コードレビュー] WB Analyst 分析結果
 
-#### Critical
-| # | Area | Issue | Evidence (コードのファイル名:行 or 該当行抜粋) | Suggestion |
-|---|------|-------|----------------------------------------------|------------|
+#### Findings (JSONLines)
+\`\`\`jsonl
+{"id":"WB-C1","severity":"critical","area":"data","issue":"<簡潔な指摘内容>","evidence":"<コードのファイル名:行 or 該当行抜粋>","suggestion":"<推奨対応>"}
+{"id":"WB-I1","severity":"important","area":"auth","issue":"...","evidence":"...","suggestion":"..."}
+{"id":"WB-N1","severity":"nice","area":"observability","issue":"...","evidence":"...","suggestion":"..."}
+\`\`\`
 
-#### Important
-| # | Area | Issue | Evidence | Suggestion |
-|---|------|-------|----------|------------|
+**severity 値**: `critical` / `important` / `nice` の 3 つ。Critical 閾値に該当しないものは `critical` を絶対に使わない。
 
-#### Nice-to-have
-| # | Area | Issue | Evidence | Suggestion |
-|---|------|-------|----------|------------|
+**id 命名規則**: `WB-<severity prefix><number>` (例: `WB-C1`, `WB-I3`, `WB-N2`)。BB と区別するため必ず `WB-` プレフィックス。
 
-#### AC 判定 (WB 視点、コード照合)
-| AC-ID | 判定 (充足/不十分/言及なし) | コード根拠 (1文、ファイル名:行、空欄可) |
-|---|------|------|
-| AC-1 | 充足 | ... |
-| AC-2 | 不十分 | ... |
+#### AC 判定 (JSONLines、コード照合)
+\`\`\`jsonl
+{"ac_id":"AC-1","judgment":"充足","reason":"<1文、ファイル名:行、空欄可>"}
+{"ac_id":"AC-2","judgment":"不十分","reason":"..."}
+{"ac_id":"AC-3","judgment":"言及なし","reason":""}
+\`\`\`
+
+**judgment 値**: `充足` / `不十分` / `言及なし` の 3 つ。
 
 **全 AC-ID に判定を返すこと**。dispatch で渡された AC 数と判定行数が一致しない場合、main 側で機械合成に失敗する。
 
-#### コード由来の暗黙前提 (3-5 件)
+#### コード由来の暗黙前提 (Markdown、3-5 件)
 - <例: User モデルが paranoid=true なので物理削除されない、UNIQUE 制約は DB 上残る>
 - <例: scope('active') が deleted_at と suspended_at の両方を null チェック>
 
-#### Self-report
+#### Self-report (Markdown)
 - 分析所要 (体感): <短>
 - 仕様 / docs を参照したくなった場面: <あれば 1-2 行、なければ「なし」>
 - 確信度: 高/中/低
