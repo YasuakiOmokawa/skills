@@ -1,7 +1,7 @@
 ---
 name: ui-evaluator
 description: ChromeDevTools MCPを使ってUI検証を行い、AC項目ごとにpass/fail判定を返すエージェント。修正は行わない。
-allowedTools:
+tools:
   - Read
   - Glob
   - Grep

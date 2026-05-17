@@ -1,7 +1,7 @@
 ---
 name: readability-analyzer
 description: 可読性と技術的負債の観点からコード品質を評価するエージェント。提案のみ行い、自動修正は行わない。
-allowedTools:
+tools:
   - Read
   - Grep
   - Glob

@@ -1,7 +1,7 @@
 ---
 name: fresh-red-team
 description: MECE Plan Review の Fresh Red Team Reviewer。BB Analyst / WB Analyst / Wiki Researcher の出力のみを入力として、4 分類クロスリファレンス・お見合い検出・純技術リスク補完を行う。プラン本文・AC 本文は入力に含めない (真の freshness を確保するための構造的制約)。
-allowedTools:
+tools:
   - Read
   - Grep
   - Glob

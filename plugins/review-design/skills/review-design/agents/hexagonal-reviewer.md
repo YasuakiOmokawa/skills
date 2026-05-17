@@ -1,7 +1,7 @@
 ---
 name: hexagonal-reviewer
 description: Hexagonal Architecture（Port/Adapter）パターンの適用を検証するレビューワー
-allowedTools:
+tools:
   - Read
   - Grep
   - Glob

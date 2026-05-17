@@ -1,7 +1,7 @@
 ---
 name: anti-pattern-checker
 description: アーキテクチャ・アンチパターンを検出するレビューワー
-allowedTools:
+tools:
   - Read
   - Grep
   - Glob

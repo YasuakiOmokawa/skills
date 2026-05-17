@@ -1,7 +1,7 @@
 ---
 name: clean-architecture-reviewer
 description: Clean Architecture原則に基づいて設計を検証するレビューワー
-allowedTools:
+tools:
   - Read
   - Grep
   - Glob

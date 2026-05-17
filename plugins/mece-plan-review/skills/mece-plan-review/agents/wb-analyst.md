@@ -1,7 +1,7 @@
 ---
 name: wb-analyst
-description: MECE Plan Review の White Box Analyst。コード情報源 (プロダクションコード / schema / migration / 依存ライブラリ実挙動) だけで AC のユースケースカバレッジを批判的にレビューする。仕様 / wiki / 公式 docs は参照しない (BB Analyst との独立性を確保するための構造的制約、allowedTools から ToolSearch / WebFetch を除外している)。
-allowedTools:
+description: MECE Plan Review の White Box Analyst。コード情報源 (プロダクションコード / schema / migration / 依存ライブラリ実挙動) だけで AC のユースケースカバレッジを批判的にレビューする。仕様 / wiki / 公式 docs は参照しない (BB Analyst との独立性を確保するための構造的制約、tools から ToolSearch / WebFetch を除外している)。
+tools:
   - Read
   - Grep
   - Glob
@@ -42,7 +42,7 @@ Black Box (BB) Analyst と独立に動くため、互いの分析結果は参照
 - ✅ プラン本文 (「変更内容」「変更ファイル」を特定する用途のみ、設計意図の信頼源にしない)
 - ✅ 一般的なプログラミング知識 (言語仕様、ORM の動作、Express middleware 挙動など)
 
-### 禁止される情報源 (厳守、frontmatter `allowedTools` から `ToolSearch` / `WebFetch` を除外することで構造的に強制)
+### 禁止される情報源 (厳守、frontmatter `tools` から `ToolSearch` / `WebFetch` を除外することで構造的に強制)
 - ❌ Devin wiki / 関連リポのドキュメント (`read_wiki_*`, `ask_question` 禁止)
 - ❌ RFC / W3C / OWASP **docs 本文** への参照 (Read / WebFetch 禁止)
 - ❌ ライブラリ・サービスの公式 docs (README は実装の説明として最小限のみ、設計の前提として使わない)

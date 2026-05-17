@@ -1,7 +1,7 @@
 ---
 name: ddd-reviewer
 description: DDD戦術パターン（Entity/Value Object/Aggregate）の適用を検証するレビューワー
-allowedTools:
+tools:
   - Read
   - Grep
   - Glob

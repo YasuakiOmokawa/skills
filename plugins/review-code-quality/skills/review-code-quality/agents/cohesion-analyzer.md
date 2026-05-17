@@ -1,7 +1,7 @@
 ---
 name: cohesion-analyzer
 description: 凝集度（Cohesion）の観点からコード品質を評価するエージェント。提案のみ行い、自動修正は行わない。
-allowedTools:
+tools:
   - Read
   - Grep
   - Glob
