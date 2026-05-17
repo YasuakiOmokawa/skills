@@ -155,26 +155,14 @@ Step 0 を抜ける時点で以下を変数として保持していること。S
 
 ## Step 1: 3 並列 Analyst 起動
 
-### 1-1: プロンプト読み込み
+### 1-1: 3 つの Task subagent を同一メッセージ内で並列起動
+
+各 agent の責務・情報源制約・出力フォーマットは `agents/*.md` の frontmatter + 本文で定義済み。main agent は dispatch 時に**入力データ (AC / プラン / リポ情報) のみ**を渡す。
+
+> **読み手への注記**: 以下のコードブロックは **main agent が組み立てる dispatch prompt のテンプレート**。`Task(...)` ブロック内 `prompt="""..."""` の文字列全体が subagent に渡されるため、その中に書かれた指示はすべて subagent 向け runtime 指示として扱われる (SKILL.md 上のコメントを混在させないこと)。`${...}` プレースホルダは Step 0 で保持した変数で main agent が置換する。
 
 ```
-bb_prompt = Read("${CLAUDE_PLUGIN_ROOT}/skills/mece-plan-review/references/bb-analyst-prompt.md")
-wb_prompt = Read("${CLAUDE_PLUGIN_ROOT}/skills/mece-plan-review/references/wb-analyst-prompt.md")
-```
-
-Wiki Researcher 専用プロンプトは不要 (本 SKILL.md 内に dispatch 時の指示を直書きする、BB の Phase 0 は Wiki Researcher 結果を入力として受け取るだけ)。
-
-### 1-2: 3 つの Task subagent を同一メッセージ内で並列起動
-
-```
-Task(subagent_type="general-purpose", name="bb-analyst", prompt="""
-あなたは MECE 分析の Black Box Analyst です。以下のプロンプトに従い分析を実行してください。
-WB Analyst の結果は参照せず、仕様情報源だけで独立に調査してください。
-Wiki Researcher と並列起動されますが、BB Analyst も独立して `read_wiki_*` を実行してよい (両者の結果は main agent が集約)。
-
-${bb_prompt}
-
----
+Task(subagent_type="bb-analyst", prompt="""
 リポジトリ: ${REPO_NAME}
 関連リポジトリ (Devin wiki の repoName にそのまま使用可能):
 ${RELATED_REPOS}
@@ -183,49 +171,37 @@ ${PLAN_CONTENT}
 受け入れ条件 (AC-ID 付き、検証ターゲット):
 ${ENUMERATED_AC}
 
-分析結果を Markdown 形式で返してください。
+WB Analyst と独立に動くため、互いの分析結果は参照しないこと。Wiki Researcher と並列起動されるが、BB Analyst も独立して `read_wiki_*` を実行してよい。
 """)
 
-Task(subagent_type="general-purpose", name="wb-analyst", prompt="""
-あなたは MECE 分析の White Box Analyst です。以下のプロンプトに従い分析を実行してください。
-BB Analyst の結果は参照せず、コード情報源だけで独立に調査してください。
-
-${wb_prompt}
-
----
+Task(subagent_type="wb-analyst", prompt="""
 リポジトリ: ${REPO_NAME}
 プランファイル:
 ${PLAN_CONTENT}
 受け入れ条件 (AC-ID 付き、検証ターゲット):
 ${ENUMERATED_AC}
 
-分析結果を Markdown 形式で返してください。
+BB Analyst と独立に動くため、互いの分析結果は参照しないこと。
 """)
 
-Task(subagent_type="general-purpose", name="wiki-researcher", prompt="""
-あなたは MECE 分析の Wiki Researcher です。Devin wiki から関連 context を収集し、BB Analyst の補助情報として整理してください。
-
+Task(subagent_type="wiki-researcher", prompt="""
 リポジトリ: ${REPO_NAME}
 関連リポジトリ:
 ${RELATED_REPOS}
 プランファイル:
 ${PLAN_CONTENT}
-
-以下を実行:
-1. `ToolSearch("+fdev-devin")` で devin ツール取得
-2. `read_wiki_structure(repoName)` で wiki 構造取得
-3. プラン関連ページを `read_wiki_contents` で読む
-4. 関連リポも同様に調査
-5. 不明点のみ `ask_question` で補足
-
-⚠️ Devin wiki の repoName は必ず `<YOUR_GITHUB_ORG>/<リポジトリ名>` 形式。
-
-出力: Markdown でユースケース・既知のエッジケース・連携先システムの動作を整理。
-分析判断 (Critical / Important) はせず、事実情報のみ。
 """)
 ```
 
-### 1-3: 3 つの結果を受信
+**subagent_type と agents/ ファイルの対応**:
+
+| subagent_type | 定義ファイル | allowedTools |
+|---|---|---|
+| `bb-analyst` | `agents/bb-analyst.md` | Read, Grep, Glob, ToolSearch, WebFetch |
+| `wb-analyst` | `agents/wb-analyst.md` | Read, Grep, Glob (ToolSearch / WebFetch を**意図的に除外**して wiki/docs 参照を構造的に禁止) |
+| `wiki-researcher` | `agents/wiki-researcher.md` | ToolSearch |
+
+### 1-2: 3 つの結果を受信
 
 Task の戻り値として自動的に取得。変数 `${BB_RESULT}` / `${WB_RESULT}` / `${WIKI_RESULT}` として保持。
 
@@ -237,23 +213,14 @@ Task の戻り値として自動的に取得。変数 `${BB_RESULT}` / `${WB_RES
 
 ## Step 2: Fresh Red Team subagent 起動
 
-### 2-1: チェックリスト読み込み
+### 2-1: Fresh Red Team subagent dispatch
+
+**⚠️ 重要**: Red Team subagent の入力にプラン本文 / AC 本文を含めない (真の freshness 確保)。BB / WB / Wiki の出力のみ。
+
+`agents/fresh-red-team.md` は起動時に `references/red-team-checklist.md` を自前で Read する設計のため、main agent からチェックリストを渡す必要はない。
 
 ```
-red_team_checklist = Read("${CLAUDE_PLUGIN_ROOT}/skills/mece-plan-review/references/red-team-checklist.md")
-```
-
-### 2-2: Fresh Red Team subagent dispatch
-
-**⚠️ 重要**: Red Team subagent の入力にプラン本文 / AC 本文を含めない (真の freshness 確保)。BB / WB / Wiki の出力と checklist のみ。
-
-```
-Task(subagent_type="general-purpose", name="fresh-red-team", prompt="""
-あなたは MECE 分析の Fresh Red Team Reviewer です。プラン本文 / AC 本文を持たない状態で、以下 3 入力 (BB / WB / Wiki) のみを使ってクロスリファレンスを実行してください。プラン本文 / AC 本文を持たないことが「真の freshness」の定義であり、入力に含まれない情報源を能動的に取りに行かないこと (お見合い検出時の Read/Grep 例外を除く、red-team-checklist.md 参照)。
-
-${red_team_checklist}
-
----
+Task(subagent_type="fresh-red-team", prompt="""
 BB Analyst の分析結果:
 ${BB_RESULT}
 
@@ -263,11 +230,11 @@ ${WB_RESULT}
 Wiki Researcher の参考情報 (事実情報のみ、判定なし。BB の補強として使う):
 ${WIKI_RESULT}
 
-統合評価レポートを red-team-checklist.md の「統合評価レポートのフォーマット」に従って出力してください。
+統合評価レポートを `${CLAUDE_PLUGIN_ROOT}/skills/mece-plan-review/references/red-team-checklist.md` の「統合評価レポートのフォーマット」に従って出力してください。
 """)
 ```
 
-### 2-3: Red Team 結果受信
+### 2-2: Red Team 結果受信
 
 `${RED_TEAM_RESULT}` として保持。
 
@@ -359,12 +326,17 @@ AskUserQuestion でパス確認を依頼。
 - 分析ファイル書込み時に lock 検出 → 1 回リトライ、それでも失敗なら AskUserQuestion で対応確認
 - non-git リポ (`git remote get-url origin` が失敗) → `${REPO_NAME}` を「unknown-repo」として継続、Wiki Researcher は `[non-git: Devin 未使用]` で skip
 
+## Agents
+
+- [agents/bb-analyst.md](agents/bb-analyst.md) - Black Box Analyst (仕様情報源限定)
+- [agents/wb-analyst.md](agents/wb-analyst.md) - White Box Analyst (コード情報源限定、`allowedTools` から ToolSearch / WebFetch を除外して構造的に分離)
+- [agents/wiki-researcher.md](agents/wiki-researcher.md) - Wiki Researcher (Devin wiki 事実収集、判定なし)
+- [agents/fresh-red-team.md](agents/fresh-red-team.md) - Fresh Red Team Reviewer (BB / WB / Wiki 出力のみで統合判定)
+
 ## References
 
 - [references/init-common.md](references/init-common.md) - 初期化処理 (define-AC と共通)
-- [references/bb-analyst-prompt.md](references/bb-analyst-prompt.md) - BB Analyst プロンプト (仕様情報源限定)
-- [references/wb-analyst-prompt.md](references/wb-analyst-prompt.md) - WB Analyst プロンプト (コード情報源限定)
-- [references/red-team-checklist.md](references/red-team-checklist.md) - Fresh Red Team クロスリファレンスチェックリスト
+- [references/red-team-checklist.md](references/red-team-checklist.md) - Fresh Red Team クロスリファレンスチェックリスト (`agents/fresh-red-team.md` から Read される)
 - [references/output-format.md](references/output-format.md) - プラン修正・追記フォーマット
 
 ## 併用推奨 skill
