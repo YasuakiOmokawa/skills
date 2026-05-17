@@ -1,7 +1,7 @@
 {
   "name": "mece-plan-review",
   "description": "プランファイルの受け入れ条件（AC）に対しMECE完全性検証を実施し、ユースケース漏れ・技術的対応漏れ・ACの改善点を検出して分析ファイルに記録する。プランにACが定義済みで実装前にMECE検証が必要な時に使用。事前に /define-acceptance-criteria でACを定義しておくこと。",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "author": { "name": "Yasuaki Omokawa", "url": "https://github.com/YasuakiOmokawa" },
   "homepage": "https://github.com/YasuakiOmokawa/skills",
   "repository": "https://github.com/YasuakiOmokawa/skills",
