@@ -275,8 +275,10 @@ Red Team の 4 分類結果から AC 改善点を統合:
 プランファイルの `## 品質検証` セクションに以下を追記する（セクションがなければ作成）:
 
 ```markdown
-- MECE判定: [OK or 要修正（Critical N件）] / ACカバレッジ [N]/[M]項目 / 漏れ [X]件 / 重複 [Y]件 → [分析ファイル名]
+- MECE判定: [OK or 要修正（Critical N件）] / ACカバレッジ [N]/[M] (うち[MECE追加] [X]件) / 漏れ [Y]件 / 重複 [Z]件 → [分析ファイル名]
 ```
+
+**[MECE追加] [X]件** は学習ループ用指標。X/M が 30% 超なら次回 `/define-acceptance-criteria` で観点表を改訂する目安 (詳細は [references/output-format.md](references/output-format.md))。
 
 ## Error Handling
 
