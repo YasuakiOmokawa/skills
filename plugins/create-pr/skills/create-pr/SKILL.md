@@ -1,7 +1,6 @@
 ---
 name: create-pr
 description: カレントブランチをもとに Conventional Commits 形式のドラフト PR を作成する。ユーザーが「PR を作って」「draft PR」「PR 作成して」と依頼したら起動。引数 [base-branch] でベースブランチを指定可能。確認なしで実行する。
-allowed-tools: TodoWrite, Bash(gh *), Bash(git switch *), Bash(git add *), Bash(git commit *), Bash(git push *), Bash(git status), Bash(git diff *), Bash(git branch *), Bash(git log *), Bash(git rev-parse *), Bash(git symbolic-ref *), Glob, Grep, Read, Write
 ---
 
 カレントブランチをもとに、Conventional Commits形式のタイトルと、リポジトリに存在する PR テンプレート（ステップ 0 で動的検索）に従った説明を持つドラフトPRを作成してください。
