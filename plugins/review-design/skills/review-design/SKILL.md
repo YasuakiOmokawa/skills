@@ -109,16 +109,16 @@ Q1-Q3の結果に基づき、適切なReviewerを選択する。
 
 ### Step 3: Parallel Task Invocation
 
-選択された Reviewer を Task ツール（`subagent_type: "general-purpose"`）で**並列起動**する。各 Reviewer の agent ファイル（`agents/*.md`）を読み込ませ、設計判断の内容を渡すこと。
+選択された Reviewer を Task ツール (`subagent_type="review-design:<reviewer>"`) で**並列起動**する。各 Reviewer の責務・判定基準は plugin top-level の `../../agents/<reviewer>.md` の frontmatter + 本文で定義済み。dispatch 時には設計判断の内容と対象ファイルパスを prompt として渡す。
 
-**各 Reviewer の役割**:
-- `anti-pattern-checker` — 全レビューで必須
-- `ddd-reviewer` — ビジネスルール観点
-- `hexagonal-reviewer` — 外部依存の差し替え観点
-- `clean-architecture-reviewer` — レイヤー分離観点
+**各 Reviewer の subagent_type**:
+- `review-design:anti-pattern-checker` — 全レビューで必須
+- `review-design:ddd-reviewer` — ビジネスルール観点
+- `review-design:hexagonal-reviewer` — 外部依存の差し替え観点
+- `review-design:clean-architecture-reviewer` — レイヤー分離観点
 
 **Task ツールが利用不可な環境** (既に subagent として動作中 / tool が deferred / dispatch 権限なし):
-1. 該当する `agents/*.md` を Read で直接読み込む
+1. 該当する `../../agents/<reviewer>.md` を Read で直接読み込む
 2. 本 agent 自身がその判定基準を適用し、Reviewer ごとの判定結果を**内部処理として** Devil's Advocate 判定に渡す（ユーザーへは中間出力しない）
 3. 最終報告本文末尾に `(in-context 代替モード: <代替した reviewer 名>)` と1行だけ明記する（独立視点での検証という本来の意図が失われるため透明性を確保）
 
@@ -135,12 +135,12 @@ Q1-Q3の結果に基づき、適切なReviewerを選択する。
 
 ### Step 5: Devil's Advocate レビュー（必須・標準フロー）
 
-Parallel Review 後、Task ツール（`subagent_type: "general-purpose"`）で設計判断への反論を生成する。Task 不可環境では Step 3 と同じく in-context で本 agent が反論を生成する（代替モード明記）。
+Parallel Review 後、Task ツール (`subagent_type="general-purpose"`) で設計判断への反論を生成する。Devil's Advocate は専用 agent ではなく汎用 subagent を使う (反論生成は特定 tool 制限を必要としないため)。Task 不可環境では Step 3 と同じく in-context で本 agent が反論を生成する (代替モード明記)。
 
 **指示内容**: 反対意見を3つ挙げ、各意見を「致命的（設計変更すべき）」か「許容可能（理由つき）」で判定。見落としている前提も指摘。
 
 **致命的判定の基準**（これに該当するもののみ「致命的」。主観的な好みは「許容可能」）:
-- `agents/anti-pattern-checker.md` の判定表で ❌ に該当
+- `../../agents/anti-pattern-checker.md` の判定表で ❌ に該当
 - DB トランザクション境界違反（例: コールバック内で外部API呼び出し）
 - 並行性 / 冪等性の欠陥（例: レースコンディション、二重通知）
 - セキュリティ脆弱性（例: 個人情報の平文保存、認証バイパス）

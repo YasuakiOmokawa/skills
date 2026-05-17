@@ -55,20 +55,20 @@ inputなしでは品質を保証できないため、先に以下を実行して
 
 ### Step 2: 4並列サブエージェント起動
 
-Task ツール（`subagent_type: "general-purpose"`）で以下を**同一メッセージ内で並列起動**。各 agent ファイル（`agents/*.md`）を読み込ませ、プランファイルの内容を渡すこと。
+Task ツール (`subagent_type="finalize-plan:<agent>"`) で以下を**同一メッセージ内で並列起動**。各 agent の責務・出力フォーマットは plugin top-level の `../../agents/<agent>.md` の frontmatter + 本文で定義済み。dispatch 時には**入力データのみ**を prompt として渡す (agent ファイルの Read は不要)。
 
-| Agent | ファイル | 入力 |
+| subagent_type | 定義ファイル | 入力 |
 |-------|---------|------|
-| branch-planner | `agents/branch-planner.md` | プラン |
-| pr-splitter | `agents/pr-splitter.md` | プラン |
-| manual-qa-planner | `agents/manual-qa-planner.md` | プラン + ${AC_CONTENT} + ${MECE_CONTENT} |
-| auto-qa-planner | `agents/auto-qa-planner.md` | プラン + ${AC_CONTENT} + ${MECE_CONTENT} |
+| `finalize-plan:branch-planner` | `../../agents/branch-planner.md` | プラン |
+| `finalize-plan:pr-splitter` | `../../agents/pr-splitter.md` | プラン |
+| `finalize-plan:manual-qa-planner` | `../../agents/manual-qa-planner.md` | プラン + ${AC_CONTENT} + ${MECE_CONTENT} |
+| `finalize-plan:auto-qa-planner` | `../../agents/auto-qa-planner.md` | プラン + ${AC_CONTENT} + ${MECE_CONTENT} |
 
 **QA系エージェントへのプロンプト例:**
 
 ```
-${CLAUDE_PLUGIN_ROOT}/skills/finalize-plan/agents/manual-qa-planner.md を読み込み、
-以下のプランとAC・MECE分析結果に基づいて手動QA手順を策定してください:
+Task(subagent_type="finalize-plan:manual-qa-planner", prompt="""
+以下のプランとAC・MECE分析結果に基づいて手動QA手順を策定してください。
 
 ## プラン:
 [プランファイルの内容]
@@ -78,10 +78,11 @@ ${CLAUDE_PLUGIN_ROOT}/skills/finalize-plan/agents/manual-qa-planner.md を読み
 
 ## MECE分析結果:
 [${MECE_CONTENT} — 存在する場合]
+""")
 ```
 
 **Task ツールが利用不可な環境** (既に subagent として動作中 / tool が deferred / dispatch 権限なし):
-1. 4 つの agent 定義ファイル (`agents/branch-planner.md`, `agents/pr-splitter.md`, `agents/manual-qa-planner.md`, `agents/auto-qa-planner.md`) を Read で順次読み込む
+1. 4 つの agent 定義ファイル (`../../agents/branch-planner.md`, `../../agents/pr-splitter.md`, `../../agents/manual-qa-planner.md`, `../../agents/auto-qa-planner.md`) を Read で順次読み込む
 2. 本 agent 自身が各 agent の判定基準・出力フォーマットを適用し、各サブセクション (ブランチ戦略 / PR 分割 / 手動 QA / 自動 QA) を内部処理として生成する (中間出力をユーザーへ出さない)
 3. Step 3 の「実装準備」追記時に、セクションの**冒頭 1 行**として以下を必ず挿入する:
 
