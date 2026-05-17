@@ -1,14 +1,14 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "omokawa-skills",
-  "version": "2.3.0",
+  "version": "2.4.0",
   "description": "Plan-driven development workflow を構成する個別 skill 群。必要なものだけ install 可能",
   "owner": { "name": "Yasuaki Omokawa", "url": "https://github.com/YasuakiOmokawa" },
   "plugins": [
     {
       "name": "define-acceptance-criteria",
       "description": "プランモード中にプランファイルの受け入れ条件・技術リスクを定義する時に使用。",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "source": "./plugins/define-acceptance-criteria",
       "category": "productivity",
       "homepage": "https://github.com/YasuakiOmokawa/skills",
@@ -17,7 +17,7 @@
     {
       "name": "mece-plan-review",
       "description": "プランファイルの受け入れ条件（AC）に対しMECE完全性検証を実施。",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "source": "./plugins/mece-plan-review",
       "category": "productivity",
       "homepage": "https://github.com/YasuakiOmokawa/skills",
