@@ -1,7 +1,7 @@
 {
   "name": "finalize-plan",
   "description": "プランモードで設計が確定した後、実装に移る直前に使用。分析ファイルからAC・MECE結果を読み込み、プランファイルにブランチ・PR分割・QA手順を追記する。",
-  "version": "1.0.0",
+  "version": "0.5.0",
   "author": { "name": "Yasuaki Omokawa", "url": "https://github.com/YasuakiOmokawa" },
   "homepage": "https://github.com/YasuakiOmokawa/skills",
   "repository": "https://github.com/YasuakiOmokawa/skills",

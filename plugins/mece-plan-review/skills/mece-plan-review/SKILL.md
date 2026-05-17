@@ -168,7 +168,7 @@ Step 0 を抜ける時点で以下を変数として保持していること。S
 > **読み手への注記**: 以下のコードブロックは **main agent が組み立てる dispatch prompt のテンプレート**。`Task(...)` ブロック内 `prompt="""..."""` の文字列全体が subagent に渡されるため、その中に書かれた指示はすべて subagent 向け runtime 指示として扱われる (SKILL.md 上のコメントを混在させないこと)。`${...}` プレースホルダは Step 0 で保持した変数で main agent が置換する。
 
 ```
-Task(subagent_type="mece-plan-review:bb-analyst", prompt="""
+Task(subagent_type="bb-analyst", prompt="""
 リポジトリ: ${REPO_NAME}
 関連リポジトリ (Devin wiki の repoName にそのまま使用可能):
 ${RELATED_REPOS}
@@ -180,7 +180,7 @@ ${ENUMERATED_AC}
 WB Analyst と独立に動くため、互いの分析結果は参照しないこと。Wiki Researcher と並列起動されるが、BB Analyst も独立して `read_wiki_*` を実行してよい。
 """)
 
-Task(subagent_type="mece-plan-review:wb-analyst", prompt="""
+Task(subagent_type="wb-analyst", prompt="""
 リポジトリ: ${REPO_NAME}
 プランファイル:
 ${PLAN_CONTENT}
@@ -190,7 +190,7 @@ ${ENUMERATED_AC}
 BB Analyst と独立に動くため、互いの分析結果は参照しないこと。
 """)
 
-Task(subagent_type="mece-plan-review:wiki-researcher", prompt="""
+Task(subagent_type="wiki-researcher", prompt="""
 リポジトリ: ${REPO_NAME}
 関連リポジトリ:
 ${RELATED_REPOS}
@@ -201,11 +201,11 @@ ${PLAN_CONTENT}
 
 **subagent_type と agents/ ファイルの対応**:
 
-| subagent_type | 定義ファイル (plugin top-level) | tools |
+| subagent_type | 定義ファイル | tools |
 |---|---|---|
-| `mece-plan-review:bb-analyst` | `../../agents/bb-analyst.md` | Read, Grep, Glob, ToolSearch, WebFetch |
-| `mece-plan-review:wb-analyst` | `../../agents/wb-analyst.md` | Read, Grep, Glob (ToolSearch / WebFetch を**意図的に除外**して wiki/docs 参照を構造的に禁止) |
-| `mece-plan-review:wiki-researcher` | `../../agents/wiki-researcher.md` | ToolSearch |
+| `bb-analyst` | `agents/bb-analyst.md` | Read, Grep, Glob, ToolSearch, WebFetch |
+| `wb-analyst` | `agents/wb-analyst.md` | Read, Grep, Glob (ToolSearch / WebFetch を**意図的に除外**して wiki/docs 参照を構造的に禁止) |
+| `wiki-researcher` | `agents/wiki-researcher.md` | ToolSearch |
 
 ### 1-2: 3 つの結果を受信
 
@@ -226,7 +226,7 @@ Task の戻り値として自動的に取得。変数 `${BB_RESULT}` / `${WB_RES
 `agents/fresh-red-team.md` は起動時に `references/red-team-checklist.md` を自前で Read する設計のため、main agent からチェックリストを渡す必要はない。
 
 ```
-Task(subagent_type="mece-plan-review:fresh-red-team", prompt="""
+Task(subagent_type="fresh-red-team", prompt="""
 BB Analyst の分析結果:
 ${BB_RESULT}
 
@@ -332,12 +332,12 @@ AskUserQuestion でパス確認を依頼。
 - 分析ファイル書込み時に lock 検出 → 1 回リトライ、それでも失敗なら AskUserQuestion で対応確認
 - non-git リポ (`git remote get-url origin` が失敗) → `${REPO_NAME}` を「unknown-repo」として継続、Wiki Researcher は `[non-git: Devin 未使用]` で skip
 
-## Agents (plugin top-level、`subagent_type="mece-plan-review:<agent>"` で起動)
+## Agents
 
-- [../../agents/bb-analyst.md](../../agents/bb-analyst.md) - Black Box Analyst (仕様情報源限定)
-- [../../agents/wb-analyst.md](../../agents/wb-analyst.md) - White Box Analyst (コード情報源限定、`tools` から ToolSearch / WebFetch を除外して構造的に分離)
-- [../../agents/wiki-researcher.md](../../agents/wiki-researcher.md) - Wiki Researcher (Devin wiki 事実収集、判定なし)
-- [../../agents/fresh-red-team.md](../../agents/fresh-red-team.md) - Fresh Red Team Reviewer (BB / WB / Wiki 出力のみで統合判定)
+- [agents/bb-analyst.md](agents/bb-analyst.md) - Black Box Analyst (仕様情報源限定)
+- [agents/wb-analyst.md](agents/wb-analyst.md) - White Box Analyst (コード情報源限定、`tools` から ToolSearch / WebFetch を除外して構造的に分離)
+- [agents/wiki-researcher.md](agents/wiki-researcher.md) - Wiki Researcher (Devin wiki 事実収集、判定なし)
+- [agents/fresh-red-team.md](agents/fresh-red-team.md) - Fresh Red Team Reviewer (BB / WB / Wiki 出力のみで統合判定)
 
 ## References
 

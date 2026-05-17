@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "omokawa-skills",
-  "version": "3.0.0",
+  "version": "2.15.0",
   "description": "Plan-driven development workflow を構成する個別 skill 群。必要なものだけ install 可能",
   "owner": { "name": "Yasuaki Omokawa", "url": "https://github.com/YasuakiOmokawa" },
   "metadata": { "pluginRoot": "./plugins" },
@@ -19,7 +19,7 @@
     {
       "name": "mece-plan-review",
       "description": "プランファイルの受け入れ条件（AC）に対しMECE完全性検証を実施。",
-      "version": "1.0.0",
+      "version": "0.5.0",
       "source": "./plugins/mece-plan-review",
       "skills": ["./skills/mece-plan-review"],
       "category": "productivity",
@@ -29,7 +29,7 @@
     {
       "name": "finalize-plan",
       "description": "プランモードで設計が確定した後、ブランチ・PR分割・QA手順を追記する。",
-      "version": "1.0.0",
+      "version": "0.5.0",
       "source": "./plugins/finalize-plan",
       "skills": ["./skills/finalize-plan"],
       "category": "productivity",
@@ -39,7 +39,7 @@
     {
       "name": "review-design",
       "description": "新機能の実装開始前、「このコードはどこに置くべきか」と迷った時に使用。",
-      "version": "1.0.0",
+      "version": "0.4.0",
       "source": "./plugins/review-design",
       "skills": ["./skills/review-design"],
       "category": "productivity",
@@ -49,7 +49,7 @@
     {
       "name": "review-code-quality",
       "description": "実装完了後のセルフチェック時、PRレビュー前の品質確認時に使用。",
-      "version": "1.0.0",
+      "version": "0.3.0",
       "source": "./plugins/review-code-quality",
       "skills": ["./skills/review-code-quality"],
       "category": "productivity",
@@ -89,7 +89,7 @@
     {
       "name": "qa-ui",
       "description": "実装完了後にChromeDevTools MCPでUI検証を行う。",
-      "version": "1.0.0",
+      "version": "0.3.0",
       "source": "./plugins/qa-ui",
       "skills": ["./skills/qa-ui"],
       "category": "productivity",
