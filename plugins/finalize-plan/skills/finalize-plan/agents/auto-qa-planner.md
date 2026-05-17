@@ -1,7 +1,7 @@
 ---
 name: auto-qa-planner
 description: AC・MECE分析結果からRSpec/Vitestのテストコード仕様を生成するサブエージェント
-allowedTools:
+tools:
   - Read
   - Glob
   - Grep

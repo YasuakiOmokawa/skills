@@ -1,7 +1,7 @@
 ---
 name: wiki-researcher
 description: MECE Plan Review の Wiki Researcher。Devin wiki から関連 context (ユースケース・既知のエッジケース・連携先システムの動作) を事実情報として収集する。判定は行わず、BB Analyst の補助情報を提供する役割。
-allowedTools:
+tools:
   - ToolSearch
 ---
 

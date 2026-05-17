@@ -1,7 +1,7 @@
 ---
 name: pr-splitter
 description: PRガイドラインに準拠したPR分割計画を策定するサブエージェント
-allowedTools:
+tools:
   - Read
 ---
 

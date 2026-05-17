@@ -1,7 +1,7 @@
 ---
 name: manual-qa-planner
 description: AC・MECE分析結果を基に、Chrome DevTools MCPで実行可能な手動QA手順を策定するサブエージェント
-allowedTools:
+tools:
   - Read
   - Glob
   - Grep

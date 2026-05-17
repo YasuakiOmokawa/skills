@@ -84,8 +84,18 @@ TodoWrite で以下のステップを記録すること:
 
 mece-plan-review 固有の処理。分析ファイルから `## 受け入れ条件` セクションを抽出する。
 
-- **ACあり**: 検証ターゲットとして Step 1 の各サブエージェントに配布
-- **分析ファイルが存在しない or ACなし**: **即座に中断**:
+- **ACあり**: 検証ターゲットとして §0-3 (enumerate) に進む
+- **分析ファイルが存在しない or ACなし**: 以下のメッセージを表示して**即座に中断** (§0-3 以降は実行しない):
+
+```
+⛔ 受け入れ条件（AC）が見つかりません。
+
+分析ファイル（{分析ファイルパス}）にACが定義されている必要があります。
+MECEは「何に対して漏れがないか」を検証するプロセスです。
+検証ターゲットなしでは分析の精度が保証できないため、先にACを定義してください。
+
+👉 /define-acceptance-criteria を実行してACを定義した後、再度 /mece-plan-review を実行してください。
+```
 
 ### 0-3: AC の enumerate (AC-ID 付与)
 
@@ -101,23 +111,15 @@ ${ENUMERATED_AC} の生成例:
 
 BB / WB Analyst には `${ENUMERATED_AC}` を渡し、各 AC-ID に対する判定 (充足 / 不十分 / 言及なし) を返してもらう (output-format.md「ACカバレッジ機械合成」参照)。
 
-```
-⛔ 受け入れ条件（AC）が見つかりません。
-
-分析ファイル（{分析ファイルパス}）にACが定義されている必要があります。
-MECEは「何に対して漏れがないか」を検証するプロセスです。
-検証ターゲットなしでは分析の精度が保証できないため、先にACを定義してください。
-
-👉 /define-acceptance-criteria を実行してACを定義した後、再度 /mece-plan-review を実行してください。
-```
-
 ### 0-4: 関連リポジトリ取得（オプション、Wiki Researcher 用）
 
 **GitHub org の解決手順** (必ずこの順序で試行):
 
 1. `~/.claude/skills-config/mece-plan-review.md` を Read し、`github_org:` フィールドを取得
 2. 未設定 / ファイル無し → `git remote get-url origin` から `<org>/<repo>` を抽出し、`<org>` 部分を採用
-3. それでも失敗 → `${RELATED_REPOS}` を `"なし (org 未解決のため関連リポ調査スキップ)"` リテラルで固定し、Wiki Researcher にはカレントリポのみ渡す
+3. ステップ 1-2 いずれも失敗 → 関連リポ収集を**スキップ**し、`${RELATED_REPOS}="なし (org 未解決のため関連リポ調査スキップ)"` リテラルで確定して §0-5 へ進む (以下の gh コマンドは実行しない)
+
+**org 解決成功時のみ** 以下を実行:
 
 ```bash
 gh repo list ${GITHUB_ORG} --limit 200 --json name,description --jq '.[] | "\(.name)\t\(.description)"'
@@ -127,9 +129,13 @@ gh repo list ${GITHUB_ORG} --limit 200 --json name,description --jq '.[] | "\(.n
 
 **⚠️ 重要**: 選定したリポジトリ名は `${GITHUB_ORG}/<リポジトリ名>` 形式で保持する (Devin wiki の `repoName` 引数にそのまま渡す)。
 
-**`${RELATED_REPOS}` の最終フォーマット** (空時のリテラルを固定):
-- 1 件以上ある場合: `${GITHUB_ORG}/<repo1>\n${GITHUB_ORG}/<repo2>\n...` (改行区切り)
-- 0 件: `"なし"` リテラルを格納 (Wiki Researcher dispatch 時はカレントリポのみで進める)
+**`${RELATED_REPOS}` の最終フォーマット**:
+
+| 状態 | `${RELATED_REPOS}` の値 |
+|---|---|
+| gh 成功 + 1 件以上選定 | `${GITHUB_ORG}/<repo1>\n${GITHUB_ORG}/<repo2>\n...` (改行区切り) |
+| gh 成功 + 0 件選定 | `"なし"` リテラル (Wiki Researcher dispatch 時はカレントリポのみ) |
+| org 解決失敗 (gh 未実行) | `"なし (org 未解決のため関連リポ調査スキップ)"` リテラル |
 
 ### 0-5: Step 0 完了時の保持変数 (Step 1 以降で参照)
 
@@ -195,7 +201,7 @@ ${PLAN_CONTENT}
 
 **subagent_type と agents/ ファイルの対応**:
 
-| subagent_type | 定義ファイル | allowedTools |
+| subagent_type | 定義ファイル | tools |
 |---|---|---|
 | `bb-analyst` | `agents/bb-analyst.md` | Read, Grep, Glob, ToolSearch, WebFetch |
 | `wb-analyst` | `agents/wb-analyst.md` | Read, Grep, Glob (ToolSearch / WebFetch を**意図的に除外**して wiki/docs 参照を構造的に禁止) |
@@ -329,7 +335,7 @@ AskUserQuestion でパス確認を依頼。
 ## Agents
 
 - [agents/bb-analyst.md](agents/bb-analyst.md) - Black Box Analyst (仕様情報源限定)
-- [agents/wb-analyst.md](agents/wb-analyst.md) - White Box Analyst (コード情報源限定、`allowedTools` から ToolSearch / WebFetch を除外して構造的に分離)
+- [agents/wb-analyst.md](agents/wb-analyst.md) - White Box Analyst (コード情報源限定、`tools` から ToolSearch / WebFetch を除外して構造的に分離)
 - [agents/wiki-researcher.md](agents/wiki-researcher.md) - Wiki Researcher (Devin wiki 事実収集、判定なし)
 - [agents/fresh-red-team.md](agents/fresh-red-team.md) - Fresh Red Team Reviewer (BB / WB / Wiki 出力のみで統合判定)
 

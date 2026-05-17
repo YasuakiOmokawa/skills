@@ -1,7 +1,7 @@
 ---
 name: bb-analyst
 description: MECE Plan Review の Black Box Analyst。仕様情報源 (AC / プラン / Devin wiki / 公式仕様 docs) だけで AC のユースケースカバレッジを批判的にレビューする。プロダクションコードは参照しない (WB Analyst との独立性を確保するための構造的制約)。
-allowedTools:
+tools:
   - Read
   - Grep
   - Glob
@@ -40,7 +40,7 @@ White Box (WB) Analyst と独立に動くため、互いの分析結果は参照
 - ✅ spec / テストコード (受け入れ要件として扱う、実装詳細としては読まない)
 - ✅ 該当ドメインの公式仕様レベルの一般知識 (RFC, W3C, OWASP, クラウドプロバイダ公式, 標準プロトコル)
 
-### 禁止される情報源 (厳守、frontmatter `allowedTools` だけでは構造的に強制できないため本文の自己制御で担保)
+### 禁止される情報源 (厳守、frontmatter `tools` だけでは構造的に強制できないため本文の自己制御で担保)
 - ❌ プロダクションコード Read / Grep (実装詳細に踏み込まない、コード由来の推論禁止)
 - ❌ schema / migration ファイルの実装詳細
 - ❌ 依存ライブラリの内部実装の推論

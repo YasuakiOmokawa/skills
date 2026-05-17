@@ -1,7 +1,7 @@
 {
   "name": "review-design",
   "description": "新機能の実装開始前、ファイルやモジュールの追加時、「このコードはどこに置くべきか」と迷った時に使用。",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "author": { "name": "Yasuaki Omokawa", "url": "https://github.com/YasuakiOmokawa" },
   "homepage": "https://github.com/YasuakiOmokawa/skills",
   "repository": "https://github.com/YasuakiOmokawa/skills",

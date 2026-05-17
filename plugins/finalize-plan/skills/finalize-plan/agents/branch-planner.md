@@ -1,7 +1,7 @@
 ---
 name: branch-planner
 description: プランからブランチ戦略を策定するサブエージェント
-allowedTools:
+tools:
   - Read
   - Bash(git branch:*)
   - Bash(git status:*)
