@@ -1,13 +1,18 @@
 ---
+name: create-pr
+description: カレントブランチをもとに Conventional Commits 形式のドラフト PR を作成する。ユーザーが「PR を作って」「draft PR」「PR 作成して」と依頼したら起動。引数 [base-branch] でベースブランチを指定可能。確認なしで実行する。
 allowed-tools: TodoWrite, Bash(gh *), Bash(git switch *), Bash(git add *), Bash(git commit *), Bash(git push *), Bash(git status), Bash(git diff *), Bash(git branch *), Bash(git log *), Bash(git rev-parse *), Bash(git symbolic-ref *), Glob, Grep, Read, Write
-description: カレントブランチをもとにPRを作成（確認なし）
-argument-hint: [base-branch]
-model: inherit
 ---
 
 カレントブランチをもとに、Conventional Commits形式のタイトルと、リポジトリに存在する PR テンプレート（ステップ 0 で動的検索）に従った説明を持つドラフトPRを作成してください。
 
 **重要: ユーザーへの確認は一切行わず、分析完了後は直接PR作成を実行すること。**
+
+## Arguments
+
+- `$ARGUMENTS`: ベースブランチ名（省略可）
+  - 指定あり: そのブランチを base として PR を作成
+  - 指定なし: リポジトリのデフォルトブランチを使用
 
 ## 実行手順
 
@@ -192,7 +197,7 @@ model: inherit
    ```
 
    差分:
-   - 1文目で PR 全体の意図を要約（タイトルの文章化）
+   - 1文目で PR 全体の意図を要約(タイトルの文章化)
    - 各 bullet を 1 行 60 字以内、変更事実のみ。採用パターン名・比較対象・hardcoded 等の理由語は削除
    - 設計理由（`auth-guard.ts と同じ pattern` 等）は「設計判断」セクションへ退避、無ければ削除
 
@@ -262,7 +267,7 @@ model: inherit
    - depends on #1234 (UserModel)
    - DD: https://docs.google.com/document/d/xxxxx
    ```
-   単一項目しかない場合は箇条書きにせず1行で書いてよい（例: `related #1234`）。
+   単一項目しかない場合は箇条書きにせず1行で書いてよい(例: `related #1234`)。
 
    **◆ 詳細セクション（記載要否を以下の判定基準で決める。20 字制限は適用しない）**
 
@@ -345,7 +350,7 @@ model: inherit
    `release-labels.md` の `ai_contribution_labels` から1つ選択。判定フローチャート（上から順に適用、最初にマッチしたもの採用）:
    1. ユーザーがセッション冒頭で level を明示指定した → その指定を優先
    2. 本セッション内で Claude（または他の AI コード生成コマンド）が **本 PR の差分コードを生成・変更**した（新規ファイル作成・既存コードへの Edit/Write を行った）→ 推奨デフォルト（4段階の最高レベル）
-      - 注意: 本 `/create-pr` コマンド自体は PR 作成補助であり「コード生成」には該当しない。判定対象は **PR の diff に含まれるソースコードの成立経緯**
+      - 注意: 本 skill 自体は PR 作成補助であり「コード生成」には該当しない。判定対象は **PR の diff に含まれるソースコードの成立経緯**
    3. AI 生成がほぼ無く人間主体で書いた変更（例: typo 修正、手動 rename のみ、手動で書いた後に AI は PR 作成補助のみ使用）→ 4段階の最低レベル
    4. それ以外で判断に迷う → 推奨デフォルトを採用し、PR 本文「やったこと」の末尾に「(AI contribution 実測困難のため推定)」と 1 行添える（この 1 行は 60字制限から除外する）
 
@@ -437,3 +442,8 @@ gh api "repos/${REPO}/pulls/${PR_NUMBER}" --method PATCH -F "body=@/tmp/pr-body.
 
 - `-F "body=@<path>"` はファイル内容をリクエストボディの文字列値として送信する gh CLI の機能。`--field` の `@` プレフィックスと同じ
 - タイトルやラベルの更新は `gh pr edit --title` / `gh pr edit --add-label` で動作するので、description 更新時のみこの回避策を使う
+
+## 併用推奨 skill
+
+- `/polish-before-commit` — コミット前にプロジェクト規約・パターン一貫性を仕上げてから本 skill を起動する
+- `/finalize-plan` — プランを実装可能形式に変換し、その流れで本 skill を呼ぶ

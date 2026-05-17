@@ -4,28 +4,46 @@ Claude Code 用 plan-driven development plugin 群。**15 個の独立 plugin** 
 
 ## クイックスタート
 
+install 経路は 2 種類。利用環境に合わせて選ぶ。
+
+### A. Claude Code の plugin marketplace 経由
+
 ```
 /plugin marketplace add YasuakiOmokawa/skills
 /plugin install <skill-name>@omokawa-skills
 ```
 
-必要な skill だけを `/plugin install` する。複数 install したい場合はコマンドを繰り返し実行。続けてターミナルで設定値を生成:
+必要な skill だけを `/plugin install` する。複数 install したい場合はコマンドを繰り返し実行。
+
+### B. `npx skills` 経由 (Claude Code 以外の agent も対象)
+
+[`vercel-labs/skills`](https://github.com/vercel-labs/skills) CLI の Plugin Manifest Discovery で `marketplace.json` から各 skill を自動発見できる。Cursor / Codex / Cline / Gemini CLI 等にも同じ skill を install したい場合に使う。
+
+```bash
+# 全 skill を list で確認
+npx skills add YasuakiOmokawa/skills --list
+
+# 通常: 対話 multiselect で必要な skill だけを選ぶ
+npx skills add YasuakiOmokawa/skills
+
+# 個別 install (例: create-pr を Claude Code global に)
+npx skills add YasuakiOmokawa/skills --skill create-pr -g -a claude-code
+
+# 一括 install (全 skill を Claude Code global に)
+npx skills add YasuakiOmokawa/skills --skill '*' -g -a claude-code
+```
+
+> **注意**: agent 内 (例: Claude Code の `! npx ...`) から実行すると `--yes` が自動付与され、対話 multiselect がスキップされて全 skill が install される。agent 内では `--skill <name>` を明示すること。
+
+### 設定値の生成 (両経路共通)
+
+続けてターミナルで設定値を生成:
 
 ```bash
 bash ~/.claude/plugins/marketplaces/omokawa-skills/scripts/setup.sh
 ```
 
 これで `~/.claude/skills-config/jira.md` などが生成される。**全プロジェクト横断で参照されるグローバル設定**で、プロジェクトを切り替えても同じ設定が効く。
-
-## **重要: 旧 `omokawa-skills` plugin を install 済みの方へ**
-
-v2.0.0 で破壊的変更があり、モノリス plugin `omokawa-skills` は廃止された。各 skill は独立 plugin として再配布されている。移行手順:
-
-```
-/plugin uninstall omokawa-skills@omokawa-skills
-/plugin marketplace update omokawa-skills
-/plugin install <必要な skill>@omokawa-skills
-```
 
 ## Plugins (15)
 
@@ -60,7 +78,7 @@ v2.0.0 で破壊的変更があり、モノリス plugin `omokawa-skills` は廃
 |---|---|
 | [`qa-ui`](./plugins/qa-ui/skills/qa-ui/SKILL.md) | ChromeDevTools MCP で UI 検証 |
 | [`review-code-quality`](./plugins/review-code-quality/skills/review-code-quality/SKILL.md) | 設計レベルの品質問題を検出 |
-| [`create-pr`](./plugins/create-pr/commands/create-pr.md) | カレントブランチからドラフト PR 作成 (slash command) |
+| [`create-pr`](./plugins/create-pr/skills/create-pr/SKILL.md) | カレントブランチからドラフト PR 作成 |
 | [`dry-ssot-text`](./plugins/dry-ssot-text/skills/dry-ssot-text/SKILL.md) | AI-generated document を SSOT に統合 |
 | [`purge-private-vocab`](./plugins/purge-private-vocab/skills/purge-private-vocab/SKILL.md) | plan 由来の固有語を対外文書から除染 |
 
