@@ -51,9 +51,15 @@ git diff --name-only $(git merge-base HEAD main)..HEAD | xargs dirname | sort -u
 
 ## Workflow
 
-### Step 1: プランファイル読込
+### Step 1: 初期化 + プランファイル読込
 
-プランファイルから以下を抽出:
+`/mece-plan-review` と共通の初期化手順を実施: [references/init-common.md](references/init-common.md) を参照し、以下を実行:
+- プランファイル特定 (`$ARGUMENTS` or システムプロンプト `Plan File Info:`)
+- プランファイル全文を Read
+- 分析ファイルパス導出 (拡張子前に `.analysis` 挿入)
+- リポジトリ名取得 (`git remote get-url origin`)
+
+加えて define-AC 固有の処理として、プランファイルから以下を抽出:
 - 変更概要（何を、なぜ変えるか）
 - 変更ファイル一覧
 - 既存の設計内容
