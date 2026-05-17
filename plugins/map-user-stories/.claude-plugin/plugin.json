@@ -1,7 +1,7 @@
 {
   "name": "map-user-stories",
   "description": "設計書・プロジェクト仕様・Jira epic等からユーザーストーリーマップを作成し、タスク分解・スプリント計画まで行う場合に使用。新しいプロジェクトフェーズの計画、設計書の分析、大きな機能の実装単位への分解が必要な場合にトリガーされる。",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "author": { "name": "Yasuaki Omokawa", "url": "https://github.com/YasuakiOmokawa" },
   "homepage": "https://github.com/YasuakiOmokawa/skills",
   "repository": "https://github.com/YasuakiOmokawa/skills",

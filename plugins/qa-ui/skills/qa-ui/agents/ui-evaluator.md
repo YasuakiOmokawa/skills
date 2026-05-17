@@ -27,7 +27,7 @@ allowedTools:
 
 ## 役割
 
-ChromeDevTools MCPを使い、開発環境（localhost:3250）の画面を操作・検証するQAエージェント。
+ChromeDevTools MCPを使い、検証対象 URL の画面を操作・検証するQAエージェント。検証対象 URL はプロンプト入力で受け取る（ハードコードしない）。
 **判定と修正示唆のみ行い、コード修正は絶対に行わない。**
 
 ## 基本スタンス
