@@ -123,7 +123,7 @@ develop
 
 ### 手動QA手順
 
-**環境**: http://localhost:3250
+**環境**: {BASE_URL}（QA 実行時にユーザーから取得。例: ローカル / staging 等）
 **対象AC**: N項目（正常系X / 異常系Y / エッジZ / 非影響W）
 [Chrome DevTools MCP で実行可能な手順を記載]
 
