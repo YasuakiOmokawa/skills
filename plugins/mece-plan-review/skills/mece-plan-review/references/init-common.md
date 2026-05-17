@@ -15,7 +15,7 @@
 
 プランファイルの拡張子前に `.analysis` を挿入したパスを使用する:
 
-- 例: `plans/feature-xxx.md` → `plans/feature-xxx.analysis.md`
+- 例: `~/.claude/plans/feature-xxx.md` → `~/.claude/plans/feature-xxx.analysis.md` (プランファイルは `~/.claude/plans/` 配下を推奨)
 
 両 skill で同じ規約を使うことで、`/define-acceptance-criteria` で書き出した分析ファイルが `/mece-plan-review` でそのまま参照可能になる。
 

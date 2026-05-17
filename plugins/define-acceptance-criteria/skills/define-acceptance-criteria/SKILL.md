@@ -121,7 +121,7 @@ git diff --name-only $(git merge-base HEAD main)..HEAD | xargs dirname | sort -u
 ### Step 5: 分析ファイルに詳細を書き出し
 
 **分析ファイルパス**: プランファイルの拡張子前に `.analysis` を挿入する。
-- 例: `plans/feature-xxx.md` → `plans/feature-xxx.analysis.md`
+- 例: `~/.claude/plans/feature-xxx.md` → `~/.claude/plans/feature-xxx.analysis.md` (プランファイルは `~/.claude/plans/` 配下を推奨)
 
 分析ファイルが存在しない場合は新規作成する。既に存在する場合は末尾に追記する。
 
