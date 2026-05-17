@@ -163,12 +163,15 @@ Step 0 を抜ける時点で以下を変数として保持していること。S
 
 ### 1-1: 3 つの Task subagent を同一メッセージ内で並列起動
 
-各 agent の責務・情報源制約・出力フォーマットは `agents/*.md` の frontmatter + 本文で定義済み。main agent は dispatch 時に**入力データ (AC / プラン / リポ情報) のみ**を渡す。
+Task ツール (`subagent_type="general-purpose"`) で同一メッセージ内に 3 つの Task 呼び出しを並べて起動 (並列化のため単一メッセージ必須)。各 agent ファイル (`agents/<role>.md`) の絶対パスを示し、main agent が dispatch 時に**入力データ (AC / プラン / リポ情報) と agent ファイルパス**を渡す。subagent は agent ファイルを Read してから分析を開始する。
 
-> **読み手への注記**: 以下のコードブロックは **main agent が組み立てる dispatch prompt のテンプレート**。`Task(...)` ブロック内 `prompt="""..."""` の文字列全体が subagent に渡されるため、その中に書かれた指示はすべて subagent 向け runtime 指示として扱われる (SKILL.md 上のコメントを混在させないこと)。`${...}` プレースホルダは Step 0 で保持した変数で main agent が置換する。
+`${CLAUDE_PLUGIN_ROOT}` は plugin install 先 (`plugins/mece-plan-review/`) に解決される。npx skills add 経由でも `~/.claude/skills/mece-plan-review/` に skills 配下が展開されるため、相対パスは同じ。
 
 ```
-Task(subagent_type="mece-plan-review:bb-analyst", prompt="""
+Task(subagent_type="general-purpose", prompt="""
+以下の agent 定義を Read で読み込み、そこに書かれた責務・情報源制約・出力フォーマットに従ってください:
+${CLAUDE_PLUGIN_ROOT}/skills/mece-plan-review/agents/bb-analyst.md
+
 リポジトリ: ${REPO_NAME}
 関連リポジトリ (Devin wiki の repoName にそのまま使用可能):
 ${RELATED_REPOS}
@@ -180,7 +183,10 @@ ${ENUMERATED_AC}
 WB Analyst と独立に動くため、互いの分析結果は参照しないこと。Wiki Researcher と並列起動されるが、BB Analyst も独立して `read_wiki_*` を実行してよい。
 """)
 
-Task(subagent_type="mece-plan-review:wb-analyst", prompt="""
+Task(subagent_type="general-purpose", prompt="""
+以下の agent 定義を Read で読み込み、そこに書かれた責務・情報源制約・出力フォーマットに従ってください:
+${CLAUDE_PLUGIN_ROOT}/skills/mece-plan-review/agents/wb-analyst.md
+
 リポジトリ: ${REPO_NAME}
 プランファイル:
 ${PLAN_CONTENT}
@@ -190,7 +196,10 @@ ${ENUMERATED_AC}
 BB Analyst と独立に動くため、互いの分析結果は参照しないこと。
 """)
 
-Task(subagent_type="mece-plan-review:wiki-researcher", prompt="""
+Task(subagent_type="general-purpose", prompt="""
+以下の agent 定義を Read で読み込み、そこに書かれた責務・出力フォーマットに従ってください:
+${CLAUDE_PLUGIN_ROOT}/skills/mece-plan-review/agents/wiki-researcher.md
+
 リポジトリ: ${REPO_NAME}
 関連リポジトリ:
 ${RELATED_REPOS}
@@ -199,13 +208,15 @@ ${PLAN_CONTENT}
 """)
 ```
 
-**subagent_type と agents/ ファイルの対応**:
+**agents/ ファイルの責務マップ**:
 
-| subagent_type | 定義ファイル (plugin top-level) | tools |
+| agent ファイル | 責務 | frontmatter `tools` (※) |
 |---|---|---|
-| `mece-plan-review:bb-analyst` | `../../agents/bb-analyst.md` | Read, Grep, Glob, ToolSearch, WebFetch |
-| `mece-plan-review:wb-analyst` | `../../agents/wb-analyst.md` | Read, Grep, Glob (ToolSearch / WebFetch を**意図的に除外**して wiki/docs 参照を構造的に禁止) |
-| `mece-plan-review:wiki-researcher` | `../../agents/wiki-researcher.md` | ToolSearch |
+| `agents/bb-analyst.md` | 仕様情報源で AC 検証 | Read, Grep, Glob, ToolSearch, WebFetch |
+| `agents/wb-analyst.md` | コード情報源で AC 検証 | Read, Grep, Glob |
+| `agents/wiki-researcher.md` | Devin wiki から事実情報を収集 | ToolSearch |
+
+※ `tools` frontmatter は本 skill が `subagent_type="general-purpose"` で起動する general-purpose subagent の場合は**強制されない** (general-purpose subagent は main agent のツール権限を継承するため)。情報源の分離は agent 本文の禁止記述に依存する self-control。Claude Code 公式 plugin install (`/plugin install mece-plan-review@omokawa-skills`) 経由で利用する場合のみ、`subagent_type="mece-plan-review:<agent>"` の型付け呼び出しが可能になり、frontmatter `tools` が harness レベルで構造的に強制される (本リポは npx skills add 互換性を優先し、SKILL.md には general-purpose 形式のみを記載)。
 
 ### 1-2: 3 つの結果を受信
 
@@ -226,7 +237,10 @@ Task の戻り値として自動的に取得。変数 `${BB_RESULT}` / `${WB_RES
 `agents/fresh-red-team.md` は起動時に `references/red-team-checklist.md` を自前で Read する設計のため、main agent からチェックリストを渡す必要はない。
 
 ```
-Task(subagent_type="mece-plan-review:fresh-red-team", prompt="""
+Task(subagent_type="general-purpose", prompt="""
+以下の agent 定義を Read で読み込み、そこに書かれた責務・出力フォーマットに従ってください:
+${CLAUDE_PLUGIN_ROOT}/skills/mece-plan-review/agents/fresh-red-team.md
+
 BB Analyst の分析結果:
 ${BB_RESULT}
 
@@ -332,12 +346,12 @@ AskUserQuestion でパス確認を依頼。
 - 分析ファイル書込み時に lock 検出 → 1 回リトライ、それでも失敗なら AskUserQuestion で対応確認
 - non-git リポ (`git remote get-url origin` が失敗) → `${REPO_NAME}` を「unknown-repo」として継続、Wiki Researcher は `[non-git: Devin 未使用]` で skip
 
-## Agents (plugin top-level、`subagent_type="mece-plan-review:<agent>"` で起動)
+## Agents
 
-- [../../agents/bb-analyst.md](../../agents/bb-analyst.md) - Black Box Analyst (仕様情報源限定)
-- [../../agents/wb-analyst.md](../../agents/wb-analyst.md) - White Box Analyst (コード情報源限定、`tools` から ToolSearch / WebFetch を除外して構造的に分離)
-- [../../agents/wiki-researcher.md](../../agents/wiki-researcher.md) - Wiki Researcher (Devin wiki 事実収集、判定なし)
-- [../../agents/fresh-red-team.md](../../agents/fresh-red-team.md) - Fresh Red Team Reviewer (BB / WB / Wiki 出力のみで統合判定)
+- [agents/bb-analyst.md](agents/bb-analyst.md) - Black Box Analyst (仕様情報源限定)
+- [agents/wb-analyst.md](agents/wb-analyst.md) - White Box Analyst (コード情報源限定、`tools` から ToolSearch / WebFetch を除外して構造的に分離)
+- [agents/wiki-researcher.md](agents/wiki-researcher.md) - Wiki Researcher (Devin wiki 事実収集、判定なし)
+- [agents/fresh-red-team.md](agents/fresh-red-team.md) - Fresh Red Team Reviewer (BB / WB / Wiki 出力のみで統合判定)
 
 ## References
 
