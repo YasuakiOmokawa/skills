@@ -1,4 +1,4 @@
-# omokawa-skills
+# sklls
 
 独立した plugin 群。必要な skill だけを選択的に install できる。
 
