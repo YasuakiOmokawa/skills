@@ -415,7 +415,7 @@ description: カレントブランチをもとに Conventional Commits 形式の
    - `gh pr create`コマンドを使用
    - `--draft`オプションでドラフトとして作成
    - `--title`でタイトル設定
-   - `--body`で説明設定（ステップ9でチェック済みの本文）
+   - `--body`で説明設定（ステップ9でチェック済みの本文）。**巨大本文で `--body-file` を選ぶ場合は、必ず後述「作成後に PR description を更新する場合」の `mktemp` 規約に従う**（固定パス `/tmp/pr-body.md` は過去セッション残骸混入の事故源）
    - `--label`で全てのラベル設定
    - `--milestone`でマイルストーン設定
    - ベースブランチを指定
@@ -441,11 +441,16 @@ gh pr create --draft \
 
 ## 作成後に PR description を更新する場合
 
-`gh pr edit --body` は Projects Classic deprecation エラーで失敗するため **使わない**。代わりに GitHub REST API を直接叩く:
+`gh pr edit --body` は Projects Classic deprecation エラーで失敗するため **使わない**。代わりに GitHub REST API を直接叩く。
+
+**⚠️ 前提: 固定パス (`/tmp/pr-body.md` 等) を使わない**
+
+過去セッションが同一パスに残した body 内容 (stale content) が残置ファイルとして残り、Write の「File has not been read yet」エラーを軽視して読み込まずに `gh api -F body=@<file>` や `gh pr create --body-file <file>` で渡すと、無関係な PR 内容が投入される事故が発生する。**body をヒアドキュメントで一時ファイル化する場合は、固定パスではなく `mktemp` でユニークパスを生成し、終了時に削除する**。ランダム名のため衝突せず、rm し損ねても他セッションには影響しない。
 
 ```bash
-# 1. body を一時ファイルに書き出す（ヒアドキュメントで改行・バッククォート保持）
-cat <<'EOF' > /tmp/pr-body.md
+# 1. body を一時ファイルに書き出す（mktemp でユニークパス生成）
+PR_BODY_FILE=$(mktemp --suffix=.md)
+cat <<'EOF' > "$PR_BODY_FILE"
 ## やったこと
 ...
 EOF
@@ -453,11 +458,15 @@ EOF
 # 2. gh api PATCH で body を更新
 REPO=$(gh repo view --json nameWithOwner --jq .nameWithOwner)
 PR_NUMBER=<作成した PR 番号>
-gh api "repos/${REPO}/pulls/${PR_NUMBER}" --method PATCH -F "body=@/tmp/pr-body.md"
+gh api "repos/${REPO}/pulls/${PR_NUMBER}" --method PATCH -F "body=@${PR_BODY_FILE}"
+
+# 3. 一時ファイル削除
+rm "$PR_BODY_FILE"
 ```
 
 - `-F "body=@<path>"` はファイル内容をリクエストボディの文字列値として送信する gh CLI の機能。`--field` の `@` プレフィックスと同じ
 - タイトルやラベルの更新は `gh pr edit --title` / `gh pr edit --add-label` で動作するので、description 更新時のみこの回避策を使う
+- 同じ `mktemp` 規約は Step 10 (`gh pr create`) で `--body` ではなく `--body-file` を選ぶ場合にも適用する
 
 ## 併用推奨 skill
 
