@@ -35,10 +35,18 @@ Frameworks/Drivers → Interface Adapters → Application Business → Enterpris
 - `Rails.logger` を Model 内で使うのは ⚠️ レベル (許容)
 - `has_many` / `belongs_to` による双方向 association は ⚠️ レベル (Rails 標準)
 
-## 詳細を Read する条件
+## 推奨修正の雛形 (短文テンプレ)
 
-以下の場合のみ `clean-architecture.md` 本体を Read する:
+| 違反種 | 推奨修正テンプレ |
+|---|---|
+| 依存方向違反 | `<file>:<line> で <外側 SDK> を直接参照。<Service or Adapter> 経由に分離` |
+| レイヤー混在 | `<file>:<line> の <where/joins> を <scope or Service> に移動` |
+| 循環依存 | `<service A> と <service B> を共通インターフェース <I> 経由に変更` |
 
-- 4 層構造の理解が必要な複雑な設計判断
-- 依存逆転 (DIP) の具体実装例を確認したい
-- Effect-TS / TypeScript プロジェクト構造の参考例が必要
+## 詳細を Read する条件 (観測可能トリガー)
+
+以下のいずれかに該当する場合のみ `clean-architecture.md` 本体を Read する:
+
+- 検出対象が 3 レイヤー以上を跨ぐ (4 層構造の理解が必要)
+- ユーザーへの出力に依存逆転 (DIP) の具体実装例を含める必要がある
+- 対象プロジェクトが Effect-TS / 純 TypeScript (Rails 以外) で、参考例の照合が必要

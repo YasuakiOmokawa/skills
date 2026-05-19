@@ -79,6 +79,11 @@ ${ENUMERATED_QA_AC} の生成例:
 
 これを `${ENUMERATED_QA_AC}` 変数として保持し、manual-qa-planner と auto-qa-planner の両方に渡す (各 planner は自前で再分類しない、main agent の分類結果を信頼)。
 
+**Step 1.7 失敗時 (main agent 側 fallback)**:
+- AC セクションが空 / 全項目がカテゴリ不明 / `${AC_CONTENT}` がパース不能 → AskUserQuestion で「AC が分類できません。`/define-acceptance-criteria` を再実行するか、AC を手動で正常系/異常系/エッジ/非影響/[MECE追加] にラベル付けしてください」と確認
+- 一部 AC のカテゴリのみ不明 (例: 5 項目中 1 つが分類不能) → 不明項目を `QA-X-NN` (X = 不明 prefix) で enumerate し、両 planner に「QA-X-* は分類不能項目。可能なら推測してフォローし、Self-report にも明示」と注釈付きで渡す
+- in-context 代替モード時: Step 1.7 を本 agent 内で同等処理し、`${ENUMERATED_QA_AC}` 相当の中間結果を保持してから Step 2A → 2B 相当の処理を逐次適用する
+
 ### Step 2A: branch-planner → pr-splitter を直列実行
 
 両 agent は軽量で順序依存 (pr-splitter は branch-planner の base ブランチ名を `<base>-<suffix>` で派生に使う) のため、並列起動の旨味がなく直列実行する。

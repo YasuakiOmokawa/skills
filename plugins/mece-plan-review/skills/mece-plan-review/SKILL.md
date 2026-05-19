@@ -235,9 +235,13 @@ Task の戻り値として自動的に取得。変数 `${BB_RESULT}` / `${WB_RES
 **⚠️ 重要**: Red Team subagent の入力にプラン本文 / AC 本文を含めない (真の freshness 確保)。BB / WB の出力からは **JSONL ブロック (findings + AC 判定) のみ抽出** して渡し、Markdown ボイラープレート (Self-report / 確信度 / コード参照したくなった場面 / 使った情報源 / 暗黙前提詳細) は dispatch に含めない (Red Team の判定に不要、入力トークン削減)。
 
 **入力抽出ルール** (main agent が dispatch 前に実行):
-1. `${BB_RESULT}` / `${WB_RESULT}` から ` ```jsonl` で開始するブロックのみ抜き出す (findings + AC 判定の 2 ブロック)
-2. `${WIKI_RESULT}` は Markdown のまま渡してよい (短い箇条書きであり、Red Team が事実情報として参照する補強として有用)
-3. 抽出変数 `${BB_JSONL}` / `${WB_JSONL}` を Red Team prompt に埋め込む
+1. `${BB_RESULT}` / `${WB_RESULT}` から **正規表現 `/^```jsonl\n(.*?)\n```/ms` を 2 回マッチ** させて findings ブロックと AC 判定ブロックを抽出する
+2. 2 ブロックの中身 (フェンス内 JSONL 行のみ) を **改行 1 つで連結** して単一文字列 `${BB_JSONL}` / `${WB_JSONL}` を生成する (Red Team が 1 つの prompt セクションで両方を一括 parse できる形)
+3. `${WIKI_RESULT}` は Markdown のまま渡してよい (短い箇条書きであり、Red Team が事実情報として参照する補強として有用)
+4. **抽出失敗時 (JSONL ブロックが 0 個 / 1 個のみ / フェンスが破損)**:
+   - 1 回リトライ: BB / WB に対して同じ AC リストを再送し、「findings (jsonl fence) + AC 判定 (jsonl fence) の 2 ブロックを必ず返してください」と明示
+   - 2 回目も失敗: 該当 ロールを `${BB_JSONL}=""` または `${WB_JSONL}=""` (空文字) で Red Team に渡し、Red Team の prompt に「⚠️ <ロール名> の JSONL 出力が欠落しています。残りの入力 + チェックリストでお見合い検出を強化してください」と注釈を追加
+   - 3 回連続失敗または BB/WB の両方が JSONL 欠落: AskUserQuestion で「subagent が JSONL 形式を返せない。手動 MECE レビューに切り替えるか中断するか」を確認
 
 `agents/fresh-red-team.md` は起動時に `references/red-team-checklist.md` を自前で Read する設計のため、main agent からチェックリストを渡す必要はない。
 
@@ -259,7 +263,7 @@ ${WIKI_RESULT}
 """)
 ```
 
-**注意**: BB / WB の Markdown 部分 (Self-report 等) は分析ファイルに記録する用途で main agent 側に保持しておくこと (Step 3 で全文を `<details>` ブロックに埋め込むため必要)。
+**注意**: BB / WB の Markdown 部分 (Self-report 等) は分析ファイルに記録する用途で main agent 側に保持しておくこと。具体的には Step 3-3 で [references/output-format.md](references/output-format.md) の「各ロール分析詳細」セクション (3 つの `<details>` ブロック) に `${BB_RESULT}` / `${WB_RESULT}` / `${WIKI_RESULT}` の **元 Markdown 全文** をそのまま埋め込む。Red Team dispatch では JSONL のみだが、分析ファイルでは Markdown 全文を保持する二重用途を main agent が担う。
 
 ### 2-2: Red Team 結果受信
 

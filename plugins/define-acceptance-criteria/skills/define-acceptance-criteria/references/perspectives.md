@@ -78,6 +78,7 @@
 | mail_change | テンプレート | `template` |
 | service_change | 呼び出し元 | `caller` |
 | service_change | エラー伝播 | `error_prop` |
+| **全種別 (追加候補)** | 監査ログ / メトリクス / 構造化ログ | `observability` |
 
 ### area タグ対応 (mece-plan-review との接続)
 
@@ -99,6 +100,7 @@
 | `api_version` / `auth_method` / `rate_limit` | `network` |
 | `delivery` / `template` | `business` |
 | `error_prop` | `observability` (or `その他`) |
+| `observability` | `observability` |
 
 この対応表は mece-plan-review が JSONL findings を集約する際に同 `area` でクロスリファレンスするため、ラベル粒度を揃える目的で重要。
 

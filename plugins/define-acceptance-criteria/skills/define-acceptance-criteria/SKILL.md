@@ -63,7 +63,11 @@ git diff --name-only $(git merge-base HEAD main)..HEAD | xargs dirname | sort -u
 
 加えて define-AC 固有の処理として、プランファイルから以下を抽出:
 - 変更概要（何を、なぜ変えるか）
-- 変更ファイル一覧 (`変更ファイル:` セクション or プラン本文中のパス列挙、抽出できない場合は `git diff --name-only $(git merge-base HEAD main)..HEAD` で補完)
+- 変更ファイル一覧 (以下のフォールバックチェーン):
+  1. プラン本文の `変更ファイル:` セクションまたは本文中のパス列挙を最優先で抽出
+  2. 1 で空なら `git diff --name-only $(git merge-base HEAD main)..HEAD` を試行
+  3. 2 も空 (新規プラン + 未コミット) なら**プラン本文の自然言語からパス類推** (例: 「`/api/users` エンドポイント追加」→ `app/controllers/api/users_controller.rb` を候補に挙げる)
+  4. 3 でも候補が出ない場合は AskUserQuestion で「変更対象ファイル一覧をプランに追記してください」と要求し、ユーザー入力後に Step 1.5 を再実行
 - 既存の設計内容
 
 ### Step 1.5: 変更種別の機械的判定 (機械化された候補抽出)
@@ -139,6 +143,9 @@ LLM はこの**機械的に抽出された候補**を出発点として、Step 2
 - [controlled label 1]: [1文で理由を書く]
 - [controlled label 2]: [1文で理由を書く]
 - [controlled label 3]: [1文で理由を書く]
+- 副作用軸の追加 (該当時のみ): [label] (理由: ...)  ← Step 2「主種別 + 副作用軸 1」
+- 裁量判断 (該当時のみ): 表 N 軸 + 独自軸 K (理由: ...)  ← Step 2「テーブルに該当する変更種別がない場合」
+- observability 追加 (該当時のみ): observability (理由: ...) ← Step 2「observability 軸の特例」
 
 ### 正常系
 - [ ] [controlled label]: [具体的な入力値 → 期待する出力値]
