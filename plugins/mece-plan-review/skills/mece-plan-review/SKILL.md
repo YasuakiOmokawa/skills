@@ -235,7 +235,7 @@ Task の戻り値として自動的に取得。変数 `${BB_RESULT}` / `${WB_RES
 **⚠️ 重要**: Red Team subagent の入力にプラン本文 / AC 本文を含めない (真の freshness 確保)。BB / WB の出力からは **JSONL ブロック (findings + AC 判定) のみ抽出** して渡し、Markdown ボイラープレート (Self-report / 確信度 / コード参照したくなった場面 / 使った情報源 / 暗黙前提詳細) は dispatch に含めない (Red Team の判定に不要、入力トークン削減)。
 
 **入力抽出ルール** (main agent が dispatch 前に実行):
-1. `${BB_RESULT}` / `${WB_RESULT}` から **正規表現 `/^```jsonl\n(.*?)\n```/ms` を 2 回マッチ** させて findings ブロックと AC 判定ブロックを抽出する
+1. `${BB_RESULT}` / `${WB_RESULT}` から **正規表現 `/^\s*```jsonl\n(.*?)\n\s*```/ms` を 2 回マッチ** させて findings ブロックと AC 判定ブロックを抽出する (先頭の `\s*` で subagent が字下げした場合のフェンスもキャッチ)
 2. 2 ブロックの中身 (フェンス内 JSONL 行のみ) を **改行 1 つで連結** して単一文字列 `${BB_JSONL}` / `${WB_JSONL}` を生成する (Red Team が 1 つの prompt セクションで両方を一括 parse できる形)
 3. `${WIKI_RESULT}` は Markdown のまま渡してよい (短い箇条書きであり、Red Team が事実情報として参照する補強として有用)
 4. **抽出失敗時 (JSONL ブロックが 0 個 / 1 個のみ / フェンスが破損)**:
