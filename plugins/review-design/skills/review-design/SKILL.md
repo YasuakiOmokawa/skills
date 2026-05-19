@@ -152,11 +152,23 @@ Parallel Review 後、Devil's Advocate (DA) で設計判断への反論を生成
 inline default で開始し、以下のいずれかを満たした場合は subagent dispatch に切り替える:
 
 1. **`❌` を含む Reviewer 数 ≥ 2**: Parallel Review (Step 3) の出力で `❌` 判定を含む Reviewer (anti-pattern-checker / ddd-reviewer / hexagonal-reviewer / clean-architecture-reviewer の 4 種) の数が 2 以上
-2. **単独致命的トリガーが 1 件以上**: 以下の項目を Reviewer 出力に検出した場合は 1 件でも昇格 (重要度が高く、自己批判バイアスのリスクを許容できない)
+2. **単独昇格トリガーが 1 件以上**: 以下の項目を Reviewer 出力に検出した場合は 1 件でも昇格 (重要度が高く、自己批判バイアスのリスクを許容できない)
    - DB トランザクション境界違反 (コールバック内で外部 API、複数 Aggregate にまたがる write、saga パターン未実装)
+   - 並行性 / 冪等性の欠陥 (race condition、二重通知、複数タブ・複数インスタンス時の競合)
    - セキュリティ脆弱性 (認証バイパス、SQL/XSS/CSRF、平文保存、IDOR、open redirect)
    - 既存契約違反 (公開 API の breaking change、外部 SDK の major version up)
 3. **`--strict-da` 引数の指定**: ユーザーが `$ARGUMENTS` に `--strict-da` を含めた場合、無条件で subagent dispatch
+
+#### 「単独昇格トリガー」と「致命的判定基準」の関係
+
+両者は別用途で使う:
+
+| 用語 | 用途 | 適用タイミング |
+|---|---|---|
+| **単独昇格トリガー** (本セクション) | inline default → subagent dispatch への切り替え判定 | Parallel Review 完了直後、DA 開始前 |
+| **致命的判定基準** (次セクション) | DA が反論を「致命的 / 許容可能」で評価 | DA 実行中 (inline / subagent どちらでも) |
+
+**包含関係**: 単独昇格トリガー ⊆ 致命的判定基準。昇格トリガー 4 種 (DB transaction / 並行性 / セキュリティ / 既存契約) は致命的判定基準にも含まれる。致命的判定基準には加えて「anti-pattern ❌」がある (これは既に Parallel Review で検出されるため昇格判定は `❌ Reviewer 数 ≥ 2` の経路で扱う)。
 
 #### inline default の指示内容
 
