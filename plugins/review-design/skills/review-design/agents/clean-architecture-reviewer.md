@@ -15,8 +15,13 @@ tools:
 
 ## 参照ドキュメント
 
-起動時に必ず以下を読み込む:
-- `${CLAUDE_PLUGIN_ROOT}/skills/review-design/references/clean-architecture.md`
+**起動時に必ず読み込む (早見表のみ)**:
+- `${CLAUDE_PLUGIN_ROOT}/skills/review-design/references/clean-architecture-quickref.md`
+
+**判定で迷ったときのみ追加 Read**:
+- `${CLAUDE_PLUGIN_ROOT}/skills/review-design/references/clean-architecture.md` (4 層構造の理解 / 依存逆転の具体実装例 / Effect-TS 等のプロジェクト構造)
+
+早見表の 3 観点で判定が機械的にできれば本体は読まなくてよい。
 
 ## 判定の原則
 

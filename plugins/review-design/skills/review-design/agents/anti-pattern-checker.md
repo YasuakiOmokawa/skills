@@ -15,8 +15,13 @@ tools:
 
 ## 参照ドキュメント
 
-起動時に必ず以下を読み込む:
-- `${CLAUDE_PLUGIN_ROOT}/skills/review-design/references/anti-patterns.md`
+**起動時に必ず読み込む (早見表のみ)**:
+- `${CLAUDE_PLUGIN_ROOT}/skills/review-design/references/anti-patterns-quickref.md`
+
+**判定で迷ったときのみ追加 Read**:
+- `${CLAUDE_PLUGIN_ROOT}/skills/review-design/references/anti-patterns.md` (詳細な改善コード例 / Rails 固有パターン例外)
+
+早見表で 8 観点の判定が機械的にできれば本体は読まなくてよい。⚠️ と ❌ の境界で具体例を確認したい時のみ本体を Read する。
 
 ## 判定の原則
 

@@ -15,8 +15,13 @@ tools:
 
 ## 参照ドキュメント
 
-起動時に必ず以下を読み込む:
-- `${CLAUDE_PLUGIN_ROOT}/skills/review-design/references/hexagonal-architecture.md`
+**起動時に必ず読み込む (早見表のみ)**:
+- `${CLAUDE_PLUGIN_ROOT}/skills/review-design/references/hexagonal-architecture-quickref.md`
+
+**判定で迷ったときのみ追加 Read**:
+- `${CLAUDE_PLUGIN_ROOT}/skills/review-design/references/hexagonal-architecture.md` (Port/Adapter のディレクトリ構造提案 / TypeScript/React 適用例 / Clean Architecture との関係性)
+
+早見表の 4 観点 + 採用判断表で判定が機械的にできれば本体は読まなくてよい。
 
 ## 判定の原則
 

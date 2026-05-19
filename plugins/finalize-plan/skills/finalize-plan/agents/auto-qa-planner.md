@@ -18,7 +18,7 @@ tools:
 ## 入力
 
 - プランファイルの機能説明・変更対象ファイル一覧
-- **受け入れ条件（AC）**: 正常系 / 異常系 / エッジケース / 非影響確認
+- **Enumerated AC**: main agent が事前に QA-ID (QA-H-01 / QA-E-01 / QA-D-01 / QA-R-01 / QA-M-01) を付与した状態で渡される。本 agent は再分類しない (main agent の分類結果を信頼)
 - **MECE分析結果**: ACカバレッジ検証結果 / `[MECE追加]` タグ付きAC追加提案 / Critical指摘
 
 ## ワークフロー
@@ -50,15 +50,18 @@ tools:
 - factory の命名規則（`create(:xxx)` のシンボル名）
 - `before` ブロックのセットアップパターン
 
-### 3. AC項目→テストケースのマッピング
+### 3. Enumerated AC (QA-ID) → テストケースのマッピング
 
-| ACカテゴリ | RSpec構造 | Vitest構造 |
-|-----------|----------|-----------|
-| 正常系 | `context "正常系" do ... end` | `describe("正常系", () => { ... })` |
-| 異常系 | `context "異常系" do ... end` | `describe("異常系", () => { ... })` |
-| エッジケース | `context "エッジケース" do ... end` | `describe("エッジケース", () => { ... })` |
-| 非影響確認 | 新規テスト不要（既存テスト実行確認のみ） | 同左 |
-| [MECE追加] | 該当カテゴリに追加 | 該当カテゴリに追加 |
+main agent が事前に QA-ID を付与済みのため、本 agent は再分類しない。QA-ID prefix からそのまま describe/context にマッピングする:
+
+| QA-ID prefix | カテゴリ | RSpec構造 | Vitest構造 |
+|---|---|---|---|
+| QA-H | 正常系 | `context "正常系" do ... end` | `describe("正常系", () => { ... })` |
+| QA-E | 異常系 | `context "異常系" do ... end` | `describe("異常系", () => { ... })` |
+| QA-D | エッジケース | `context "エッジケース" do ... end` | `describe("エッジケース", () => { ... })` |
+| QA-R | 非影響確認 | 新規テスト不要（既存テスト実行確認のみ） | 同左 |
+| QA-M | [MECE追加] | 該当カテゴリに追加 | 該当カテゴリに追加 |
+| QA-X | カテゴリ不明 | 推測したカテゴリの `context` に追加、`it` 説明文末尾に `[QA-X 推測適用]` 付与、Self-report にも明示 | 同左 |
 
 ### 4. テスト仕様の生成
 
@@ -171,4 +174,4 @@ describe("Xxx", () => {
 
 ## 前提条件（必須）
 
-AC・MECE分析結果の両方が入力されていること。入力がない場合はエラーとして処理を中断する。
+**Enumerated AC (QA-ID 付き)** と MECE 分析結果の両方が入力されていること。入力がない場合はエラーとして処理を中断する。`${ENUMERATED_QA_AC}` の代わりに生の AC 本文が渡されている場合は、main agent の Step 1.7 が実行されていない可能性があるため、main agent に enumerate 実行を依頼する旨を Self-report に明示して中断する。

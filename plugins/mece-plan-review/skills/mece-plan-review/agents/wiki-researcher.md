@@ -12,6 +12,7 @@ tools:
 ## 責務
 
 - カレントリポと関連リポの Devin wiki からプランに関連する事実情報を抽出する
+- **関連リポ wiki 専属** (`${RELATED_REPOS}` の全リポ): BB Analyst は関連リポを読まない契約のため、Wiki Researcher が関連リポ wiki の事実収集を一括引き受ける
 - ユースケース・既知のエッジケース・連携先システムの動作を整理する
 - **分析判断 (Critical / Important) はしない**。事実情報のみを返す
 

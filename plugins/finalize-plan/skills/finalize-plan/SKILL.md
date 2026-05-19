@@ -53,32 +53,102 @@ inputなしでは品質を保証できないため、先に以下を実行して
 両方が完了した後、再度 /finalize-plan を実行してください。
 ```
 
-### Step 2: 4並列サブエージェント起動
+### Step 1.7: AC を QA-ID 形式で事前 enumerate (main agent)
 
-Task ツール（`subagent_type: "general-purpose"`）で以下を**同一メッセージ内で並列起動**。各 agent ファイル（`agents/*.md`）を読み込ませ、プランファイルの内容を渡すこと。
+manual-qa-planner と auto-qa-planner は**同じ AC をそれぞれ独立に分類** していたため重複コストが発生していた。main agent が事前に 1 回だけ enumerate して両 planner に渡す形に再構成する。
 
-| Agent | ファイル | 入力 |
-|-------|---------|------|
-| branch-planner | `agents/branch-planner.md` | プラン |
-| pr-splitter | `agents/pr-splitter.md` | プラン |
-| manual-qa-planner | `agents/manual-qa-planner.md` | プラン + ${AC_CONTENT} + ${MECE_CONTENT} |
-| auto-qa-planner | `agents/auto-qa-planner.md` | プラン + ${AC_CONTENT} + ${MECE_CONTENT} |
-
-**QA系エージェントへのプロンプト例:**
+`${AC_CONTENT}` の各 `- [ ]` 項目を以下のルールで QA-ID 付与する:
 
 ```
+正常系:       QA-H-01, QA-H-02, ...  (Happy path)
+異常系:       QA-E-01, QA-E-02, ...  (Error)
+エッジケース: QA-D-01, QA-D-02, ...  (eDge case)
+非影響確認:   QA-R-01, QA-R-02, ...  (Regression)
+[MECE追加]:   QA-M-01, QA-M-02, ...  (Mece)
+```
+
+```
+${ENUMERATED_QA_AC} の生成例:
+- QA-H-01 (正常系): req_form: 本人が PATCH /api/users/123 → 200 OK
+- QA-H-02 (正常系): permission: 管理者が PATCH /api/users/123 → 200 OK
+- QA-E-01 (異常系): req_form: 本文なしで PATCH → 400 Bad Request
+- QA-D-01 (エッジ): permission [境界値: 未ログイン]: PATCH /api/users/:id → 401
+- QA-R-01 (非影響): /api/health が変更前と同じ挙動
+- QA-M-01 ([MECE追加]): observability: 監査ログに変更前後の差分が記録される
+```
+
+これを `${ENUMERATED_QA_AC}` 変数として保持し、manual-qa-planner と auto-qa-planner の両方に渡す (各 planner は自前で再分類しない、main agent の分類結果を信頼)。
+
+**Step 1.7 失敗時 (main agent 側 fallback)**:
+- AC セクションが空 / 全項目がカテゴリ不明 / `${AC_CONTENT}` がパース不能 → AskUserQuestion で「AC が分類できません。`/define-acceptance-criteria` を再実行するか、AC を手動で正常系/異常系/エッジ/非影響/[MECE追加] にラベル付けしてください」と確認
+- 一部 AC のカテゴリのみ不明 (例: 5 項目中 1 つが分類不能) → 不明項目を `QA-X-NN` (X = 不明 prefix) で enumerate し、両 planner に「QA-X-* は分類不能項目。可能なら推測してフォローし、Self-report にも明示」と注釈付きで渡す
+- in-context 代替モード時: Step 1.7 を本 agent 内で同等処理し、`${ENUMERATED_QA_AC}` 相当の中間結果を保持してから Step 2A → 2B 相当の処理を逐次適用する
+
+### Step 2A: branch-planner → pr-splitter を直列実行
+
+両 agent は軽量で順序依存 (pr-splitter は branch-planner の base ブランチ名を `<base>-<suffix>` で派生に使う) のため、並列起動の旨味がなく直列実行する。
+
+```
+1. Task(subagent_type="general-purpose", prompt="""
+   ${CLAUDE_PLUGIN_ROOT}/skills/finalize-plan/agents/branch-planner.md を読み込み、
+   以下のプランに基づいてベースブランチを策定してください:
+   
+   ## プラン:
+   ${PLAN_CONTENT}
+   """)
+   → 結果を ${BRANCH_RESULT} として保持
+
+2. Task(subagent_type="general-purpose", prompt="""
+   ${CLAUDE_PLUGIN_ROOT}/skills/finalize-plan/agents/pr-splitter.md を読み込み、
+   以下のプランとベースブランチ名に基づいて PR 分割計画を策定してください:
+   
+   ## プラン:
+   ${PLAN_CONTENT}
+   
+   ## ベースブランチ (branch-planner 結果):
+   ${BRANCH_RESULT}
+   """)
+   → 結果を ${PR_SPLIT_RESULT} として保持
+```
+
+### Step 2B: manual-qa + auto-qa を並列実行 (enumerated AC を共有)
+
+Step 1.7 で生成した `${ENUMERATED_QA_AC}` を両 planner に渡す。両 planner は QA-ID を信頼して、各 ID に対応する操作手順 / テスト仕様だけを生成する (AC の再分類処理は廃止):
+
+```
+Task(subagent_type="general-purpose", prompt="""
 ${CLAUDE_PLUGIN_ROOT}/skills/finalize-plan/agents/manual-qa-planner.md を読み込み、
-以下のプランとAC・MECE分析結果に基づいて手動QA手順を策定してください:
+以下の enumerated AC を基に手動 QA 手順を策定してください:
 
 ## プラン:
-[プランファイルの内容]
+${PLAN_CONTENT}
 
-## 受け入れ条件（AC）:
-[${AC_CONTENT} — 存在する場合]
+## Enumerated AC (QA-ID 付き、main agent が事前分類済み):
+${ENUMERATED_QA_AC}
 
-## MECE分析結果:
-[${MECE_CONTENT} — 存在する場合]
+## MECE 分析結果:
+${MECE_CONTENT}
+""")
+
+Task(subagent_type="general-purpose", prompt="""
+${CLAUDE_PLUGIN_ROOT}/skills/finalize-plan/agents/auto-qa-planner.md を読み込み、
+以下の enumerated AC を基にテストコード仕様を生成してください:
+
+## プラン:
+${PLAN_CONTENT}
+
+## Enumerated AC (QA-ID 付き、main agent が事前分類済み):
+${ENUMERATED_QA_AC}
+
+## MECE 分析結果:
+${MECE_CONTENT}
+""")
 ```
+
+**実行構成 (Step 2A + 2B)**:
+- Step 2A 完了後に Step 2B を起動 (直列)
+- Step 2B 内では manual-qa + auto-qa を**同一メッセージ内で並列起動**
+- 全体として「直列 (branch → pr-splitter) → 並列 (manual-qa + auto-qa)」の 1 直列 + 2 並列構成
 
 **Task ツールが利用不可な環境** (既に subagent として動作中 / tool が deferred / dispatch 権限なし):
 1. 4 つの agent 定義ファイル (`agents/branch-planner.md`, `agents/pr-splitter.md`, `agents/manual-qa-planner.md`, `agents/auto-qa-planner.md`) を Read で順次読み込む
