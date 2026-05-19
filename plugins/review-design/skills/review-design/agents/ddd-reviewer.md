@@ -15,8 +15,13 @@ tools:
 
 ## 参照ドキュメント
 
-起動時に必ず以下を読み込む:
-- `${CLAUDE_PLUGIN_ROOT}/skills/review-design/references/domain-driven-design.md`
+**起動時に必ず読み込む (早見表のみ)**:
+- `${CLAUDE_PLUGIN_ROOT}/skills/review-design/references/domain-driven-design-quickref.md`
+
+**判定で迷ったときのみ追加 Read**:
+- `${CLAUDE_PLUGIN_ROOT}/skills/review-design/references/domain-driven-design.md` (Entity / VO の Ruby/TS 実装例 / Aggregate 実装パターン / Rails ActiveRecord アプローチ 1 vs 2 の判断 / Domain Service / Domain Event の Ruby 実装例)
+
+早見表の 4 観点で判定が機械的にできれば本体は読まなくてよい。
 
 ## 判定の原則
 
