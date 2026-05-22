@@ -33,7 +33,7 @@
 
 種別を選定した後、以下の表から該当する観点軸を 3-5 個選ぶ。各軸の右列の controlled label を AC 行頭に使う。
 
-| 変更種別 | 軸名 | controlled label (AC 行頭で使う、6 文字以内・名詞のみ) |
+| 変更種別 | 軸名 | controlled label (AC 行頭で使う、既定値はそのまま採用) |
 |---|---|---|
 | auth_change | ユーザー種別 | `user_type` |
 | auth_change | 認証状態 | `auth_state` |
@@ -117,5 +117,5 @@
 
 1. **AC 行頭は controlled label**: 例 `- [ ] permission [境界値: 未ログイン]: PATCH /api/users/:id → 401`
 2. **同じ skill 内で揺らさない**: 一度決めたラベルを全 AC で同一表記
-3. **6 文字以内・名詞のみ**: 表に新規追加する場合もこのルール
+3. **既定 label をそのまま使う (grandfathered)**: 上記表の `permission` / `observability` / `data_compat` / `req_form` 等は字数制約の対象外。新規追加する場合のみ「12 文字以内・名詞のみ」を目安にする (SKILL.md `Quantitative scaffolding` と同期)
 4. **AC 末尾の `(仕様確定要)`**: プラン本文に欠落する仕様を AC 側で仮置きする場合のみ付与

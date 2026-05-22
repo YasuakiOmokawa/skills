@@ -26,7 +26,7 @@ description: Defines acceptance criteria and technical risks for a plan file. Us
 |---|---|---|
 | 観点軸数 | 主軸 3-5 個 (+ observability 1 軸まで例外) | 実効上限 6。observability は上限 5 にカウントしない (`references/selection-rules.md`) |
 | 技術リスク件数 | **3 件固定** | 各リスクは 3 点セット (Step 4 参照)、件数増減は不可 |
-| controlled label | **6 文字以内・名詞のみ** | 表に新規追加する場合も同制約 (`references/perspectives.md`) |
+| controlled label | **既定 label をそのまま使用** (名詞のみ・短く保つ) | 既定 label (`permission` / `observability` / `data_compat` / `req_form` 等) は文字数の制約外 = grandfathered。**`references/perspectives.md` の Step A 既定表 + Step B 汎用候補軸 (`flag_removal` / `non_invasive` / `dep_loc` / `layer` / `contract` 等) も既定扱い**。完全新規 label を追加する場合のみ「12 文字以内・名詞のみ」が目安 |
 | 必須セル充填率 | 全セル ≥1 項目 | 空セル = 検討不足、`(仕様確定要)` も項目としてカウント可 |
 
 この表は他 references の数量定義に対する canonical。下位 reference に同義の定義が出る場合はこの表が優先。
@@ -60,6 +60,8 @@ description: Defines acceptance criteria and technical risks for a plan file. Us
 
 [references/perspectives.md](references/perspectives.md) の「変更種別 → デフォルト観点軸」表から **3-5 個**選ぶ (下限 3 / 上限 5)。複数主種別での主軸採用 / 副作用軸 1 つ追加 (併用可) / observability 特例 / 表に無い場合の汎用候補軸 (Step B) などの運用詳細は [references/selection-rules.md](references/selection-rules.md) を参照。選定理由を分析ファイル `### 検討観点` に 1 文ずつ明記。
 
+**SSOT 表を優先**: observability を含める場合の実効上限は **6 軸** (主軸 5 + observability 1)。Step 2 の「3-5 個」は **主軸の範囲**であり、observability 例外 1 軸を別枠で加算可能。詳細は SKILL.md 冒頭 Quantitative scaffolding 表を参照。主種別が 3 種類以上の場合は **副作用軸を 1 つに絞る** (合計が上限を超えるのを避けるため)。
+
 ### Step 3: 受け入れ条件の生成
 
 必須 3 カテゴリ × 選択観点で全セル充填:
@@ -67,7 +69,7 @@ description: Defines acceptance criteria and technical risks for a plan file. Us
 - **正常系**: `- [ ] <label>: <入力> → <期待出力>` (「正しく動作する」禁止)
 - **異常系**: `- [ ] <label>: <条件> → <HTTP status or エラー文言>`
 - **エッジケース**: `- [ ] <label> [境界値: <カテゴリ>]: <条件>` (境界値カテゴリは [references/edge-case-checklist.md](references/edge-case-checklist.md))
-- **非影響確認 (推奨)**: `git status --short` 出力で機械判定 — `M` 含む → (a) 手動列挙 or (b) `git diff` 隣接列挙 / `A` のみ → (c) 省略可 / `D` 含む → (a) 必須。詳細は [references/non-impact-rules.md](references/non-impact-rules.md)
+- **非影響確認 (推奨)**: `git status --short` 出力で機械判定 — `M` 含む → (a) 手動列挙 or (b) `git diff` 隣接列挙 / `A` のみ → (c) 省略可 / `D` 含む → (a) 必須。詳細は [references/non-impact-rules.md](references/non-impact-rules.md)。**git 実行不能 (plan mode で未着手 / walk-through / dry-run)** の場合は plan 本文の「変更ファイル予定」リストから推測し、判定根拠に `(推定)` を付与する
 
 ### Step 4: 技術リスクの生成
 
@@ -82,7 +84,7 @@ description: Defines acceptance criteria and technical risks for a plan file. Us
 
 ### Step 6: プランファイル末尾サマリー
 
-プランファイル末尾の `## 品質検証` セクションに 1 行サマリーを追記 (既存内容は変更しない):
+プランファイル末尾の `## 品質検証` セクションに 1 行サマリーを追記 (既存内容は変更しない)。**セクションが存在しない場合**は `---` 区切り + `## 品質検証` ヘッダから新規作成する (既存テキストの末尾に追記):
 
 ```markdown
 ---
