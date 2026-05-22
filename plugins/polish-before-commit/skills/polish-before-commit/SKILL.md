@@ -79,7 +79,16 @@ find . -maxdepth 5 -path "*/.claude/rules/*.md" -type f 2>/dev/null
 
 **なぜ必要か**: 呼ばれなくなった mock は CI ではエラーにならない（RSpec は未使用 stub を error にしない）。lint でも検出されない。レビュー時に発見され差し戻しになる。
 
-**スキップ条件**: 変更ファイルに `*.rb` が無い、または `spec/` ディレクトリが存在しない。スキップ時は `[dead mock: スキップ (Ruby/RSpec 対象外)]` を最終レポートに明記。
+**スキップ条件と文言バリアント**:
+
+| 条件 | スキップ文言 |
+|---|---|
+| 変更ファイルに `*.rb` が無い | `[dead mock: スキップ (Ruby/RSpec 対象外)]` |
+| `spec/` ディレクトリが存在しない | `[dead mock: スキップ (Ruby/RSpec 対象外)]` |
+| 検出手順 1 で削除された identifier が 0 件 (= delegate / def 撤去なし) | `[dead mock: スキップ (撤去なし)]` |
+| 検出手順 1 で identifier が 1 件以上、かつ 検出手順 2 で残存 mock 0 件 | `[dead mock: 検出済み撤去なし]` (識別子 N 件確認、残存 0 件) |
+
+検出手順 1 の出力で identifier 0 件と確定した時点で手順 2 を実行せず即スキップ報告して良い (rg 不要)。
 
 **検出手順**:
 
