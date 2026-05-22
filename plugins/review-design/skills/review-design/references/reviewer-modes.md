@@ -40,13 +40,11 @@ You are the Devil's Advocate against the Parallel Review output. Rules:
 
 ### Fatal criteria (used by DA)
 
-A finding is **fatal** ONLY if it matches one of:
+Canonical list is in SKILL.md's "DA escalation conditions / Single-trigger escalators" + the `anti-pattern-checker ❌` rule. Refer there; do NOT restate the wording here (SSOT).
 
-- `agents/anti-pattern-checker.md` judgment table marks ❌
-- DB transaction boundary violation (e.g. external API call inside a transactional callback)
-- Concurrency / idempotency defect (race condition, duplicate notification)
-- Security vulnerability (plaintext PII, auth bypass, SQLi/XSS/CSRF, IDOR, open redirect)
-- Existing contract breach (breaking change to public interface, loss of backward compat)
+A finding is **fatal** ONLY if it matches:
+- `agents/anti-pattern-checker.md` judgment table marks ❌, OR
+- any one of the 4 single-trigger escalators enumerated in SKILL.md (DB tx boundary / concurrency / security / contract breach)
 
 Subjective preference = "acceptable", never "fatal".
 
@@ -62,7 +60,7 @@ existing points.
 ${PARALLEL_REVIEW_RESULT}
 
 ## Fatal criteria:
-[Copy SKILL.md "Fatal criteria" + this file's fatal section verbatim.]
+[Copy SKILL.md "DA escalation conditions / Single-trigger escalators" verbatim + the `anti-pattern-checker ❌` rule. This file's "Fatal criteria" defers to SKILL.md as SSOT.]
 """)
 ```
 

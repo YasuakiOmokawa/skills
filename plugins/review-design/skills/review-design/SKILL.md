@@ -1,6 +1,6 @@
 ---
 name: review-design
-description: Reviews architecture placement and pattern decisions before code is written, runs parallel reviewers (DDD / Hexagonal / Clean Arch / anti-pattern) and a mandatory Devil's Advocate critique, and rewrites the plan file directly when fatal issues are found. Use when starting a new feature, adding a file or module, deciding "where should this code live", or when the user requests a design review with `/review-design`.
+description: Reviews architecture placement and pattern decisions before code is written, runs a Q1-Q3 selected subset of parallel reviewers (anti-pattern always + DDD / Hexagonal / Clean Arch as applicable) and a mandatory Devil's Advocate critique, and rewrites the plan file directly when reviewers or Devil's Advocate find issues. Use when starting a new feature, adding a file or module, deciding "where should this code live", or when the user requests a design review with `/review-design`.
 ---
 
 # review-design

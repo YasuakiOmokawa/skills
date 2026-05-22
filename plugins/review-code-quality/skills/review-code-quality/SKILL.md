@@ -1,6 +1,6 @@
 ---
 name: review-code-quality
-description: Detects design-level issues that RuboCop/ESLint miss, and 2-stage business side-effect chains (feature-flag revival / auth bypass) introduced by changes that update domain model attributes (plan_code / role / status, etc.). Use when finishing self-review of an implementation, before requesting PR review, or when a diff updates a domain model attribute.
+description: Detects two tiers of issues. Tier 1 (always-on, 3 観点): design-level cohesion / coupling / readability issues that RuboCop/ESLint miss. Tier 2 (conditional, business-impact 観点 — runs only when the diff updates a domain model attribute such as plan_code / role / status, otherwise reports `skip`): 2-stage business side-effect chains like feature-flag revival or auth bypass. Use when finishing self-review of an implementation, before requesting PR review, or when a diff updates a domain model attribute.
 ---
 
 # Review Code Quality
