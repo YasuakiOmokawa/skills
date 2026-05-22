@@ -63,12 +63,15 @@ Q1-Q3 の結果から下表で Reviewer を決定する。**「全 Reviewer」= 
 
 | 状況 | 起動する Reviewer |
 |---|---|
-| Q1 類似機能あり + Q1.1 健全 | anti-pattern-checker のみ |
+| Q1 類似機能あり + Q1.1 健全 + Q2 単一責務 | anti-pattern-checker のみ |
+| Q1 類似機能あり + Q1.1 健全 + Q2 「〜と〜」(分割必要) | anti-pattern-checker + ddd-reviewer |
 | Q1 類似機能あり + Q1.1 不健全 | 全 Reviewer (並列) |
 | Q1 類似なし + 複雑なビジネスルール | ddd-reviewer + anti-pattern-checker |
 | Q1 類似なし + 外部依存あり (API/DB 差替) | hexagonal-reviewer + anti-pattern-checker |
 | Q1 類似なし + 新規設計 (レイヤー検討) | clean-architecture-reviewer + anti-pattern-checker |
 | 複合ケース | 該当する全 Reviewer を並列起動 |
+
+**表の優先順位**: 上から順に評価して最初にマッチした行を採用 (Q1.1 健全行は Q2 単一/分割で 2 行に分割済みなので、Q2 結果で機械的に決まる)。
 
 ### Step 3: Parallel Task Invocation
 
