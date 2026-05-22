@@ -1,6 +1,6 @@
 ---
 name: finalize-plan
-description: Finalizes a confirmed plan by reading AC/MECE results from the analysis file and appending branch, PR-split, and QA procedures to the plan file. Use when the user has completed `/define-acceptance-criteria` + `/mece-plan-review` and is about to move from plan mode into implementation.
+description: Finalizes a confirmed plan by reading AC/MECE results from the analysis file, enumerating per-category QA-IDs (QA-H/E/D/R/M), and appending branch, PR-split, and QA procedures to the plan file. Use when the user has completed `/define-acceptance-criteria` + `/mece-plan-review` and is about to move from plan mode into implementation.
 ---
 
 # finalize-plan
@@ -71,7 +71,7 @@ git checkout -b feature/xxx
 
 ### 手動QA手順
 **環境**: {BASE_URL}（QA 実行時にユーザーから取得）
-**対象AC**: N項目（正常系X / 異常系Y / エッジZ / 非影響W / MECE追加V）
+**対象AC**: N項目（正常系X / 異常系Y / エッジケースZ / 非影響W / MECE追加V）
 [Chrome DevTools MCP で実行可能な手順]
 
 ### 自動QA（テストコード仕様）

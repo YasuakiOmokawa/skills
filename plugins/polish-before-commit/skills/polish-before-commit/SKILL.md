@@ -1,6 +1,6 @@
 ---
 name: polish-before-commit
-description: Polishes changed files before commit/PR by enforcing project conventions, pattern consistency, and impl/spec alignment (incl. Ruby dead-mock removal after delegate/def deletion). Use when finalizing a branch, just before `git commit` or `/create-pr`, or whenever the user says "仕上げて" / "polish" / "コミット前チェック".
+description: Polishes changed files before commit/PR by enforcing project conventions, pattern consistency, and impl/spec alignment (currently Ruby/RSpec dead-mock removal after delegate/def deletion only; TS/JS/Python mock cleanup is out of scope and skipped). Use when finalizing a branch, just before `git commit` or `/create-pr`, or whenever the user says "仕上げて" / "polish" / "コミット前チェック".
 ---
 
 # polish-before-commit

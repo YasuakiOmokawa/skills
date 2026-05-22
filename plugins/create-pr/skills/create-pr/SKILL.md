@@ -1,6 +1,6 @@
 ---
 name: create-pr
-description: Creates a Conventional Commits draft PR from the current branch with template-aware description and labels. Use when the user says "PR を作って" / "draft PR" / "PR 作成して", optionally with `[base-branch]` argument. Runs without confirmation.
+description: Creates a Conventional Commits **draft PR** (always `--draft`, no ready-PR path) from the current branch with template-aware description and labels. Accepts only `[base-branch]` as positional argument; other options (`--draft` toggle / label override / milestone override) are not supported. Use when the user says "PR を作って" / "draft PR" / "PR 作成して". Runs without confirmation.
 ---
 
 カレントブランチから Conventional Commits 形式のドラフト PR を作成する。**ユーザー確認は一切行わず、分析完了後は直接 PR 作成を実行**。
@@ -17,8 +17,9 @@ description: Creates a Conventional Commits draft PR from the current branch wit
 3. **Step 1.5**: ブランチ妥当性検証 (`references/branch-validation.md` 参照)。違反なら **コミット前** に `git switch -c` で新ブランチ切替（コミット後 rename は GitHub API 副作用で PR が CLOSED されるため不可）
 4. **Step 2**: 未コミットファイルがあれば 1 コミット = 1〜3 ファイル粒度で `<type>(<scope>): <日本語要約>` 形式コミット
 5. **Step 3**: `git push -u origin <branch>`
-6. **Step 4-9**: タイトル / 本文 / ラベル生成（後述 Workflows）
-7. **Step 10**: `gh pr create --draft --title ... --body ... --label ... --milestone ... --base [base-branch]`
+6. **Step 4-8**: タイトル / 本文 / ラベル生成（後述 Workflows）
+7. **Step 9 (必須)**: `references/description-style.md` の **[A] 斜め読み / [B] コード由来情報 / [C] 重複・冗長 / [D] AI 臭** 4 観点セルフチェックを必ず実施 (省略禁止、Quick start でもスキップ不可)
+8. **Step 10**: `gh pr create --draft --title ... --body-file ... --label ... --milestone ... --base [base-branch]`
 
 PR URL を表示して完了。
 
@@ -70,16 +71,19 @@ PR URL を表示して完了。
 
 ### Step 10: ドラフト PR 作成
 
+`--body-file` を統一採用 (`--body "$(cat ...)"` 経路は使わない)。`$PR_BODY_FILE` は **`mktemp` でユニークパス生成 + コマンド完了後に削除** (`references/post-create-edit.md` の「固定パス禁止」参照)。固定パス `/tmp/pr-body.md` は過去セッション残骸混入事故源で禁止。
+
 ```bash
+PR_BODY_FILE="$(mktemp -t pr-body-XXXXXX.md)"
+# (本文を $PR_BODY_FILE に書き出した後)
 gh pr create --draft \
   --title "feat(order): 注文確定後の通知機能を追加" \
-  --body "$(cat "$PR_BODY_FILE")" \
+  --body-file "$PR_BODY_FILE" \
   --label "1.Feature development,ai-contribution-level:2,ReleaseLevel-2" \
   --milestone "Untracked" \
   --base develop
+rm -f "$PR_BODY_FILE"
 ```
-
-`--body-file` を選ぶ場合は **`mktemp` でユニークパス生成 + 終了時削除** を厳守 (`references/post-create-edit.md` の「固定パス禁止」参照)。固定パス `/tmp/pr-body.md` は過去セッション残骸混入事故源。
 
 ## Advanced features
 

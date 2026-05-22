@@ -20,6 +20,17 @@ description: Defines acceptance criteria and technical risks for a plan file. Us
 - AC 行頭は controlled label ([references/perspectives.md](references/perspectives.md)) — 自由形式禁止
 - プラン本文に欠落する仕様を AC で仮置きする場合は末尾に `(仕様確定要)`
 
+## Quantitative scaffolding (SSOT)
+
+| 項目 | 値 | 補足 |
+|---|---|---|
+| 観点軸数 | 主軸 3-5 個 (+ observability 1 軸まで例外) | 実効上限 6。observability は上限 5 にカウントしない (`references/selection-rules.md`) |
+| 技術リスク件数 | **3 件固定** | 各リスクは 3 点セット (Step 4 参照)、件数増減は不可 |
+| controlled label | **6 文字以内・名詞のみ** | 表に新規追加する場合も同制約 (`references/perspectives.md`) |
+| 必須セル充填率 | 全セル ≥1 項目 | 空セル = 検討不足、`(仕様確定要)` も項目としてカウント可 |
+
+この表は他 references の数量定義に対する canonical。下位 reference に同義の定義が出る場合はこの表が優先。
+
 ## Quick start
 
 シナリオ: 「users API に role 更新を追加」
