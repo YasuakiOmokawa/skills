@@ -103,6 +103,8 @@ Q1-Q3 の結果から下表で Reviewer を決定する。**「全 Reviewer」= 
 
 Parallel Review 後、Devil's Advocate (DA) で設計判断への反論を生成する。**inline default** モードで main agent 自身が反論を生成し、特定の昇格条件を満たすときのみ subagent dispatch に切り替える。
 
+**実行必須性**: Parallel Review の結果が**全 Reviewer ✅** (問題検出なし) であっても、Step 5 は **必ず走らせる** (skip しない)。理由は、Reviewer が見ていない観点 (運用シナリオ / スケール / 別チーム interface / rollback コスト) を DA が補完するためで、Reviewer 全 ✅ ≠ 「設計に問題なし」ではない。DA で「致命的 0 件」となった場合のみ Step 6「問題なしルート」を選択できる。
+
 #### 用語の区別
 
 | 用語 | 意味 | 適用場面 |

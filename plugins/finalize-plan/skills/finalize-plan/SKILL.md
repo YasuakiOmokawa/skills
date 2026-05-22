@@ -67,6 +67,8 @@ manual-qa-planner と auto-qa-planner は**同じ AC をそれぞれ独立に分
 [MECE追加]:   QA-M-01, QA-M-02, ...  (Mece)
 ```
 
+**0 件カテゴリの扱い**: 該当 AC が 0 件のカテゴリは **QA-ID を発行しない** (例: 非影響確認 0 件なら QA-R-* は生成しない)。Step 3 の出力テンプレで対象 AC 行に `非影響0` と件数のみ表記する (詳細は Step 3 の `0 件カテゴリの表記` 規則を参照)。
+
 ```
 ${ENUMERATED_QA_AC} の生成例:
 - QA-H-01 (正常系): req_form: 本人が PATCH /api/users/123 → 200 OK
