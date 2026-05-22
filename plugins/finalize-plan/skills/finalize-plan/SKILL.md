@@ -80,9 +80,8 @@ ${ENUMERATED_QA_AC} の生成例:
 これを `${ENUMERATED_QA_AC}` 変数として保持し、manual-qa-planner と auto-qa-planner の両方に渡す (各 planner は自前で再分類しない、main agent の分類結果を信頼)。
 
 **Step 1.7 失敗時 (main agent 側 fallback)**:
-- AC セクションが空 / 全項目がカテゴリ不明 / `${AC_CONTENT}` がパース不能 → AskUserQuestion で「AC が分類できません。`/define-acceptance-criteria` を再実行するか、AC を手動で正常系/異常系/エッジ/非影響/[MECE追加] にラベル付けしてください」と確認
-- 一部 AC のカテゴリのみ不明 (例: 5 項目中 1 つが分類不能) → 不明項目を `QA-X-NN` (X = 不明 prefix) で enumerate し、両 planner に「QA-X-* は分類不能項目。可能なら推測してフォローし、Self-report にも明示」と注釈付きで渡す
-- in-context 代替モード時: Step 1.7 を本 agent 内で同等処理し、`${ENUMERATED_QA_AC}` 相当の中間結果を保持してから Step 2A → 2B 相当の処理を逐次適用する
+- AC セクションが空 / 全項目分類不能 → AskUserQuestion で「AC が分類できません。`/define-acceptance-criteria` を再実行するか、AC を手動で正常系/異常系/エッジ/非影響/[MECE追加] にラベル付けしてください」と確認
+- 一部 AC のみ不明 → 不明項目を `QA-X-NN` で enumerate し、両 planner に「QA-X-* は分類不能、推測してフォロー + Self-report 明示」と注釈付与
 
 ### Step 2A: branch-planner → pr-splitter を直列実行
 
@@ -150,16 +149,10 @@ ${MECE_CONTENT}
 - Step 2B 内では manual-qa + auto-qa を**同一メッセージ内で並列起動**
 - 全体として「直列 (branch → pr-splitter) → 並列 (manual-qa + auto-qa)」の 1 直列 + 2 並列構成
 
-**Task ツールが利用不可な環境** (既に subagent として動作中 / tool が deferred / dispatch 権限なし):
-1. 4 つの agent 定義ファイル (`agents/branch-planner.md`, `agents/pr-splitter.md`, `agents/manual-qa-planner.md`, `agents/auto-qa-planner.md`) を Read で順次読み込む
-2. 本 agent 自身が各 agent の判定基準・出力フォーマットを適用し、各サブセクション (ブランチ戦略 / PR 分割 / 手動 QA / 自動 QA) を内部処理として生成する (中間出力をユーザーへ出さない)
-3. Step 3 の「実装準備」追記時に、セクションの**冒頭 1 行**として以下を必ず挿入する:
-
-   ```
-   > **備考**: 本実行は Task ツール利用不可のため in-context 代替モードで実行 (4 agent 定義をメイン agent が逐次適用)。
-   ```
-
-   これにより並列 dispatch との実行履歴の透明性を確保する。AC トレーサビリティ・PR ガイドライン (≤2 commits / ≤5 files) は通常モードと同じく守ること。
+**Task ツールが利用不可な環境** (subagent として動作中 / tool deferred / dispatch 権限なし):
+1. 4 agent 定義 (`agents/{branch-planner,pr-splitter,manual-qa-planner,auto-qa-planner}.md`) を Read で順次読込
+2. 本 agent 自身が各 agent の判定基準・出力フォーマットを適用し、各サブセクション (ブランチ戦略 / PR 分割 / 手動 QA / 自動 QA) を内部生成 (中間出力なし)
+3. Step 3 の「実装準備」追記時に、`## 実装準備` 見出しの**直下 1 行目**として `> **備考**: 本実行は Task ツール利用不可のため in-context 代替モードで実行 (4 agent 定義をメイン agent が逐次適用)。` を必ず挿入。AC トレーサビリティ・PR ガイドライン (≤2 commits / ≤5 files) は通常モードと同じ
 
 ### Step 3: 結果統合
 
