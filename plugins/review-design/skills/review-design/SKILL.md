@@ -1,11 +1,24 @@
 ---
 name: review-design
-description: Reviews architecture placement and pattern decisions before code is written, runs parallel reviewers (DDD / Hexagonal / Clean Arch / anti-pattern) and a mandatory Devil's Advocate critique, and rewrites the plan file directly when fatal issues are found. Use when starting a new feature, adding a file or module, deciding "where should this code live", or when the user requests a design review with `/review-design`.
+description: Use when starting a new feature, adding a file or module, deciding "where should this code live", or when the user requests a design review with `/review-design`.
 ---
 
 # review-design
 
 実装前の配置・パターン判定を Q1-Q3 で選択された reviewer subset (anti-pattern 必須 + DDD / Hexagonal / Clean Arch 選択) で並列レビュー → 必須 Devil's Advocate critique → 致命指摘があれば plan ファイルを直接書き換える。
+
+## Task complexity tier (skip / scope decision)
+
+| Row | 状況 | アクション |
+|---|---|---|
+| 1 | 1 ファイル <50 LoC かつ既存 class 内部 method の追加・修正のみ かつ配置決定済み | **skip** (本 skill 不要) |
+| 2 | ファイル追加 or 配置に迷う or 既存パターン拡張 | Quick Start (Q1-Q3) → matrix で reviewer subset 決定 |
+| 3 | 新規 module / 複数 file 跨り / domain 跨り | Quick Start (Q1-Q3) でも **all 4 reviewers を default** |
+| 4 | auth / billing / payment / migration / security (= **territory**, not keyword match) | 配置が自明でも本 skill 実行 + DA を subagent dispatch |
+
+**Row 1 と Row 4 の precedence**: territory (semantic) 判定を優先 — substring match による誤 escalate を避ける。read-only predicate / getter (例: `def admin?; role == 'admin'; end`) のような **既存属性に対する判定 method 追加** は Row 4 territory に該当せず Row 1 で **skip 可**。新たな write path / 新規ガード (`before_action :require_admin!` 等) / 新規 callback (after_save で session/token 操作) を含む場合は Row 4 で **強制 exec**。判定不能なら Quick Start に進む。
+
+**Row 3 と Row 4 の compound**: 両 Row が同時に該当する場合 (例: 新規 module + auth territory) は **superset を採用** — Row 3 の "all 4 reviewers default" と Row 4 の "DA subagent dispatch 強制" を**両方適用**する。reviewer 選択は all 4、DA は subagent (inline ではない)。Row 4 の存在が DA mode を inline → subagent に上書きする。
 
 ## Quick Start: 3 questions (Q1-Q3)
 

@@ -1,6 +1,6 @@
 ---
 name: finalize-plan
-description: Finalizes a confirmed plan by reading AC/MECE results from the analysis file and appending branch, PR-split, and QA procedures to the plan file. Use when the user has completed `/define-acceptance-criteria` + `/mece-plan-review` and is about to move from plan mode into implementation.
+description: Use when the user has completed `/define-acceptance-criteria` + `/mece-plan-review` and is about to move from plan mode into implementation.
 ---
 
 # finalize-plan
@@ -10,6 +10,18 @@ description: Finalizes a confirmed plan by reading AC/MECE results from the anal
 ## Arguments
 
 - `$ARGUMENTS`: プランファイルパス (省略時は会話コンテキストの `Plan File Info:` から取得、見つからなければ確認)
+
+## Task complexity tier
+
+`<plan>.analysis.md` 冒頭の `### Tier` を継承し、agent の起動範囲を変える:
+
+| Tier | AC 件数 | 想定 PR 数 | branch-planner | pr-splitter | manual-qa-planner | auto-qa-planner |
+|---|---|---|---|---|---|---|
+| **lite** | ≤5 | 1 | ✓ (簡略) | skip | inline (1 セクション統合) | skip |
+| **standard** (default) | 6-15 | 2-3 | ✓ | ✓ | ✓ | ✓ |
+| **deep** | >15 / auth / billing / payment / migration | 4+ | ✓ (詳細) | ✓ (詳細) | ✓ | ✓ |
+
+リスク領域は AC 件数によらず **deep**。lite では Step 1.7 の QA-ID enumerate を簡略形 (`QA-N-01`, `QA-N-02`... の通し番号) に縮約してよい。
 
 ## Quick start
 
@@ -44,6 +56,8 @@ description: Finalizes a confirmed plan by reading AC/MECE results from the anal
 ```
 
 **0 件カテゴリは ID を発行しない** が Step 3 の対象 AC 行では `0/0` 件数表記を必ず残す (詳細・生成例・fallback は [references/qa-id-enumeration.md](references/qa-id-enumeration.md))。
+
+**[MECE追加] のカウント**: `[MECE追加]` / `[MECE追加 変更]` タグ付き AC は base 4 カテゴリ (正常系 / 異常系 / エッジケース / 非影響確認) **とは別に** QA-M-NN を採番し、`対象AC` 件数の総数に**加算**して扱う。例: base 8 件 (3/2/2/1) + MECE追加 1 件 → 対象AC `9項目 (正常系3 / 異常系2 / エッジケース2 / 非影響1 / MECE追加1)`。
 
 ### Step 2A → 2B: Agent 実行 (1 直列 + 2 並列)
 

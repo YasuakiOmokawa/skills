@@ -1,11 +1,25 @@
 ---
 name: create-pr
-description: Creates a Conventional Commits draft PR from the current branch with template-aware description and labels. Use when the user says "PR を作って" / "draft PR" / "PR 作成して", optionally with `[base-branch]` argument. Runs without confirmation.
+description: Use when the user says "PR を作って" / "draft PR" / "PR 作成して", optionally with `[base-branch]` argument. Runs without confirmation.
 ---
 
 # create-pr
 
 カレントブランチから Conventional Commits 形式のドラフト PR を作成する。**ユーザー確認は一切行わず、分析完了後は直接 PR 作成を実行**。常に `--draft` (ready-PR path なし)、positional argument は `[base-branch]` のみ。
+
+## Task complexity tier
+
+| Tier | 判定 | Step 9 セルフチェック | その他 |
+|---|---|---|---|
+| **lite** | 1 commit, <50 LoC, single domain, 既存 pattern 踏襲 | [A] 斜め読み + [D] AI 臭 の 2 観点 | Step 4b (周辺コード比較) 省略可 |
+| **standard** (default) | 2-5 commits, multi-file, single domain | [A] + [B] + [C] + [D] の 4 観点 (現状) | Step 1-10 を順次実行 |
+| **deep** | multi-domain / breaking change / 6+ commits / migration | 4 観点 + 関連 PR 検索 + 既存 issue リンク | Step 4c で plan 全展開、Pre-work 本質リストを **最低 5 点・上限 7 点** に拡張 (5 に届かない場合は domain ごと / PR チェーン段階ごと / migration / observability / rollout / rollback の観点で分解して 5 点まで埋める) |
+
+リスク領域 (auth / billing / payment / migration / security config) は LoC・commit 数によらず **deep**。lite でも `--draft` は維持 (ready PR path なし、現状維持)。
+
+**deep tier の追加規約**:
+- **description-style.md との優先順位**: `references/description-style.md` の「本質リスト 5+ で PR スコープ広すぎ警告」は **standard tier の既定**。**deep tier では本 tier 表 (5-7) が優先**し、5-7 点は scope 過大の兆候ではなく分解の正常結果。standard で 5 点に達した PR は scope 過大の兆候、deep は正常運用と読み分ける。
+- **BREAKING CHANGE footer 位置**: PR テンプレに専用 footer 見出しがあればそこ。無ければ本文末尾の独立 footer として `BREAKING CHANGE: <description>` を「Revert 手順」見出しの**直前**に配置 (Conventional Commits の footer 慣例。`## やらなかったこと` の直後・本文セクション群の外側)。テンプレ内の `<!-- ... -->` コメントは削除しない。
 
 ## Arguments
 
