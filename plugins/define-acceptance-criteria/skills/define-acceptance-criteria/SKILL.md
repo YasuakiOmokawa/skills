@@ -1,6 +1,6 @@
 ---
 name: define-acceptance-criteria
-description: Defines acceptance criteria and technical risks for a plan file. Use when in plan mode before /mece-plan-review, when the user asks to write AC for a plan, or when an AC matrix is needed as MECE input. Writes detail to `<plan>.analysis.md` and a one-line summary to the plan file tail.
+description: Use when in plan mode before /mece-plan-review, when the user asks to write AC for a plan, or when an AC matrix is needed as MECE input.
 ---
 
 # define-acceptance-criteria
@@ -24,12 +24,12 @@ description: Defines acceptance criteria and technical risks for a plan file. Us
 
 | 項目 | 値 | 補足 |
 |---|---|---|
-| 観点軸数 | 主軸 3-5 個 (+ observability 1 軸まで例外) | 実効上限 6。observability は上限 5 にカウントしない (`references/selection-rules.md`) |
-| 技術リスク件数 | **3 件固定** | 各リスクは 3 点セット (Step 4 参照)、件数増減は不可 |
-| controlled label | **既定 label をそのまま使用** (名詞のみ・短く保つ) | 既定 label (`permission` / `observability` / `data_compat` / `req_form` 等) は文字数の制約外 = grandfathered。**`references/perspectives.md` の Step A 既定表 + Step B 汎用候補軸 (`flag_removal` / `non_invasive` / `dep_loc` / `layer` / `contract` 等) も既定扱い**。完全新規 label を追加する場合のみ「12 文字以内・名詞のみ」が目安 |
+| 観点軸数 | 主軸 3-5 個 (+ observability 1 軸まで例外) | 実効上限 6。observability は上限 5 にカウントしない |
+| 技術リスク件数 | **3 件固定** | 各リスクは 3 点セット (Step 4)、件数増減不可 |
+| controlled label | **既定 label をそのまま使用** | 既定 label (`permission` / `observability` / `data_compat` / `req_form` 等、`references/perspectives.md` の Step A + Step B 汎用候補軸 `flag_removal` / `non_invasive` / `dep_loc` / `layer` / `contract` 等) は文字数制約外 = grandfathered。完全新規 label を追加する場合のみ「12 文字以内・名詞のみ」が目安 |
 | 必須セル充填率 | 全セル ≥1 項目 | 空セル = 検討不足、`(仕様確定要)` も項目としてカウント可 |
 
-この表は他 references の数量定義に対する canonical。下位 reference に同義の定義が出る場合はこの表が優先。
+この表は他 references の数量定義に対する canonical。
 
 ## Quick start
 
@@ -60,7 +60,11 @@ description: Defines acceptance criteria and technical risks for a plan file. Us
 
 [references/perspectives.md](references/perspectives.md) の「変更種別 → デフォルト観点軸」表から **3-5 個**選ぶ (下限 3 / 上限 5)。複数主種別での主軸採用 / 副作用軸 1 つ追加 (併用可) / observability 特例 / 表に無い場合の汎用候補軸 (Step B) などの運用詳細は [references/selection-rules.md](references/selection-rules.md) を参照。選定理由を分析ファイル `### 検討観点` に 1 文ずつ明記。
 
-**SSOT 表を優先**: observability を含める場合の実効上限は **6 軸** (主軸 5 + observability 1)。Step 2 の「3-5 個」は **主軸の範囲**であり、observability 例外 1 軸を別枠で加算可能。詳細は SKILL.md 冒頭 Quantitative scaffolding 表を参照。主種別が 3 種類以上の場合は **副作用軸を 1 つに絞る** (合計が上限を超えるのを避けるため)。
+**主軸 / 副作用軸の deterministic classifier**: 変更種別 → デフォルト観点軸表の該当 type 行に現れた controlled label は **主軸**、Step B 汎用候補軸 (`flag_removal` / `non_invasive` / `dep_loc` / `layer` / `contract` 等) と `observability` は **副作用軸**。複数主種別共存時は各 type の最も中心的な 1 label を 1 主軸として採用 (= 副軸格上げ禁止)。
+
+**Cross-cutting behaviors の label**: retry / timeout / circuit-breaker などの cross-cutting 挙動が複数 change-type で出現する場合、変更種別表の特定行に閉じ込めず Step B 汎用候補軸として扱う (例: api_change の同期エンドポイントで「リトライ 3 回」なら `idempotency` を Step B 汎用候補軸として副作用軸採用)。
+
+observability を含める場合の実効上限は **6 軸** (主軸 5 + observability 1)。主種別が 3 種類以上の場合は **副作用軸を 1 つに絞る** (合計が上限を超えるのを避けるため)。
 
 ### Step 3: 受け入れ条件の生成
 
@@ -84,7 +88,7 @@ description: Defines acceptance criteria and technical risks for a plan file. Us
 
 ### Step 6: プランファイル末尾サマリー
 
-プランファイル末尾の `## 品質検証` セクションに 1 行サマリーを追記 (既存内容は変更しない)。**セクションが存在しない場合**は `---` 区切り + `## 品質検証` ヘッダから新規作成する (既存テキストの末尾に追記):
+プランファイル末尾の `## 品質検証` セクションに 1 行サマリーを追記 (既存内容は変更しない)。**セクションが存在しない場合**は `---` 区切り + `## 品質検証` ヘッダから新規作成:
 
 ```markdown
 ---

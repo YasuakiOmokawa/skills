@@ -1,13 +1,13 @@
 ---
 name: review-code-quality
-description: Detects two tiers of issues. Tier 1 (always-on, 3 観点): design-level cohesion / coupling / readability issues that RuboCop/ESLint miss. Tier 2 (conditional, business-impact 観点 — runs only when the diff updates a domain model attribute such as plan_code / role / status, otherwise reports `skip`): 2-stage business side-effect chains like feature-flag revival or auth bypass. Use when finishing self-review of an implementation, before requesting PR review, or when a diff updates a domain model attribute.
+description: Detects design-level issues that RuboCop/ESLint miss, and 2-stage business side-effect chains (feature-flag revival / auth bypass) introduced by changes that update domain model attributes (plan_code / role / status, etc.). Use when finishing self-review of an implementation, before requesting PR review, or when a diff updates a domain model attribute.
 ---
 
 # Review Code Quality
 
 **提案のみ行い、自動修正は行わない。**
 
-4 観点 (凝集度 / 結合度 / 可読性 / 業務副作用 chain) を専用 agent で分析し、統合レポートを出力する。
+4 観点を専用 agent で分析し統合レポートを出力する。Tier 1 (常時) = 凝集度 / 結合度 / 可読性 の設計レベル問題 (RuboCop/ESLint で漏れるもの)、Tier 2 (条件付き) = 業務副作用 chain (feature-flag revival / auth bypass 等) で、対象 diff に domain model attribute (`plan_code` / `role` / `status` 等) の更新が含まれる場合のみ実行し、無ければ `skip` 報告。
 
 ## Quick start
 
@@ -24,6 +24,8 @@ description: Detects two tiers of issues. Tier 1 (always-on, 3 観点): design-l
 ### Step 1: 対象ファイルの特定
 
 引数指定時は `$ARGUMENTS` を使用。なければ `git diff --name-only origin/develop...HEAD` で取得。0 件なら終了。
+
+**ファイル数の defining unit**: `git diff --name-only` の行数で確定する。**test 未更新で diff に出ない spec ファイルは count しない** (impl 2 + spec 未更新 = 2 ファイル → main thread 順次)。spec の coverage gap (新規 attribute 値 / 新規 branch に対する spec context 不在) は coupling-analyzer の責務で別途検出される ([references/coupling.md](references/coupling.md) §spec-coverage-gap)。
 
 ### Step 2: Quality Analysis
 
@@ -42,10 +44,10 @@ business-impact-analyzer の **skip 報告も統合レポートに残す**。
 
 手順 (根本原因の特定 → 優先度判定 → レポート出力)、重大度表、出力ルール (アイコンは該当時のみ / サマリーは 0 件含めて全表示 / 指摘は `/abs/path:line_number` 形式) とレポートテンプレは [references/integration-output.md](references/integration-output.md) を参照。
 
-## Advanced features
+## Advanced
 
-- 実行モード (並列 / main thread fallback) と Task 自己判定、指摘件数ルール: [references/execution.md](references/execution.md)
-- 重大度・統合手順・レポート出力ルール: [references/integration-output.md](references/integration-output.md)
+- [references/execution.md](references/execution.md) — 実行モード (並列 / main thread fallback) と Task 自己判定、指摘件数ルール
+- [references/integration-output.md](references/integration-output.md) — 重大度・統合手順・レポート出力ルール
 - 各観点の検出基準: [references/cohesion.md](references/cohesion.md) / [references/coupling.md](references/coupling.md) / [references/readability.md](references/readability.md) / [references/business-impact.md](references/business-impact.md)
 
 ## 併用推奨 skill
