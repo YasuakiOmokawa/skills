@@ -1,6 +1,6 @@
 ---
 name: dry-ssot-text
-description: Use when an AI-generated document (plan / design doc / RFC / PR description) has grown long with the same concept explained in multiple places and needs consolidation to a single source of truth while preserving navigation aids like TOC, progress tables, and checklists.
+description: Use when an AI-generated document (plan / design doc / RFC / PR description) has grown long with the same concept explained in multiple places.
 ---
 
 # DRY/SSOT Text Refactor
@@ -9,11 +9,16 @@ AI 生成の長文 (plan / design doc / RFC / PR / README) で同一概念が複
 
 **核心原則**: 「同じ事実を 2 度書かない」だが「ナビゲーション目的の重複は別物」。
 
-## When NOT to use
+## Task complexity tier
 
-- 重複が 2 箇所以下 (集約しても 1 箇所減るだけでメリット薄い)
-- **外向きの説明資料** (顧客向けドキュメント、ブログ記事) で、各セクションが自己完結すべき場合
-- API リファレンスのような **網羅的列挙が目的** の文書
+| Tier | 判定 | アクション |
+|---|---|---|
+| **skip** | 文書 <100 行 / 重複箇所数 ≤2 / 外向き説明資料 (顧客向け・ブログ) / API ref のような網羅列挙文書 | **skip** (集約効果薄) |
+| **lite** | 100-300 行, 重複 3-5 箇所 | dry-run 省略、直接 Edit 可 (4. の dry-run レポートは出力しない) |
+| **standard** (default) | 300+ 行 or 共有前文書 or 重複 6+ 箇所 | dry-run レポート必須 → 承認後 Edit |
+| **deep** | 600+ 行 / 複数 doc 跨り (plan + design doc 一致) / 既存 cross-reference に依存 | dry-run + 各 reference 先のアンカー疎通検証 + 適用後の `grep -c` 重複ゼロ確認 |
+
+**tier 名規約**: 4 tier (skip / lite / standard / deep) は本 skill 内の判定軸であり、他 skill の "standard" / "lite" 命名と直接対応しない (本 skill では 300+ 行が standard、100-300 行は lite)。other skill から「standard median な文書」と呼ばれる 200 行・3 箇所重複ケースは本 skill では **lite** tier として処理する。
 
 ## Core Pattern: 必要重複 vs 不要重複
 

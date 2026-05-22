@@ -1,17 +1,27 @@
 ---
 name: polish-before-commit
-description: Polishes changed files before commit/PR by enforcing project conventions, pattern consistency, and impl/spec alignment (incl. Ruby/RSpec dead-mock removal after delegate/def deletion; TS/JS/Python mock cleanup is skipped). Use when finalizing a branch, just before `git commit` or `/create-pr`, or whenever the user says "仕上げて" / "polish" / "コミット前チェック".
+description: Use when finalizing a branch, just before `git commit` or `/create-pr`, or whenever the user says "仕上げて" / "polish" / "コミット前チェック".
 ---
 
 # polish-before-commit
 
 **提案だけでなく、自動修正まで行う。** プロジェクト規約・パターン一貫性・impl/spec 整合 (現状 Ruby/RSpec の delegate/def 撤去後 dead-mock 削除のみ、TS/JS/Python は範囲外で skip) を点検し、Step 4 → 5 → 6 → 7 は順序固定で再評価ループ禁止。
 
+## Task complexity tier
+
+| Tier | 判定 | 実行 Step |
+|---|---|---|
+| **lite** | 1 ファイル <30 LoC, 規約 hit 0, Ruby delegate/def 撤去なし | Step 5 (lint) + Step 8 (final review) のみ |
+| **standard** (default) | 2-5 ファイル, 規約 hit 1-3 | Step 1-5 + Step 8 (Step 6/7 は条件 hit 時のみ) |
+| **deep** | 6+ ファイル / 規約 hit 4+ / Ruby delegate or def 撤去あり / multi-language | 全 Step (1-8) |
+
+**Step 6 (dead-mock 削除)** は Ruby PR で `delegate :X` / `def X` 撤去を含む場合のみ実行 (tier 問わず)。リスク領域 (auth / billing / payment / migration) は LoC によらず **deep**。
+
 ## Quick start
 
 1. 引数 `$ARGUMENTS` あり → そのファイルを対象。なし → `git diff --name-only origin/${BASE_BRANCH:-develop}...HEAD` で取得 (0 件なら終了)。
-2. 規約を収集 (下記 Workflow Step 1) → Step 2-8 を順に実行。
-3. 各 Step の結果を**文言バリアント表に厳密一致**させた最終レポートを返す (silent skip 禁止)。
+2. 上記 tier 表で実行範囲を確定 → 規約を収集 (下記 Workflow Step 1) → tier 対応 Step を順に実行。
+3. 各 Step の結果を**文言バリアント表に厳密一致**させた最終レポートを返す (silent skip 禁止、tier による省略は `[<Step>: tier-{lite,standard,deep} により省略]` を 1 行明示)。
 
 ## Workflow
 

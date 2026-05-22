@@ -1,6 +1,6 @@
 ---
 name: review-code-quality
-description: Detects design-level issues that RuboCop/ESLint miss, and 2-stage business side-effect chains (feature-flag revival / auth bypass) introduced by changes that update domain model attributes (plan_code / role / status, etc.). Use when finishing self-review of an implementation, before requesting PR review, or when a diff updates a domain model attribute.
+description: Use when finishing self-review of an implementation, before requesting PR review, or when a diff updates a domain model attribute (`plan_code` / `role` / `status` 等).
 ---
 
 # Review Code Quality
@@ -8,6 +8,16 @@ description: Detects design-level issues that RuboCop/ESLint miss, and 2-stage b
 **提案のみ行い、自動修正は行わない。**
 
 4 観点を専用 agent で分析し統合レポートを出力する。Tier 1 (常時) = 凝集度 / 結合度 / 可読性 の設計レベル問題 (RuboCop/ESLint で漏れるもの)、Tier 2 (条件付き) = 業務副作用 chain (feature-flag revival / auth bypass 等) で、対象 diff に domain model attribute (`plan_code` / `role` / `status` 等) の更新が含まれる場合のみ実行し、無ければ `skip` 報告。
+
+## Task complexity tier
+
+| Tier | 判定 | 実行範囲 |
+|---|---|---|
+| **lite (skip)** | 1 ファイル <50 LoC かつ pure typo / copy / comment / lint-only / config 値変更のみ | **skip** (本 skill 不要) |
+| **standard** (default) | 2 ファイル以下 (≤2) | main thread 順次 4 観点 |
+| **deep** | 3 ファイル以上 (>2) | 4 agent 並列 |
+
+**business-impact-analyzer (Tier 2)** は domain model attribute (`plan_code` / `role` / `status` 等) の更新を含む diff のみ実行。それ以外は skip 報告で完了。リスク領域 (auth / billing / payment / migration) は LoC によらず **deep** + business-impact-analyzer 必須。
 
 ## Quick start
 

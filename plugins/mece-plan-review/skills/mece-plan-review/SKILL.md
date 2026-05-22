@@ -1,6 +1,6 @@
 ---
 name: mece-plan-review
-description: Validates MECE completeness of acceptance criteria in an analysis file from 4 viewpoints — BB Analyst (spec), WB Analyst (code), Wiki Researcher (Devin), Fresh Red Team — to detect missing use cases, technical gaps, and stand-offs. Use when AC is already defined in the analysis file via /define-acceptance-criteria and MECE verification is required before implementation.
+description: Use when AC is already defined in the analysis file via /define-acceptance-criteria and MECE verification is required before implementation.
 ---
 
 # MECE Plan Review
@@ -13,6 +13,26 @@ description: Validates MECE completeness of acceptance criteria in an analysis f
 2. 上流は `/define-acceptance-criteria`。分析ファイルに `## 受け入れ条件` が無ければ**即中断** (検証ターゲット不在)
 3. 出力先: 分析ファイル (全結果) + プランファイル (`## 品質検証` に 1 行)
 4. TodoWrite で Step 0 / 1 / 2 / 3-1〜3-4 を進捗管理する
+
+## Task complexity tier
+
+`${ENUMERATED_AC}` の件数で tier を判定し、Analyst / Red Team の実行形態を変える:
+
+| Tier | AC 件数 | Analyst | Fresh Red Team |
+|---|---|---|---|
+| **lite** | ≤5 件 | main agent 内で BB+WB を統合 inline 実行 (Wiki Researcher 省略可) | skip (Critical 候補 0 で確定) |
+| **standard** (default) | 6-15 件 | 3 並列 Analyst (BB / WB / Wiki Researcher) | Critical 候補 ≥1 なら起動 |
+| **deep** | >15 件 / auth / billing / payment / migration | 3 並列 Analyst | 必須起動 |
+
+`<plan>.analysis.md` 冒頭の `### Tier` (define-AC が記録) を継承。リスク領域は AC 件数によらず強制的に **deep**。
+
+**lite-mode inline 実行手順** (Step 1 / Step 2 の代替):
+1. main agent が `${ENUMERATED_AC}` を inline review し、以下 2 視点を統合した analysis を産出:
+   - **BB 視点**: 仕様 / カレントリポ wiki / 一般知識 から欠落 use case を 1-3 件抽出 (コード参照禁止)
+   - **WB 視点**: 変更ファイル diff を Read し技術ギャップを 1-3 件抽出 (仕様参照禁止)
+2. Wiki Researcher / Fresh Red Team は skip (Critical 候補 0 で確定する設計)
+3. 出力は標準と同じ Step 3 形式 (分析ファイル末尾セクション + プラン 1 行サマリー) を採用
+4. lite 報告では `Critical: 0` を確定値として 1 行サマリーに記載 (Critical ≥1 が出現したら自動的に standard tier へ格上げ判定)
 
 ## Core rules (絶対に守る)
 

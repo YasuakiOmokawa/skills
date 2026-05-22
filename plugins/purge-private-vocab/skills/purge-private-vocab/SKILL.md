@@ -1,6 +1,6 @@
 ---
 name: purge-private-vocab
-description: Use after generating PR description, Jira ticket, design doc, RFC, or other reader-facing text from a local plan/spec file, to detect and rewrite vocabulary that exists only in the source and would confuse readers without it. Triggers when output of /create-pr, Jira create, design doc draft, or similar derives from a local plan.
+description: Use after generating PR description, Jira ticket, design doc, RFC, or other reader-facing text from a local plan/spec file, when readers don't share the source plan.
 ---
 
 # Purge Private Vocabulary
@@ -9,11 +9,19 @@ description: Use after generating PR description, Jira ticket, design doc, RFC, 
 
 **核心原則**: 「読者が source plan を持っていない前提で読み下せるか」。書き手 (AI 自身) が plan を読んだ状態で書くと無意識に plan 内造語を持ち込む。
 
-## When NOT to use
+## Task complexity tier
 
-- target が plan そのもの (内部設計ノート、自分用メモ)
-- 読者全員が plan を読んでいる前提のチーム内資料
-- API リファレンスなど語彙が codebase に直接マップされ、読者が grep で辿れる文書
+| Tier | 判定 | アクション |
+|---|---|---|
+| **lite (skip)** | target = plan そのもの / 読者全員が plan 共有済のチーム内資料 / API ref (codebase 直 map) | **skip** |
+| **lite** | target ≤300 字 or plan-only 語ヒット ≤2 | 1-pass 直接修正 (dry-run レポート省略、Step 4 飛ばして Step 5 のみ) |
+| **standard** (default) | 中規模 doc (PR description / Jira description 等、300-2000 字) | Step 1-5 全実行、dry-run レポート提示 → 承認後 Edit |
+| **deep** | design doc / RFC / 公開資料 / 2000+ 字 | dry-run + 適用後の再読検証必須 + heuristics-and-pitfalls.md 全件チェック + 下記 **deep 必須前置**を Step 1 で実施 |
+
+**deep 必須前置** (Step 1 の入力収集を拡張):
+1. **target の文構造を直読み**: `**用語**: 説明` のような Label vs Body 構造かを目視確認し、Label vs Body 分離ルートの適用可否を Step 3 までに確定する
+2. **AC-* / Critical-* / RFC-* 等の ID 紐付け**: target に登場する全 ID (`AC-7`, `Critical-A` 等) を source plan / analysis ファイルから 1:1 で索引し、各 ID の元内容を「展開」または「文ごと削除」のどちらにするか Step 4 提案レポートに明記する
+3. **layer label (α/β/γ 層 等) の対応コンポーネント名解決**: source plan から各 layer の実コンポーネント名 (Web / Service / Persistence 等) を引き、推測補完にせず実値で言い換える
 
 ## Core Pattern: 3 分類
 

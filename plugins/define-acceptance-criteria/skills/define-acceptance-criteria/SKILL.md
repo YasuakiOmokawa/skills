@@ -20,16 +20,28 @@ description: Use when in plan mode before /mece-plan-review, when the user asks 
 - AC 行頭は controlled label ([references/perspectives.md](references/perspectives.md)) — 自由形式禁止
 - プラン本文に欠落する仕様を AC で仮置きする場合は末尾に `(仕様確定要)`
 
+## Task complexity tier
+
+実行前に変更規模を判定 → tier を選択 → 該当する scope で AC を作成する:
+
+| Tier | 判定 (OR で 1 つ該当) | 観点軸数 | 必須セル数 | 技術リスク |
+|---|---|---|---|---|
+| **lite** | 1 ファイル <50 LoC / pure UI・copy・typo・comment / lint-only / config 値変更のみ | 1 軸 | 3 セル | 0-1 件 (省略可) |
+| **standard** (default) | 2-5 ファイル / 中規模 feature / 単一 domain | 3 軸 | 9 セル | 3 件 |
+| **deep** | 6+ ファイル / multi-domain / auth・billing・payment・DB migration・security config | 5 軸 | 15 セル | 3-5 件 |
+
+**リスク領域** (auth / billing / payment / DB migration / security config) は LoC によらず強制的に **deep**。判定不能なら **standard**。`<plan>.analysis.md` 冒頭の `### Tier` に判定結果と理由を 1 行記録 (例: `Tier: standard (3 files, single domain)`)。
+
 ## Quantitative scaffolding (SSOT)
 
-| 項目 | 値 | 補足 |
-|---|---|---|
-| 観点軸数 | 主軸 3-5 個 (+ observability 1 軸まで例外) | 実効上限 6。observability は上限 5 にカウントしない |
-| 技術リスク件数 | **3 件固定** | 各リスクは 3 点セット (Step 4)、件数増減不可 |
-| controlled label | **既定 label をそのまま使用** | 既定 label (`permission` / `observability` / `data_compat` / `req_form` 等、`references/perspectives.md` の Step A + Step B 汎用候補軸 `flag_removal` / `non_invasive` / `dep_loc` / `layer` / `contract` 等) は文字数制約外 = grandfathered。完全新規 label を追加する場合のみ「12 文字以内・名詞のみ」が目安 |
-| 必須セル充填率 | 全セル ≥1 項目 | 空セル = 検討不足、`(仕様確定要)` も項目としてカウント可 |
+| 項目 | lite | standard | deep |
+|---|---|---|---|
+| 観点軸数 | 1 軸 | 3 軸 (+ observability 1 軸まで例外) | 5 軸 |
+| 必須セル数 | 3 セル | 9 セル | 15 セル |
+| 技術リスク件数 | 0-1 件 | 3 件固定 | 3-5 件 |
+| 全 tier 共通 | controlled label (`permission` / `observability` / `data_compat` / `req_form` 等) を使用。完全新規 label は 12 文字以内・名詞のみ。`(仕様確定要)` も項目としてカウント可 |
 
-この表は他 references の数量定義に対する canonical。
+この表は他 references の数量定義に対する canonical。observability 軸は standard/deep の上限にカウントしない。
 
 ## Quick start
 
