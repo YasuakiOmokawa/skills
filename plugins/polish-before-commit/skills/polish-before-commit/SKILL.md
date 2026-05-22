@@ -1,179 +1,98 @@
 ---
 name: polish-before-commit
-description: コミット前やPR作成前に、プロジェクト規約への準拠・パターン一貫性・実装/spec 整合性 (Ruby の delegate / def 撤去後に残る dead mock の検出と削除を含む) を確認・修正したい時に使用。
+description: Polishes changed files before commit/PR by enforcing project conventions, pattern consistency, and impl/spec alignment (incl. Ruby dead-mock removal after delegate/def deletion). Use when finalizing a branch, just before `git commit` or `/create-pr`, or whenever the user says "仕上げて" / "polish" / "コミット前チェック".
 ---
 
-# My Code Polish
+# polish-before-commit
 
-**提案だけでなく、自動修正まで行う。**
+**提案だけでなく、自動修正まで行う。** Step 4 → 5 → 6 → 7 は順序固定、再評価ループ禁止。
 
-## Arguments
+## Quick start
 
-- `$ARGUMENTS`: リファクタ対象のファイルパス（省略可）
-  - 指定あり: 指定されたファイルのみをリファクタ
-  - 指定なし: `git diff --name-only origin/develop...HEAD` で取得。0件なら終了
+1. 引数 `$ARGUMENTS` あり → そのファイルを対象。なし → `git diff --name-only origin/${BASE_BRANCH:-develop}...HEAD` で取得 (0 件なら終了)。
+2. 規約を収集 (下記 Workflow Step 1) → Step 2-8 を順に実行。
+3. 各 Step の結果を**文言バリアント表に厳密一致**させた最終レポートを返す (silent skip 禁止)。
 
 ## Workflow
 
-### 1. プロジェクト規約の収集
-
-以下のコマンドでプロジェクト内の規約ファイルを列挙し、Read で全件読み込む:
+### 1. 規約の収集
 
 ```bash
 find . -maxdepth 4 -name "CLAUDE.md" -type f 2>/dev/null
 find . -maxdepth 5 -path "*/.claude/rules/*.md" -type f 2>/dev/null
 ```
 
-ユーザーのグローバル規約 (`~/.claude/CLAUDE.md`) も読み込む。
+加えて `~/.claude/CLAUDE.md` と `~/.claude/rules/*.md` も Read。抽出対象: コーディング規約 / 命名 / 禁止事項 / 推奨パターン / コメント原則。0 件なら以降の各ステップのフォールバック (スキップ + 文言明示) に従う。
 
-抽出対象:
-- コーディング規約、命名規則、禁止事項、推奨パターン、コメント記載原則
+### 2. 対象ファイル確定 / 3. 処理方式
 
-規約ファイルが 0 件、または対象テーマ（命名・エラーハンドリング・コメント等）の記載が無い場合は、該当ステップでのフォールバック挙動を各ステップの指示に従う（下記ステップ 7 参照）。
+Step 2 は Quick start の通り。Step 3: ファイル ≤ 5 は main thread で直接処理、> 5 かつ複数言語混在は `subagent_type: "general-purpose"` で並列 (規約・対象ファイル・`references/pattern-consistency.md` を渡す)。
 
-### 2. 変更ファイルの特定と分類
+### 4. パターン一貫性
 
-引数指定時は `$ARGUMENTS` を使用。なければ git diff で取得。
+`references/pattern-consistency.md` の手法に従い、対象ファイルの既存パターン分析 → 同一ファイル内混在検出 → 類似ファイル間不整合検出 → 規約整合性確認 → 既存パターンへ統一。
 
-### 3. 処理方式の選択
+**4.6 同種違反の網羅確認 (必須)**: 1 ファイルでパターン違反を修正したら、変更ファイル群の他箇所に同じ違反が残っていないか `grep` で網羅確認し、見つけた違反は同時修正する。
 
-| 条件 | 処理方式 |
-|-----|---------|
-| ファイル ≤ 5 | 直接処理（main thread で 1M context を活用） |
-| ファイル > 5 かつ 複数言語が混在 | サブエージェント並列（`subagent_type: "general-purpose"`） |
+- 検査コマンド汎用形: `grep -l '<違反パターン>' $(git diff --name-only origin/${BASE_BRANCH:-develop}...HEAD)`
+- Step 5 (lint) が Step 2 で確定した変更ファイル群全体をカバーするため、4.6 で広げた範囲も自動再検証される。
 
-サブエージェントには収集した規約・対象ファイル・`references/pattern-consistency.md` を渡す。
+**Step 4 レポート文言** (3 バリアント、いずれかを必ず出力):
 
-### 4. パターン一貫性チェック
-
-**最終レポート文言バリアント** (Step 4.6 発火有無で 3 パターン):
-
-| 条件 | 最終レポート文言 |
+| 条件 | 文言 |
 |---|---|
-| 違反検出 0 件 (Step 4.6 発火対象なし) | `[パターン一貫性: 違反なし]` |
-| 違反検出 + 1 ファイルのみ修正 (Step 4.6 網羅確認で他箇所も 0 件) | `[パターン一貫性: N 件修正、網羅確認 OK]` |
-| 違反検出 + 複数ファイル同時修正 (Step 4.6 で他箇所違反を発見し同時修正) | `[パターン一貫性: N 件修正 (うち網羅確認発火 M 件)]` |
+| 違反 0 件 | `[パターン一貫性: 違反なし]` |
+| 1 ファイル修正 + 他箇所 0 件 | `[パターン一貫性: N 件修正、網羅確認 OK]` |
+| 複数ファイル同時修正 | `[パターン一貫性: N 件修正 (うち網羅確認発火 M 件)]` |
 
-**`references/pattern-consistency.md`** の手法に従い実行:
+### 5. lint 自動修正 (言語別分岐)
 
-1. 対象ファイルの既存パターンを分析
-2. **同一ファイル内のパターン混在**を検出
-3. **類似ファイル間の不整合**を検出（同じコンテキストのファイルと比較）
-4. プロジェクト規約との整合性を確認
-5. パターンを統一（既存パターンに合わせる）
-6. **同種違反の網羅確認 (必須、本サブステップは「4.6」と呼称し外部 Workflow ステップ 6 (Dead mock) と区別)**: ある1ファイルでパターン違反を修正したら、**変更ファイル群の他箇所に同じ違反が残っていないか `grep` 等で網羅確認**し、見つけた違反は同時に修正する。1ファイルだけ修正して残りを放置すると、CI またはレビューで残りが指摘され追加修正コミットが必要になる
-   - **汎用ルール**: ある partial / module / class でパターンを変更したら、同ディレクトリ / 同名前空間 / 同責務の他ファイルも同様に変更する
-   - **例 (Rails Slim partial の場合)**: ある partial の `@instance_var` を local 変数化したら、`grep -l '@<varname>' $(git diff --name-only origin/develop...HEAD | grep '_.*\.html\.slim')` で他 partial の同種違反を列挙して同時修正
-   - **検査コマンドの汎用形** (`grep -l '<違反パターン>' $(git diff --name-only origin/${BASE_BRANCH:-develop}...HEAD)` のように、ステップ 2 で確定した変更ファイル群を入力にして残箇所を列挙する)
-   - 同種違反を修正したら、次のステップ 5 (lint) はステップ 2 で確定した変更ファイル群全体をカバーするため、本サブステップ 4.6 で広げた範囲も自動的に再検証される
-   - 補足: Ruby/RSpec の場合は本サブステップ 4.6 の後に外部 Workflow ステップ 6 (Dead mock 削除) でも網羅確認を行う (発想は同型 = 「1 箇所修正したら関連箇所も同時に直す」)
-
-### 5. 自動修正と検証ループ
-
-修正後は必ず lint を実行し、成功するまで繰り返す（最大3回）。
-
-**Step 5 → Step 7 の順序保証**: Step 5 (lint --autocorrect-all) が auto-fix を実施した場合、その結果生じた差分は **Step 6 (dead mock) と Step 7 (コメント改善) の評価対象に含める** (lint 結果を信頼してそのまま流す)。lint で auto-fix が走ったあと Step 4 のパターン一貫性を再評価する必要はない (Step 4 の評価対象は人間が書いたコード、lint 修正後の機械的整形は対象外)。順序は Step 4 → 5 → 6 → 7 で確定、逆順や再評価ループは禁止。
-
-| 言語 | 検証コマンド |
-|-----|-------------|
+| 言語 | コマンド |
+|---|---|
 | Ruby | `bundle exec rubocop ${files} --autocorrect-all` |
 | TypeScript/JavaScript | `yarn eslint ${files} --fix` |
-| Python | プロジェクトに応じて `ruff check --fix ${files}` または `black ${files}` |
-| その他（Go / Rust / Shell 等） | プロジェクト内の `Makefile` / `package.json` / `pyproject.toml` 等から lint タスクを探索。見つからなければ **lint スキップし `[lint: 未定義言語のためスキップ（手動確認要）]` と最終レポートに明記** |
+| Python | `ruff check --fix ${files}` または `black ${files}` |
+| その他 (Go/Rust/Shell 等) | `Makefile` / `package.json` / `pyproject.toml` から lint タスク探索。なければ `[lint: 未定義言語のためスキップ（手動確認要）]` |
 
-3回試行しても解決しない場合は手動対応として報告。
+成功するまで最大 3 回繰り返す。3 回試行で解決しなければ手動対応として報告。
+
+**順序保証**: Step 5 の auto-fix 差分は Step 6 / 7 の評価対象に含める (lint 結果を信頼)。Step 4 の再評価はしない。Step 4 → 5 → 6 → 7 で確定、逆順・再評価ループは禁止。
 
 ### 6. Dead mock 削除 (Ruby/RSpec)
 
-**目的**: 実装側で `delegate :X` / `def X` を撤去した PR で、spec の対応 mock (`receive(:X)` / `receive_messages(X:)`) が残置していないか検証し、残っていれば削除する。
+詳細手順・スキップ条件・文言 4 バリアントは **`references/dead-mock-removal.md`** に従う。要旨:
 
-**なぜ必要か**: 呼ばれなくなった mock は CI ではエラーにならない（RSpec は未使用 stub を error にしない）。lint でも検出されない。レビュー時に発見され差し戻しになる。
-
-**スキップ条件と文言バリアント**:
-
-| 条件 | スキップ文言 |
-|---|---|
-| 変更ファイルに `*.rb` が無い | `[dead mock: スキップ (Ruby/RSpec 対象外)]` |
-| `spec/` ディレクトリが存在しない | `[dead mock: スキップ (Ruby/RSpec 対象外)]` |
-| 検出手順 1 で削除された identifier が 0 件 (= delegate / def 撤去なし) | `[dead mock: スキップ (撤去なし)]` |
-| 検出手順 1 で identifier が 1 件以上、かつ 検出手順 2 で残存 mock 0 件 | `[dead mock: 検出済み撤去なし]` (識別子 N 件確認、残存 0 件) |
-
-検出手順 1 の出力で identifier 0 件と確定した時点で手順 2 を実行せず即スキップ報告して良い (rg 不要)。
-
-**検出手順**:
-
-1. **削除された identifier を抽出** (impl 側のみ、`spec/` 自身は除外):
-   ```bash
-   git diff origin/${BASE_BRANCH:-develop}...HEAD -- '*.rb' ':!spec/**' \
-     | grep -E "^-\s*(delegate\s+:|def\s+)" \
-     | grep -vE "^---"
-   ```
-   - `- delegate :foo, :bar, to: ...` → identifiers: `foo`, `bar`
-   - `- def foo` / `- def self.foo` → identifier: `foo`
-   - 同一 PR 内で同名メソッドが追加し直されている (`+ def foo`) なら除外する
-
-2. **spec/ で残存 mock を検出** (identifier ごとに):
-   ```bash
-   rg --no-heading -n -e "receive\(:${ID}\)" -e "receive_messages\([^)]*\b${ID}:" spec/
-   ```
-
-3. **削除前にユーザーへ提示** (1 ヒットでも以下を必須):
-   - ヒットしたファイル/行
-   - 削除後の差分プレビュー
-   - **削除単位の分類** (auto / Manual Review):
-     - `receive(:X)` の単独 stub で X が削除済 → **行ごと自動削除** (auto)
-     - `receive_messages(a:, b:)` で **a, b すべてが削除済 identifier** → **行ごと自動削除** (auto, full removal)
-     - `receive_messages(a:, b:)` で **一部 (例: a だけ) が削除済、他は実装に残存** → **Manual Review Items** に回す (auto しない)
-
-4. **承認後、該当 mock を削除** → 編集した spec ファイル**全件**を `bundle exec rspec <file1> <file2> ...` (複数指定可) で実行し 0 failures を確認。失敗した場合は変更を revert し報告。
-
-**注意**:
-- caller 側で `obj.X` 呼出を撤去しただけ (実装は残存) の場合は対象外。`delegate` / `def` の **定義削除** に限る。
-- `allow_any_instance_of(...).to receive(:X)` 形式や `instance_double(..., X: ...)` 形式も同様に検出対象に含める (`rg` パターンを追加):
-  ```bash
-  rg -e "receive\(:${ID}\)" -e "receive_messages\([^)]*\b${ID}:" \
-     -e "instance_double\([^)]*\b${ID}:" -e "double\([^)]*\b${ID}:" spec/
-  ```
+- 対象: impl 側で `delegate :X` / `def X` を撤去した PR の spec 残存 mock (`receive(:X)` / `receive_messages(X:)` / `instance_double(..., X:)` / `double(..., X:)`)。
+- スキップ判定の優先順: ① `*.rb` なし / `spec/` なし → 対象外、② 削除 identifier 0 件 → 撤去なし。
+- 削除単位: 単独 stub と「全 identifier が削除済の `receive_messages`」は auto、部分削除は Manual Review。
+- 削除後は編集 spec 全件を `bundle exec rspec` で 0 failures 確認。失敗時は revert + 報告。
 
 ### 7. コメント改善
 
-ステップ 1 で収集した規約テキストに「コメント」「comment」キーワードを含む節がある場合のみ、その原則に従ってコメントを改善する。
+Step 1 で収集した規約テキストに「コメント」「comment」キーワードを含む節が**ある場合のみ**実施。なければ独自判断で追加・削除しない。
 
-**規約にコメント原則の記載がない場合はこのステップをスキップする**（独自判断でコメントを追加・削除しない）。スキップした旨は最終レポートに `[コメント改善: スキップ（規約に原則なし）]` と明記する。
+**Step 7 レポート文言** (3 バリアント、いずれかを必ず出力):
 
-**最終レポートの文言バリアント** (3 パターンで明示、捏造的な silent skip を防ぐ):
-
-| 条件 | 最終レポート文言 |
+| 条件 | 文言 |
 |---|---|
-| 規約にコメント原則の記載なし | `[コメント改善: スキップ（規約に原則なし）]` |
-| 規約あり + 適用後に違反なし | `[コメント改善: 違反なし（規約適用済み）]` |
-| 規約あり + 修正実施 | `[コメント改善: N 件修正（&lt;規約根拠&gt;準拠）]` (N は実数、根拠は適用した規約のファイル名) |
+| 規約に原則なし | `[コメント改善: スキップ（規約に原則なし）]` |
+| 規約あり + 違反なし | `[コメント改善: 違反なし（規約適用済み）]` |
+| 規約あり + 修正実施 | `[コメント改善: N 件修正（<規約根拠>準拠）]` (根拠は適用規約のファイル名) |
 
 ### 8. 最終レビュー
 
-全ての改善が完了したら、`feature-dev:code-reviewer` で見落としをキャッチ:
-
 ```
-Task(subagent_type="feature-dev:code-reviewer", prompt="変更ファイルの git diff をレビューし、バグ・規約違反を報告せよ")
+Task(subagent_type="general-purpose", prompt="feature-dev:code-reviewer agent として変更ファイルの git diff をレビューし、バグ・規約違反を報告せよ")
 ```
 
-## Manual Review Items
+## Manual Review Items (自動修正せず提案のみ)
 
-以下は自動修正せず、提案として報告:
-
-1. **設計判断が必要**: サービス切り出し、モジュール化、責務分離
-2. **影響範囲調査が必要**: メソッド名/引数/戻り値の変更
-3. **ビジネスロジックのチェックが必要**: バリデーション追加、認可変更
-4. **Dead mock の部分削除**: `receive_messages(a:, b:)` のうち一部の identifier だけ削除する場合（残す側との整合確認が必要）。書換え候補 (例: `receive_messages(b:)` 化 / 行ごと削除 / テスト見直し) を併記してユーザーに選択させてよい。最終編集は必ずユーザー承認後。
-
-## Quality Standards
-
-- **Accuracy**: 明確に問題であるものだけを修正
-- **Safety**: 既存の機能を壊さない
-- **Completeness**: 変更されたファイルをすべてチェック
-- **Respect**: プロジェクトの規約に従う
+1. 設計判断: サービス切り出し / モジュール化 / 責務分離
+2. 影響範囲調査: メソッド名・引数・戻り値の変更
+3. ビジネスロジック: バリデーション追加 / 認可変更
+4. Dead mock の**部分削除** (`receive_messages(a:, b:)` のうち一部 identifier だけ削除): 書換え候補を併記してユーザー承認後に編集
 
 ## 併用推奨 skill
 
-- `/review-code-quality` — 設計レベルの品質課題をコミット前に検出する
-- `/create-pr` — 仕上げが完了したらカレントブランチから PR を作成する
+- `/review-code-quality` — 設計レベルの品質課題をコミット前に検出
+- `/create-pr` — 仕上げ完了後にカレントブランチから PR を作成

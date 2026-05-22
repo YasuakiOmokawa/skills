@@ -1,235 +1,101 @@
 ---
 name: define-acceptance-criteria
-description: プランモード中にプランファイルの受け入れ条件・技術リスクを定義する時に使用。詳細は分析ファイル（`<plan>.analysis.md`）に書き出し、プランファイル末尾には品質検証サマリーのみ追記する。/mece-plan-reviewの前に実行し、MECEの検証ターゲットを定義する。
+description: Defines acceptance criteria and technical risks for a plan file. Use when in plan mode before /mece-plan-review, when the user asks to write AC for a plan, or when an AC matrix is needed as MECE input. Writes detail to `<plan>.analysis.md` and a one-line summary to the plan file tail.
 ---
 
 # define-acceptance-criteria
 
-**3カテゴリ × 選択した観点のマトリクスを埋めて受け入れ条件を網羅する。非影響確認は推奨追加項目。**
+3 必須カテゴリ × controlled vocabulary 観点 (3-5 個) のマトリクスを埋めて AC を書き出す。詳細は `<plan>.analysis.md` に、サマリーのみプランファイル末尾に追記する。
 
 ```
-              │ 観点A      │ 観点B      │ 観点C
-──────────────┼────────────┼────────────┼────────────
-正常系        │ 具体的I/O  │ 具体的I/O  │ 具体的I/O  ← 必須
-異常系        │ エラー+HTTP│ エラー+HTTP│ エラー+HTTP ← 必須
-エッジケース  │ 境界値     │ 境界値     │ 境界値      ← 必須
-非影響確認    │ 既存機能A  │ 既存機能B  │ 既存機能C  ← 推奨 (git diff 隣接から自動補完可)
+              │ 観点A    │ 観点B    │ 観点C
+──────────────┼──────────┼──────────┼──────────
+正常系        │ 具体I/O  │ 具体I/O  │ 具体I/O    ← 必須 (全セル ≥1 項目)
+異常系        │ Err+HTTP │ Err+HTTP │ Err+HTTP   ← 必須 (全セル ≥1 項目)
+エッジケース  │ 境界値   │ 境界値   │ 境界値     ← 必須 (全セル ≥1 項目)
+非影響確認    │ 既存A    │ 既存B    │ 既存C      ← 推奨 (a/b/c から選択)
 ```
 
-**必須3カテゴリの全セルを埋めること。** 具体的には以下を必ず守る：
+- 必須 3 カテゴリの全セル ≥1 項目 (空セル = 検討不足)
+- AC 行頭は controlled label ([references/perspectives.md](references/perspectives.md)) — 自由形式禁止
+- プラン本文に欠落する仕様を AC で仮置きする場合は末尾に `(仕様確定要)`
 
-- **観点 × 必須3カテゴリの全セルに最低 1 項目必須**（観点 3 つなら最低 9 項目。観点 4 つなら 12 項目）
-- **1 セルあたり上限なし**: 境界値カテゴリが複数該当する場合 (例: エッジケース × 配列観点で「空」と「大量件数」両方該当) は複数項目を入れて良い。**最低 1 項目** だけ守れば良い
-- **各項目の冒頭に controlled label を明記**する ([references/perspectives.md](references/perspectives.md) の controlled vocabulary から選択)。例: `- [ ] req_form: 本人が PATCH ... → 200 OK`。自由形式の観点名は禁止 (mece-plan-review の area タグと一対一対応させて機械的に集約するため)
-- 特定セルを埋める AC が思いつかない場合も「該当なし」と書かず、**境界値リストや既存機能から必ず 1 件以上を導く**（空セル = 検討不足のシグナル）
-- **プラン本文に欠落する仕様**を AC 側で仮置きする場合 (例: 文字列長上限が未定義) は **`(仕様確定要)` ラベルを末尾に付ける** (例: `- [ ] req_form: name=255 byte 入力 → 200 OK (仕様確定要)`)。これにより「AC で勝手に決めた仕様」と「プランで明示済の仕様」が区別できる
+## Quick start
 
-### 非影響確認カテゴリ (推奨)
+シナリオ: 「users API に role 更新を追加」
 
-「変更していない既存機能が壊れていないこと」を確認する項目。必須ではない理由: 実利用ログで Critical 化することがほぼなく、機械的列挙が冗長化しやすいため。
-
-代わりに以下のいずれかを推奨:
-
-**(a) 手動列挙**: 観点と紐付けず、変更コードが触れる隣接機能を 3-5 件記述
-```markdown
-### 非影響確認 (推奨)
-- [ ] /api/health エンドポイントが影響を受けないこと
-- [ ] 既存認証 middleware の挙動が変わらないこと
-```
-
-**(b) git diff 隣接ファイル列挙** (自動補完): プランで変更が宣言されたファイル群の隣接ファイル (同ディレクトリ・呼び出し先) を `git diff --name-only` 系コマンドで列挙し、それぞれの非影響を確認
-```bash
-git diff --name-only $(git merge-base HEAD main)..HEAD | xargs dirname | sort -u
-# → 影響範囲となる隣接ディレクトリを抽出、その他のテストが落ちないことを確認
-```
-
-**(c) 省略**: 変更が完全に独立 (例: 新規ファイルのみ追加で既存への変更ゼロ) と判断できる場合は非影響確認セクションごと省略可。判断根拠を分析ファイルの `### 検討観点` に 1 文で明記する
-
-**(a)/(b)/(c) の機械判定基準** (裁量判断を排除):
-- `git status --short` (もしくは `git diff --name-status $(git merge-base HEAD main)..HEAD`) を実行
-- 出力に `M` (modified) が 1 件でも含まれる → **(a) または (b) 必須** (既存への影響あり)
-- 出力が `A` (added) のみ → **(c) 省略可**
-- `D` (deleted) を含む → **(a) 必須** (既存削除は影響範囲調査が必要、自動列挙の (b) では不十分)
-- 判定結果と判断根拠を分析ファイル `### 検討観点` に 1 文で明記する (例: `git status: M 2 / A 1 → (b) 隣接ファイル列挙を選択`)
-
-## Arguments
-
-- `$ARGUMENTS`: プランファイルパス（省略可）
-  - 指定あり: そのファイルを使用
-  - 指定なし: システムプロンプトの `Plan File Info:` からパスを取得
+1. プランファイル読込 → 変更ファイル抽出 ([references/perspectives.md](references/perspectives.md) Step A で `api_change` + `db_change` 判定、テスト/docs/メタは除外)
+2. 観点 4 軸選定: `permission` (主軸、auth 文脈) / `req_form` / `data_compat` / `observability`
+3. 必須 3 カテゴリ × 4 軸 = 12 セル充填:
+   ```markdown
+   - [ ] permission: 本人が PATCH /api/users/123 (自分の ID) → 200 OK
+   - [ ] req_form: PATCH /api/users/:id without body → 400 Bad Request
+   - [ ] permission [境界値: 未ログイン]: PATCH /api/users/:id → 401 Unauthorized
+   ```
+4. 技術リスク 3 件を 3 点セットで記述
+5. 分析ファイル (`<plan>.analysis.md`) に詳細出力 → プランファイル末尾に 1 行サマリー
 
 ## Workflow
 
 ### Step 1: 初期化 + プランファイル読込
 
-`/mece-plan-review` と共通の初期化手順を実施: [references/init-common.md](references/init-common.md) を参照し、以下を実行:
-- プランファイル特定 (`$ARGUMENTS` or システムプロンプト `Plan File Info:`)
-- プランファイル全文を Read
-- 分析ファイルパス導出 (拡張子前に `.analysis` 挿入)
-- リポジトリ名取得 (`git remote get-url origin`)
+[references/init-common.md](references/init-common.md) に従って初期化 (プランファイル特定 / 分析ファイルパス導出 / リポジトリ名取得)。加えて変更概要・変更ファイル一覧・既存設計内容を抽出。変更ファイル抽出のフォールバック順: プラン本文記述 → `git diff --name-only $(git merge-base HEAD main)..HEAD` → 自然言語類推 → AskUserQuestion。
 
-加えて define-AC 固有の処理として、プランファイルから以下を抽出:
-- 変更概要（何を、なぜ変えるか）
-- 変更ファイル一覧 (以下のフォールバックチェーン):
-  1. プラン本文の `変更ファイル:` セクションまたは本文中のパス列挙を最優先で抽出
-  2. 1 で空なら `git diff --name-only $(git merge-base HEAD main)..HEAD` を試行
-  3. 2 も空 (新規プラン + 未コミット) なら**プラン本文の自然言語からパス類推** (例: 「`/api/users` エンドポイント追加」→ `app/controllers/api/users_controller.rb` を候補に挙げる)
-  4. 3 でも候補が出ない場合は AskUserQuestion で「変更対象ファイル一覧をプランに追記してください」と要求し、ユーザー入力後に Step 1.5 を再実行
-- 既存の設計内容
+### Step 1.5: 変更種別の機械判定
 
-### Step 1.5: 変更種別の機械的判定 (機械化された候補抽出)
+[references/perspectives.md](references/perspectives.md) Step A のパスパターン表で機械抽出する。**除外パスパターン**: `spec/`, `test/`, `__tests__/`, `*_test.go`, `*.spec.ts`, `*.md`, `docs/`, `README*`, `CHANGELOG`, `LICENSE`。テスト単独修正は `test_only_change` 扱いか Step B 汎用候補軸に流す。LLM は機械抽出候補を出発点とし、ズレる場合のみ手動補正して分析ファイル `### 検討観点` に「機械抽出: A, B / 追加: C (理由)」と明記。
 
-[references/perspectives.md](references/perspectives.md) の **「Step A: パスパターン → 変更種別マッピング」** を使い、変更ファイルパスから種別候補を機械的に列挙する。
+### Step 2: 観点の選択 (3-5 個)
 
-**除外パスパターン (機械抽出から外す)**:
-- `spec/`, `test/`, `__tests__/`, `*_test.go`, `*.spec.ts` などのテストファイル
-- `*.md`, `docs/`, `README*` などのドキュメント
-- `CHANGELOG`, `LICENSE` などのメタファイル
-- これらは「実装変更の種別」を示さないため、Step A の判定対象から除外する。「テストファイル単独の修正」は別軸 (test_only_change) として扱うか、機械抽出 0 件で Step B 汎用候補軸に流す。
-
-```
-例: 変更ファイル一覧が
-- app/controllers/api/users_controller.rb
-- db/migrate/20260519_add_role_to_users.rb
-- spec/controllers/api/users_controller_spec.rb
-
-→ マッピング結果: { api_change, db_change }
-```
-
-LLM はこの**機械的に抽出された候補**を出発点として、Step 2 で観点軸を選定する。種別候補がプランの意図と明らかにずれる場合のみ手動で追加・削除し、分析ファイルの `### 検討観点` に「機械抽出: A, B / 追加: C (理由)」と明記する。
-
-### Step 2: 観点の選択 (controlled vocabulary)
-
-[references/perspectives.md](references/perspectives.md) の **「変更種別 → デフォルト観点軸」** 表から、Step 1.5 で抽出した種別に対応する controlled label を **3 つ以上 5 つ以下**選択する。AC 行頭ラベルは必ずこの controlled vocabulary から選ぶ (自由形式禁止)。
-
-**観点数の規則:**
-
-- **下限 3 / 上限 5**（3 未満ではマトリクスが痩せすぎ、5 超では管理負荷が爆発する）
-- **複数種別該当時**: 各種別の controlled label から重複を除き、3〜5 個に絞る (例: api_change + db_change で `permission` (両方該当)、`req_form` (api 側)、`data_volume` (db 側)、`data_compat` (db 側) の 4 軸)
-- **主種別 + 副作用軸の追加**: 該当種別の表 3 軸に加えて、プラン本文から派生する独自軸を 1 つだけ足す形は **裁量判断扱い**。perspectives.md に既存 label がなければ汎用候補 (`dep_loc` / `layer` / `non_invasive` / `contract`) から選ぶか、新規 label を追加する。分析ファイルの `### 検討観点` に「表 N 軸 + 副作用軸 1 (理由)」と明記
-- **複数主種別 + プラン文脈軸の主軸採用**: 主種別が複数該当 (例: api_change + service_change + db_change) し、かつプラン本文に明示的な文脈軸 (auth / authz / billing / privacy 等) がある場合は、その文脈軸を**副作用軸ではなく主軸**として採用してよい。例: プラン本文に「管理者のみ」「本人不可」等の auth 記述があるなら `permission` を主軸として 4 軸の先頭に置く。`### 検討観点` には「auth 文脈強調により permission を主軸採用 (副作用軸ではない)」と明記
-- **主軸採用と副作用軸の併用可否**: 「主軸採用 (上記項目)」と「副作用軸 1 つ追加」は**併用可能** (3-5 個の上限内なら)。例: 主軸 `permission` + 副作用軸 `observability` で 5 軸構成。`### 検討観点` には「主軸 permission + 副作用軸 observability (理由: ...)」と分けて明記
-- **表に該当する変更種別がない場合**: perspectives.md の「Step B」汎用候補軸から選ぶ。裁量判断であることを分析ファイルに明記
-- **observability 軸の特例**: 全変更種別で**追加候補**として考慮可能。Critical 検出力を上げるための共通軸 (mece-plan-review の Red Team が `observability` お見合いで Critical 検出することがあるため、define-AC 段階で取り込むと精度↑)
+[references/perspectives.md](references/perspectives.md) の「変更種別 → デフォルト観点軸」表から **3-5 個**選ぶ (下限 3 / 上限 5)。複数主種別での主軸採用 / 副作用軸 1 つ追加 (併用可) / observability 特例 / 表に無い場合の汎用候補軸 (Step B) などの運用詳細は [references/selection-rules.md](references/selection-rules.md) を参照。選定理由を分析ファイル `### 検討観点` に 1 文ずつ明記。
 
 ### Step 3: 受け入れ条件の生成
 
-**必須 3 カテゴリ (正常系 / 異常系 / エッジケース) + 推奨 1 カテゴリ (非影響確認)** × 選択した観点で、マトリクスを埋める。冒頭マトリクス図 (本ファイル冒頭) のとおり、必須は 3 カテゴリで、非影響確認は省略可。
+必須 3 カテゴリ × 選択観点で全セル充填:
 
-**各カテゴリの記述ルール:**
-
-- **正常系**: 行頭に **controlled label** ([references/perspectives.md](references/perspectives.md)) を置く。具体的な入力値 → 期待する出力値で書く（「正しく動作する」は禁止）。例: `- [ ] permission: 本人が PATCH /api/users/123 (自分の ID) → 200 OK`
-- **異常系**: 行頭に **controlled label**。エラーメッセージ文言またはHTTPステータスコードを明記。例: `- [ ] req_form: PATCH /api/users/:id without body → 400 Bad Request`
-- **エッジケース**: 行頭に **controlled label** を置き、続けて角括弧で **境界値カテゴリ名** を付記（例: `- [ ] permission [境界値: 未ログイン]: PATCH /api/users/:id → 401 Unauthorized`）。境界値カテゴリは以下のチェックリストから該当するものを選ぶ。controlled label を冒頭に置かず境界値カテゴリ名だけにするのは禁止（セル充填のトレースができなくなる）
-
-```
-数値   → 0、負数、最大値、小数点
-文字列 → 空文字、超長文、特殊文字、マルチバイト
-日付   → 月末、年末、うるう年、未来日
-配列   → 空、1件、大量件数
-状態   → 初期、途中、完了、削除済み
-権限   → 本人、他人、管理者、未ログイン
-同時   → 複数ユーザー、二重送信、処理中の再実行
-```
-
-- **非影響確認 (推奨)**: 必須3カテゴリの後、可能なら追加。「他に影響がない」のような汎用記述は禁止。手動列挙 (a) または `git diff` 隣接列挙 (b)、または独立変更で省略 (c) のいずれか (詳細はファイル冒頭の「非影響確認カテゴリ」参照)
+- **正常系**: `- [ ] <label>: <入力> → <期待出力>` (「正しく動作する」禁止)
+- **異常系**: `- [ ] <label>: <条件> → <HTTP status or エラー文言>`
+- **エッジケース**: `- [ ] <label> [境界値: <カテゴリ>]: <条件>` (境界値カテゴリは [references/edge-case-checklist.md](references/edge-case-checklist.md))
+- **非影響確認 (推奨)**: `git status --short` 出力で機械判定 — `M` 含む → (a) 手動列挙 or (b) `git diff` 隣接列挙 / `A` のみ → (c) 省略可 / `D` 含む → (a) 必須。詳細は [references/non-impact-rules.md](references/non-impact-rules.md)
 
 ### Step 4: 技術リスクの生成
 
-3つのリスクを挙げ、**各リスクは以下の3点セットで記述**:
-- **何がわからないか**: **必ず1文（句点1つ）で書く。2文以上は禁止。**
-- **最悪何が起きるか**: **必ず1文で、誰にどんな影響が出るかを書く。**
-- **どうやって検証するか**: 実行可能なコマンドまたは手順（コマンドは `code block` で）
+リスク 3 件を 3 点セットで記述 (各項目 1 文 = 句点 1 つ厳守):
+- **何がわからないか**: 主語+述語の 1 文
+- **最悪何が起きるか**: 誰に+何が
+- **どうやって検証するか**: 実行可能コマンド (`code block`) または手順
 
-### Step 5: 分析ファイルに詳細を書き出し
+### Step 5: 分析ファイルへの書き出し
 
-**分析ファイルパス**: プランファイルの拡張子前に `.analysis` を挿入する。
-- 例: `~/.claude/plans/feature-xxx.md` → `~/.claude/plans/feature-xxx.analysis.md` (プランファイルは `~/.claude/plans/` 配下を推奨)
+分析ファイルパス: プランファイルの拡張子前に `.analysis` 挿入 (例: `feature-xxx.md` → `feature-xxx.analysis.md`)。既存なら末尾追記。フォーマット (`/mece-plan-review` との contract、変更禁止) は [references/output-template.md](references/output-template.md) を参照。
 
-分析ファイルが存在しない場合は新規作成する。既に存在する場合は末尾に追記する。
+### Step 6: プランファイル末尾サマリー
 
-以下のフォーマットで **分析ファイル** に書き出す:
-
-```markdown
-## 受け入れ条件
-
-### 検討観点 (controlled vocabulary)
-- 機械抽出変更種別: [api_change, db_change, ...] (Step 1.5 でマッピング結果)
-- [controlled label 1]: [1文で理由を書く]
-- [controlled label 2]: [1文で理由を書く]
-- [controlled label 3]: [1文で理由を書く]
-- 副作用軸の追加 (該当時のみ): [label] (理由: ...)  ← Step 2「主種別 + 副作用軸 1」
-- 裁量判断 (該当時のみ): 表 N 軸 + 独自軸 K (理由: ...)  ← Step 2「テーブルに該当する変更種別がない場合」
-- observability 追加 (該当時のみ): observability (理由: ...) ← Step 2「observability 軸の特例」
-
-### 正常系
-- [ ] [controlled label]: [具体的な入力値 → 期待する出力値]
-- [ ] ...
-
-### 異常系
-- [ ] [controlled label]: [条件] → [エラーメッセージ or HTTPステータス]
-- [ ] ...
-
-### エッジケース（境界値チェックリストより）
-- [ ] [controlled label] [境界値: カテゴリ名]: [条件]
-- [ ] ...
-
-### 非影響確認 (推奨、省略可)
-- [ ] [既存機能A]が変更前と同じ挙動であること
-- [ ] [既存機能B]が変更前と同じ挙動であること
-- [ ] ...
-
-省略する場合は理由を 1 文で明記 (例: 「新規ファイル追加のみで既存ファイルへの変更ゼロのため非影響確認省略」)
-
-## 技術リスク
-
-### リスク1: [タイトル]
-- **何がわからないか**: [主語+述語の1文。例: dispatch側のエンドポイントが実装済みか不明。]
-- **最悪何が起きるか**: [誰に+何が。例: 全ユーザーがログイン後に404になる。]
-- **どうやって検証するか**: [例: `bundle exec rails runner "p UriService.generate(:sign)"` で確認]
-
-### リスク2: [タイトル]
-- **何がわからないか**: [1文]
-- **最悪何が起きるか**: [1文]
-- **どうやって検証するか**: [コマンド or 手順]
-
-### リスク3: [タイトル]
-- **何がわからないか**: [1文]
-- **最悪何が起きるか**: [1文]
-- **どうやって検証するか**: [コマンド or 手順]
-```
-
-### Step 6: プランファイルにサマリーを追記
-
-プランファイル末尾に **品質検証セクション** を追記する（既存内容は一切変更しない）。
-既に `## 品質検証` セクションがある場合は、そのセクション内に追記する。
+プランファイル末尾の `## 品質検証` セクションに 1 行サマリーを追記 (既存内容は変更しない):
 
 ```markdown
 ---
 
 ## 品質検証
 
-- AC: [N]観点×必須3カテゴリ + 非影響確認 [K]件 = [M]項目定義済み → [分析ファイル名]
-- 技術リスク: [N]件特定済み → [分析ファイル名]
+- AC: <N>観点×必須3カテゴリ + 非影響確認 <K>件 = <M>項目定義済み → <分析ファイル名>
+- 技術リスク: <N>件特定済み → <分析ファイル名>
 ```
 
-**`[M]` の算出式** (placeholder 計算ルール):
+**M 算出**: 簡略式 (各セル 1 項目固定) は `M = N × 3 + K`。各セルに複数項目を含む場合は実数表記に分岐 (`AC: M項目定義済み (内訳: 必須X件 + 非影響確認K件)`)。判定: `M == N × 3 + K` なら簡略式、不一致なら実数表記。
 
-```
-M = (各セルの項目数の合計) + K
-```
+## 上流/下流 contract (変更禁止)
 
-- 必須 3 カテゴリ部分: 観点が `N` 個でも、各セルに複数項目入れた場合は `N × 3` ではなく実数で数える (例: 観点 4 個・各セル 1 項目 + エッジケースに 1 セルだけ追加 1 項目 = 12 + 1 = 13)
-- `K` = 非影響確認の項目数 (省略 (c) の場合は 0)
-- 簡略式 (各セル 1 項目固定の場合のみ): `M = N × 3 + K`
+| 項目 | 値 |
+|---|---|
+| 分析ファイルパス | プランファイル拡張子前に `.analysis` 挿入 |
+| 必須セクション | `## 受け入れ条件` / `### 正常系` / `### 異常系` / `### エッジケース` / `### 非影響確認` |
+| AC 行頭 | `- [ ] <controlled label>: ...` ([references/perspectives.md](references/perspectives.md)) |
+| プラン末尾 | `## 品質検証` 1 行サマリー |
 
-**サマリー文の表記分岐** (各セル項目数で文型を変える):
-
-- **各セル 1 項目固定の場合のみ** (= 簡略式適用可): `AC: N観点×必須3カテゴリ + 非影響確認 K件 = M項目定義済み`
-- **各セル複数項目を含む場合** (実数表記): `AC: M項目定義済み (内訳: 必須[必須カテゴリ実数]件 + 非影響確認K件)` (例: `AC: 13項目定義済み (内訳: 必須12件 + 非影響確認1件)`)
-- 観点数 N と各セル項目数 M の関係が `M == N × 3 + K` を満たすかで分岐判定する (一致なら簡略式の文型、不一致なら実数表記)
+`/mece-plan-review` が AC を `- [ ]` 単位で enumerate するため必須。
 
 ## 併用推奨 skill
 
-- `/mece-plan-review` — このスキルで定義した AC の網羅性を 3 視点で検証する
-- `/finalize-plan` — AC + MECE 結果をもとにブランチ・PR 分割・QA 手順を起こす
+- `/mece-plan-review` — 本 skill 出力の AC を 3 視点で MECE 検証
+- `/finalize-plan` — AC + MECE 結果からブランチ・PR 分割・QA 手順を起こす
