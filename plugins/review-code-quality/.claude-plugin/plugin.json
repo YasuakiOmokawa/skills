@@ -1,7 +1,7 @@
 {
   "name": "review-code-quality",
   "description": "実装完了後のセルフチェック時、PRレビュー前の品質確認時に使用。RuboCop/ESLintでは検出できない設計レベルの問題を検出する。",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "author": { "name": "Yasuaki Omokawa", "url": "https://github.com/YasuakiOmokawa" },
   "homepage": "https://github.com/YasuakiOmokawa/skills",
   "repository": "https://github.com/YasuakiOmokawa/skills",
