@@ -159,6 +159,66 @@ function legacyFunction() { ... }
 // TODO: リファクタする
 ```
 
+## diff スコープ規律 (Surgical Changes)
+
+PR の diff が user の要求スコープを超えていないかを検出する。コード自体の品質ではなく**変更範囲の品質**を見る観点。Karpathy の "Surgical Changes" 原則 (https://x.com/karpathy/status/2015883857489522876) に対応。
+
+### 原則
+
+- **要求された行のみ変更**: 「empty email crash の bug fix」依頼に対して、隣の username バリデーション強化を「ついでに」混ぜない
+- **既存スタイルを維持**: quote style (`'` / `"`)、type hint の有無、whitespace、docstring 有無は既存ファイルに合わせる。「自分流の方が良い」と思っても触らない
+- **動いている箇所を refactor しない**: その関数のロジックが壊れていないなら、命名・引数順・early return への書き換えは要求がない限り触らない
+- **dead code は削除でなく mention**: 自分の変更で発生した orphan import / 未使用変数は削除する。**事前から存在する** dead code は「指摘するが削除しない」
+
+### ボーイスカウト・ルールとの使い分け
+
+| ルール | スコープ | 適用 |
+|---|---|---|
+| ボーイスカウト・ルール | **現在編集中の関数本体内** | 関数を触る理由がある時に限り、その関数内の小さな改善は OK |
+| diff スコープ規律 | **PR diff 全体** | 隣接関数 / 別ファイル / コメント / quote style への drive-by 変更は禁止 |
+
+両者は競合しない (前者は関数内、後者は PR 全体)。**判断に迷ったら**: その行は user の依頼文に直接 trace できるか? `Yes` ならボーイスカウト適用可、`No` なら除外。
+
+### 検出パターン
+
+PR diff に以下のような「要求と無関係な変更」が混ざっていたら **Important** で報告:
+
+- bug fix PR で隣接関数のバリデーション強化 / 命名変更が混じる
+- 機能追加 PR で `'` → `"` 等の quote style 変更がファイル全体に拡散
+- 機能追加 PR で関係ない既存関数に type hint / docstring が追加される
+- 「logging を追加」依頼で boolean return logic が書き換えられる
+- 既存の dead code (本 PR の変更と無関係) が削除されている
+
+### 例: Style Drift
+
+依頼: 「upload_file に logging を追加」
+
+```diff
+- def upload_file(file_path, destination):
++ def upload_file(file_path: str, destination: str) -> bool:
++     """Upload file to destination with logging."""
++     logger.info(f"Uploading {file_path} to {destination}")
+      try:
+-         with open(file_path, 'rb') as f:
++         with open(file_path, "rb") as f:
+              data = f.read()
+          response = requests.post(destination, files={'file': data})
+-         if response.status_code == 200:
+-             return True
+-         else:
+-             return False
++         success = response.status_code == 200
++         return success
+      except Exception as e:
+-         print(f"Error: {e}")
++         logger.exception(f"Upload error: {e}")
+          return False
+```
+
+問題: 依頼は logging 追加のみ。type hint / docstring / quote style / boolean 簡約は要求外。
+
+期待: `logger.info` / `logger.error` の追加行のみ。既存の `'rb'` / `if/else` 構造はそのまま維持。
+
 ## 意味的な検出基準
 
 ### 曖昧な命名の検出
