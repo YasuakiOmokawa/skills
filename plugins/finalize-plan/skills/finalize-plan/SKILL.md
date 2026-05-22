@@ -71,7 +71,7 @@ git checkout -b feature/xxx
 
 ### 手動QA手順
 **環境**: {BASE_URL}（QA 実行時にユーザーから取得）
-**対象AC**: N項目（正常系X / 異常系Y / エッジケースZ / 非影響W / MECE追加V）
+**対象AC**: N項目（正常系X / 異常系Y / エッジケースZ / 非影響W / MECE追加V）（カテゴリ名 canonical は output-template.md SSOT を参照、`エッジ` 単独や `eDge` 不可）
 [Chrome DevTools MCP で実行可能な手順]
 
 ### 自動QA（テストコード仕様）

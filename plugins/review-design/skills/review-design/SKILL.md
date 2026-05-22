@@ -9,13 +9,27 @@ description: Reviews architecture placement and pattern decisions before code is
 
 | Q | Answer | Next |
 |---|---|---|
-| Q1: Similar feature exists? | Yes + healthy (tests / single responsibility / ≤200 lines / public ≤10) | Follow that pattern. Run `anti-pattern-checker` only. |
-| Q1 | Yes + unhealthy (no tests / God Class / ≥300 lines / ≥3 callback chain) | Propose new pattern. Run **all 4** reviewers. |
+| Q1: Similar feature exists? | Yes → Q1.1 へ進む | (Q1.1 で healthy/unhealthy 判定) |
 | Q1 | No | Go to Q2 |
 | Q2: Responsibility statable in one phrase? | Yes | 1 file, go to Q3 |
 | Q2 | "X and Y" | Split first, then Q3 |
 | Q3: Testable (deps swappable)? | Yes | Proceed |
-| Q3 | No | Inject via DI / args |
+| Q3 | No | Inject via DI / args (matrix への影響なし、anti-pattern-checker の Leaky Abstraction / Feature Envy 検出に委ねる) |
+
+#### Q1.1: 既存類似機能の健全性チェック (Yes 時のみ)
+
+以下の **5 項目すべて** (AND) を満たす場合のみ **healthy** と判定。1 項目でも違反すれば **unhealthy**:
+
+1. tests が通過している
+2. single responsibility (責務が一句で言える)
+3. 行数 ≤200
+4. public method ≤10 / callback chain <3
+5. **after_commit / after_create 内で external API / 外部 IO を呼んでいない** (= 後述 escape hatch 条件と一致)
+
+- **healthy**: Follow that pattern. Run `anti-pattern-checker` only.
+- **unhealthy**: Propose new pattern. Run **all 4** reviewers.
+
+**Escape hatch (Q1.1 評価順序)**: 1-4 項目を満たし healthy 寄りでも、項目 5 (after_commit 内 external IO) を含む場合は **healthy を撤回** = unhealthy 扱い → all 4 reviewers。すなわち項目 5 は他項目と独立に致命的 (Q1.1 と escape hatch は **同じ判定基準を 1 つに統合**)。これにより「既存パターンが DA escalation conditions / Single-trigger escalators に該当しているのに healthy 判定されて誤誘導」を防ぐ。
 
 ### Reviewer selection matrix (Q1 × Q1.1 × Q2)
 

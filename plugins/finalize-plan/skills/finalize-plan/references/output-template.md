@@ -29,7 +29,7 @@ develop
 ### 手動QA手順
 
 **環境**: {BASE_URL}（QA 実行時にユーザーから取得。例: ローカル / staging 等）
-**対象AC**: N項目（正常系X / 異常系Y / エッジZ / 非影響W / MECE追加V）
+**対象AC**: N項目（正常系X / 異常系Y / エッジケースZ / 非影響W / MECE追加V）
 [Chrome DevTools MCP で実行可能な手順を記載]
 
 ### 自動QA（テストコード仕様）

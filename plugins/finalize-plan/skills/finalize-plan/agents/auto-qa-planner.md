@@ -167,7 +167,7 @@ describe("Xxx", () => {
 |--------|---------|-------------|------------|----------|
 | [AC項目1] | 正常系 | spec/xxx_spec.rb | it "..." | 新規 |
 | [AC項目2] | 異常系 | spec/xxx_spec.rb | it "..." | 新規 |
-| [AC項目3] | エッジ | front/__tests__/xxx.test.ts | it "..." | 新規 |
+| [AC項目3] | エッジケース | front/__tests__/xxx.test.ts | it "..." | 新規 |
 | [AC項目4] | 非影響 | spec/yyy_spec.rb | (既存) | 既存テスト実行 |
 | [MECE追加項目] | 正常系 | spec/xxx_spec.rb | it "..." | MECE追加 |
 ```
