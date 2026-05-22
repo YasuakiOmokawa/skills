@@ -1,11 +1,11 @@
 ---
 name: finalize-plan
-description: Finalizes a confirmed plan by reading AC/MECE results from the analysis file, enumerating per-category QA-IDs (QA-H/E/D/R/M), and appending branch, PR-split, and QA procedures to the plan file. Use when the user has completed `/define-acceptance-criteria` + `/mece-plan-review` and is about to move from plan mode into implementation.
+description: Finalizes a confirmed plan by reading AC/MECE results from the analysis file and appending branch, PR-split, and QA procedures to the plan file. Use when the user has completed `/define-acceptance-criteria` + `/mece-plan-review` and is about to move from plan mode into implementation.
 ---
 
 # finalize-plan
 
-分析ファイル (`<plan>.analysis.md`) から AC・MECE 結果を読み込み、プランファイル末尾に `## 実装準備` を追記する。入力欠落時は即中断。
+分析ファイル (`<plan>.analysis.md`) から AC・MECE 結果を読み込み、プランファイル末尾に `## 実装準備` (ブランチ・PR 分割・QA 手順) を追記する。入力欠落時は即中断。
 
 ## Arguments
 
@@ -43,14 +43,14 @@ description: Finalizes a confirmed plan by reading AC/MECE results from the anal
 [MECE追加]   → QA-M-01, QA-M-02, ...  (Mece)
 ```
 
-**0 件カテゴリは ID を発行しない** が Step 3 の対象 AC 行では `0/0` 件数表記を必ず残す (詳細・生成例・fallback は `references/qa-id-enumeration.md`)。
+**0 件カテゴリは ID を発行しない** が Step 3 の対象 AC 行では `0/0` 件数表記を必ず残す (詳細・生成例・fallback は [references/qa-id-enumeration.md](references/qa-id-enumeration.md))。
 
 ### Step 2A → 2B: Agent 実行 (1 直列 + 2 並列)
 
 - **Step 2A 直列**: `branch-planner` → `pr-splitter` (pr-splitter は branch-planner の base ブランチ名を派生に使う)
 - **Step 2B 並列**: `manual-qa-planner` + `auto-qa-planner` を**同一メッセージ内**で並列起動。両 planner は再分類せず `${ENUMERATED_QA_AC}` の QA-ID を信頼する
 
-各 agent への Task prompt テンプレ、Task ツール利用不可時の in-context fallback は `references/agent-orchestration.md` 参照。
+各 agent への Task prompt テンプレ、Task ツール利用不可時の in-context fallback は [references/agent-orchestration.md](references/agent-orchestration.md) 参照。
 
 ### Step 3: プランファイルに `## 実装準備` 追記
 
@@ -78,7 +78,7 @@ git checkout -b feature/xxx
 [RSpec / Vitest 仕様]
 ```
 
-完全なテンプレ・PR チェーン図・0 件カテゴリ表記ルール・in-context fallback 時の備考挿入位置は `references/output-template.md` 参照。
+完全なテンプレ・PR チェーン図・0 件カテゴリ表記ルール・in-context fallback 時の備考挿入位置は [references/output-template.md](references/output-template.md) 参照。
 
 ## Quality standards
 
@@ -87,12 +87,11 @@ git checkout -b feature/xxx
 - **AC トレーサビリティ**: QA-H/E/D/R/M 全項目が手動 QA または自動 QA のいずれかでカバーされている
 - **0 件カテゴリ可視化**: 対象 AC 行に `非影響0` のように件数明示 (省略禁止)
 
-## Advanced features
+## Advanced
 
-- 分析ファイル契約と中断メッセージの正確な文面: 上記 Step 1.5 と中断ブロックを参照
-- QA-ID 採番ルール詳細・生成例・Step 1.7 失敗時の `QA-X-NN` fallback: `references/qa-id-enumeration.md`
-- 各 agent への Task prompt / 並列メッセージ構成 / Task ツール不可時の in-context 代替モード: `references/agent-orchestration.md`
-- Step 3 出力テンプレ全文 / PR チェーン図 / 0 件カテゴリ表記 / fallback 時の備考行: `references/output-template.md`
+- [references/qa-id-enumeration.md](references/qa-id-enumeration.md) — QA-ID 採番ルール詳細・生成例・Step 1.7 失敗時の `QA-X-NN` fallback
+- [references/agent-orchestration.md](references/agent-orchestration.md) — 各 agent への Task prompt / 並列メッセージ構成 / Task ツール不可時の in-context 代替モード
+- [references/output-template.md](references/output-template.md) — Step 3 出力テンプレ全文 / PR チェーン図 / 0 件カテゴリ表記 / fallback 時の備考行
 
 ## 併用推奨 skill
 

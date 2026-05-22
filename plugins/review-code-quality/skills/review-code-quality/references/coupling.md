@@ -157,6 +157,13 @@ function sendWelcomeEmail(recipient: EmailRecipient) {
 - A→B→A の相互参照（require/import レベル）
 - クラスが相互にメソッドを呼び合う関係
 
+### spec-coverage-gap (新規 attribute 値 / 新規 branch に対する spec context 不在) の検出
+
+以下の特徴を持つ場合は coupling-analyzer の責務として検出する:
+- impl 側で enum / state に新しい値を追加したが、対応する spec context (`describe '<新値>のとき'` / `context 'when <新値>'`) が存在しない
+- impl 側で新しい分岐 (新しい if/case ブランチ / Policy の権限ロール追加 / Job の status 値追加) を追加したが、当該ブランチを通る spec が無い
+- グローバル `~/.claude/rules/ruby-coding.md` の「caller 経路 spec を audit」要件と整合: 新規 attribute 値 → caller spec の stub なし context 探索 → 当該 context 不在を Important で報告
+
 ## トレードオフ
 
 **注意**: 「すべてメッセージ結合にしろ」ではない。

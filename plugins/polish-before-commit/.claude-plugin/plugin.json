@@ -1,7 +1,7 @@
 {
   "name": "polish-before-commit",
   "description": "コミット前やPR作成前に、プロジェクト規約への準拠・パターン一貫性・実装/spec 整合性 (Ruby の delegate / def 撤去後に残る dead mock の検出と削除を含む) を確認・修正したい時に使用。",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "author": { "name": "Yasuaki Omokawa", "url": "https://github.com/YasuakiOmokawa" },
   "homepage": "https://github.com/YasuakiOmokawa/skills",
   "repository": "https://github.com/YasuakiOmokawa/skills",
