@@ -23,21 +23,34 @@ dispatch 時に以下が渡される:
 - 関連リポジトリ一覧 (改行区切り、または「なし」リテラル)
 - プラン本文
 
-## 調査手順
+## 調査手順 (即時 cutoff 設計)
 
-1. `ToolSearch("+fdev-devin")` で devin ツール一式 (`read_wiki_structure` / `read_wiki_contents` / `ask_question`) を取得
-2. `read_wiki_structure(repoName=<カレントリポ>)` で wiki 構造取得
-3. プラン関連ページを `read_wiki_contents` で読む
-4. 関連リポも同様に調査 (`read_wiki_structure` → `read_wiki_contents`)
-5. wiki で不明な点のみ `ask_question` で補足
+> main agent の preflight で未収録が確定し dispatch に `[Devin未使用]` 指定が渡された場合は、**Devin を一切叩かず即座に空の `[Devin未使用]` 結果を返す** (二重 probe しない)。
+
+1. `ToolSearch("+fdev-devin")` で devin ツールを取得。失敗時は即フォールバックへ
+2. **収録判定 probe (軽量・1 回だけ)**: `read_wiki_structure(repoName=<カレントリポ>)` を 1 度だけ呼ぶ
+   - wiki 構造が返る → 手順 3 へ
+   - "Repository not found" / error / 空構造 → **即フォールバック (リトライ・別ツール再確認をしない)**
+3. 構造が返ったページのうちプラン関連ページのみ `read_wiki_contents` で読む
+4. 関連リポは各々 `read_wiki_structure` を **1 回だけ** probe → not found なら即スキップ (次のリポへ、巡回リトライしない)
+5. (任意) 収録確認済リポに対し、具体的に不明な 1-2 点のみ `ask_question` で補足
 
 **⚠️ Devin wiki の repoName は必ず `<YOUR_GITHUB_ORG>/<リポジトリ名>` 形式** (例: `acme/main-app`)。
 
-## フォールバック
+### ⛔ 即時 cutoff ルール (遅延防止、厳守)
 
-`ToolSearch("+fdev-devin")` が失敗した場合:
-- 出力に `[Devin未使用]` タグ付与
-- 「Devin MCP が利用不可のため wiki 調査をスキップ」と明記して返す
+- **収録判定は `read_wiki_structure` 1 回のみ**。`ask_question` / `generate_wiki` を収録判定・探索に使わない (これらは Devin 調査セッションを起動し分単位で遅い)
+- **`read_wiki_structure` が not found / error を返したリポは即 `[Devin未使用]` 扱いで打ち切り** — リトライ・別 path 探索・`ask_question` での再確認をしない
+- `ask_question` は「収録確認済リポ」かつ「具体的な不明点」に限り最大 1 回。未収録判定の手段に転用しない
+
+## フォールバック (即時 `[Devin未使用]`)
+
+以下のいずれかで**即座に** `[Devin未使用]` を返し、追加の Devin 呼び出しをしない:
+- dispatch 入力に `[Devin未使用]` 指定あり (main agent preflight で未収録確定) → Devin を一切叩かず即返す
+- `ToolSearch("+fdev-devin")` が失敗 (Devin MCP なし)
+- カレントリポの `read_wiki_structure` が "Repository not found" / error / 空 (Devin はあるがリポ未収録)
+
+出力: `[Devin未使用]` タグ + 「Devin MCP 利用不可 / カレントリポ未収録のため wiki 調査をスキップ」を 1 文明記して即返す。
 
 ## 出力フォーマット
 
