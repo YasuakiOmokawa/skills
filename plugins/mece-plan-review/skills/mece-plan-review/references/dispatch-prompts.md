@@ -1,10 +1,10 @@
 # Subagent dispatch prompts (Step 1 / Step 2 詳細)
 
-`subagent_type="general-purpose"` の Task ツールで起動する prompt template。Step 1 は 3 並列、Step 2 は単独。
+`subagent_type="general-purpose"` の Task ツールで起動する prompt template。Step 1 は SKILL 0-4.5 の `${DEVIN_COVERAGE}` に応じ 3 並列 (`covered`) / 2 並列 (`none`、Wiki Researcher 非起動)、Step 2 は単独。
 
-## Step 1: 3 並列 Analyst 起動
+## Step 1: 並列 Analyst 起動
 
-Task ツールを **同一メッセージ内に 3 つ並べて** 起動する (並列化のため単一メッセージ必須)。
+Task ツールを **同一メッセージ内に並べて** 起動する (並列化のため単一メッセージ必須)。`${DEVIN_COVERAGE}=covered` なら BB / WB / Wiki Researcher の 3 つ、`none` なら BB / WB の 2 つ (Wiki Researcher は起動せず、0-4.5 で確定した `${WIKI_RESULT}` = `[Devin未使用]` を後段で使う)。
 
 ### BB Analyst
 
@@ -25,6 +25,8 @@ WB Analyst と独立に動くため、互いの分析結果は参照しないこ
 """)
 ```
 
+> **`${DEVIN_COVERAGE}=none` のとき (0-4.5 で未収録/MCP 不可と確定)**: 上記 BB prompt 末尾に必ず次の 1 行を追記する — 「Devin はカレントリポ未収録のため Phase 0 (wiki 調査) をスキップし `[Devin未使用]` で AC + プラン本文 + 一般知識のみで進めてください (Devin を叩かない)」。BB の重複 probe (= 遅延) を防ぐための必須注入。
+
 ### WB Analyst
 
 ```
@@ -43,6 +45,8 @@ BB Analyst と独立に動くため、互いの分析結果は参照しないこ
 ```
 
 ### Wiki Researcher
+
+> **`${DEVIN_COVERAGE}=covered` のときのみ dispatch する**。`none` (0-4.5 preflight で未収録/MCP 不可確定) なら本 Task を**起動せず**、0-4.5 の `${WIKI_RESULT}` (`[Devin未使用]`) をそのまま後段で使う (slow path をそもそも踏まない)。
 
 ```
 Task(subagent_type="general-purpose", prompt="""

@@ -72,13 +72,19 @@ Red Team の 4 分類結果から AC 改善点を統合:
 
 ## Error Handling
 
-### Devin MCP 利用不可
+### Devin MCP 利用不可 / カレントリポ未収録 (即時 cutoff)
+
+Step 0-4.5 の preflight (`read_wiki_structure` を 1 回だけ probe、`ask_question` 禁止) で判定:
 
 ```
-ToolSearch("+fdev-devin") → 失敗
-  → BB Analyst と Wiki Researcher は wiki なしで継続 (BB はローカル仕様 + 一般知識でフォールバック)
-  → 結果に [Devin未使用] タグ付与
+ToolSearch("+fdev-devin") 失敗 OR read_wiki_structure が "Repository not found"/error/空
+  → ${DEVIN_COVERAGE}=none
+  → Wiki Researcher を dispatch しない (Step 1 は BB+WB の 2 並列)
+  → ${WIKI_RESULT}="[Devin未使用] ..." を確定、BB は Phase 0 をスキップ
+  → BB はローカル仕様 + 一般知識でフォールバック、結果に [Devin未使用] タグ
 ```
+
+**遅延防止 (本 cutoff の主眼)**: 収録判定に `ask_question` / `generate_wiki` を使わない (Devin 調査セッション起動で分単位の遅延)。判定は軽量な `read_wiki_structure` 1 回に限定し、not found なら即打ち切る。preflight で `none` 確定なら Wiki Researcher subagent 自体を起動しない (slow path をそもそも踏まない)。
 
 ### Analyst subagent 失敗
 
