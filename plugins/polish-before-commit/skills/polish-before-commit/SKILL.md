@@ -97,6 +97,8 @@ Step 1 で収集した規約テキストに「コメント」「comment」キー
 Task(subagent_type="general-purpose", prompt="feature-dev:code-reviewer agent として変更ファイルの git diff をレビューし、バグ・規約違反を報告せよ")
 ```
 
+Task ツールが使えない (nested 実行) / `feature-dev` plugin 未導入の場合は、main thread で同等のレビュー (変更 diff のバグ・規約違反確認) を直接行い、`[最終レビュー: ... (fallback)]` と明示する (silent skip 禁止)。
+
 **Step 8 レポート文言** (2 バリアント、いずれかを必ず出力):
 
 | 条件 | 文言 |
