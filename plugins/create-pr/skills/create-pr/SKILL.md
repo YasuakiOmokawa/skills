@@ -75,7 +75,7 @@ PR URL を表示して完了。
 2. **AI Contribution ラベル** (`ai_contribution_labels`): セッション内で AI が PR 差分コードを生成・変更したか
 3. **Release Level ラベル** (`release_level_labels`): `db/migrate/` 配下があれば最高 / 根幹機能 + 体感変化なら高 / 後方互換なら中 / 表示文言のみなら最低
 
-`release-labels.md` が無ければ `bash scripts/setup.sh` をユーザーに促しラベル付与スキップ。マイルストーンは関連 Issue 由来、それ以外は `Untracked` (存在確認後、無ければ `--milestone` 省略)。
+`release-labels.md` が無ければ `bash scripts/setup.sh` をユーザーに促しラベル付与スキップ。マイルストーンは関連 Issue 由来、それ以外は `Untracked` (存在確認は `gh api repos/{owner}/{repo}/milestones --paginate --jq '.[].title'` で行う。`per_page=100` でも 100 件超リポジトリでは漏れるため `--paginate` 必須。無ければ `--milestone` 省略)。
 
 ### Step 9: セルフチェック (投稿前必須)
 

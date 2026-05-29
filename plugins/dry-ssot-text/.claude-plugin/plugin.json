@@ -1,7 +1,7 @@
 {
   "name": "dry-ssot-text",
   "description": "Use when an AI-generated document (plan / design doc / RFC / PR description) has grown long with the same concept explained in multiple places and needs consolidation to a single source of truth while preserving navigation aids like TOC, progress tables, and checklists",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "author": { "name": "Yasuaki Omokawa", "url": "https://github.com/YasuakiOmokawa" },
   "homepage": "https://github.com/YasuakiOmokawa/skills",
   "repository": "https://github.com/YasuakiOmokawa/skills",

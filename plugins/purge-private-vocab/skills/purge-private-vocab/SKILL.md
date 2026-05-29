@@ -62,12 +62,14 @@ Q3. source plan にしか定義がなく、target の読者は外部リソース
   YES → Q4 (要対応)
   NO  → 【持ち込み可】 (公知用語)
 
-Q4. target 内の出現回数は?
-  2+ 回 → 【要 in-line 定義】 (初出箇所で `用語 (= 短い説明)` を補う)
-  1 回   → 【要言い換えまたは削除】 (平易な日本語に書き換え、または文ごと削除)
+Q4. 番号/層ラベルか? (`Critical-A`, `α/β/γ 層`, `AC-12`, PR チェーン番号 等)
+  YES → 【要言い換えまたは削除】 出現回数に関わらず実値へ言い換え (in-line 定義ルートには載せない。Core Pattern 3 分類表と整合)
+  NO  → 出現回数で分岐:
+    2+ 回 → 【要 in-line 定義】 (初出箇所で `用語 (= 短い説明)` を補う)
+    1 回   → 【要言い換えまたは削除】 (平易な日本語に書き換え、または文ごと削除)
 ```
 
-**Q1 判定**: codebase identifier = `git grep <語>` が 1+ ヒット、公開規格 = RFC/W3C/ISO/IETF 等、公知 Issue/Jira = 公開 tracker でアクセス可。
+**Q1 判定**: codebase identifier = `git grep <語>` が 1+ ヒット、公開規格 = RFC/W3C/ISO/IETF 等、公知 Issue/Jira = 公開 tracker でアクセス可。**非 repo / 未マージ flag で `git grep` 不能時**は、backtick 付き snake_case で文中に `Flipper flag` / `class` / `file path` と明示されている、または source plan にファイルパス/flag 記述がある語を codebase identifier とみなす。
 
 **Q2 判定**: 見出し+直後本文に平易な説明があれば self-contained。ただし説明に plan 内造語がさらに混入していれば NO。迷ったら「plan 未読の同僚が target だけ読み下せるか」を音読で確認。
 

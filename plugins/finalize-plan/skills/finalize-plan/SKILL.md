@@ -96,7 +96,7 @@ git checkout -b feature/xxx
 
 ## Quality standards
 
-- **PR ガイドライン準拠**: ≤2 commits, ≤5 files
+- **PR ガイドライン準拠**: ≤2 commits, ≤5 files。この上限は tier 表の「想定 PR 数」より優先する (tier の PR 数は目安であり下限ではない。総ファイル数が少なければ standard でも 1 PR でよい)
 - **実行可能性**: Chrome DevTools MCP で実行可能な手動 QA 手順
 - **AC トレーサビリティ**: QA-H/E/D/R/M 全項目が手動 QA または自動 QA のいずれかでカバーされている
 - **0 件カテゴリ可視化**: 対象 AC 行に `非影響0` のように件数明示 (省略禁止)

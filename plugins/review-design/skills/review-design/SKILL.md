@@ -71,7 +71,7 @@ Pick the first matching row, top-down:
 ## Workflow
 
 1. **Step 1-2**: Run Q1-Q3 → pick reviewers from the matrix.
-2. **Step 3 — Parallel Review**: Dispatch selected reviewers via `Task(subagent_type="general-purpose")` in parallel. Each Task reads the corresponding `agents/*.md` and applies it.
+2. **Step 3 — Parallel Review**: Dispatch selected reviewers via `Task(subagent_type="general-purpose")` in parallel. Each Task reads the corresponding `agents/*.md` and applies it. **Greenfield (まだコードが無い設計レビュー) の場合**: 各 reviewer の判定基準を Grep/Glob による反例検索ではなく、提案された構造への forward-looking な制約として適用する (本 skill は "starting a new feature" が主用途のため、コード不在でもレビューを成立させる)。
 3. **Step 4 — Plan edit**: Integrate reviewer outputs. If issues found, **rewrite the plan file directly** with `Edit` (do NOT paste analysis summaries into the plan — modify the design itself). Do not emit a report here — flow into Step 5.
 4. **Step 5 — Devil's Advocate (MANDATORY)**: Always run, even when all reviewers returned ✅. Reviewers see only their own lens; DA covers operations / scale / cross-team interface / rollback cost. Default mode is **inline default** (main agent self-critiques). Escalate to **subagent dispatch** under the conditions in [references/escalation-rules.md](references/escalation-rules.md).
 5. **Feedback loop**: If DA flags any "fatal" finding → Edit plan → re-run Step 2-4 → re-evaluate DA escalation. Repeat until all DA findings are "acceptable".

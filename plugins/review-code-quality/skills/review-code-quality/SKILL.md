@@ -43,7 +43,7 @@ description: Use when finishing self-review of an implementation, before request
 
 - **Task 使用可否の自己判定**: 本 skill が他 subagent から呼ばれている (nested 実行) 場合、Task ツールは使用不可とみなす。Task を試行して失敗を確認する必要はない。判定基準は references/execution.md を参照
 - **4 agent**: cohesion / coupling / readability / business-impact (`agents/*.md`)
-- **business-impact-analyzer の skip 条件**: 対象 diff に domain model attribute (plan_code / role / status 等) の更新が含まれない場合、最低件数を満たさず skip 報告で終了してよい
+- **business-impact-analyzer の skip 条件**: 対象 diff に domain model attribute (plan_code / role / status 等) の更新が含まれない場合、最低件数を満たさず skip 報告で終了してよい。`$ARGUMENTS` が diff ではなく既存ファイル単体で git diff が取れない場合も「diff 不在のため判定不能」を理由に skip 報告する
 - 並列実行の agent 起動プロンプトテンプレ・観点と reference の対応表・指摘件数ルール (最低 3 件 / 50 行未満の escape hatch 等) は [references/execution.md](references/execution.md) を参照
 
 ### Step 3: 統合分析

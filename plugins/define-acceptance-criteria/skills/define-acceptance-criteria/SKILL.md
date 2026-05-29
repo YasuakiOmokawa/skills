@@ -41,7 +41,7 @@ description: Use when in plan mode before /mece-plan-review, when the user asks 
 | 技術リスク件数 | 0-1 件 | 3 件固定 | 3-5 件 |
 | 全 tier 共通 | controlled label (`permission` / `observability` / `data_compat` / `req_form` 等) を使用。完全新規 label は 12 文字以内・名詞のみ。`(仕様確定要)` も項目としてカウント可 |
 
-この表は他 references の数量定義に対する canonical。observability 軸は standard/deep の上限にカウントしない。
+この表は他 references の数量定義に対する canonical。**deep = 5 主軸 + observability 1 軸まで (計 6 軸まで)**、**必須セル数 = 主軸数 × 3** (deep は 15、observability セルは加算・任意)。observability 軸は standard/deep の主軸上限にカウントしない。
 
 ## Quick start
 
