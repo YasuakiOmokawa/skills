@@ -5,7 +5,7 @@ description: Use when finishing self-review of an implementation, before request
 
 # Review Code Quality
 
-**提案のみ行い、自動修正は行わない。**
+**🔴 Critical / 🟠 Major のうち機械的に安全なものは自動適用 + 適用後に lint/test で検証する。設計判断を要するものは `/polish-before-commit` への申し送りに回す (連続スキル実行で提案が握りつぶされるのを防ぐため)。🟡 Minor 以下は提案のみ。** 振り分け基準・検証・申し送り contract は [references/auto-apply.md](references/auto-apply.md) を SSOT とする。
 
 4 観点を専用 agent で分析し統合レポートを出力する。Tier 1 (常時) = 凝集度 / 結合度 / 可読性 の設計レベル問題 (RuboCop/ESLint で漏れるもの)、Tier 2 (条件付き) = 業務副作用 chain (feature-flag revival / auth bypass 等) で、対象 diff に domain model attribute (`plan_code` / `role` / `status` 等) の更新が含まれる場合のみ実行し、無ければ `skip` 報告。
 
@@ -28,6 +28,7 @@ description: Use when finishing self-review of an implementation, before request
    - ファイル > 2 かつ Task 使用不可 (nested 実行) → **main thread fallback** + 冒頭で fallback 理由を明示
 3. 4 agent **すべての結果を受信してから**統合分析を開始 (部分結果先行禁止)
 4. 統合レポートを出力 (詳細: [references/integration-output.md](references/integration-output.md))
+5. 🔴/🟠 を auto-apply-safe / needs-judgment に振り分け、safe を自動適用 → lint/test 検証、needs-judgment を申し送りファイルへ (詳細: [references/auto-apply.md](references/auto-apply.md))
 
 ## Workflows
 
@@ -54,13 +55,24 @@ business-impact-analyzer の **skip 報告も統合レポートに残す**。
 
 手順 (根本原因の特定 → 優先度判定 → レポート出力)、重大度表、出力ルール (アイコンは該当時のみ / サマリーは 0 件含めて全表示 / 指摘は `/abs/path:line_number` 形式) とレポートテンプレは [references/integration-output.md](references/integration-output.md) を参照。
 
+### Step 4: 自動適用・検証・申し送り
+
+統合した 🔴 Critical / 🟠 Major を [references/auto-apply.md](references/auto-apply.md) の 5 条件で **auto-apply-safe / needs-judgment** に振り分ける。
+
+- **auto-apply-safe** (局所・public interface 不変・意味保存・非リスク領域・非 business-impact): Edit で適用 → 編集言語に応じて lint/test を実行 (Ruby: rubocop + rspec / TS: eslint + prettier)。検証 fail なら逆 Edit で revert し申し送りへ。
+- **needs-judgment** (クラス分割 / 責務分離 / シグネチャ変更 / レイヤー移動 / business-impact 全件 / 修正方針が一意でないもの): 自動適用せず申し送りファイル `$(git rev-parse --git-dir)/quality-review-handoff.md` に overwrite 書き込み。判断に迷ったら needs-judgment 側へ倒す。
+- **Edit/Bash 不可 (nested 実行)**: 自動適用せず 🔴/🟠 全件を申し送りに回し、冒頭で明示。ファイル書き込みも不可なら申し送り内容をレポート inline に転記して情報欠落を防ぐ ([references/auto-apply.md](references/auto-apply.md))。
+
+各 finding に状態サフィックス (`✏️ 自動適用済 (検証 pass)` / `↩️ 適用 revert (検証 fail) → 申し送り` / `⏭ 申し送り → /polish-before-commit`) を付け、総合サマリー直下に件数行 `自動適用: N 件 (検証 pass) / revert: M 件 / 申し送り: K 件 → /polish-before-commit` を追加 ([references/auto-apply.md](references/auto-apply.md) が SSOT)。
+
 ## Advanced
 
 - [references/execution.md](references/execution.md) — 実行モード (並列 / main thread fallback) と Task 自己判定、指摘件数ルール
 - [references/integration-output.md](references/integration-output.md) — 重大度・統合手順・レポート出力ルール
+- [references/auto-apply.md](references/auto-apply.md) — 🔴/🟠 の自動適用振り分け・検証・申し送り contract
 - 各観点の検出基準: [references/cohesion.md](references/cohesion.md) / [references/coupling.md](references/coupling.md) / [references/readability.md](references/readability.md) / [references/business-impact.md](references/business-impact.md)
 
 ## 併用推奨 skill
 
-- `/polish-before-commit` — 検出された問題を踏まえてコミット前の最終仕上げを行う
+- `/polish-before-commit` — 本 skill が申し送った needs-judgment 項目を受け取り、フロー末尾でユーザー判断を仰ぐ最終仕上げ役
 - `/qa-ui` — コード品質と並行して実装後 UI を検証する
