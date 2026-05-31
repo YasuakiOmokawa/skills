@@ -1,6 +1,6 @@
 ---
 name: iterate-with-prototypes
-description: Use when starting a complex feature where a PRD or spec exists but load-bearing assumptions (technical feasibility, UX effect, reuse of an existing API or data structure) are still unverified, most implementation is done by an AI agent, the work spans several design docs and a PR chain, AND the change is reversible with a small blast radius. Do NOT use when the core risk is a hard-to-reverse decision (DB schema / migration, public API contract, cross-team boundary) — use design-first there. Symptom: about to design a complex feature on paper before any of it is proven to run, or confident-but-wrong design propagating across documents.
+description: Use when starting a complex feature where a PRD or spec exists but load-bearing assumptions (technical feasibility, UX effect, reuse of an existing API or data structure) are still unverified, most implementation is done by an AI agent, the work spans several design docs and a PR chain, AND the change is reversible with a small blast radius. Do NOT use when the core risk is a hard-to-reverse decision (DB schema / migration, public API contract, cross-team boundary) — use design-first there. Symptom — about to design a complex feature on paper before any of it is proven to run, or confident-but-wrong design propagating across documents.
 ---
 
 # Iterate With Prototypes
