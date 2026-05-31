@@ -20,7 +20,7 @@ bash ~/.claude/plugins/marketplaces/omokawa-skills/scripts/setup.sh
 
 これで `~/.claude/skills-config/jira.md` などが生成される。**全プロジェクト横断で参照されるグローバル設定**で、プロジェクトを切り替えても同じ設定が効く。
 
-## Plugins (15)
+## Plugins (16)
 
 ### プラン駆動 7-skill セット (engineering / プロジェクト非依存)
 
@@ -51,6 +51,7 @@ bash ~/.claude/plugins/marketplaces/omokawa-skills/scripts/setup.sh
 
 | Plugin | 役割 |
 |---|---|
+| [`iterate-with-prototypes`](./plugins/iterate-with-prototypes/skills/iterate-with-prototypes/SKILL.md) | 未検証仮定のある複雑機能を code-first(動かしてから設計)で本番まで回す |
 | [`qa-ui`](./plugins/qa-ui/skills/qa-ui/SKILL.md) | ChromeDevTools MCP で UI 検証 |
 | [`review-code-quality`](./plugins/review-code-quality/skills/review-code-quality/SKILL.md) | 設計レベルの品質問題を検出 |
 | [`create-pr`](./plugins/create-pr/skills/create-pr/SKILL.md) | カレントブランチからドラフト PR 作成 |
@@ -70,6 +71,7 @@ bash ~/.claude/plugins/marketplaces/omokawa-skills/scripts/setup.sh
 ## 開発ワークフローの推奨例
 
 ```
+0. 未検証の仮定がある複雑機能なら /iterate-with-prototypes（code-first: 動かしてから設計し、設計書はコードから起こす。戻しにくいスキーマ/API契約が主リスクなら不適）
 1. 設計してプランファイルつくる
 2. 要件を精査する
 3. /map-user-stories で US/Task に分解
