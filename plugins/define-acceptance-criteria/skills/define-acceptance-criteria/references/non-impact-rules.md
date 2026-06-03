@@ -35,3 +35,5 @@ git diff --name-only $(git merge-base HEAD main)..HEAD | xargs dirname | sort -u
 | `D` (deleted) を含む | **(a) 必須** (既存削除は影響範囲調査が必要、自動列挙の (b) では不十分) |
 
 判定結果と判断根拠を分析ファイル `### 検討観点` に 1 文で明記 (例: `git status: M 2 / A 1 → (b) 隣接ファイル列挙を選択`)。
+
+**plan mode (git 実行不能) のフォールバック分類**: `git status` / `git diff` が取れない (plan mode で未着手 / 別リポジトリ) 場合、plan 本文の「変更ファイル予定」記述から種別を推定する — 「〜追加 (新規ファイル作成)」= `A` 相当 → (c) 省略可、「既存ファイルへの追記 (バリデーション追加 / ルート追加 / アクション追加 等)」= `M` 相当 → (a) 必須、「〜削除」= `D` 相当 → (a) 必須。判定根拠に `(推定)` を付す (例: `plan 推定: 既存 controller へ action 追加 = M 相当 → (a) 手動列挙`)。

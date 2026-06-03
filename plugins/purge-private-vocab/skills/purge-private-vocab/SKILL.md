@@ -1,6 +1,6 @@
 ---
 name: purge-private-vocab
-description: Use after generating PR description, Jira ticket, design doc, RFC, or other reader-facing text from a local plan/spec file, when readers don't share the source plan.
+description: Detects local-plan coinages, abbreviations, and number labels in reader-facing text and rewrites them so readers without the source plan can follow. Use after generating PR description, Jira ticket, design doc, RFC, or other reader-facing text from a local plan/spec file, when readers don't share the source plan.
 ---
 
 # Purge Private Vocabulary
@@ -21,7 +21,7 @@ description: Use after generating PR description, Jira ticket, design doc, RFC, 
 **deep 必須前置** (Step 1 の入力収集を拡張):
 1. **target の文構造を直読み**: `**用語**: 説明` のような Label vs Body 構造かを目視確認し、Label vs Body 分離ルートの適用可否を Step 3 までに確定する
 2. **AC-* / Critical-* / RFC-* 等の ID 紐付け**: target に登場する全 ID (`AC-7`, `Critical-A` 等) を source plan / analysis ファイルから 1:1 で索引し、各 ID の元内容を「展開」または「文ごと削除」のどちらにするか Step 4 提案レポートに明記する
-3. **layer label (α/β/γ 層 等) の対応コンポーネント名解決**: source plan から各 layer の実コンポーネント名 (Web / Service / Persistence 等) を引き、推測補完にせず実値で言い換える
+3. **layer label (α/β/γ 層 等) の対応コンポーネント名解決**: source plan から各 layer の実コンポーネント名 (Web / Service / Persistence 等) を引き、推測補完にせず実値で言い換える。**source plan 不在で実コンポーネント名を解決できない場合**は、target 文脈から導ける関係性ベースの一般表現 (例: 「後段の処理層」) に言い換え、具体名を捏造しない
 
 ## Core Pattern: 3 分類
 
@@ -63,13 +63,13 @@ Q3. source plan にしか定義がなく、target の読者は外部リソース
   NO  → 【持ち込み可】 (公知用語)
 
 Q4. 番号/層ラベルか? (`Critical-A`, `α/β/γ 層`, `AC-12`, PR チェーン番号 等)
-  YES → 【要言い換えまたは削除】 出現回数に関わらず実値へ言い換え (in-line 定義ルートには載せない。Core Pattern 3 分類表と整合)
+  YES → 【要言い換えまたは削除】 出現回数に関わらず実値へ言い換え (in-line 定義ルートには載せない。Core Pattern 3 分類表と整合)。**層ラベルで source plan が無く実コンポーネント名を解決できない場合**は target 文脈から導ける関係性ベースの一般表現 (例: 「後段の処理層」) に言い換え、具体名を捏造しない (tier 非依存で適用)
   NO  → 出現回数で分岐:
-    2+ 回 → 【要 in-line 定義】 (初出箇所で `用語 (= 短い説明)` を補う)
+    2+ 回 → 【要 in-line 定義】 (初出箇所で `用語 (= 短い説明)` を補う)。**ただし初出が見出し / title の場合**は in-line 定義が不自然なため、Label vs Body の label 書換 (平易化) ルートに倒す
     1 回   → 【要言い換えまたは削除】 (平易な日本語に書き換え、または文ごと削除)
 ```
 
-**Q1 判定**: codebase identifier = `git grep <語>` が 1+ ヒット、公開規格 = RFC/W3C/ISO/IETF 等、公知 Issue/Jira = 公開 tracker でアクセス可。**非 repo / 未マージ flag で `git grep` 不能時**は、backtick 付き snake_case で文中に `Flipper flag` / `class` / `file path` と明示されている、または source plan にファイルパス/flag 記述がある語を codebase identifier とみなす。
+**Q1 判定**: codebase identifier = `git grep <語>` が 1+ ヒット、公開規格 = RFC/W3C/ISO/IETF 等、公知 Issue/Jira = 公開 tracker でアクセス可。**非 repo / 未マージ flag で `git grep` 不能時**は、backtick 付き snake_case で文中に `Flipper flag` / `class` / `file path` と明示されている、または source plan にファイルパス/flag 記述がある語を codebase identifier とみなす。加えて `Provider` / `Adapter` / `Gateway` のような**一般的なソフトウェア構成概念**は、平易な言い換えがかえって曖昧化する場合、持ち込み可に倒してよい (読者が文脈で解せる一般語のため)。
 
 **Q2 判定**: 見出し+直後本文に平易な説明があれば self-contained。ただし説明に plan 内造語がさらに混入していれば NO。迷ったら「plan 未読の同僚が target だけ読み下せるか」を音読で確認。
 

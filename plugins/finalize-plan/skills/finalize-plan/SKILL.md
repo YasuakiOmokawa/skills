@@ -1,6 +1,6 @@
 ---
 name: finalize-plan
-description: Use when the user has completed `/define-acceptance-criteria` + `/mece-plan-review` and is about to move from plan mode into implementation.
+description: Turns AC and MECE results from the analysis file into a branch strategy, PR split, and manual/auto QA steps appended to the plan file. Use when the user has completed `/define-acceptance-criteria` + `/mece-plan-review` and is about to move from plan mode into implementation.
 ---
 
 # finalize-plan
@@ -57,7 +57,7 @@ description: Use when the user has completed `/define-acceptance-criteria` + `/m
 
 **0 件カテゴリは ID を発行しない** が Step 3 の対象 AC 行では `0/0` 件数表記を必ず残す (詳細・生成例・fallback は [references/qa-id-enumeration.md](references/qa-id-enumeration.md))。
 
-**[MECE追加] のカウント**: `[MECE追加]` / `[MECE追加 変更]` タグ付き AC は base 4 カテゴリ (正常系 / 異常系 / エッジケース / 非影響確認) **とは別に** QA-M-NN を採番し、`対象AC` 件数の総数に**加算**して扱う。例: base 8 件 (3/2/2/1) + MECE追加 1 件 → 対象AC `9項目 (正常系3 / 異常系2 / エッジケース2 / 非影響1 / MECE追加1)`。
+**[MECE追加] のカウント**: `[MECE追加]` / `[MECE追加 変更]` タグ付き AC は base 4 カテゴリ (正常系 / 異常系 / エッジケース / 非影響確認) **とは別に** QA-M-NN を採番し、`対象AC` 件数の総数に**加算**して扱う。**タグ優先**: AC 本文が `### 正常系` 等のセクション内にインライン配置されていても、`[MECE追加]` タグが section 見出しより優先し QA-M を採番する。例: base 8 件 (3/2/2/1) + MECE追加 1 件 → 対象AC `9項目 (正常系3 / 異常系2 / エッジケース2 / 非影響1 / MECE追加1)`。
 
 ### Step 2A → 2B: Agent 実行 (1 直列 + 2 並列)
 

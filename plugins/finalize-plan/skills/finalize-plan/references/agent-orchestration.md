@@ -71,7 +71,7 @@ subagent として動作中 / tool deferred / dispatch 権限なしの場合:
 
 1. 4 agent 定義 (`agents/{branch-planner,pr-splitter,manual-qa-planner,auto-qa-planner}.md`) を Read で順次読込
 2. 本 agent 自身が各 agent の判定基準・出力フォーマットを適用し、各サブセクション (ブランチ戦略 / PR 分割 / 手動 QA / 自動 QA) を内部生成 (中間出力なし)
-3. Step 3 の「実装準備」追記時に、`## 実装準備` 見出しの**直下 1 行目**として次の備考を必ず挿入:
+3. Step 3 の「実装準備」追記時に、`## 実装準備` 見出しの直後 (見出し → 空行 1 つ → 備考 blockquote の順で、本文サブセクションより前) に次の備考を必ず挿入:
 
    ```
    > **備考**: 本実行は Task ツール利用不可のため in-context 代替モードで実行 (4 agent 定義をメイン agent が逐次適用)。

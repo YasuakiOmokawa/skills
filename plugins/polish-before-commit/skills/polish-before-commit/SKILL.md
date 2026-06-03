@@ -1,6 +1,6 @@
 ---
 name: polish-before-commit
-description: Use when finalizing a branch, just before `git commit` or `/create-pr`, or whenever the user says "仕上げて" / "polish" / "コミット前チェック".
+description: Auto-fixes convention and pattern-consistency issues, runs lint, and aggregates remaining judgment calls before stopping for the user. Use when finalizing a branch, just before `git commit` or `/create-pr`, or whenever the user says "仕上げて" / "polish" / "コミット前チェック".
 ---
 
 # polish-before-commit
@@ -13,9 +13,9 @@ description: Use when finalizing a branch, just before `git commit` or `/create-
 
 | Tier | 判定 | 実行 Step |
 |---|---|---|
-| **lite** | 1 ファイル <30 LoC, 規約 hit 0, Ruby delegate/def 撤去なし | Step 5 (lint) + Step 8 (final review) のみ |
-| **standard** (default) | 2-5 ファイル, 規約 hit 1-3 | Step 1-5 + Step 8 (Step 6/7 は条件 hit 時のみ) |
-| **deep** | 6+ ファイル / 規約 hit 4+ / Ruby delegate or def 撤去あり / multi-language | 全 Step (1-8) |
+| **lite** | 1 ファイル <30 LoC, 規約 hit 0, Ruby delegate/def 撤去なし | Step 5 (lint) + Step 8 (final review) + Step 9 (集約) |
+| **standard** (default) | 2-5 ファイル, 規約 hit 1-3 | Step 1-5 + Step 8 + Step 9 (Step 6/7 は条件 hit 時のみ) |
+| **deep** | 6+ ファイル / 規約 hit 4+ / Ruby delegate or def 撤去あり / multi-language | 全 Step (1-9) |
 
 **Step 6 (dead-mock 削除)** は Ruby PR で `delegate :X` / `def X` 撤去を含む場合のみ実行 (tier 問わず)。**Step 9 (判断申し送りの集約)** は tier 問わず必ず実行 (フロー最終出力のため lite でも省略不可)。リスク領域 (auth / billing / payment / migration) は LoC によらず **deep**。
 

@@ -1,6 +1,6 @@
 ---
 name: qa-ui
-description: 実装完了後の UI を検証したいとき、または「UI を確認して」「QA して」「画面の動作確認」と頼まれたときに使用。ChromeDevTools MCP を使い、独立コンテキストの QA エージェントが画面を操作して AC 単位で pass/fail を判定する。
+description: 実装完了後の UI を検証したいとき、または「UI を確認して」「QA して」「画面の動作確認」と頼まれたときに使用。ChromeDevTools MCP を使い、独立コンテキストの QA エージェントが画面を操作して AC 単位で pass/fail を判定し、Major/Minor 不合格は最小修正して再検証するループを回す (最大3ラウンド、Critical は即エスカレート)。
 argument-hint: [確認したい画面やURL（省略可）]
 ---
 
