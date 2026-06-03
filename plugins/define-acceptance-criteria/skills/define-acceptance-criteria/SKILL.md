@@ -1,6 +1,6 @@
 ---
 name: define-acceptance-criteria
-description: Use when in plan mode before /mece-plan-review, when the user asks to write AC for a plan, or when an AC matrix is needed as MECE input.
+description: Fills a matrix of 3 required categories (normal, error, edge) by controlled-vocabulary perspectives to enumerate acceptance criteria into the analysis file. Use when in plan mode before /mece-plan-review, when the user asks to write AC for a plan, or when an AC matrix is needed as MECE input.
 ---
 
 # define-acceptance-criteria
@@ -17,7 +17,7 @@ description: Use when in plan mode before /mece-plan-review, when the user asks 
 ```
 
 - 必須 3 カテゴリの全セル ≥1 項目 (空セル = 検討不足)
-- AC 行頭は controlled label ([references/perspectives.md](references/perspectives.md)) — 自由形式禁止
+- AC 行頭は controlled label ([references/perspectives.md](references/perspectives.md)) — 自由形式禁止。**ただし非影響確認カテゴリは例外**で、隣接する既存機能名で記述し controlled label 接頭辞は不要 (label 必須は正常系 / 異常系 / エッジケースの 3 必須カテゴリのみ)
 - プラン本文に欠落する仕様を AC で仮置きする場合は末尾に `(仕様確定要)`
 
 ## Task complexity tier
@@ -74,13 +74,15 @@ description: Use when in plan mode before /mece-plan-review, when the user asks 
 
 **主軸 / 副作用軸の deterministic classifier**: 変更種別 → デフォルト観点軸表の該当 type 行に現れた controlled label は **主軸**、Step B 汎用候補軸 (`flag_removal` / `non_invasive` / `dep_loc` / `layer` / `contract` 等) と `observability` は **副作用軸**。複数主種別共存時は各 type の最も中心的な 1 label を 1 主軸として採用 (= 副軸格上げ禁止)。
 
+**主軸候補が tier 軸数を超える場合の deterministic ドロップ**: (1) plan の不変条件からセルが空 / 自明になる軸を先にドロップ (例: 「auth 不変・誰でも閲覧可」と明示 → `permission` をドロップ)、(2) plan 本文で明示された関心 (後方互換 / データ量等) に対応する軸は優先的に残す、(3) なお超過するなら表の行順 (上位種別優先) で決める。table-listed label は概念的に cross-cutting に見えても主軸 (例: `compat`) であり副軸格上げ禁止。
+
 **Cross-cutting behaviors の label**: retry / timeout / circuit-breaker などの cross-cutting 挙動が複数 change-type で出現する場合、変更種別表の特定行に閉じ込めず Step B 汎用候補軸として扱う (例: api_change の同期エンドポイントで「リトライ 3 回」なら `idempotency` を Step B 汎用候補軸として副作用軸採用)。
 
 observability を含める場合の実効上限は **6 軸** (主軸 5 + observability 1)。主種別が 3 種類以上の場合は **副作用軸を 1 つに絞る** (合計が上限を超えるのを避けるため)。
 
 ### Step 3: 受け入れ条件の生成
 
-必須 3 カテゴリ × 選択観点で全セル充填:
+必須 3 カテゴリ × 選択観点で全セル充填。**充填確認は (カテゴリ × 各軸) の N×3 セルを 1 つずつ列挙し、各セルが ≥1 項目かを書き出し前に確認する**。執筆は軸を内側ループ (セル起点) で回すと特定軸への偏りを防げる — カテゴリ単位で書くと一部セルが空のまま「総数」だけ満たす漏れが起きる:
 
 - **正常系**: `- [ ] <label>: <入力> → <期待出力>` (「正しく動作する」禁止)
 - **異常系**: `- [ ] <label>: <条件> → <HTTP status or エラー文言>`
@@ -113,13 +115,15 @@ observability を含める場合の実効上限は **6 軸** (主軸 5 + observa
 
 **M 算出**: 簡略式 (各セル 1 項目固定) は `M = N × 3 + K`。各セルに複数項目を含む場合は実数表記に分岐 (`AC: M項目定義済み (内訳: 必須X件 + 非影響確認K件)`)。判定: `M == N × 3 + K` なら簡略式、不一致なら実数表記。
 
+**N / X / K の定義**: N = 主軸数 (observability 等の追加軸は N に含めず `+ observability` のように別表記)。X = 正常系 + 異常系 + エッジケースの**実 AC 行数**、K = 非影響確認の**実 AC 行数** (いずれも理論値 N×3 ではなく実カウント)。
+
 ## 上流/下流 contract (変更禁止)
 
 | 項目 | 値 |
 |---|---|
 | 分析ファイルパス | プランファイル拡張子前に `.analysis` 挿入 |
 | 必須セクション | `## 受け入れ条件` / `### 正常系` / `### 異常系` / `### エッジケース` / `### 非影響確認` |
-| AC 行頭 | `- [ ] <controlled label>: ...` ([references/perspectives.md](references/perspectives.md)) |
+| AC 行頭 | 正常系 / 異常系 / エッジケースは `- [ ] <controlled label>: ...` ([references/perspectives.md](references/perspectives.md))。非影響確認は `- [ ] [既存機能名]が...` で label 不要 |
 | プラン末尾 | `## 品質検証` 1 行サマリー |
 
 `/mece-plan-review` が AC を `- [ ]` 単位で enumerate するため必須。

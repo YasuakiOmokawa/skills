@@ -68,6 +68,8 @@ description: Use when starting a complex feature where a PRD or spec exists but 
 
 ## 併用推奨 skill
 
+> **install 前提**: `/prototype` (superpowers) と `/grill-with-docs` は本 repo の plugin ではなく別途 install が必要。未 install の場合 step 1 (spike) / step 5 (ドメインレビュー) が起動できないため、先に導入するか、手動の throwaway spike / ドメイン用語レビューで代替する。本 repo 内の plugin は `/review-design` `/define-acceptance-criteria` `/mece-plan-review` `/dry-ssot-text` `/finalize-plan` `/purge-private-vocab`。
+
 - `/prototype` — step 1 の throwaway スパイク
 - `/review-design` — step 3 のリファクタ/配置判断
 - `/grill-with-docs` `/define-acceptance-criteria` `/mece-plan-review` `/dry-ssot-text` — step 5 の設計書磨き

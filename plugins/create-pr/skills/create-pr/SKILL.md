@@ -1,6 +1,6 @@
 ---
 name: create-pr
-description: Use when the user says "PR を作って" / "draft PR" / "PR 作成して", optionally with `[base-branch]` argument. Runs without confirmation.
+description: Creates a Conventional-Commits draft PR from the current branch with generated title, body, labels, and milestone, without confirmation. Use when the user says "PR を作って" / "draft PR" / "PR 作成して", optionally with `[base-branch]` argument.
 ---
 
 # create-pr
@@ -75,7 +75,7 @@ PR URL を表示して完了。
 2. **AI Contribution ラベル** (`ai_contribution_labels`): セッション内で AI が PR 差分コードを生成・変更したか
 3. **Release Level ラベル** (`release_level_labels`): `db/migrate/` 配下があれば最高 / 根幹機能 + 体感変化なら高 / 後方互換なら中 / 表示文言のみなら最低
 
-`release-labels.md` が無ければ `bash scripts/setup.sh` をユーザーに促しラベル付与スキップ。マイルストーンは関連 Issue 由来、それ以外は `Untracked` (存在確認は `gh api repos/{owner}/{repo}/milestones --paginate --jq '.[].title'` で行う。`per_page=100` でも 100 件超リポジトリでは漏れるため `--paginate` 必須。無ければ `--milestone` 省略)。
+`release-labels.md` が無ければラベル付与をスキップし、設定方法を案内する (リポジトリ root の `scripts/setup.sh` 実行、または `~/.claude/skills-config/release-labels.md` を手動作成。サンプルは `examples/skills-config/`。npx skills add 経由では plugin 内に `scripts/` が無いため裸の相対パス案内をしない)。マイルストーンは関連 Issue 由来、それ以外は `Untracked` (存在確認は `gh api repos/{owner}/{repo}/milestones --paginate --jq '.[].title'` で行う。`per_page=100` でも 100 件超リポジトリでは漏れるため `--paginate` 必須。無ければ `--milestone` 省略)。
 
 ### Step 9: セルフチェック (投稿前必須)
 

@@ -1,6 +1,6 @@
 ---
 name: mece-plan-review
-description: Use when AC is already defined in the analysis file via /define-acceptance-criteria and MECE verification is required before implementation.
+description: Verifies acceptance criteria for MECE coverage with parallel spec/code/wiki analysts and a fresh red-team judge, recording coverage gaps and duplicates in the analysis file. Use when AC is already defined in the analysis file via /define-acceptance-criteria and MECE verification is required before implementation.
 ---
 
 # MECE Plan Review
@@ -31,7 +31,7 @@ description: Use when AC is already defined in the analysis file via /define-acc
 **lite-mode inline 実行手順** (Step 1 / Step 2 の代替):
 1. main agent が `${ENUMERATED_AC}` を inline review し、以下 2 視点を統合した analysis を産出:
    - **BB 視点**: 仕様 / カレントリポ wiki / 一般知識 から欠落 use case を 1-3 件抽出 (コード参照禁止)
-   - **WB 視点**: 変更ファイル diff を Read し技術ギャップを 1-3 件抽出 (仕様参照禁止)
+   - **WB 視点**: 変更ファイル diff を Read し技術ギャップを 1-3 件抽出 (仕様参照禁止)。**コードが未実装 / 不可読 (greenfield・plan mode) の場合**は AC 判定を `言及なし` 既定とし、plan からコード構造ギャップが積極的に導ける AC のみ `不十分` とする。低充足率は AC 不備でなくコード不可読が原因と明記し、機械合成 (一方充足 + 他方言及なし → 充足) に委ねる
 2. Wiki Researcher / Fresh Red Team は skip (Critical 候補 0 で確定する設計)
 3. 出力は標準と同じ Step 3 形式 (分析ファイル末尾セクション + プラン 1 行サマリー) を採用
 4. lite 報告では `Critical: 0` を確定値として 1 行サマリーに記載 (Critical ≥1 が出現したら自動的に standard tier へ格上げ判定)
@@ -41,7 +41,7 @@ description: Use when AC is already defined in the analysis file via /define-acc
 1. **分析ファイルへの記録は main agent のみ** (subagent は書かない)
 2. **情報源の完全分離**: BB は仕様 (カレントリポ wiki + Web + 一般知識) のみ・コード参照禁止 / WB はコードのみ・仕様 / wiki 参照禁止 / Wiki Researcher は判定なし / Red Team は plan/AC 本文を持たない
 3. **Wiki 分担**: BB は `read_wiki_*` を **カレントリポ (`${REPO_NAME}`) のみ** に呼ぶ。関連リポ wiki は Wiki Researcher 専属
-4. **Critical=0 なら「MECE OK」**、1 件以上で「要修正」(分析ファイルに記録、プラン本文は変更しない)
+4. **Critical=0 なら「MECE OK」**、1 件以上で「要修正」(分析ファイルに記録、プラン本文は変更しない)。**verdict (OK / 要修正) は Critical 件数のみで決まる** — 「不十分」AC や coverage 率は verdict に影響せず、AC ブラッシュアップ (Step 3-2) の対象として別系統で扱う (Critical 0 + 不十分 AC 数件 = 「MECE OK」で正しい)
 5. **指摘件数の縛りなし**: 該当時のみ指摘、0 件なら根拠 1 文
 
 ## Workflow

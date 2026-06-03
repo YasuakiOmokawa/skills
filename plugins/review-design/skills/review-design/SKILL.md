@@ -1,6 +1,6 @@
 ---
 name: review-design
-description: Use when starting a new feature, adding a file or module, deciding "where should this code live", or when the user requests a design review with `/review-design`.
+description: Reviews code placement and pattern choices before implementation using selected architecture reviewers (anti-pattern plus DDD, Hexagonal, Clean) and a mandatory adversarial critique, editing the plan directly on fatal findings. Use when starting a new feature, adding a file or module, deciding "where should this code live", or when the user requests a design review with `/review-design`.
 ---
 
 # review-design
@@ -40,6 +40,8 @@ description: Use when starting a new feature, adding a file or module, deciding 
 3. 行数 ≤200
 4. public method ≤10 / callback chain <3
 5. **after_commit / after_create 内で external API / 外部 IO を呼んでいない** (escape hatch 条件と一致)
+
+**Greenfield (コード不在) の扱い**: 項目 1 / 3 / 4 (tests 通過 / 行数 ≤200 / public method 数) は実コードがないと検証できない。検証不能な項目は **not satisfied (違反) 扱い**とし、結果 unhealthy → all 4 reviewers に倒す (criticism-first default を保つため。greenfield は本 skill の主用途なのでこの分岐を必ず通る)。
 
 **Escape hatch**: 1-4 を満たし healthy 寄りでも、項目 5 (after_commit 内 external IO) を含む場合は healthy を撤回 = unhealthy 扱い → all 4 reviewers。
 

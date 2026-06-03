@@ -1,6 +1,6 @@
 ---
 name: review-code-quality
-description: Use when finishing self-review of an implementation, before requesting PR review, or when a diff updates a domain model attribute (`plan_code` / `role` / `status` 等).
+description: Analyzes a diff across cohesion, coupling, and readability (plus business-impact for domain-attribute changes), auto-applies only mechanically safe readability-axis critical/major fixes (cohesion/coupling/business-impact findings are always handed off), and routes design-judgment items to /polish-before-commit. Use when finishing self-review of an implementation, before requesting PR review, or when a diff updates a domain model attribute (`plan_code` / `role` / `status` 等).
 ---
 
 # Review Code Quality

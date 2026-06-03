@@ -28,6 +28,10 @@
 | `plugins/.*/SKILL.md` / `plugins/.*/agents/` | skill_or_prompt_change |
 | `app/.*/feature_flag/` / `config/features/` | flag_change |
 | `app/.*/external_api/` / 外部 API client | external_api_change |
+| `app/queries/` (Query オブジェクト) | db_or_model_change |
+| `app/forms/` / `app/form_objects/` | controller_change |
+
+**未マッチ時の fallback (裁量判断を排除)**: 上表に無い `app/*/` 配下は最も近い層の既存種別へ従属させる (データ取得系 → `db_or_model_change` / 入力受付系 → `controller_change`)。`config/` 配下 (initializers 除く) や `config/routes.rb` は単独で種別を持たない supporting file とみなし、関連する主種別の副次扱いにして独自の観点軸を起こさない。
 
 ### 変更種別 → デフォルト観点軸 (controlled vocabulary)
 
@@ -79,6 +83,8 @@
 | service_change | 呼び出し元 | `caller` |
 | service_change | エラー伝播 | `error_prop` |
 | **全種別 (追加候補)** | 監査ログ / メトリクス / 構造化ログ | `observability` |
+
+**ui_change の copy / 文言のみ変更時の主軸**: `device` を主軸に採る (ラベル長・文字列の変化による truncation / overflow / 折り返しが唯一の実観測点のため)。`a11y` は読み上げ名・ARIA に踏み込む変更がある時のみ、`browser` はブラウザ依存描画が絡む時のみ採用する。
 
 ### area タグ対応 (mece-plan-review との接続)
 
