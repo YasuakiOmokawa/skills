@@ -40,14 +40,14 @@ WB Analyst と独立に動くため互いの分析結果は参照しない。責
 
 ## Critical 閾値
 
-以下のいずれかに該当する指摘のみ Critical 認定。これ以外は Important 以下に分類。
+**判定の既定規則**: 「この欠陥は **それ単独で能動的に** 害を成立させるか? それとも害を **容易にする** だけか?」 — 成立させるなら Critical、容易にするだけなら Important。以下 4 類型に **現に該当** する指摘のみ Critical 認定:
 
-1. **データロス or 破壊的変更** (DB drop, schema break, irreversible mutation)
-2. **セキュリティホール** (OWASP Top 10 該当、認証バイパス、SQL/XSS/CSRF/SSRF/IDOR 等)
-3. **既存ユーザ動線が壊れる** (現行ユーザの操作が不可になる、互換性消失)
+1. **データロス / 破壊的変更** (DB drop, schema break, irreversible mutation)
+2. **能動的に成立するセキュリティ侵害** — それ単独で不正アクセス / データ取得 / 権限昇格が **成立する** 欠陥 (認証バイパス / SQL・XSS injection / CSRF / SSRF / IDOR / mass-assignment 権限昇格 等)
+3. **既存ユーザ動線の破壊** (現行ユーザの操作が不可になる、互換性消失。遅延・文言品質の低下は含まない)
 4. **ロールバック不能** (revert できない migration, 削除不可能な外部影響)
 
-上記いずれにも当たらない指摘は Important / Nice-to-have に分類。「重大に見える」だけで Critical にしないこと。
+**Critical でないもの (Important 以下に格下げ)**: hardening / 防御の多層化の不足で、それ単独では侵害が **成立しない** もの — rate-limit / brute-force 耐性・アカウントロック・監査ログ・強パスワード方針の欠如、機微情報の localStorage 保管 等。攻撃を容易にするが単独で害を成立させない。性能劣化 / 観測性 / i18n / polish も Critical でない。「OWASP Top 10 に載るか」でなく「**それ単独で害が成立するか**」で決める。上記いずれにも当たらない指摘は Important / Nice-to-have に分類。「重大に見える」だけで Critical にしないこと。
 
 ## 指摘件数のルール
 
