@@ -65,6 +65,7 @@ description: Use when starting a complex feature where a PRD or spec exists but 
 - **机上設計から始める。** 紙の設計 → コードの順は、このスキルが**禁じる**既定挙動。spike → 動くコード → リファクタ → doc の順を守る。
 - **設計書をコードより先に書く。** doc が先だと必ず乖離する。doc は step 4 以降、working code から起こす。
 - **緑チェックを product-green と取り違える。** 動くコードは実装可能性を示すだけ。ユーザーの完了率向上は示さない。UX 仮説は post-ship で計測する。
+- **variant 同士の相対比較で合否(kill/grounded)を決める。** A vs B は、どちらも telos の正本(ground-truth)で測っていなければ「差が無い → 無価値」と誤断する(両方ゴールを外していても気づけない)。relative 比較は候補の絞り込みにのみ使い、合否は telos の正本(網羅性が価値なら既知完全集合 = oracle を構築)に対する**絶対値**(recall/precision 等)で出す。
 
 ## 併用推奨 skill
 
