@@ -45,14 +45,14 @@ BB Analyst と独立に動くため互いの分析結果は参照しない。責
 
 ## Critical 閾値
 
-以下のいずれかに該当する指摘のみ Critical 認定。これ以外は Important 以下に分類。
+**判定の既定規則**: 「この欠陥は **それ単独で能動的に** 害を成立させるか? それとも害を **容易にする** だけか?」 — 成立させるなら Critical、容易にするだけなら Important。以下 4 類型に **現に該当** する指摘のみ Critical 認定:
 
-1. **データロス or 破壊的変更** (DB drop, schema break, irreversible mutation, 既存データの整合性破壊)
-2. **セキュリティホール** (実装由来: 認証バイパス、SQL/XSS/CSRF/SSRF/IDOR、open redirect、race condition による権限昇格 等。OWASP Top 10 のカテゴリ名は一般知識として概念ラベルに使ってよい)
-3. **既存ユーザ動線が壊れる** (現行コードの挙動が変わってユーザ操作が不可になる)
+1. **データロス / 破壊的変更** (DB drop, schema break, irreversible mutation, 既存データの整合性破壊)
+2. **能動的に成立するセキュリティ侵害** — それ単独で不正アクセス / 権限昇格が **成立する** 欠陥 (実装由来: 認証バイパス / SQL・XSS injection / CSRF / SSRF / IDOR / open redirect / race condition による権限昇格 / mass-assignment 等。OWASP Top 10 のカテゴリ名は概念ラベルに使ってよい)
+3. **既存ユーザ動線の破壊** (現行コードの挙動が変わってユーザ操作が不可になる。遅延・文言品質の低下は含まない)
 4. **ロールバック不能** (revert できない migration, 削除不可能な外部影響)
 
-上記いずれにも当たらない指摘は Important / Nice-to-have に分類。
+**Critical でないもの (Important 以下に格下げ)**: hardening / 防御の多層化の不足で、それ単独では侵害が **成立しない** もの — rate-limit / brute-force 耐性・アカウントロック・監査ログ・強パスワード方針の欠如、機微情報の localStorage 保管 等。攻撃を容易にするが単独で害を成立させない。性能劣化 / 観測性 / i18n / polish も Critical でない。「OWASP Top 10 に載るか」でなく「**それ単独で害が成立するか**」で決める。上記いずれにも当たらない指摘は Important / Nice-to-have に分類。
 
 ## 指摘件数のルール
 
