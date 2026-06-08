@@ -64,7 +64,21 @@ description: Turns AC and MECE results from the analysis file into a branch stra
 - **Step 2A 直列**: `branch-planner` → `pr-splitter` (pr-splitter は branch-planner の base ブランチ名を派生に使う)
 - **Step 2B 並列**: `manual-qa-planner` + `auto-qa-planner` を**同一メッセージ内**で並列起動。両 planner は再分類せず `${ENUMERATED_QA_AC}` の QA-ID を信頼する
 
-各 agent への Task prompt テンプレ、Task ツール利用不可時の in-context fallback は [references/agent-orchestration.md](references/agent-orchestration.md) 参照。
+4 agent はいずれも `Task(subagent_type="general-purpose")` で起動し、prompt 冒頭で agent 定義ファイルを Read させる (repo 制約上 typed subagent_type は使わない)。最小レシピ:
+
+```
+Task(subagent_type="general-purpose", prompt="""
+${CLAUDE_PLUGIN_ROOT}/skills/finalize-plan/agents/<agent>.md を読み込み、以下を基に <成果物> を策定:
+## プラン:
+${PLAN_CONTENT}
+## Enumerated AC:
+${ENUMERATED_QA_AC}      # qa planner のみ
+## MECE 分析結果:
+${MECE_CONTENT}          # qa planner のみ
+""")
+```
+
+2A は branch-planner → pr-splitter の順 (pr-splitter は `${BRANCH_RESULT}` の base 名を派生に使う)。2B は manual-qa-planner + auto-qa-planner を同一メッセージで並列起動。各 agent 固有 prompt の全文・Task ツール利用不可時の in-context fallback は [references/agent-orchestration.md](references/agent-orchestration.md) 参照。
 
 ### Step 3: プランファイルに `## 実装準備` 追記
 
@@ -99,7 +113,7 @@ git checkout -b feature/xxx
 - **PR ガイドライン準拠**: ≤2 commits, ≤5 files。この上限は tier 表の「想定 PR 数」より優先する (tier の PR 数は目安であり下限ではない。総ファイル数が少なければ standard でも 1 PR でよい)
 - **実行可能性**: Chrome DevTools MCP で実行可能な手動 QA 手順
 - **AC トレーサビリティ**: QA-H/E/D/R/M 全項目が手動 QA または自動 QA のいずれかでカバーされている
-- **0 件カテゴリ可視化**: 対象 AC 行に `非影響0` のように件数明示 (省略禁止)
+- **0 件カテゴリ可視化**: 対象 AC 行に `非影響0` のように件数明示 (省略禁止 — 省略すると読み手が「採番漏れ」か「該当ゼロ」かを区別できないため)
 
 ## Advanced
 

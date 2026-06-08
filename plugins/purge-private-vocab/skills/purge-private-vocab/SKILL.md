@@ -42,7 +42,20 @@ description: Detects local-plan coinages, abbreviations, and number labels in re
 
 ### 2. 候補抽出
 
-target 全文から [references/heuristics-and-pitfalls.md](references/heuristics-and-pitfalls.md) の検出パターン (カタカナ+型/主義/原則/論/系、強調フレーズ、ラベル+番号、ギリシャ文字+層、`§...` anchor、フェーズ用語、数字+象限/層) にマッチする語を**全件**列挙する。heuristic ヒット ≠ 要対応で、分類は Step 3 で決める。
+target 全文から下記の検出パターンにマッチする語を**全件**列挙する。heuristic ヒット ≠ 要対応で、分類は Step 3 で決める (false positive を含む候補リスト):
+
+```bash
+# カタカナ造語 (型/主義/原則/論/系)
+grep -oE '[ァ-ヴー一-龥a-zA-Z]+(型|主義|原則|論|系)' <target>
+# section anchor
+grep -oE '§[^ ,。、）]+' <target>
+# アルファベット + 番号ラベル (Critical-A, AC-12 等。suffix は大文字も拾う)
+grep -oE '[A-Z][A-Za-z]*-[0-9A-Za-z]+' <target>
+```
+
+加えて目視で拾う: 強調フレーズ (`**...**` / 「...」)、ギリシャ文字+層 (`α/β/γ 層`)、フェーズ用語 (`rollout enabler` 等)、数字+象限/層 (各要素が文中未説明のもの)。
+
+パターン別の typical false positive とより広い grep 例は [references/heuristics-and-pitfalls.md](references/heuristics-and-pitfalls.md) 参照。
 
 ### 3. 分類 — 決定木
 

@@ -27,8 +27,8 @@ grep -oE '[ァ-ヴー一-龥a-zA-Z]+(型|主義|原則|論|系)' <target>
 # section anchor
 grep -oE '§[^ ,。、）]+' <target>
 
-# アルファベット + 番号ラベル
-grep -oE '[A-Z][A-Za-z]*-[0-9a-z]+' <target>
+# アルファベット + 番号ラベル (suffix は大文字も拾う: Critical-A / Critical-D 等)
+grep -oE '[A-Z][A-Za-z]*-[0-9A-Za-z]+' <target>
 ```
 
 ## Common Mistakes

@@ -70,7 +70,18 @@ description: Fills a matrix of 3 required categories (normal, error, edge) by co
 
 ### Step 2: 観点の選択 (3-5 個)
 
-[references/perspectives.md](references/perspectives.md) の「変更種別 → デフォルト観点軸」表から **3-5 個**選ぶ (下限 3 / 上限 5)。複数主種別での主軸採用 / 副作用軸 1 つ追加 (併用可) / observability 特例 / 表に無い場合の汎用候補軸 (Step B) などの運用詳細は [references/selection-rules.md](references/selection-rules.md) を参照。選定理由を分析ファイル `### 検討観点` に 1 文ずつ明記。
+[references/perspectives.md](references/perspectives.md) の「変更種別 → デフォルト観点軸」表から **3-5 個**選ぶ (下限 3 / 上限 5)。よく使う種別は以下を inline で採用でき、references を開かず median path を完結できる (下表に無い種別・副作用軸・Step B は perspectives.md 参照):
+
+| 変更種別 | 既定 controlled label (上から優先) |
+|---|---|
+| api_change | `req_form` / `permission` / `compat` |
+| db_change / db_or_model_change | `data_compat` / `migration` / `data_volume` |
+| auth_change | `permission` / `auth_state` / `user_type` |
+| ui_change | `device` / `a11y` / `browser` |
+| batch_change | `idempotency` / `data_volume` / `runtime` |
+| 全種別 追加候補 | `observability` (主軸数にカウントしない) |
+
+複数主種別での主軸採用 / 副作用軸 1 つ追加 (併用可) / observability 特例 / 表に無い場合の汎用候補軸 (Step B) などの運用詳細は [references/selection-rules.md](references/selection-rules.md) を参照。選定理由を分析ファイル `### 検討観点` に 1 文ずつ明記。
 
 **主軸 / 副作用軸の deterministic classifier**: 変更種別 → デフォルト観点軸表の該当 type 行に現れた controlled label は **主軸**、Step B 汎用候補軸 (`flag_removal` / `non_invasive` / `dep_loc` / `layer` / `contract` 等) と `observability` は **副作用軸**。複数主種別共存時は各 type の最も中心的な 1 label を 1 主軸として採用 (= 副軸格上げ禁止)。
 
@@ -91,7 +102,7 @@ observability を含める場合の実効上限は **6 軸** (主軸 5 + observa
 
 ### Step 4: 技術リスクの生成
 
-リスク 3 件を 3 点セットで記述 (各項目 1 文 = 句点 1 つ厳守):
+リスク 3 件を 3 点セットで記述 (各項目 1 文 = 句点 1 つに収める。理由: 1 項目に複数文を詰めると検証単位が曖昧になり、後続でリスク単位の追跡ができなくなる):
 - **何がわからないか**: 主語+述語の 1 文
 - **最悪何が起きるか**: 誰に+何が
 - **どうやって検証するか**: 実行可能コマンド (`code block`) または手順
