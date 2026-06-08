@@ -36,12 +36,12 @@ description: Verifies acceptance criteria for MECE coverage with parallel spec/c
 3. 出力は標準と同じ Step 3 形式 (分析ファイル末尾セクション + プラン 1 行サマリー) を採用
 4. lite 報告では `Critical: 0` を確定値として 1 行サマリーに記載 (Critical ≥1 が出現したら自動的に standard tier へ格上げ判定)
 
-## Core rules (絶対に守る)
+## Core rules (絶対に守る = 守らないと検証設計が崩れる不変条件)
 
-1. **分析ファイルへの記録は main agent のみ** (subagent は書かない)
+1. **分析ファイルへの記録は main agent のみ** (subagent は書かない — 並列 subagent が同一ファイルに書くと記録の競合・重複が起き、main agent の機械合成 (Step 3-1) の入力が壊れるため)
 2. **情報源の完全分離**: BB は仕様 (カレントリポ wiki + Web + 一般知識) のみ・コード参照禁止 / WB はコードのみ・仕様 / wiki 参照禁止 / Wiki Researcher は判定なし / Red Team は plan/AC 本文を持たない
 3. **Wiki 分担**: BB は `read_wiki_*` を **カレントリポ (`${REPO_NAME}`) のみ** に呼ぶ。関連リポ wiki は Wiki Researcher 専属
-4. **Critical=0 なら「MECE OK」**、1 件以上で「要修正」(分析ファイルに記録、プラン本文は変更しない)。**verdict (OK / 要修正) は Critical 件数のみで決まる** — 「不十分」AC や coverage 率は verdict に影響せず、AC ブラッシュアップ (Step 3-2) の対象として別系統で扱う (Critical 0 + 不十分 AC 数件 = 「MECE OK」で正しい)。**Critical 認定は「その欠陥が *それ単独で* 害を成立させるか (hardening 不足は Important)」の決定規則で行う** — verdict の信頼性はこの規則に依存する (詳細は各 agent / `references/red-team-checklist.md` の「Critical 閾値」節)
+4. **Critical=0 なら「MECE OK」**、1 件以上で「要修正」(分析ファイルに記録、プラン本文は変更しない)。**MECE判定 (OK / 要修正) は Critical 件数のみで決まる** — 「不十分」AC や coverage 率は MECE判定 に影響せず、AC ブラッシュアップ (Step 3-2) の対象として別系統で扱う (Critical 0 + 不十分 AC 数件 = 「MECE OK」で正しい)。**Critical 認定は「その欠陥が *それ単独で* 害を成立させるか (hardening 不足は Important)」の決定規則で行う** — MECE判定 の信頼性はこの規則に依存する (詳細は各 agent / `references/red-team-checklist.md` の「Critical 閾値」節)
 5. **指摘件数の縛りなし**: 該当時のみ指摘、0 件なら根拠 1 文
 
 ## Workflow

@@ -50,5 +50,5 @@
 
 - 関連 Issue がありマイルストーンがあればそれを使用
 - それ以外の場合は `Untracked` を設定
-- **事前確認必須**: `gh api repos/{owner}/{repo}/milestones --jq '.[].title'` で `Untracked` の存在を確認し、**無ければ `--milestone` オプション自体を省略**する（存在しない値を指定すると `gh pr create` が失敗するため）
-- `--paginate` 推奨: 100 件超のリポジトリで `per_page=100` でも漏れるため、`--paginate` か id 直接確認
+- **事前確認必須**: `gh api repos/{owner}/{repo}/milestones --paginate --jq '.[].title'` で `Untracked` の存在を確認し、**無ければ `--milestone` オプション自体を省略**する（存在しない値を指定すると `gh pr create` が失敗するため）
+- **`--paginate` 必須**（推奨ではない）: `per_page=100` でも 100 件超リポジトリでは末尾が漏れ、実在する `Untracked` を「無い」と誤判定して `--milestone` を不要に省略する事故が起きるため。100 件超が確実なら id 直接確認でも可

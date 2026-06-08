@@ -9,6 +9,8 @@ description: Analyzes a diff across cohesion, coupling, and readability (plus bu
 
 4 観点を専用 agent で分析し統合レポートを出力する。Tier 1 (常時) = 凝集度 / 結合度 / 可読性 の設計レベル問題 (RuboCop/ESLint で漏れるもの)、Tier 2 (条件付き) = 業務副作用 chain (feature-flag revival / auth bypass 等) で、対象 diff に domain model attribute (`plan_code` / `role` / `status` 等) の更新が含まれる場合のみ実行し、無ければ `skip` 報告。
 
+**重大度 (全 step 共通):** 🔴 Critical (即修正 / auto-apply 対象) / 🟠 Major (この PR で修正 / auto-apply 対象) / 🟡 Minor (次 PR / 提案のみ) / 🔵 Info (認識のみ) / ✅ Good (維持)。詳細・出力ルールは [references/integration-output.md](references/integration-output.md) を SSOT とする。
+
 ## Task complexity tier
 
 | Tier | 判定 | 実行範囲 |

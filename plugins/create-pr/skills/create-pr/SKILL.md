@@ -56,9 +56,9 @@ PR URL を表示して完了。
 
 ### Step 6: 本文生成
 
-検出した PR テンプレートのセクション構成に従う。**詳細は [references/description-style.md](references/description-style.md) を必ず Read**。要点:
+検出した PR テンプレートのセクション構成に従う。下記の要点で書ける lite-tier は inline 完結でよい。**standard / deep tier、または初めて本 skill を使う場合は [references/description-style.md](references/description-style.md) を Read**（NG/OK 例対比・Pre-work の具体手順・セクション分量対比表が必要になるため）。要点:
 
-- **Pre-work (mandatory)**: 本文を書く前に PR の本質を **2-3 点の bullet リスト** として scratch 出力 → 「このPRでやること」 (または「やったこと」を格上げ) に貼る
+- **Pre-work (mandatory)**: 本文を書く前に PR の本質を **bullet リスト** (standard 既定 2-3 点 / deep 5-7 点、tier 表が SSOT) として scratch 出力 → 「このPRでやること」 (または「やったこと」を格上げ) に貼る
 - **6 文体鉄則**: コードから読めることは書かない / 斜め読み構造 / 重複禁止 / 常体 / 書かない勇気 / 読み直し
 - **セクション分量**:
   - 簡潔 (やったこと / なぜやるのか / 動作確認結果 / レビューしてほしい観点) → 全 1 行・bullet なし
@@ -80,7 +80,7 @@ PR URL を表示して完了。
 ### Step 9: セルフチェック (投稿前必須)
 
 [references/description-style.md](references/description-style.md) の「Step 9 セルフチェック」を実施。4 観点で 1 つでも該当があれば修正:
-- **[A] 斜め読みテスト**: 各セクション 1 行目だけで PR 意図再構築可能か / 本質 2-3 点リストと一致か / plan 由来 internal 語彙 (`α 層` / `AC-9` / `Critical-A` 等) が残っていないか
+- **[A] 斜め読みテスト**: 各セクション 1 行目だけで PR 意図再構築可能か / 本質リスト (tier 依存: standard 2-3 点 / deep 5-7 点) と一致か / plan 由来 internal 語彙 (`α 層` / `AC-9` / `Critical-A` 等) が残っていないか
 - **[B] コードから読める情報の混入**: ファイル名・関数名・パラメータ追加・import 等が簡潔セクションに残っていないか
 - **[C] 重複・冗長**: 「やったこと」と「なぜやるのか」の事実重複 / 簡潔セクションの bullet 化 / 動作確認結果のケース列挙 / 詳細セクションが 1〜2 行で済まされていないか
 - **[D] AI 臭**: 「以下に〜を示す」「具体的には」「適切に」等の生成検出語 / 太字 bullet 3 つ以上 / 機械的絵文字 / 「〜のため」段落内 2 回以上 / 「特になし」埋め文

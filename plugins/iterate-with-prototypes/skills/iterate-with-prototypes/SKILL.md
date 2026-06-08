@@ -27,7 +27,15 @@ description: Use when starting a complex feature where a PRD or spec exists but 
 
 1. **対象を特定** — PRD/仕様/プランを探す。取れなければ 1 度だけ聞く(**branch 名から決めつけない**)。`When to use` で使用可否を判定し、不適なら `/prototype` か `/define-acceptance-criteria` へ誘導して抜ける。
 2. **仮定を自分で抽出してランク** — load-bearing な未検証仮定を**自分で**列挙し、**不確実性 × 外れた時の手戻り**で順位付け(ユーザーに丸投げせず、順位案を出して訂正してもらう)。
-3. **単一正本(ledger)を作る = 最初の成果物** — `主張 / 検証方法 / kill 条件 / status` の表で 1 ファイル。**検証方法と kill 条件は実行可能に書く**: ①何を正本(source-of-truth)として数値照合するか名指す ②scalar な予算(レイテンシ/精度等)は percentile + 計測窓に固定(例: p95 ≤ 1s)③代表入力を列挙(正常/エッジ)④境界は推測せず観測で確定(put→get・実測)。以後の TODO・決定・AC はすべてここに集約する。
+3. **単一正本(ledger)を作る = 最初の成果物** — `主張 / 検証方法 / kill 条件 / status` の表で 1 ファイル。**検証方法と kill 条件は実行可能に書く**: ①何を ground-truth(source-of-truth)として数値照合するか名指す ②scalar な予算(レイテンシ/精度等)は percentile + 計測窓に固定(例: p95 ≤ 1s)③代表入力を列挙(正常/エッジ)④境界は推測せず観測で確定(put→get・実測)。以後の TODO・決定・AC はすべてここに集約する。
+
+   例(1 行):
+
+   | 主張 | 検証方法 | kill 条件 | status |
+   |---|---|---|---|
+   | 既存 SearchIndex API を流用して全文検索を賄える | 本番 SearchIndex に代表クエリ 20 件(正常 15 / エッジ 5)を投げ、返却 ID 集合を本番 DB の期待集合(=ground-truth)と照合。レイテンシは p95 計測 | recall < 0.9 もしくは p95 > 1s が再現 | unverified |
+
+   この行は **1 仮定に複数観測基準(recall と latency)**を持つ例(同一データ経路なので 1 行に同居)。**別仮定は行を分ける**(`The loop` step 1 の「verdict を仮定ごとに分ける」と整合)。
 4. 最上位仮定の spike へ → `The loop` step 1。
 
 > **iterate の実体**: spike は 1 回で終わらないことが多い。spike を配信して触らせる → ledger の仮定/status を更新 → 未解決なら step 1 へ戻る、という**周回**を回す。`The loop` step 2(Code-A)着手は、最上位仮定が grounded になってから。
@@ -65,7 +73,7 @@ description: Use when starting a complex feature where a PRD or spec exists but 
 - **机上設計から始める。** 紙の設計 → コードの順は、このスキルが**禁じる**既定挙動。spike → 動くコード → リファクタ → doc の順を守る。
 - **設計書をコードより先に書く。** doc が先だと必ず乖離する。doc は step 4 以降、working code から起こす。
 - **緑チェックを product-green と取り違える。** 動くコードは実装可能性を示すだけ。ユーザーの完了率向上は示さない。UX 仮説は post-ship で計測する。
-- **variant 同士の相対比較で合否(kill/grounded)を決める。** A vs B は、どちらも telos の正本(ground-truth)で測っていなければ「差が無い → 無価値」と誤断する(両方ゴールを外していても気づけない)。relative 比較は候補の絞り込みにのみ使い、合否は telos の正本(網羅性が価値なら既知完全集合 = oracle を構築)に対する**絶対値**(recall/precision 等)で出す。
+- **variant 同士の相対比較で合否(kill/grounded)を決める。** A vs B は、どちらも**機能の目的(その機能が生む価値)を定義する ground-truth** で測っていなければ「差が無い → 無価値」と誤断する(両方ゴールを外していても気づけない)。relative 比較は候補の絞り込みにのみ使い、合否はこの ground-truth(網羅性が価値なら既知完全集合 = oracle を構築)に対する**絶対値**(recall/precision 等)で出す。
 
 ## 併用推奨 skill
 
