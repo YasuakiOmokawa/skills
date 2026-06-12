@@ -36,6 +36,8 @@ description: Use when starting a complex feature where a PRD or spec exists but 
    | 既存 SearchIndex API を流用して全文検索を賄える | 本番 SearchIndex に代表クエリ 20 件(正常 15 / エッジ 5)を投げ、返却 ID 集合を本番 DB の期待集合(=ground-truth)と照合。レイテンシは p95 計測 | recall < 0.9 もしくは p95 > 1s が再現 | unverified |
 
    この行は **1 仮定に複数観測基準(recall と latency)**を持つ例(同一データ経路なので 1 行に同居)。**別仮定は行を分ける**(`The loop` step 1 の「verdict を仮定ごとに分ける」と整合)。
+
+   status は **unverified / grounded / killed** の 3 値(本文の「接地」= grounded、表の「kill 条件」成立 = killed。この 3 トークン以外を status 列に書かない)。**grounded の立証責任は証拠側にある** — ground-truth 照合が取れない・観測が kill / grounded どちらの条件にも届かない場合は grounded にせず unverified のまま step 1 へ戻る(判定をでっち上げない。楽観 grounded は「最上位仮定が grounded になってから Code-A 着手」の gate をすり抜けさせる)。
 4. 最上位仮定の spike へ → `The loop` step 1。
 
 > **iterate の実体**: spike は 1 回で終わらないことが多い。spike を配信して触らせる → ledger の仮定/status を更新 → 未解決なら step 1 へ戻る、という**周回**を回す。`The loop` step 2(Code-A)着手は、最上位仮定が grounded になってから。

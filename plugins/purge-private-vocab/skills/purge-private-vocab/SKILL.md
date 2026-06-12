@@ -1,6 +1,6 @@
 ---
 name: purge-private-vocab
-description: Detects local-plan coinages, abbreviations, and number labels in reader-facing text and rewrites them so readers without the source plan can follow. Use after generating PR description, Jira ticket, design doc, RFC, or other reader-facing text from a local plan/spec file, when readers don't share the source plan.
+description: Detects local-plan coinages, abbreviations, and number labels in reader-facing text and rewrites them so readers without the source plan can follow. Use after generating PR description, Jira ticket, design doc, RFC, or other reader-facing text from a local plan/spec file, when readers don't share the source plan, or when the user says "造語チェックして" / "plan 用語を消して" / "PR 説明の語彙を点検して".
 ---
 
 # Purge Private Vocabulary
@@ -113,7 +113,7 @@ Q4. 番号/層ラベルか? (`Critical-A`, `α/β/γ 層`, `AC-12`, PR チェー
 
 ### 5. 適用
 
-承認後、Edit で target に修正を適用。検証: 初出箇所のみ定義があるか / 削除した語の周辺文が文として成立しているか (主述破綻していないか) / 言い換え箇所が plan 未読でも読み下せるか **再読**。
+承認後 (lite は Step 4 の dry-run を省略するため承認不要 — 直接適用してよい)、Edit で target に修正を適用。検証: 初出箇所のみ定義があるか / 削除した語の周辺文が文として成立しているか (主述破綻していないか) / 言い換え箇所が plan 未読でも読み下せるか **再読**。
 
 ## Quick Reference
 

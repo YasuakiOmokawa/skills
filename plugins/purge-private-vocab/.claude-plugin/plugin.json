@@ -1,10 +1,18 @@
 {
   "name": "purge-private-vocab",
   "description": "Use after generating PR description, Jira ticket, design doc, RFC, or other reader-facing text from a local plan/spec file, to detect and rewrite vocabulary that exists only in the source and would confuse readers without it",
-  "version": "0.6.0",
-  "author": { "name": "Yasuaki Omokawa", "url": "https://github.com/YasuakiOmokawa" },
+  "version": "0.7.0",
+  "author": {
+    "name": "Yasuaki Omokawa",
+    "url": "https://github.com/YasuakiOmokawa"
+  },
   "homepage": "https://github.com/YasuakiOmokawa/skills",
   "repository": "https://github.com/YasuakiOmokawa/skills",
   "license": "MIT",
-  "keywords": ["writing", "vocabulary", "audience", "documentation"]
+  "keywords": [
+    "writing",
+    "vocabulary",
+    "audience",
+    "documentation"
+  ]
 }
