@@ -1,6 +1,6 @@
 ---
 name: review-code-quality
-description: Analyzes a diff across cohesion, coupling, and readability (plus business-impact for domain-attribute changes), auto-applies only mechanically safe readability-axis critical/major fixes (cohesion/coupling/business-impact findings are always handed off), and routes design-judgment items to /polish-before-commit. Use when finishing self-review of an implementation, before requesting PR review, or when a diff updates a domain model attribute (`plan_code` / `role` / `status` 等).
+description: Use when finishing self-review of an implementation, before requesting PR review, when a diff updates a domain model attribute (`plan_code` / `role` / `status` 等), or when the user says "コード品質をレビューして" / "品質レビュー". Analyzes the diff across cohesion, coupling, and readability (plus business-impact for domain-attribute changes), auto-applies only mechanically safe readability-axis critical/major fixes (cohesion/coupling/business-impact findings are always handed off), and routes design-judgment items to /polish-before-commit.
 ---
 
 # Review Code Quality
@@ -21,9 +21,15 @@ description: Analyzes a diff across cohesion, coupling, and readability (plus bu
 
 **business-impact-analyzer (Tier 2)** は domain model attribute (`plan_code` / `role` / `status` 等) の更新を含む diff のみ実行。それ以外は skip 報告で完了。リスク領域 (auth / billing / payment / migration) は LoC によらず **deep** + business-impact-analyzer 必須。
 
+## 対象 diff (skill 読み込み時に自動取得)
+
+!`git diff --name-only origin/develop...HEAD`
+
+> 上 1 行は Claude Code が skill 読み込み時に実行し結果へ置換する (読み取り専用・冪等)。失敗時のフォールバックは原因別に分ける: (a) 生コマンド文字列のまま見える (注入非対応環境) → Step 1 の同コマンドを Bash で実行する。(b) `unknown revision` 等のエラー文字列が見える (base branch が origin/develop でない) → `gh repo view --json defaultBranchRef -q .defaultBranchRef.name` か `git remote show origin` の HEAD branch で base を特定し、`origin/<base>...HEAD` に読み替えて Bash で再実行する。
+
 ## Quick start
 
-1. `$ARGUMENTS` 指定があればそのファイル、なければ `git diff --name-only origin/develop...HEAD` で対象を確定。0 件なら終了
+1. `$ARGUMENTS` 指定があればそのファイル、なければ冒頭の自動取得結果 (または `git diff --name-only origin/develop...HEAD`) で対象を確定。0 件なら終了
 2. 処理方式を選ぶ (詳細: [references/execution.md](references/execution.md)):
    - ファイル ≤ 2 → **main thread で 4 観点を順次分析**
    - ファイル > 2 かつ Task 使用可 → **4 agent 並列** (同一メッセージ内に Task 4 つ)
@@ -61,7 +67,7 @@ business-impact-analyzer の **skip 報告も統合レポートに残す**。
 
 統合した 🔴 Critical / 🟠 Major を [references/auto-apply.md](references/auto-apply.md) の 5 条件で **auto-apply-safe / needs-judgment** に振り分ける。
 
-- **auto-apply-safe** (局所・public interface 不変・意味保存・非リスク領域・非 business-impact): Edit で適用 → 編集言語に応じて lint/test を実行 (Ruby: rubocop + rspec / TS: eslint + prettier)。検証 fail なら逆 Edit で revert し申し送りへ。
+- **auto-apply-safe** (**readability 軸の finding のみ** — cohesion / coupling / business-impact は条件を満たしても常に申し送り。かつ局所・public interface 不変・意味保存・非リスク領域): Edit で適用 → 編集言語に応じて lint/test を実行 (Ruby: rubocop + rspec / TS: eslint + prettier)。検証 fail なら逆 Edit で revert し申し送りへ。
 - **needs-judgment** (クラス分割 / 責務分離 / シグネチャ変更 / レイヤー移動 / business-impact 全件 / 修正方針が一意でないもの): 自動適用せず申し送りファイル `$(git rev-parse --git-dir)/quality-review-handoff.md` に overwrite 書き込み。判断に迷ったら needs-judgment 側へ倒す。
 - **Edit/Bash 不可 (nested 実行)**: 自動適用せず 🔴/🟠 全件を申し送りに回し、冒頭で明示。ファイル書き込みも不可なら申し送り内容をレポート inline に転記して情報欠落を防ぐ ([references/auto-apply.md](references/auto-apply.md))。
 

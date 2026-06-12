@@ -4,7 +4,7 @@
 
 ## リポジトリ構造
 
-omokawa-skills は **monorepo + N plugins** 構造。各 skill / command は `plugins/<name>/` 配下の独立 plugin として配置される。`marketplace.json` が 14 plugins を列挙する。詳細は CLAUDE.md 参照。
+omokawa-skills は **monorepo + N plugins** 構造。各 skill / command は `plugins/<name>/` 配下の独立 plugin として配置される。`marketplace.json` が全 plugins (現在 16) を列挙する。詳細は CLAUDE.md 参照。
 
 ## プラン駆動開発
 

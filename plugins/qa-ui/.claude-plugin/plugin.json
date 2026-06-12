@@ -1,10 +1,17 @@
 {
   "name": "qa-ui",
   "description": "実装完了後にChromeDevTools MCPでUI検証を行う。ACがあればAC項目ごとに画面操作・スクリーンショット・pass/fail判定。FAILなら自動修正→再QAを最大3回ループ。",
-  "version": "1.5.0",
-  "author": { "name": "Yasuaki Omokawa", "url": "https://github.com/YasuakiOmokawa" },
+  "version": "1.6.0",
+  "author": {
+    "name": "Yasuaki Omokawa",
+    "url": "https://github.com/YasuakiOmokawa"
+  },
   "homepage": "https://github.com/YasuakiOmokawa/skills",
   "repository": "https://github.com/YasuakiOmokawa/skills",
   "license": "MIT",
-  "keywords": ["qa", "ui-testing", "chrome-devtools"]
+  "keywords": [
+    "qa",
+    "ui-testing",
+    "chrome-devtools"
+  ]
 }

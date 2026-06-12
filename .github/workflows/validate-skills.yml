@@ -1,0 +1,23 @@
+name: validate-skills
+
+# skill 構造の機械検証 (frontmatter / 参照実在 / 絶対パス混入 / marketplace 整合)。
+# 参照切れ・改名漏れは実行時まで顕在化しないため PR 単位で検出する。詳細は scripts/validate_skills.py。
+on:
+  pull_request:
+    paths:
+      - "plugins/**"
+      - ".claude-plugin/**"
+      - "scripts/validate_skills.py"
+  push:
+    branches: [main]
+    paths:
+      - "plugins/**"
+      - ".claude-plugin/**"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate skill structure
+        run: python3 scripts/validate_skills.py

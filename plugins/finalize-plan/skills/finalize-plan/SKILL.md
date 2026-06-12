@@ -1,6 +1,6 @@
 ---
 name: finalize-plan
-description: Turns AC and MECE results from the analysis file into a branch strategy, PR split, and manual/auto QA steps appended to the plan file. Use when the user has completed `/define-acceptance-criteria` + `/mece-plan-review` and is about to move from plan mode into implementation.
+description: Turns AC and MECE results from the analysis file into a branch strategy, PR split, and manual/auto QA steps appended to the plan file. Use when the user has completed `/define-acceptance-criteria` + `/mece-plan-review` and is about to move from plan mode into implementation, or says "実装準備を追記して" / "ブランチ戦略と PR 分割を決めて" / "QA 手順をプランに書いて".
 ---
 
 # finalize-plan
@@ -63,6 +63,7 @@ description: Turns AC and MECE results from the analysis file into a branch stra
 
 - **Step 2A 直列**: `branch-planner` → `pr-splitter` (pr-splitter は branch-planner の base ブランチ名を派生に使う)
 - **Step 2B 並列**: `manual-qa-planner` + `auto-qa-planner` を**同一メッセージ内**で並列起動。両 planner は再分類せず `${ENUMERATED_QA_AC}` の QA-ID を信頼する
+- **lite tier の縮約**: tier 表に従い pr-splitter / auto-qa-planner は起動しない (skip)。manual-qa-planner も dispatch せず、main agent 自身が手動 QA 手順を 1 セクションに統合して書く (= 表の「inline」の意味)
 
 4 agent はいずれも `Task(subagent_type="general-purpose")` で起動し、prompt 冒頭で agent 定義ファイルを Read させる (repo 制約上 typed subagent_type は使わない)。最小レシピ:
 
