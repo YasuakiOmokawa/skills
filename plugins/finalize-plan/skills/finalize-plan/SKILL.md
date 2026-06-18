@@ -100,7 +100,7 @@ git checkout -b feature/xxx
 
 ### 手動QA手順
 **環境**: {BASE_URL}（QA 実行時にユーザーから取得）
-**対象AC**: N項目（正常系X / 異常系Y / エッジケースZ / 非影響W / MECE追加V）（カテゴリ名 canonical は output-template.md SSOT を参照、`エッジ` 単独や `eDge` 不可）
+**対象AC**: N項目（正常系X / 異常系Y / エッジケースZ / 非影響W / MECE追加V）（カテゴリ名・0件表記は output-template.md SSOT 準拠）
 [Chrome DevTools MCP で実行可能な手順]
 
 ### 自動QA（テストコード仕様）
@@ -114,7 +114,7 @@ git checkout -b feature/xxx
 - **PR ガイドライン準拠**: ≤2 commits, ≤5 files。この上限は tier 表の「想定 PR 数」より優先する (tier の PR 数は目安であり下限ではない。総ファイル数が少なければ standard でも 1 PR でよい)
 - **実行可能性**: Chrome DevTools MCP で実行可能な手動 QA 手順
 - **AC トレーサビリティ**: QA-H/E/D/R/M 全項目が手動 QA または自動 QA のいずれかでカバーされている
-- **0 件カテゴリ可視化**: 対象 AC 行に `非影響0` のように件数明示 (省略禁止 — 省略すると読み手が「採番漏れ」か「該当ゼロ」かを区別できないため)
+- **0 件カテゴリ可視化**: 対象 AC 行は 0 件カテゴリも件数を明示 (例 `非影響0`、省略禁止)。書式・canonical カテゴリ名・禁止理由は output-template.md を SSOT とする
 
 ## Advanced
 

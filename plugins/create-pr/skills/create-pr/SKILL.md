@@ -21,13 +21,13 @@ disallowed-tools: AskUserQuestion
 | Tier | 判定 | Step 9 セルフチェック | その他 |
 |---|---|---|---|
 | **lite** | 1 commit, <50 LoC, single domain, 既存 pattern 踏襲 | [A] 斜め読み + [D] AI 臭 の 2 観点 | Step 4b (周辺コード比較) 省略可。Pre-work 本質リストは 1-2 点 |
-| **standard** (default) | 2-5 commits, multi-file, single domain | [A] + [B] + [C] + [D] の 4 観点 (現状) | Step 1-10 を順次実行 |
+| **standard** (default) | 2-5 commits, multi-file, single domain | [A] + [B] + [C] + [D] の 4 観点 (現状) | Step 1-10 を順次実行。Pre-work 本質リストは 2-3 点 |
 | **deep** | multi-domain / breaking change / 6+ commits / migration | 4 観点 + 関連 PR 検索 + 既存 issue リンク | Step 4c で plan 全展開、Pre-work 本質リストを **最低 5 点・上限 7 点** に拡張 (5 に届かない場合は domain ごと / PR チェーン段階ごと / migration / observability / rollout / rollback の観点で分解して 5 点まで埋める) |
 
 リスク領域 (auth / billing / payment / migration / security config) は LoC・commit 数によらず **deep**。lite でも `--draft` は維持 (ready PR path なし、現状維持)。**tier 判定の評価時点は Step 1 の `git log [base-branch]..HEAD` 時点** — Step 2 で未コミット分から作る commit は commit 数に数えない (数えると未コミット 1 ファイルの軽微変更が lite から外れてしまうため)。
 
 **deep tier の追加規約**:
-- **description-style.md との優先順位**: `references/description-style.md` の「本質リスト 5+ で PR スコープ広すぎ警告」は **standard tier の既定**。**deep tier では本 tier 表 (5-7) が優先**し、5-7 点は scope 過大の兆候ではなく分解の正常結果。standard で 5 点に達した PR は scope 過大の兆候、deep は正常運用と読み分ける。
+- **本質リスト 5+ の解釈**: standard tier では scope 過大の兆候、deep tier では正常な分解結果。読み分けの詳細は `references/description-style.md`「Pre-work: 本質リスト」末尾を SSOT とする (本 tier 表は点数の SSOT)。
 - **BREAKING CHANGE footer 位置**: PR テンプレに専用 footer 見出しがあればそこ。無ければ本文末尾の独立 footer として `BREAKING CHANGE: <description>` を「Revert 手順」見出しの**直前**に配置 (Conventional Commits の footer 慣例。`## やらなかったこと` の直後・本文セクション群の外側)。テンプレ内の `<!-- ... -->` コメントは削除しない。
 
 ## Arguments
@@ -67,7 +67,7 @@ PR URL を表示して完了。
 
 検出した PR テンプレートのセクション構成に従う。下記の要点で書ける lite-tier は inline 完結でよい。**standard / deep tier、または初めて本 skill を使う場合は [references/description-style.md](references/description-style.md) を Read**（NG/OK 例対比・Pre-work の具体手順・セクション分量対比表が必要になるため）。要点:
 
-- **Pre-work (mandatory)**: 本文を書く前に PR の本質を **bullet リスト** (standard 既定 2-3 点 / deep 5-7 点、tier 表が SSOT) として scratch 出力 → 「このPRでやること」 (または「やったこと」を格上げ) に貼る
+- **Pre-work (mandatory)**: 本文を書く前に PR の本質を **bullet リスト** (点数は tier 表が SSOT) として scratch 出力 → 「このPRでやること」 (または「やったこと」を格上げ) に貼る
 - **6 文体鉄則**: コードから読めることは書かない / 斜め読み構造 / 重複禁止 / 常体 / 書かない勇気 / 読み直し
 - **セクション分量**:
   - 簡潔 (やったこと / なぜやるのか / 動作確認結果 / レビューしてほしい観点) → 全 1 行・bullet なし
@@ -89,7 +89,7 @@ PR URL を表示して完了。
 ### Step 9: セルフチェック (投稿前必須)
 
 [references/description-style.md](references/description-style.md) の「Step 9 セルフチェック」を **tier 表の観点セット** (lite = [A]+[D] のみ / standard = 4 観点 / deep = 4 観点 + 関連 PR 検索) で実施。1 つでも該当があれば修正:
-- **[A] 斜め読みテスト**: 各セクション 1 行目だけで PR 意図再構築可能か / 本質リスト (tier 依存: standard 2-3 点 / deep 5-7 点) と一致か / plan 由来 internal 語彙 (`α 層` / `AC-9` / `Critical-A` 等) が残っていないか
+- **[A] 斜め読みテスト**: 各セクション 1 行目だけで PR 意図再構築可能か / 本質リスト (点数は tier 表) と一致か / plan 由来 internal 語彙 (`α 層` / `AC-9` / `Critical-A` 等) が残っていないか
 - **[B] コードから読める情報の混入**: ファイル名・関数名・パラメータ追加・import 等が簡潔セクションに残っていないか
 - **[C] 重複・冗長**: 「やったこと」と「なぜやるのか」の事実重複 / 簡潔セクションの bullet 化 / 動作確認結果のケース列挙 / 詳細セクションが 1〜2 行で済まされていないか
 - **[D] AI 臭**: 「以下に〜を示す」「具体的には」「適切に」等の生成検出語 / 太字 bullet 3 つ以上 / 機械的絵文字 / 「〜のため」段落内 2 回以上 / 「特になし」埋め文 / 矢印チェーン等の作業中 shorthand (詳細は description-style.md [D])

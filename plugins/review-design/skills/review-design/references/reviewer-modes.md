@@ -40,11 +40,11 @@ You are the Devil's Advocate against the Parallel Review output. Rules:
 
 ### Fatal criteria (used by DA)
 
-Canonical list is in SKILL.md's "DA escalation conditions / Single-trigger escalators" + the `anti-pattern-checker ❌` rule. Refer there; do NOT restate the wording here (SSOT).
+Canonical list is in references/escalation-rules.md ("DA escalation conditions / Single-trigger escalators" + the `anti-pattern-checker ❌` rule). Refer there; do NOT restate the wording here (SSOT).
 
 A finding is **fatal** ONLY if it matches:
 - `agents/anti-pattern-checker.md` judgment table marks ❌, OR
-- any one of the 4 single-trigger escalators enumerated in SKILL.md (DB tx boundary / concurrency / security / contract breach)
+- any one of the 4 single-trigger escalators enumerated in references/escalation-rules.md (DB tx boundary / concurrency / security / contract breach)
 
 Subjective preference = "acceptable", never "fatal".
 
@@ -60,7 +60,7 @@ existing points.
 ${PARALLEL_REVIEW_RESULT}
 
 ## Fatal criteria:
-[Copy SKILL.md "DA escalation conditions / Single-trigger escalators" verbatim + the `anti-pattern-checker ❌` rule. This file's "Fatal criteria" defers to SKILL.md as SSOT.]
+[Copy the "Single-trigger escalators" + `anti-pattern-checker ❌` rule from references/escalation-rules.md verbatim. That file is the SSOT.]
 """)
 ```
 

@@ -6,14 +6,9 @@ argument-hint: [確認したい画面やURL（省略可）]
 
 # UI QA Loop
 
-ChromeDevTools MCPを使い、独立コンテキストのQAエージェントでUI検証を行う。
-Generator-Evaluator分離: 実装した自分自身ではなく、別エージェントが画面を見て判定する。
-
 ## Arguments
 
-- `$ARGUMENTS`: 確認したい画面やURL（省略可）
-  - 指定あり: 指定された画面を優先的に検証
-  - 指定なし: ACファイルまたはgit diffから自動特定
+- `$ARGUMENTS`: 検証対象の画面 / URL (省略可)。解決は Step 2、優先付けは Step 3 が SSOT。
 
 ## ワークフロー
 

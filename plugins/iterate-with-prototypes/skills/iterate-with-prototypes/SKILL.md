@@ -56,24 +56,20 @@ description: Use when starting a complex feature where a PRD or spec exists but 
 > step 4→6 は同じ「コード→設計書」でも fidelity が違う: 4 = 素材、5 = 設計の堅牢化(内部品質)、6 = レビュー/デリバリー化(対外品質)。
 > スキル表記: `→` は順序固定(前段の出力が次段の入力)、`+` は順不同/併用。
 > Code-A′ は **delivery 本体**(単一実装・組み直さない)。step 6 はそれを依存順 PR に**切り出す**だけ。Code-A を捨てて clean に組み直す重い variant は、blast radius が大きい時だけの選択肢。
+> step 2(まず動かす)と step 3(次に整える)を**混ぜない** — 機能を 100% 通してから構造を整える(机上設計で間違った骨格を作らせない)。
 > step 5 の `/define-acceptance-criteria`・`/mece-plan-review` は本来「実装前 gate」だが、ここでは目的が変わり **post-code で仕様の正本化 + カバレッジ漏れ検出**に使う。
 
 ## 効かせる規律
 
-**1. 設計書はコードから起こす(初期 drift を消す)。** 設計を先に書かない。動く working code を正本にし、doc は最後に code から導出する。これで机上設計とコードの**初期ギャップ**は構造的に消える。ただし「ドリフトしない」のは導出時点だけ — コードが以後も変われば doc は再 drift するので、**doc を再導出するか code を正本(code-as-SSOT)と割り切る**こと。
+> drift / ledger / 100%-then-design の正本は他所に 1 つずつある(順に Overview・Start here step 3・The loop)。ここはそれらの再掲ではなく、loop 表に組み込めなかった掟だけを置く。
 
-**2. 100% 動かしてから設計する。** features を 100% 通してから構造を整える(設計 = リファクタ)。机上設計で AI に間違った骨格を作らせない。step 2(まず動かす)と step 3(次に整える)を混ぜない。
+**1. 磨く(内部)と仕上げる(対外)を分ける。** step 5 = 設計の堅牢化(grill/AC/MECE/SSOT)、step 6 = レビュー/デリバリー化(PR 分割/語彙浄化)。混ぜると「対外向けに整える」圧力で設計の堅牢化が甘くなる。
 
-**3. 単一正本(ledger)。** 仮定・TODO・決定・AC を 1 ファイルに集約する。複数 doc に散らさない。
-
-**4. 磨く(内部)と仕上げる(対外)を分ける。** step 5 = 設計の堅牢化(grill/AC/MECE/SSOT)、step 6 = レビュー/デリバリー化(PR 分割/語彙浄化)。混ぜると「対外向けに整える」圧力で設計の堅牢化が甘くなる。
-
-**5. 効く決定は ADR(Why + 却下案)。** 後で蒸し返される決定は ADR に結晶化する(step 5 の `/grill-with-docs` が ADR を更新)。
+**2. 効く決定は ADR(Why + 却下案)。** 後で蒸し返される決定は ADR に結晶化する(step 5 の `/grill-with-docs` が ADR を更新)。
 
 ## Common mistakes
 
-- **机上設計から始める。** 紙の設計 → コードの順は、このスキルが**禁じる**既定挙動。spike → 動くコード → リファクタ → doc の順を守る。
-- **設計書をコードより先に書く。** doc が先だと必ず乖離する。doc は step 4 以降、working code から起こす。
+- **設計/doc をコードより先に書く。** 紙の設計 → コードの順はこのスキルが**禁じる**反転違反で、doc が先だと必ず乖離する。spike → 動くコード → リファクタ → doc(step 4 以降は working code から起こす)の順を守る。
 - **緑チェックを product-green と取り違える。** 動くコードは実装可能性を示すだけ。ユーザーの完了率向上は示さない。UX 仮説は post-ship で計測する。
 - **variant 同士の相対比較で合否(kill/grounded)を決める。** A vs B は、どちらも**機能の目的(その機能が生む価値)を定義する ground-truth** で測っていなければ「差が無い → 無価値」と誤断する(両方ゴールを外していても気づけない)。relative 比較は候補の絞り込みにのみ使い、合否はこの ground-truth(網羅性が価値なら既知完全集合 = oracle を構築)に対する**絶対値**(recall/precision 等)で出す。
 
