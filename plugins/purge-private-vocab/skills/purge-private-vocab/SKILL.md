@@ -21,7 +21,7 @@ description: Detects local-plan coinages, abbreviations, and number labels in re
 **deep 必須前置** (Step 1 の入力収集を拡張):
 1. **target の文構造を直読み**: `**用語**: 説明` のような Label vs Body 構造かを目視確認し、Label vs Body 分離ルートの適用可否を Step 3 までに確定する
 2. **AC-* / Critical-* / RFC-* 等の ID 紐付け**: target に登場する全 ID (`AC-7`, `Critical-A` 等) を source plan / analysis ファイルから 1:1 で索引し、各 ID の元内容を「展開」または「文ごと削除」のどちらにするか Step 4 提案レポートに明記する
-3. **layer label (α/β/γ 層 等) の対応コンポーネント名解決**: source plan から各 layer の実コンポーネント名 (Web / Service / Persistence 等) を引き、推測補完にせず実値で言い換える。**source plan 不在で実コンポーネント名を解決できない場合**は、target 文脈から導ける関係性ベースの一般表現 (例: 「後段の処理層」) に言い換え、具体名を捏造しない
+3. **layer label (α/β/γ 層 等) の対応コンポーネント名解決**: source plan から各 layer の実コンポーネント名 (Web / Service / Persistence 等) を引き、推測補完にせず実値で言い換える候補を Step 3 までに用意する。**実コンポーネント名を解決できない場合 (source plan 不在等) の扱いは Q4 の層ラベル規則を SSOT とする** (関係性ベースの一般表現への言い換え・捏造禁止はそちらに集約)
 
 ## Core Pattern: 3 分類
 

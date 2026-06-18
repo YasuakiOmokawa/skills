@@ -35,11 +35,13 @@ description: Fills a matrix of 3 required categories (normal, error, edge) by co
 
 実行前に変更規模を判定 → tier を選択 → 該当する scope で AC を作成する:
 
-| Tier | 判定 (OR で 1 つ該当) | 観点軸数 | 必須セル数 | 技術リスク |
-|---|---|---|---|---|
-| **lite** | 1 ファイル <50 LoC / pure UI・copy・typo・comment / lint-only / config 値変更のみ | 1 軸 | 3 セル | 0-1 件 (省略可) |
-| **standard** (default) | 2-5 ファイル / 中規模 feature / 単一 domain | 3 軸 | 9 セル | 3 件 |
-| **deep** | 6+ ファイル / multi-domain / auth・billing・payment・DB migration・security config | 5 軸 | 15 セル | 3-5 件 |
+| Tier | 判定 (OR で 1 つ該当) |
+|---|---|
+| **lite** | 1 ファイル <50 LoC / pure UI・copy・typo・comment / lint-only / config 値変更のみ |
+| **standard** (default) | 2-5 ファイル / 中規模 feature / 単一 domain |
+| **deep** | 6+ ファイル / multi-domain / auth・billing・payment・DB migration・security config |
+
+各 tier の観点軸数 / 必須セル数 / 技術リスク件数は下の **Quantitative scaffolding 表 (SSOT)** を参照。
 
 **リスク領域** (auth / billing / payment / DB migration / security config) は LoC によらず強制的に **deep**。判定不能なら **standard**。`<plan>.analysis.md` 冒頭の `### Tier` に判定結果と理由を 1 行記録 (例: `Tier: standard (3 files, single domain)`)。
 

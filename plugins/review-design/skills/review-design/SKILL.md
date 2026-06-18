@@ -83,9 +83,7 @@ Three execution modes / DA escalation conditions / Fatal vs single-trigger 全�
 
 ## Quality standards
 
-- **Consistency** with existing patterns
-- **Simplicity** — minimum viable structure
-- **Criticism first** — default verdict is "there is a problem"
+- **Criticism first** — default verdict is "there is a problem"。一貫性 (existing patterns) と最小構成 (minimum viable structure) は Q1 matrix と `anti-pattern-checker` が判定するため、ここでは再掲しない。
 
 ## Advanced
 
