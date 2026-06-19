@@ -116,6 +116,8 @@ anchors << box if in_body_region && is_signature_label
 
 **move**: 概念にドメイン名の型を与え、検証/座標変換を生成時の smart constructor に集約、不変条件はガード化。境界でのみ wrap/unwrap しドメイン内部は型のまま運ぶ。機構語 (`bbox`/`xhtml`) は private 構築経路に残し grep 可能性を保つ。
 
+> **段4 経路B の実行手段**: 一緒に渡り歩く primitive 群 (同一パラメータ集合・名前が型/値を狭める `bbox: Hash`) は「まだ存在しないドメイン型の影」。この型を抽出して周辺の世話コードを移すのが、改名では届かない段4 ドメイン抽象への到達経路 (Belshee Primitive Obsession → Whole Value)。型名がドメイン語になるので、抽出した型名自体も genuine-vs-invented ゲートを通す (実在語へ接地・CS 語彙でない)。詳細 [domain-abstraction.md](domain-abstraction.md)。
+
 ```ruby
 # before — Hash が流れ、座標系や用途がコメント頼み
 boxes = parse.map { |n| { x: n.x, y: page_h - n.y } } # PDF 左下原点に変換済み
