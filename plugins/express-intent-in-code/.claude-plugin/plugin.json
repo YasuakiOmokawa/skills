@@ -1,0 +1,19 @@
+{
+  "name": "express-intent-in-code",
+  "description": "機構名やデータ形状で止まった名前を、ドメイン上の目的(why)を表明する名前・型・構造へ変換し why コメント依存を減らす。",
+  "version": "0.1.0",
+  "author": {
+    "name": "Yasuaki Omokawa",
+    "url": "https://github.com/YasuakiOmokawa"
+  },
+  "homepage": "https://github.com/YasuakiOmokawa/skills",
+  "repository": "https://github.com/YasuakiOmokawa/skills",
+  "license": "MIT",
+  "keywords": [
+    "naming",
+    "intention-revealing",
+    "refactoring",
+    "readability",
+    "ubiquitous-language"
+  ]
+}
