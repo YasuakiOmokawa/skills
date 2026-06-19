@@ -8,7 +8,8 @@
   - Iter3: boundary-and-scope §4 (分割は 1 点変換に含む)・cite 形式緩和・単一 caller スキップを追記。H/I 再実行 + hold-out K (Go/物流) 全 ○。skill 欠陥由来の新規 unclear ゼロ (clear 1)。
   - Iter4: hold-out L (Ruby/Money・経路B 型抽出) + M (Python/Redis・根拠ある据え置き) 全 ○。skill 欠陥由来の新規 unclear ゼロ (clear 2)。→ 2 連続 clear で収束。
   - 過学習チェック: fresh hold-out 4 種 (J/K/L/M、4 言語 5 ドメイン) が全 100%。全 3 経路 (A snap / B 型抽出 / 根拠ある据え置き) を実証。
-  - 既知の軽微未着手 (収束下では threshold 未満・据え置き): (i) 省略語の段0/段1 判定は「展開して what が読めるか」で切るルールの明文化、(ii) 用語集が同義語 2 つを挙げ片方が既存名前空間に占有される時の type 名 tie-break。いずれも fresh executor が明文ルール無しで正しく自己解決済み。
+  - 既知の軽微未着手 (収束下では threshold 未満・据え置き): (i) 省略語の段0/段1 判定は「展開して what が読めるか」で切るルールの明文化。fresh executor が明文ルール無しで正しく自己解決済み。
+- 2026-06-19 (v3.32.0 / 実 PR #39624 適用が露呈させた gap を修正)。実 ninja-sign repo に `draft`(73 hits)と `document_item`(100+)が**両方**実在し、正しい grounding は `document_item`(この概念を指す語)だった。現ゲートは homonym 確認 (Step E) を持つが「複数の実在ドメイン語がある時、頻度でなく概念一致で選ぶ」明示規則が弱く、naive な executor は高頻度の別概念語 (`draft`) へ snap しうる gap があった。domain-abstraction.md のゲートに「複数の実在ドメイン語がある時の選定 (頻度でなく概念一致・use site 近接)」節を追加。シナリオ N (draft vs document_item) を追加し fresh executor で検証: N + bbox 回帰再実行が全 [critical] ○ / 100% / 新規 unclear ゼロ。executor は `draft`(73 hits)でなく `document_item` を概念一致で選択し新節を明示引用、frequency-vs-concept-match の罠を回避した。
 
 用途: **regression 検出器** (capability 改善の信号としては使わない)。本 skill を変更する PR では fresh executor (blank slate, Task dispatch) で下記シナリオを再実行し、全 [critical] ○ を確認してから merge する。実行方法は empirical-prompt-tuning の「Subagent invocation contract」に従う (成果物はインライン、ファイル編集禁止)。
 
@@ -159,3 +160,35 @@ function useSplitViewForm(documentId: string) {
 4. Surgical Changes: 分割は対象内に閉じ、全 call site への波及を広げていない
 
 合格条件: 全 [critical] PASS。**muddy な対象に磨いた synonym を被せて終えたら FAIL**。
+
+---
+
+## シナリオ N: 複数の実在ドメイン語がある時の選定 (頻度でなく概念一致)
+
+実 PR #39624 (ninja-sign) 適用が露呈させたケース。working code (TypeScript):
+
+```typescript
+// 反映項目(document_item)の編集について、保存ステータス(saving/saved/error)を field 単位で追跡する
+function useFieldSaveState() {
+  const [statuses, setStatuses] = useState<Record<number, SaveStatus>>({});
+  // ... 値保存(document_item)/手書きの 2 endpoint・supersede・401/422 ...
+  return { statuses, errors, markSaving, clearErrors };
+}
+// caller (use-split-view-form.ts): statuses/errors を受け取り保存追跡を合成
+```
+
+探索手続きで得られる search results (ground truth。**複数のドメイン語が実在する**):
+- grep `draft` / `下書き`: 73 / 28 hits — ただしこれは**文書全体の下書きライフサイクル**を指す別概念。この hook の保存ステータスとは別物。
+- grep `document_item` / `DocumentItem`: 100+ hits。sibling `useSignerDocumentItemSave` が実在。対象自身のコメントも「値保存(document_item)」。
+- grep `SaveStatus` / `saveStatus`: この hook 内のみ (外部 0 hit = ローカル造語)。
+
+### Requirements checklist
+
+1. [critical] 探索手続きを実行し、複数の実在ドメイン語 (`draft` と `document_item`) があることを認識する
+2. [critical] **頻度に引かれず**、対象の概念 (項目の保存状態) を指す語 = `document_item` を選ぶ。`draft` (73 hits だが文書ライフサイクルの別概念) へ snap しない
+3. [critical] use site 近接で判定したと述べる (対象の comment「値保存(document_item)」/ sibling `useSignerDocumentItemSave` が `document_item` を使う > repo 全体の `draft` 頻度)
+4. [critical] `document_item` に接地した段4 名 (`useDocumentItemSaveState` 等) へ昇格し、出所を引用する
+5. ローカル造語 `SaveState`/`SaveStatus` (外部 0 hit) を段4 語の根拠にしない
+
+合格条件: 全 [critical] PASS。**`draft` へ snap (高頻度の別概念語) したら FAIL** (= 頻度を概念一致と取り違える誤り)。
+
