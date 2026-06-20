@@ -73,6 +73,10 @@ description: Use when starting a complex feature where a PRD or spec exists but 
 - **緑チェックを product-green と取り違える。** 動くコードは実装可能性を示すだけ。ユーザーの完了率向上は示さない。UX 仮説は post-ship で計測する。
 - **variant 同士の相対比較で合否(kill/grounded)を決める。** A vs B は、どちらも**機能の目的(その機能が生む価値)を定義する ground-truth** で測っていなければ「差が無い → 無価値」と誤断する(両方ゴールを外していても気づけない)。relative 比較は候補の絞り込みにのみ使い、合否はこの ground-truth(網羅性が価値なら既知完全集合 = oracle を構築)に対する**絶対値**(recall/precision 等)で出す。
 
+## 実例 (worked example)
+
+- [references/worked-example-spike-to-rebuild.md](references/worked-example-spike-to-rebuild.md) — 実現性不明 → 捨て spike (既定 OFF で本番非接触) → 規約準拠で**作り直し** → 決定を ADR に保全、の 1 周を匿名化した実例。step 2 を Code-A′ のリファクタでなく作り直しで起こした変種で、「捨てるのはコード・残すのは決定」「技術実現性は ADR / UX 仮説は DD」の分離を具体で示す。
+
 ## 併用推奨 skill
 
 > **install 前提**: `/prototype` (superpowers) と `/grill-with-docs` は本 repo の plugin ではなく別途 install が必要。未 install の場合 step 1 (spike) / step 5 (ドメインレビュー) が起動できないため、先に導入するか、手動の throwaway spike / ドメイン用語レビューで代替する。本 repo 内の plugin は `/review-design` `/define-acceptance-criteria` `/mece-plan-review` `/dry-ssot-text` `/finalize-plan` `/purge-private-vocab`。
