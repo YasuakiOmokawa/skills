@@ -34,7 +34,7 @@ description: Verifies acceptance criteria for MECE coverage with parallel spec/c
    - **WB 視点**: 変更ファイル diff を Read し技術ギャップを 1-3 件抽出 (仕様参照禁止)。**コードが未実装 / 不可読 (greenfield・plan mode) の場合**は AC 判定を `言及なし` 既定とし、plan からコード構造ギャップが積極的に導ける AC のみ `不十分` とする。低充足率は AC 不備でなくコード不可読が原因と明記し、機械合成 (一方充足 + 他方言及なし → 充足) に委ねる
 2. Wiki Researcher / Fresh Red Team は skip (Critical 候補 0 で確定する設計)
 3. 出力は標準と同じ Step 3 形式 (分析ファイル末尾セクション + プラン 1 行サマリー) を採用
-4. lite 報告では `Critical: 0` を確定値として 1 行サマリーに記載 (Critical ≥1 が出現したら自動的に standard tier へ格上げ判定)
+4. lite 報告では `Critical: 0` を確定値として 1 行サマリーに記載する。**inline BB/WB で Critical 候補が 1 件でも出たら lite 確定を破棄し格上げする**: tier=standard として Step 1 (BB/WB 並列 + 該当時 Wiki Researcher) と Step 2 Fresh Red Team を改めて実行し、lite サマリーは残さず standard 出力で上書きする (lite は Red Team を skip するため、Critical 候補を inline のまま確定させると MECE判定 の信頼性が崩れる)。格上げ先は原則 standard で足りる (リスク領域は tier 表で最初から強制 deep のため、lite だった時点で非リスク領域が確定しており、standard でも Critical 候補 ≥1 なら Red Team が起動する)。**ただし finding が lite 分類時に見落とした auth / billing / payment / migration の関与を露呈した場合は standard でなく deep へ格上げする** (リスク領域強制 deep が standard 格上げに優先)
 
 ## Core rules (絶対に守る = 守らないと検証設計が崩れる不変条件)
 

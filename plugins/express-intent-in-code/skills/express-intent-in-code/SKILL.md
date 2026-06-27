@@ -26,6 +26,8 @@ description: Use on a confirmed working-code target (method/value/type in this c
 - 共有語が無いのに造語して段4 に上げること (段4 は実在証拠への接地が前提。探索が空振りなら段3 据え置き + 探索ログ)
 - 段4 へ到達した型を全 call site へ波及させる広域改名 (対象 1 点のみ変換)
 
+**バッチ / パイプライン起動 (単一対象が未指定のとき)**: `/simplify` 等の品質パイプライン後段で、単一対象も `/review-code-quality` からの naming/凝集 handoff も無いまま起動された場合 — diff 全体を改名候補スキャンしない (それは `/review-code-quality` の役割で、本スキルが肩代わりしない)。handoff があればそれを変換対象に取り、handoff も明示対象も無ければ diff 名を列挙せず「handoff 無しのため変換対象なし」と即 no-op 宣言する (無人パイプラインを確認待ちで止めない)。
+
 スコープ内/外の全リストは [references/boundary-and-scope.md](references/boundary-and-scope.md)。
 
 ## 命名梯子 (このスキルの背骨)

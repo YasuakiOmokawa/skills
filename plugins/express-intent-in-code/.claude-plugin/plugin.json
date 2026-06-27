@@ -1,7 +1,7 @@
 {
   "name": "express-intent-in-code",
   "description": "機構名やデータ形状で止まった名前を、命名梯子で段4 ドメイン抽象 (ユビキタス言語) まで上げる変換器。ドメイン語を実証拠から探索して接地 (造語は禁止)、欠落型は抽出し、why コメント依存を減らす。",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "author": {
     "name": "Yasuaki Omokawa",
     "url": "https://github.com/YasuakiOmokawa"
