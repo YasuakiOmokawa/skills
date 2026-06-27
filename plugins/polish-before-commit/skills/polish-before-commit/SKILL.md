@@ -7,6 +7,8 @@ description: Auto-fixes convention and pattern-consistency issues, runs lint, an
 
 **提案だけでなく、自動修正まで行う。** プロジェクト規約・パターン一貫性・impl/spec 整合 (現状 Ruby/RSpec の delegate/def 撤去後 dead-mock 削除のみ、TS/JS/Python は範囲外で skip) を点検し、Step 4 → 5 → 6 → 7 は順序固定で再評価ループ禁止。
 
+**review-only モード (ファイル変更不可)**: user が「ファイル変更はしない」「レビューのみ」「他者の PR」を指示した場合は編集せず、auto-fix Step (4/5/6/7) は候補提示に留め各 Step を `[<Step>: review-only により提案のみ]` と報告する。実行するのは Step 0 (preflight) + Step 1 (規約収集) + Step 8 (最終レビュー) + Step 9 (集約)。対象が Ruby/TS/JS/Python 外 (Helm/YAML 等) の場合も Step 4/5/6/7 は言語スコープ外として skip し Step 8 中心で点検する (どちらも編集せず点検に倒す点は同じ)。
+
 **フロー最終段の役割**: この skill は `/simplify` → `/vercel-react-best-practices` → `/review-code-quality` → 本 skill というフローの最後に置かれる。Step 9 で `/review-code-quality` からの申し送り (`.git/quality-review-handoff.md`) と本 skill の Manual Review Items を集約し、**末尾でユーザー判断が必要な項目を一覧提示してから止まる** (連続スキル実行で個別レポートが transcript に埋もれ握りつぶされるのを防ぐため)。
 
 ## Task complexity tier
@@ -34,14 +36,18 @@ description: Auto-fixes convention and pattern-consistency issues, runs lint, an
 
 !`git diff --name-only origin/${BASE_BRANCH:-develop}...HEAD`
 
+!`git diff --name-only HEAD`
+
+!`git diff --name-only --cached`
+
 !`(grep -q '"feature-dev@' ~/.claude/plugins/installed_plugins.json 2>/dev/null || ls -d ~/.claude/plugins/cache/*/feature-dev >/dev/null 2>&1) && echo 'preflight: feature-dev INSTALLED' || echo 'preflight: feature-dev MISSING'`
 
-> 上 3 行は Claude Code が skill 読み込み時に実行し結果へ置換する (読み取り専用・冪等)。失敗時のフォールバックは原因別: (a) 生コマンド文字列のまま見える (注入非対応環境) → Step 0 / Quick start 1 の同コマンドを Bash で実行。(b) `unknown revision` 等のエラー (base branch が develop でない) → `git remote show origin` の HEAD branch で base を特定し `BASE_BRANCH=<base>` を指定して再実行。
+> 上 5 行は Claude Code が skill 読み込み時に実行し結果へ置換する (読み取り専用・冪等)。2-4 行目はそれぞれ ブランチ全体 / 未コミット (worktree) / staged 差分で、スコープ判定 (Quick start 1) に使う。失敗時のフォールバックは原因別: (a) 生コマンド文字列のまま見える (注入非対応環境) → Step 0 / Quick start 1 の同コマンドを Bash で実行。(b) `unknown revision` 等のエラー (base branch が develop でない) → `git remote show origin` の HEAD branch で base を特定し `BASE_BRANCH=<base>` を指定して再実行。
 
 ## Quick start
 
 0. **preflight (全 tier 必須・最初に実行)**: `feature-dev` plugin (Step 8 の `feature-dev:code-reviewer` が依存) の導入を確認。未導入なら**インストール方法を提示して即終了**し、以降の Step を一切実行しない (下記 Workflow Step 0)。
-1. 引数 `$ARGUMENTS` あり → そのファイルを対象。なし → `git diff --name-only origin/${BASE_BRANCH:-develop}...HEAD` で取得 (0 件なら終了)。
+1. 引数 `$ARGUMENTS` あり → そのファイルを対象。なし → `git diff --name-only origin/${BASE_BRANCH:-develop}...HEAD` (ブランチ全体) で取得 (0 件なら終了)。**ただしブランチ全体と未コミット+staged 差分が大きく乖離する長命ブランチでは、今 commit しようとしている未コミット+staged 差分 (冒頭 3-4 行目) を既定スコープにする** (本 skill は commit 直前の用途なので、過去コミット分まで巻き込まない。ブランチ全体を polish したい時のみ明示指定し、判断に迷えば user に確認)。
 2. 規約を収集 (下記 Workflow Step 1) → 規約 hit 数 + ファイル数で tier 表の実行範囲を確定 → tier 対応 Step を順に実行。
 3. 各 Step の結果を**文言バリアント表に厳密一致**させた最終レポートを返す (silent skip 禁止)。省略文言の使い分け: **tier 由来の省略**は `[<Step>: tier-{lite,standard,deep} により省略]`、**条件不一致由来のスキップ** (Step 6 の撤去なし等) は各 Step 固有のスキップバリアント文言を優先する。最後に Step 9 で `### ⚠️ ユーザー判断が必要な項目` を集約提示し、commit へ進まず判断を仰ぐ。
 

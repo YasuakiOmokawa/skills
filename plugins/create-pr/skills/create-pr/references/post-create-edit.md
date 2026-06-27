@@ -2,7 +2,7 @@
 
 ## 作成後に PR description を更新する場合
 
-`gh pr edit --body` は **Projects Classic deprecation エラーで失敗する**ため使わない。GitHub REST API を直接叩く。
+**まず `gh pr edit --body-file <file>` を試す** (gh 2.90.0 以降は成功が確認されている)。**Projects Classic deprecation エラーが出た場合のみ** GitHub REST API (`gh api ... --method PATCH -F body=@<file>`) にフォールバックする。本 skill は npx skills add で配布され gh バージョンを仮定できないため、try-then-fallback が新旧両 gh で堅牢。固定パス禁止 / `mktemp` 規約 (下記) はどちらの経路でも維持する。
 
 ## 前提: 固定パス (`/tmp/pr-body.md` 等) を使わない
 
@@ -20,10 +20,13 @@ cat <<'EOF' > "$PR_BODY_FILE"
 ...
 EOF
 
-# 2. gh api PATCH で body を更新
-REPO=$(gh repo view --json nameWithOwner --jq .nameWithOwner)
+# 2. まず gh pr edit --body-file を試し、失敗時のみ REST API にフォールバック
 PR_NUMBER=<作成した PR 番号>
-gh api "repos/${REPO}/pulls/${PR_NUMBER}" --method PATCH -F "body=@${PR_BODY_FILE}"
+if ! gh pr edit "$PR_NUMBER" --body-file "$PR_BODY_FILE"; then
+  # Projects Classic deprecation エラー等で失敗した場合のみ
+  REPO=$(gh repo view --json nameWithOwner --jq .nameWithOwner)
+  gh api "repos/${REPO}/pulls/${PR_NUMBER}" --method PATCH -F "body=@${PR_BODY_FILE}"
+fi
 
 # 3. 一時ファイル削除
 rm "$PR_BODY_FILE"
@@ -32,7 +35,7 @@ rm "$PR_BODY_FILE"
 ## 補足
 
 - `-F "body=@<path>"` はファイル内容をリクエストボディの文字列値として送信する gh CLI 機能（`--field` の `@` プレフィックスと同じ）
-- タイトル・ラベル更新は `gh pr edit --title` / `gh pr edit --add-label` で動作する。description 更新時のみこの回避策を使う
+- タイトル・ラベル更新は `gh pr edit --title` / `gh pr edit --add-label` で動作する。description 更新も `gh pr edit --body-file` を第一手とし、deprecation エラー時のみ REST API へ切替える
 - 同じ `mktemp` 規約は Step 10 (`gh pr create`) で `--body` ではなく `--body-file` を選ぶ場合にも適用する
 
 ## nested JSON が必要なケース

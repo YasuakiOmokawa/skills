@@ -4,6 +4,8 @@
 
 ## Step 1: 並列 Analyst 起動
 
+> **並列数 SSOT**: 2 並列か 3 並列かの判定点は SKILL.md 0-4.5 の `${DEVIN_COVERAGE}` ただ 1 箇所。本テンプレはその判定結果を埋める器であり、並列条件を再定義しない。新ゲート (preflight 等) を追加するときも条件は 0-4.5 にだけ書き、ここには複製しない (片側だけ古くなる drift を防ぐ)。
+
 Task ツールを **同一メッセージ内に並べて** 起動する (並列化のため単一メッセージ必須)。`${DEVIN_COVERAGE}=covered` なら BB / WB / Wiki Researcher の 3 つ、`none` なら BB / WB の 2 つ (Wiki Researcher は起動せず、0-4.5 で確定した `${WIKI_RESULT}` = `[Devin未使用]` を後段で使う)。
 
 ### BB Analyst

@@ -44,6 +44,10 @@ description: Use when finishing self-review of an implementation, before request
 
 引数指定時は `$ARGUMENTS` を使用。なければ `git diff --name-only origin/develop...HEAD` で取得。0 件なら終了。
 
+**base ブランチの確定 (develop に固定しない・第一手)**: 冒頭自動取得は `origin/develop...HEAD` を使うが develop は既定値にすぎない。base が develop でないリポ (master 基準等) では第一接触で失敗するため、`gh repo view --json defaultBranchRef -q .defaultBranchRef.name` (失敗時は `git remote show origin` の HEAD branch) で base を確定してから `origin/<base>...HEAD` で取り直す。冒頭コマンドはこの確定への足場であり、develop ハードコードと読み違えない。
+
+**PR レビューモード (現在チェックアウトしていない PR / 他者の PR を点検する場合)**: PR 番号 / URL が渡された、またはカレントブランチが対象 PR の head でない場合は、`gh pr checkout <番号>` か read-only worktree (`git worktree add`) で PR head を展開し、agent には PR head worktree の絶対パスと base 読み替え後の diff を渡す。現在の worktree をそのまま読むと別バージョンを silent に分析する (特に business-impact-analyzer は caller chain を grep で辿るため PR head の完全な repo context が要る)。
+
 **ファイル数の defining unit**: `git diff --name-only` の行数で確定する。**test 未更新で diff に出ない spec ファイルは count しない** (impl 2 + spec 未更新 = 2 ファイル → main thread 順次)。spec の coverage gap (新規 attribute 値 / 新規 branch に対する spec context 不在) は coupling-analyzer の責務で別途検出される ([references/coupling.md](references/coupling.md) §spec-coverage-gap)。
 
 ### Step 2: Quality Analysis
@@ -69,6 +73,7 @@ business-impact-analyzer の **skip 報告も統合レポートに残す**。
 
 - **auto-apply-safe** (**readability 軸の finding のみ** — cohesion / coupling / business-impact は条件を満たしても常に申し送り。かつ局所・public interface 不変・意味保存・非リスク領域): Edit で適用 → 編集言語に応じて lint/test を実行 (Ruby: rubocop + rspec / TS: eslint + prettier)。検証 fail なら逆 Edit で revert し申し送りへ。
 - **needs-judgment** (クラス分割 / 責務分離 / シグネチャ変更 / レイヤー移動 / business-impact 全件 / 修正方針が一意でないもの): 自動適用せず申し送りファイル `$(git rev-parse --git-dir)/quality-review-handoff.md` に overwrite 書き込み。判断に迷ったら needs-judgment 側へ倒す。
+- **review-only (ユーザーが「ファイル変更しない」「レビューのみ」と指示 / 他者の PR を点検)**: auto-apply を行わず 🔴/🟠 を全件申し送りに回す (書き込み不可ならレポート inline に転記)。冒頭で「review-only のため auto-apply は提案に留める」と明示する。
 - **Edit/Bash 不可 (nested 実行)**: 自動適用せず 🔴/🟠 全件を申し送りに回し、冒頭で明示。ファイル書き込みも不可なら申し送り内容をレポート inline に転記して情報欠落を防ぐ ([references/auto-apply.md](references/auto-apply.md))。
 
 各 finding に状態サフィックス (`✏️ 自動適用済 (検証 pass)` / `↩️ 適用 revert (検証 fail) → 申し送り` / `⏭ 申し送り → /polish-before-commit`) を付け、総合サマリー直下に件数行 `自動適用: N 件 (検証 pass) / revert: M 件 / 申し送り: K 件 → /polish-before-commit` を追加 ([references/auto-apply.md](references/auto-apply.md) が SSOT)。

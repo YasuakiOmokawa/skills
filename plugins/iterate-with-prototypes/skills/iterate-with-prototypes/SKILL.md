@@ -67,6 +67,8 @@ description: Use when starting a complex feature where a PRD or spec exists but 
 
 **2. 効く決定は ADR(Why + 却下案)。** 後で蒸し返される決定は ADR に結晶化する(step 5 の `/grill-with-docs` が ADR を更新)。
 
+**3. ledger は観測と status の唯一の SSOT に保つ。** 決定と Why は ADR 側に置き、ADR は観測値を ledger に委ねる(同じ事実を両方に書かない)。ledger に free-form の「決定ログ」を溜めると、step 4-6 で逆生成する doc/ADR と重複し、後追いの集約が要る。spike-N / 案ラベルは ledger 内部限定で、コードコメントや対外 doc に持ち出すなら ADR#/PR# など grep 可能な参照に置換する(step 5/6 で `/purge-private-vocab` を待たず、書いた時点で漏らさない。番号ラベル規則と同根)。
+
 ## Common mistakes
 
 - **設計/doc をコードより先に書く。** 紙の設計 → コードの順はこのスキルが**禁じる**反転違反で、doc が先だと必ず乖離する。spike → 動くコード → リファクタ → doc(step 4 以降は working code から起こす)の順を守る。

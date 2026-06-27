@@ -1,7 +1,7 @@
 {
   "name": "iterate-with-prototypes",
   "description": "PRD/仕様はあるが実現可能性・UX効果・既存API再利用が未検証の複雑機能を、code-first(spike→100%動くコード→delivery品質までリファクタ→コードから設計書を起こして磨き→レビュー/デリバリー仕上げ)で本番まで進めたい時に使用。設計書はコードから最後に起こすので机上設計との初期 drift を構造的に消す。戻しにくい決定(スキーマ/公開API契約/チーム境界)が主リスクなら不適。",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "author": {
     "name": "Yasuaki Omokawa",
     "url": "https://github.com/YasuakiOmokawa"
