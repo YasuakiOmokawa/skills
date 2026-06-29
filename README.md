@@ -20,7 +20,7 @@ bash ~/.claude/plugins/marketplaces/omokawa-skills/scripts/setup.sh
 
 これで `~/.claude/skills-config/jira.md` などが生成される。**全プロジェクト横断で参照されるグローバル設定**で、プロジェクトを切り替えても同じ設定が効く。
 
-## Plugins (17)
+## Plugins (18)
 
 ### プラン駆動 7-skill セット (engineering / プロジェクト非依存)
 
@@ -52,6 +52,7 @@ bash ~/.claude/plugins/marketplaces/omokawa-skills/scripts/setup.sh
 | Plugin | 役割 |
 |---|---|
 | [`iterate-with-prototypes`](./plugins/iterate-with-prototypes/skills/iterate-with-prototypes/SKILL.md) | 未検証仮定のある複雑機能を code-first(動かしてから設計)で本番まで回す |
+| [`extract-figma-spec`](./plugins/extract-figma-spec/skills/extract-figma-spec/SKILL.md) | Figma 指定を全プロパティ抽出しチェックリスト照合して反映漏れを防ぐ |
 | [`qa-ui`](./plugins/qa-ui/skills/qa-ui/SKILL.md) | ChromeDevTools MCP で UI 検証 |
 | [`review-code-quality`](./plugins/review-code-quality/skills/review-code-quality/SKILL.md) | 設計レベルの品質問題を検出 |
 | [`express-intent-in-code`](./plugins/express-intent-in-code/skills/express-intent-in-code/SKILL.md) | 機構名/形状名を目的(why)表明形へ変換し why コメント依存を減らす |
@@ -81,7 +82,7 @@ bash ~/.claude/plugins/marketplaces/omokawa-skills/scripts/setup.sh
 6. /mece-plan-review で網羅性検証
 7. /review-design で設計レビュー
 8. /finalize-plan でブランチ・PR分割・QA計画を策定
-9. 実装
+9. 実装（Figma 反映を含むなら /extract-figma-spec で全プロパティを抽出・照合し反映漏れを防ぐ）
 10. /qa-ui で UI 検証
 11. /review-code-quality + /polish-before-commit で仕上げ
 12. /create-pr でドラフトPR作成
