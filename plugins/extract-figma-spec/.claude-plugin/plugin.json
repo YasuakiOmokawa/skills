@@ -1,0 +1,18 @@
+{
+  "name": "extract-figma-spec",
+  "description": "Figma デザインをコードへ反映するとき、スクショ目視を正本にせず対象ノードごとに全プロパティを構造化データから抽出してチェックリスト化し、実装と1行ずつ照合して反映漏れを防ぐ。",
+  "version": "0.1.0",
+  "author": {
+    "name": "Yasuaki Omokawa",
+    "url": "https://github.com/YasuakiOmokawa"
+  },
+  "homepage": "https://github.com/YasuakiOmokawa/skills",
+  "repository": "https://github.com/YasuakiOmokawa/skills",
+  "license": "MIT",
+  "keywords": [
+    "figma",
+    "design-to-code",
+    "ui",
+    "mcp"
+  ]
+}
