@@ -1,6 +1,6 @@
 ---
 name: create-pr
-description: Creates a Conventional-Commits draft PR from the current branch with generated title, body, labels, and milestone, without confirmation. Use when the user says "PR を作って" / "draft PR" / "PR 作成して", optionally with `[base-branch]` argument.
+description: Creates a Conventional-Commits draft PR from the current branch with generated title, body, labels, and milestone, without confirmation. Use when the user says "PR を作って" / "draft PR" / "PR 作成して", optionally with `[base-branch]` and per-section detail-expansion instructions (e.g. "設計判断は詳しく") as arguments.
 disallowed-tools: AskUserQuestion
 ---
 
@@ -32,13 +32,15 @@ disallowed-tools: AskUserQuestion
 
 ## Arguments
 
-- `$ARGUMENTS`: ベースブランチ名（省略可、省略時はリポジトリのデフォルトブランチ）
+- `$ARGUMENTS`: `[base-branch] [詳細展開指示...]`（いずれも省略可）
+  - 先頭トークンがリモートブランチとして存在すればベースブランチ（確認: `git ls-remote --heads origin <トークン>`。省略時はリポジトリのデフォルトブランチ）
+  - 残り（または全体）は**詳細展開指示**として解釈する（例: `/create-pr develop 設計判断は詳しく`）。詳細展開指示はセッション中のユーザー発話でも受け付ける（Step 6 参照）
 
 ## Quick start
 
 最短経路:
 1. **Step 0**: PR テンプレートを動的検索 ([references/template-discovery.md](references/template-discovery.md)) → ベースブランチ確定
-2. **Step 1**: 冒頭の自動取得結果 (status -sb = ブランチ + 未コミット / log) を使い、base-branch 依存の `git log [base-branch]..HEAD --oneline` / `git diff [base-branch]...HEAD --stat` のみ実行 (自動取得が生コマンド文字列のままなら `git status -sb` / `git log --oneline -15` も Bash 実行)
+2. **Step 1**: 冒頭の自動取得結果 (status -sb = ブランチ + 未コミット / log) を使い、base-branch 依存の `git log [base-branch]..HEAD --oneline` / `git diff [base-branch]...HEAD --stat` のみ実行 (自動取得が生コマンド文字列のままなら `git status -sb` / `git log --oneline -15` も Bash 実行)。ローカルに `[base-branch]` ref が無ければ `git fetch origin [base-branch]` 後に `origin/[base-branch]` で比較する
 3. **Step 1.5**: ブランチ妥当性検証 ([references/branch-validation.md](references/branch-validation.md))。違反なら **コミット前** に `git switch -c` で新ブランチ切替 (コミット後 rename は GitHub API 副作用で PR が CLOSED されるため不可)
 4. **Step 2**: 未コミットファイルがあれば 1 コミット = 1〜3 ファイル粒度で `<type>(<scope>): <日本語要約>` 形式コミット
 5. **Step 3**: `git push -u origin <branch>`
@@ -65,14 +67,14 @@ PR URL を表示して完了。
 
 ### Step 6: 本文生成
 
-検出した PR テンプレートのセクション構成に従う。下記の要点で書ける lite-tier は inline 完結でよい。**standard / deep tier、または初めて本 skill を使う場合は [references/description-style.md](references/description-style.md) を Read**（NG/OK 例対比・Pre-work の具体手順・セクション分量対比表が必要になるため）。要点:
+検出した PR テンプレートのセクション構成に従う。下記の要点で書ける lite-tier は inline 完結でよい。**standard / deep tier、または初めて本 skill を使う場合は [references/description-style.md](references/description-style.md) を Read**（NG/OK 例対比・Pre-work の具体手順・1 行サマリーの書き方が必要になるため）。要点:
 
-- **Pre-work (mandatory)**: 本文を書く前に PR の本質を **bullet リスト** (点数は tier 表が SSOT) として scratch 出力 → 「このPRでやること」 (または「やったこと」を格上げ) に貼る
+- **Pre-work (mandatory)**: 本文を書く前に PR の本質を **bullet リスト** (点数は tier 表が SSOT) として scratch 出力 → 「このPRでやること」型の本質列挙系セクションがあればそこへ番号リストで貼る。**無ければ tier によらず「やったこと」1 文に畳み込む** (番号リスト格上げは本質列挙系セクション実在時のみ。分岐の詳細は description-style.md「Pre-work」節が SSOT)
 - **6 文体鉄則**: コードから読めることは書かない / 斜め読み構造 / 重複禁止 / 常体 / 書かない勇気 / 読み直し
-- **セクション分量**:
-  - 簡潔 (やったこと / なぜやるのか / 動作確認結果 / レビューしてほしい観点) → 全 1 行・bullet なし
-  - 詳細 (設計判断 / やらなかったこと) → コードから読めない情報を散文で詳細展開 (該当事実なければ見出し+空行のみ)
+- **セクション分量 (既定 = 1 行サマリー)**:
   - 定型 (Revert 手順 / チェックリスト) → テンプレ準拠
+  - それ以外の全セクション → **1 行サマリーのみ** (bullet・複数文段落・表・コードブロックを書かない。該当事実がなければ見出し+空行)。行数の例外は本質列挙系セクションの番号リストと「やらなかったこと」の 1 項目 1 行のみ
+  - **詳細展開はユーザーが明示指示したセクションだけ** (`$ARGUMENTS` またはセッション中の発話。例: 「設計判断は詳しく」)。指示されたセクションはサマリー行の直下に散文展開を追加する。棄却案・実測表などの素材が session にあっても、**自己判断では展開せず**完了報告で「展開可能」と伝える (詳細は description-style.md「分量の既定」節)
 - **テンプレ内 `<!-- ... -->` コメントは削除しない** (migration 無しでも rollback サンプルブロックを残す)
 - **テンプレに無い見出しは追加しない**
 
@@ -88,10 +90,10 @@ PR URL を表示して完了。
 
 ### Step 9: セルフチェック (投稿前必須)
 
-[references/description-style.md](references/description-style.md) の「Step 9 セルフチェック」を **tier 表の観点セット** (lite = [A]+[D] のみ / standard = 4 観点 / deep = 4 観点 + 関連 PR 検索) で実施。1 つでも該当があれば修正:
-- **[A] 斜め読みテスト**: 各セクション 1 行目だけで PR 意図再構築可能か / 本質リスト (点数は tier 表) と一致か / plan 由来 internal 語彙 (`α 層` / `AC-9` / `Critical-A` 等) が残っていないか
+[references/description-style.md](references/description-style.md) の「Step 9 セルフチェック」を **tier 表の観点セット** (lite = [A]+[D] のみ / standard = 4 観点 / deep = 4 観点 + 関連 PR 検索) で実施。deep の関連 PR 検索は `gh pr list --state all --search "<検索語>"` / `gh issue list --state all --search "<検索語>"` で行う (検索語 2 語 = scope の英語名 + タイトル主要名詞の日本語 × pr / issue の 2 コマンド = 計 4 回)。ヒットしたら「関連 Issue」セクションの `related -` を 1 行リンクで**置換** (併記しない)、0 件なら本文変更なし。1 つでも該当があれば修正:
+- **[A] 斜め読みテスト**: 各セクション 1 行目だけで PR 意図再構築可能か / 本質リスト (点数は tier 表) と一致か (判定基準は description-style.md「Pre-work」節が SSOT — 各点が分配先セクション込みで復元可能か) / plan 由来 internal 語彙 (`α 層` / `AC-9` / `Critical-A` 等) が残っていないか
 - **[B] コードから読める情報の混入**: ファイル名・関数名・パラメータ追加・import 等が簡潔セクションに残っていないか
-- **[C] 重複・冗長 + 「やらなかったこと」事実整合**: 「やったこと」と「なぜやるのか」の事実重複 / 簡潔セクションの bullet 化 / 動作確認結果のケース列挙 / 詳細セクションが 1〜2 行で済まされていないか / **「やらなかったこと」各項目が最終 diff と整合するか** (スコープ外として正しいか・先送りが本 PR で確定すべきものでないか。詳細は description-style.md「投稿前の事実整合チェック」)
+- **[C] 分量・重複 + 「やらなかったこと」事実整合**: 「やったこと」と「なぜやるのか」の事実重複 / 各セクションが 1 行サマリーを超えていないか (bullet 化・複数文段落・表・コードブロックの混入) / 詳細展開がユーザー指示なしに行われていないか (指示があったセクションは逆に 1〜2 行で済まされていないか) / 動作確認結果のケース列挙 / **「やらなかったこと」各項目が最終 diff と整合するか** (スコープ外として正しいか・先送りが本 PR で確定すべきものでないか。詳細は description-style.md「投稿前の事実整合チェック」)
 - **[D] AI 臭**: 「以下に〜を示す」「具体的には」「適切に」等の生成検出語 / 太字 bullet 3 つ以上 / 機械的絵文字 / 「〜のため」段落内 2 回以上 / 「特になし」埋め文 / 矢印チェーン等の作業中 shorthand (詳細は description-style.md [D])
 
 ### Step 10: ドラフト PR 作成
@@ -114,13 +116,13 @@ rm -f "$PR_BODY_FILE"
 
 - [references/template-discovery.md](references/template-discovery.md) — PR テンプレート 7 段階優先順位 / ベースブランチ 3 段階フォールバック
 - [references/branch-validation.md](references/branch-validation.md) — ブランチ妥当性検証 (同名禁止 / conventional prefix / プロジェクト規約) と自動切替
-- [references/description-style.md](references/description-style.md) — 文体 6 鉄則 / セクション分量対比表 / Pre-work 本質リスト / Step 9 セルフチェック [A]-[D]
+- [references/description-style.md](references/description-style.md) — 文体 6 鉄則 / 1 行サマリー既定と詳細展開指示 / Pre-work 本質リスト / Step 9 セルフチェック [A]-[D]
 - [references/labels-and-milestones.md](references/labels-and-milestones.md) — ラベル 3 種判定基準 / Untracked マイルストーン事前確認
 - [references/post-create-edit.md](references/post-create-edit.md) — 作成後の description 更新 (`gh pr edit --body` 失敗回避) / `mktemp` 規約
 
 ## 注意事項
 
-全内容を日本語で記述 / 既存コミット全てを考慮 (最新だけでない) / セキュリティ・パフォーマンス影響を考慮 / 完了時に PR URL を表示。
+全内容を日本語で記述 / 既存コミット全てを考慮 (最新だけでない) / セキュリティ・パフォーマンス影響を考慮 / 完了時に PR URL を表示し、詳細展開できる素材が残るセクションがあれば「設計判断: 棄却案 2 件を展開可能」のように列挙する (展開はユーザー指示後、[references/post-create-edit.md](references/post-create-edit.md) の手順で本文更新)。
 
 ## 併用推奨 skill
 
