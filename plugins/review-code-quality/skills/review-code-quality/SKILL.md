@@ -19,13 +19,19 @@ description: Use when finishing self-review of an implementation, before request
 | **standard** (default) | 2 ファイル以下 (≤2) | main thread 順次 4 観点 |
 | **deep** | 3 ファイル以上 (>2) | 4 agent 並列 |
 
+tier 判定のファイル数は **Step 1 でスコープ確定した後の対象ファイル数**を使う (冒頭自動取得のブランチ全体行をそのまま tier 判定に使わない — 未コミット差分が実対象の場合に判定がずれる)。
+
 **business-impact-analyzer (Tier 2)** は domain model attribute (`plan_code` / `role` / `status` 等) の更新を含む diff のみ実行。それ以外は skip 報告で完了。リスク領域 (auth / billing / payment / migration) は LoC によらず **deep** + business-impact-analyzer 必須。
 
 ## 対象 diff (skill 読み込み時に自動取得)
 
 !`git diff --name-only origin/develop...HEAD`
 
-> 上 1 行は Claude Code が skill 読み込み時に実行し結果へ置換する (読み取り専用・冪等)。失敗時のフォールバックは原因別に分ける: (a) 生コマンド文字列のまま見える (注入非対応環境) → Step 1 の同コマンドを Bash で実行する。(b) `unknown revision` 等のエラー文字列が見える (base branch が origin/develop でない) → `gh repo view --json defaultBranchRef -q .defaultBranchRef.name` か `git remote show origin` の HEAD branch で base を特定し、`origin/<base>...HEAD` に読み替えて Bash で再実行する。
+!`git diff --name-only HEAD`
+
+!`git diff --name-only --cached`
+
+> 上 3 行は Claude Code が skill 読み込み時に実行し結果へ置換する (読み取り専用・冪等)。1 行目 = ブランチ全体、2-3 行目 = 未コミット (worktree) / staged 差分で、スコープ判定 (Step 1) に使う。失敗時のフォールバックは原因別に分ける: (a) 生コマンド文字列のまま見える (注入非対応環境) → Step 1 の同コマンドを Bash で実行する。(b) `unknown revision` 等のエラー文字列が見える (base branch が origin/develop でない) → `gh repo view --json defaultBranchRef -q .defaultBranchRef.name` か `git remote show origin` の HEAD branch で base を特定し、`origin/<base>...HEAD` に読み替えて Bash で再実行する。
 
 ## Quick start
 
@@ -45,6 +51,8 @@ description: Use when finishing self-review of an implementation, before request
 引数指定時は `$ARGUMENTS` を使用。なければ `git diff --name-only origin/develop...HEAD` で取得。0 件なら終了。
 
 **base ブランチの確定 (develop に固定しない・第一手)**: 冒頭自動取得は `origin/develop...HEAD` を使うが develop は既定値にすぎない。base が develop でないリポ (master 基準等) では第一接触で失敗するため、`gh repo view --json defaultBranchRef -q .defaultBranchRef.name` (失敗時は `git remote show origin` の HEAD branch) で base を確定してから `origin/<base>...HEAD` で取り直す。冒頭コマンドはこの確定への足場であり、develop ハードコードと読み違えない。
+
+**未コミット差分が実対象のケース (セッション作業の self-review)**: 本 skill はセッションで書いたばかりのコードのレビューに使われることが多く、その差分はまだコミットされていないことがある。ブランチ全体 (`origin/<base>...HEAD`) と未コミット+staged (冒頭 2-3 行目) が乖離する場合は、**未コミット+staged を既定スコープにする** (過去コミット分まで巻き込むと、レビュー対象がセッションの作業と一致しない)。ブランチ全体をレビューしたい時のみ明示指定し、判断に迷えば user に確認する。
 
 **PR レビューモード (現在チェックアウトしていない PR / 他者の PR を点検する場合)**: PR 番号 / URL が渡された、またはカレントブランチが対象 PR の head でない場合は、`gh pr checkout <番号>` か read-only worktree (`git worktree add`) で PR head を展開し、agent には PR head worktree の絶対パスと base 読み替え後の diff を渡す。現在の worktree をそのまま読むと別バージョンを silent に分析する (特に business-impact-analyzer は caller chain を grep で辿るため PR head の完全な repo context が要る)。
 

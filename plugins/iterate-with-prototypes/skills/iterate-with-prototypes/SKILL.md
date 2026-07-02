@@ -27,7 +27,7 @@ description: Use when starting a complex feature where a PRD or spec exists but 
 
 1. **対象を特定** — PRD/仕様/プランを探す。取れなければ 1 度だけ聞く(**branch 名から決めつけない**)。`When to use` で使用可否を判定し、不適なら `/prototype` か `/define-acceptance-criteria` へ誘導して抜ける。
 2. **仮定を自分で抽出してランク** — load-bearing な未検証仮定を**自分で**列挙し、**不確実性 × 外れた時の手戻り**で順位付け(ユーザーに丸投げせず、順位案を出して訂正してもらう)。
-3. **単一正本(ledger)を作る = 最初の成果物** — `主張 / 検証方法 / kill 条件 / status` の表で 1 ファイル。**検証方法と kill 条件は実行可能に書く**: ①何を ground-truth(source-of-truth)として数値照合するか名指す ②scalar な予算(レイテンシ/精度等)は percentile + 計測窓に固定(例: p95 ≤ 1s)③代表入力を列挙(正常/エッジ)④境界は推測せず観測で確定(put→get・実測)。以後の TODO・決定・AC はすべてここに集約する。
+3. **単一正本(ledger)を作る = 最初の成果物** — `主張 / 検証方法 / kill 条件 / status` の表で 1 ファイル。**検証方法と kill 条件は実行可能に書く**: ①何を ground-truth(source-of-truth)として数値照合するか名指す ②scalar な予算(レイテンシ/精度等)は percentile + 計測窓に固定(例: p95 ≤ 1s)③代表入力を列挙(正常/エッジ)④境界は推測せず観測で確定(put→get・実測)。以後の TODO・決定・AC はすべてここに集約する。方法論用語 (ledger / spike / kill 条件 / grounded 等) を使う ledger は、**冒頭に用語定義 (glossary) 1 ブロックを最初から置く** — 後から読む人・別エージェントが decode できない造語を書いた時点で防ぐ (事後に数十箇所を除染するより安い。規律 3 の「書いた時点で漏らさない」と同根)。
 
    例(1 行):
 
@@ -58,6 +58,7 @@ description: Use when starting a complex feature where a PRD or spec exists but 
 > Code-A′ は **delivery 本体**(単一実装・組み直さない)。step 6 はそれを依存順 PR に**切り出す**だけ。Code-A を捨てて clean に組み直す重い variant は、blast radius が大きい時だけの選択肢。
 > step 2(まず動かす)と step 3(次に整える)を**混ぜない** — 機能を 100% 通してから構造を整える(机上設計で間違った骨格を作らせない)。
 > step 5 の `/define-acceptance-criteria`・`/mece-plan-review` は本来「実装前 gate」だが、ここでは目的が変わり **post-code で仕様の正本化 + カバレッジ漏れ検出**に使う。
+> plan/analysis ファイル契約が無い **ledger 駆動セッション**では step 6 の `/finalize-plan` は起動できない (入力契約が `<plan>.analysis.md` 前提のため)。この場合は ledger への追記で代替し、最低限 **PR 分割と QA 手順の 2 点**を書く (/finalize-plan の主要出力と同じ)。
 
 ## 効かせる規律
 

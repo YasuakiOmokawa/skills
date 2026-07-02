@@ -1,6 +1,6 @@
 ---
 name: dry-ssot-text
-description: Collapses repeated explanations of one concept into a single source of truth plus cross-references, while keeping navigation aids like TOCs and progress tables. Use when an AI-generated document (plan / design doc / RFC / PR description) has grown long with the same concept explained in multiple places, or when the user says "この文書の重複をまとめて" / "この文書を DRY にして" / "同じ説明が何回も出てくるので整理して". Code duplication / refactoring is out of scope (documents only).
+description: Collapses repeated explanations of one concept into a single source of truth plus cross-references, while keeping navigation aids like TOCs and progress tables. Use when an AI-generated document (plan / design doc / RFC / PR description) has grown long with the same concept explained in multiple places, when the same why-explanation is repeated across multiple code comments, or when the user says "この文書の重複をまとめて" / "この文書を DRY にして" / "同じ説明が何回も出てくるので整理して". Prose duplication inside code comments is in scope; code structure duplication / refactoring is out of scope.
 ---
 
 # DRY/SSOT Text Refactor
@@ -9,16 +9,18 @@ AI 生成の長文 (plan / design doc / RFC / PR / README) で同一概念が複
 
 **核心原則**: 「同じ事実を 2 度書かない」だが「ナビゲーション目的の重複は別物」。
 
+**対象範囲**: 文書に加えて**コードコメント内の説明文**も対象 (同じ why 説明・設計判断が複数コメントに散っている場合、正本を ADR / 1 箇所のコメントに集約し他は参照へ)。呼び出し側の識別子から正本コメントへ grep で到達できる場合、参照コメントは置かず削除してよい (1 行 why に参照コメントを足すと元と同じ長さに戻るため)。対象外はコード構造そのものの重複 (メソッド・ロジックの重複解消はリファクタリングの領分で本 skill は扱わない)。
+
 ## Task complexity tier
 
 | Tier | 判定 | アクション |
 |---|---|---|
 | **skip** | 文書 <100 行 / 重複箇所数 ≤2 / 外向き説明資料 (顧客向け・ブログ) / API ref のような網羅列挙文書 | **skip** (集約効果薄) |
-| **lite** | 100-300 行, 重複 3-5 箇所 | dry-run 省略、直接 Edit 可 (4. の dry-run レポートは出力しない) |
+| **lite** | 100-300 行, 重複 3-5 箇所 | dry-run 省略、直接 Edit 可 (4. の dry-run レポートは出力しない)。適用後に「何を何箇所→1 箇所に縮約したか」の 1 行レポートは必須 (省略の監査痕跡) |
 | **standard** (default) | 300+ 行 or 共有前文書 or 重複 6+ 箇所 | dry-run レポート必須 → 承認後 Edit |
 | **deep** | 600+ 行 / 複数 doc 跨り (plan + design doc 一致) / 既存 cross-reference に依存 | dry-run + 各 reference 先のアンカー疎通検証 + 適用後の `grep -c` 重複ゼロ確認 |
 
-**複数 tier 該当時の優先**: 1 文書が複数 tier の条件に該当する場合 (例: 55 行で skip の「<100 行」に該当するが重複 3 箇所で lite の「3-5 箇所」にも該当) は、**重複箇所数を優先**する。skip は「重複箇所数 ≤2」が必須条件 — 行数が短くても重複が 3+ なら lite 以上として集約に進む。
+**複数 tier 該当時の優先**: 1 文書が複数 tier の条件に該当する場合 (例: 55 行で skip の「<100 行」に該当するが重複 3 箇所で lite の「3-5 箇所」にも該当) は、**重複箇所数を優先**する。skip は「重複箇所数 ≤2」が必須条件 — 行数が短くても重複が 3+ なら lite 以上として集約に進む。重複箇所数は**同一概念ごとに数える** (複数の重複グループが併存する場合は最大のグループの箇所数で判定し、全グループを合算しない)。
 
 **tier 名規約**: 4 tier (skip / lite / standard / deep) は本 skill 内の判定軸であり、他 skill の "standard" / "lite" 命名と直接対応しない (本 skill では 300+ 行が standard、100-300 行は lite)。other skill から「standard median な文書」と呼ばれる 200 行・3 箇所重複ケースは本 skill では **lite** tier として処理する。
 
@@ -30,6 +32,7 @@ AI 生成の長文 (plan / design doc / RFC / PR / README) で同一概念が複
 | **不要: 表/コード** | 同じ table が 2 箇所、片方に「再掲」 | **する** | 1 箇所更新で済む |
 | **不要: 引用文** | 公式ドキュメントの同一一節を 2 箇所引用 | **する** | 引用元に集約 |
 | **不要: 旧版が新版に包含** | 中間サマリ表が最終サマリ表に subsume / 粗い旧 QA が詳細 QA に含まれる | **する** | 詳細版を正本にし旧粗版は削除 or 1 行参照に縮約 (相互リンクでなく旧版を除く点が同一重複と異なる) |
+| **不要: 同一対象の表記ゆれ** | 同じ ADR を `docs/adr/0004` と `ADR-0004` の 2 表記で参照 | **する** | 解決可能な方 (パス・正式 ID) へ全箇所寄せる (2 表記は同一概念の重複) |
 | **必要: TOC / 進捗 table** | 章立て一覧、PR 進捗表 | **しない** | 俯瞰 navigation |
 | **必要: checklist サマリ** | AC リスト 1 行 + 詳細は §設計詳細 | **しない** | 確認用 |
 | **必要: header + body 同名** | 「§Provider 内吸収型」見出しと本文冒頭 | **しない** | index 機能 |

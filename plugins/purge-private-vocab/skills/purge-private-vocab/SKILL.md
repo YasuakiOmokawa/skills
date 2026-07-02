@@ -18,6 +18,8 @@ description: Detects local-plan coinages, abbreviations, and number labels in re
 | **standard** (default) | 中規模 doc (PR description / Jira description 等、300-2000 字) | Step 1-5 全実行、dry-run レポート提示 → 承認後 Edit |
 | **deep** | design doc / RFC / 公開資料 / 2000+ 字 | dry-run + 適用後の再読検証必須 + heuristics-and-pitfalls.md 全件チェック + 下記 **deep 必須前置**を Step 1 で実施 |
 
+**plan そのものが target になる場合 (lite(skip) の例外)**: plan の読者 (チームメンバー / 将来の別エージェント) が持たない上流文書 (分析ファイル・MECE 結果等) 由来の語彙 — `BB-N` / `WB-N` / `IM-N` 等の finding ID — が plan に混入している場合は、plan 自体を target として検査する (skip しない)。このとき source = 分析ファイル、target = plan の多段連鎖として扱う (「分析ファイル → plan → 読者」で、plan は中間文書でも読者にとっては対外文書)。
+
 **deep 必須前置** (Step 1 の入力収集を拡張):
 1. **target の文構造を直読み**: `**用語**: 説明` のような Label vs Body 構造かを目視確認し、Label vs Body 分離ルートの適用可否を Step 3 までに確定する
 2. **AC-* / Critical-* / RFC-* 等の ID 紐付け**: target に登場する全 ID (`AC-7`, `Critical-A` 等) を source plan / analysis ファイルから 1:1 で索引し、各 ID の元内容を「展開」または「文ごと削除」のどちらにするか Step 4 提案レポートに明記する
@@ -53,7 +55,7 @@ grep -oE '§[^ ,。、）]+' <target>
 grep -oE '[A-Z][A-Za-z]*-[0-9A-Za-z]+' <target>
 ```
 
-加えて目視で拾う: 強調フレーズ (`**...**` / 「...」)、ギリシャ文字+層 (`α/β/γ 層`)、フェーズ用語 (`rollout enabler` 等)、数字+象限/層 (各要素が文中未説明のもの)。
+加えて目視で拾う: 強調フレーズ (`**...**` / 「...」)、大文字始まりの英語複合語 (`Single Switch` / `Dual Write` 等、強調の有無を問わない)、ギリシャ文字+層 (`α/β/γ 層`)、フェーズ用語 (`rollout enabler` 等)、数字+象限/層 (各要素が文中未説明のもの)。
 
 パターン別の typical false positive とより広い grep 例は [references/heuristics-and-pitfalls.md](references/heuristics-and-pitfalls.md) 参照。
 
@@ -75,16 +77,18 @@ Q3. source plan にしか定義がなく、target の読者は外部リソース
   YES → Q4 (要対応)
   NO  → 【持ち込み可】 (公知用語)
 
-Q4. 番号/層ラベルか? (`Critical-A`, `α/β/γ 層`, `AC-12`, PR チェーン番号 等)
-  YES → 【要言い換えまたは削除】 出現回数に関わらず実値へ言い換え (in-line 定義ルートには載せない。Core Pattern 3 分類表と整合)。**層ラベルで source plan が無く実コンポーネント名を解決できない場合**は target 文脈から導ける関係性ベースの一般表現 (例: 「後段の処理層」) に言い換え、具体名を捏造しない (tier 非依存で適用)
+Q4. 番号/層ラベルか? (`Critical-A`, `α/β/γ 層`, `AC-12`, PR チェーン番号、分析ファイル由来 finding ID (`BB-N`/`WB-N`/`IM-N`) 等)
+  YES → 【要言い換えまたは削除】 出現回数に関わらず実値へ言い換え (in-line 定義ルートには載せない。Core Pattern 3 分類表と整合)。**ただし target 自身の表・一覧で定義済みの `AC-N` / `QA-N` は Q2 (self-contained) で維持** (例: QA 手順表に全 QA-ID が展開されている plan)。**層ラベルで source plan が無く実コンポーネント名を解決できない場合**は target 文脈から導ける関係性ベースの一般表現 (例: 「後段の処理層」) に言い換え、具体名を捏造しない (tier 非依存で適用)
   NO  → 出現回数で分岐:
     2+ 回 → 【要 in-line 定義】 (初出箇所で `用語 (= 短い説明)` を補う)。**ただし初出が見出し / title の場合**は in-line 定義が不自然なため、Label vs Body の label 書換 (平易化) ルートに倒す
     1 回   → 【要言い換えまたは削除】 (平易な日本語に書き換え、または文ごと削除)
 ```
 
-**Q1 判定**: codebase identifier = `git grep <語>` が 1+ ヒット、公開規格 = RFC/W3C/ISO/IETF 等、公知 Issue/Jira = 公開 tracker でアクセス可。**非 repo / 未マージ flag で `git grep` 不能時**は、backtick 付き snake_case で文中に `Flipper flag` / `class` / `file path` と明示されている、または source plan にファイルパス/flag 記述がある語を codebase identifier とみなす。加えて `Provider` / `Adapter` / `Gateway` のような**一般的なソフトウェア構成概念**は、平易な言い換えがかえって曖昧化する場合、持ち込み可に倒してよい (読者が文脈で解せる一般語のため)。
+**Q1 判定**: codebase identifier = `git grep <語>` が 1+ ヒット、公開規格 = RFC/W3C/ISO/IETF 等、公知 Issue/Jira = 公開 tracker でアクセス可。Figma node-id (`1:2` / `123:456` 等) も Q1 維持 (Figma ツールで解決可能な識別子)。**非 repo / 未マージ flag で `git grep` 不能時**は、backtick 付き snake_case で文中に `Flipper flag` / `class` / `file path` と明示されている、または source plan にファイルパス/flag 記述がある語を codebase identifier とみなす。加えて `Provider` / `Adapter` / `Gateway` のような**一般的なソフトウェア構成概念**は、平易な言い換えがかえって曖昧化する場合、持ち込み可に倒してよい (読者が文脈で解せる一般語のため)。
 
-**Q2 判定**: 見出し+直後本文に平易な説明があれば self-contained。ただし説明に plan 内造語がさらに混入していれば NO。迷ったら「plan 未読の同僚が target だけ読み下せるか」を音読で確認。
+**Q2 判定**: 見出し+直後本文に平易な説明があれば self-contained。ただし説明に plan 内造語がさらに混入していれば NO。定義が初出より**後**に置かれている (用語使用 → 後置説明の順) 場合は、**Q3 以降へ進まずこの時点で【要 in-line 定義】で確定**する (定義を初出へ `用語 (= 短い説明)` として移し、後置説明文は定義に吸収・削除。Q3 の「source plan にしか定義がない」判定に流すと target 内に後置定義があるせいで素通しになるため、木の分岐でなくここで短絡させる)。迷ったら「plan 未読の同僚が target だけ読み下せるか」を音読で確認。
+
+**Q4 で source plan (分析ファイル) が未提供の場合**: finding ID の原文を参照できないときは、target 文脈から復元できる範囲の展開案に「適用前に原文と照合」の注記を付けて提示し、実値を捏造しない (deep 必須前置の 1:1 索引と同じ原則を standard でも守る)。この照合注記付き修正を 1 件でも含む場合、**tier に関わらず Step 4 の提案レポート提示を省略しない** (lite の直接適用に乗せると、照合されないまま復元文が plan に書き込まれる)。
 
 **Label vs Body 分離** (Q2 の partial 抜けに使う既定ルート): 構造が `**plan-only ラベル**: 平易な説明文…` の場合、ラベルは Q4 で「要言い換えまたは削除」、本文は維持。例: `**Single Switch**: Flipper の参照を 1 箇所に集約` → ラベルを `**Flipper 参照の 1 箇所集約**` に置換、本文は維持。
 
@@ -123,7 +127,7 @@ Q4. 番号/層ラベルか? (`Critical-A`, `α/β/γ 層`, `AC-12`, PR チェー
 
 | 操作 | コマンド |
 |---|---|
-| 候補語の出現回数 | `grep -c '<語>' <target>` |
+| 候補語の出現回数 | `grep -o '<語>' <target> \| wc -l` (`grep -c` は行数を返すため、同一行 2 回出現を 1 と数え違える) |
 | codebase 検索 (Q1 判定) | `git grep '<語>'` |
 | in-line 定義形式 | `<用語> (= <短い説明>)` を初出箇所のみに |
 
