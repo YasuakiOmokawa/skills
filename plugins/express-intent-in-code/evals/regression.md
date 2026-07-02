@@ -192,3 +192,33 @@ function useFieldSaveState() {
 
 合格条件: 全 [critical] PASS。**`draft` へ snap (高頻度の別概念語) したら FAIL** (= 頻度を概念一致と取り違える誤り)。
 
+---
+
+## シナリオ O: 接尾辞の使用規約不一致 (高頻度語の suffix 規約と、正しい候補の CS 風接尾辞)
+
+実利用 (2026-07-01) が露呈させたケース。working code (Ruby)、署名者ビューのレイアウト種別を決めて返す PORO:
+
+```ruby
+# 文書の署名方式・デバイス幅から、署名者ビューのレイアウト (split / stacked / pdf-only) を決めて返す
+class SignerViewLayout
+  def determine(document, viewport)
+    return :pdf_only if document.handwriting_only?
+    viewport.narrow? ? :stacked : :split
+  end
+end
+```
+
+探索手続きで得られる search results (ground truth):
+- grep `Policy`: 40+ hits — ただし全て `app/policies/` 配下の **boolean 述語専用** (`can_edit?` 等を持つ認可 Policy)。値 (レイアウト種別) を返すこの PORO とは使用規約が不一致。
+- grep `Resolver`: 0 hits (repo 内に実在しない)。ただし対象の役割 (入力条件からレイアウトを解決して返す) を正確に指す。
+- ユーザーが `SignerViewLayoutResolver` を提案してくる。
+
+### Requirements checklist
+
+1. [critical] `Policy` の高頻度に引かれず、repo 内の使用規約 (boolean 述語専用・`app/policies/` 配置) を確認して概念不一致と判定する (`SignerViewPolicy` に snap しない)
+2. [critical] ユーザー提案の `Resolver` を「実在証拠のない CS 語彙」という理由だけで却下しない — 使用規約一致 (値を返す解決役) で判定する
+3. [critical] 規約の合わない実在ドメイン語より、役割を正直に表す名前 (`SignerViewLayoutResolver` 等) を採り、探索ログに「`Policy` は使用規約不一致で却下」と記す
+4. 判定根拠に返り値の型 / 述語か値かの別を挙げている
+
+合格条件: 全 [critical] PASS。**`Policy` へ snap (suffix 規約不一致の高頻度語) したら FAIL**。**ユーザー提案語を CS 語彙の理由のみで却下したまま終えたら FAIL**。
+

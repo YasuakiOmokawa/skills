@@ -23,6 +23,8 @@ description: Turns AC and MECE results from the analysis file into a branch stra
 
 リスク領域は AC 件数によらず **deep**。lite では Step 1.7 の QA-ID enumerate を簡略形 (`QA-N-01`, `QA-N-02`... の通し番号) に縮約してよい。
 
+**single-branch / no-PR モード (tier と直交する省略条件)**: ユーザー制約で新規ブランチ・PR 分割が不要な場合 (現ブランチへの 1 コミット実装 / 「PR なし・QA 手順中心で」等の明示指示) は、branch-planner / pr-splitter を省略し QA 手順中心の `## 実装準備` を出力してよい (ブランチ戦略・PR分割計画セクションは「現ブランチ 1 コミット (ユーザー制約)」の 1 行に縮約)。**agent 省略が sanctioned なのはこのモードと lite tier の skip 列のみ** — deep tier で「文脈が十分だから直接書ける」という判断での省略はしない (planner agent を通さない直接策定は QA-ID トレーサビリティの独立検証を欠く)。
+
 ## Quick start
 
 1. **Step 1**: プランファイルパスを特定
@@ -42,6 +44,8 @@ description: Turns AC and MECE results from the analysis file into a branch stra
 ⛔ 分析ファイル（{パス}）にACまたはMECE分析結果が見つかりません。
 先に /define-acceptance-criteria → /mece-plan-review を実行してください。
 ```
+
+例外: 分析ファイルが無く **ledger 駆動** (`/iterate-with-prototypes` の単一正本ファイルで進行中) のセッションでは、本 skill を起動せず iterate-with-prototypes step 6 の ledger 追記代替 (PR 分割 + QA 手順を ledger に書く) に従う。上の中断メッセージは「分析ファイルが本来あるべきなのに無い」場合のみ表示する。
 
 ### Step 1.7: QA-ID enumerate (main agent が 1 回だけ実行)
 
@@ -79,7 +83,7 @@ ${MECE_CONTENT}          # qa planner のみ
 """)
 ```
 
-2A は branch-planner → pr-splitter の順 (pr-splitter は `${BRANCH_RESULT}` の base 名を派生に使う)。2B は manual-qa-planner + auto-qa-planner を同一メッセージで並列起動。各 agent 固有 prompt の全文・Task ツール利用不可時の in-context fallback は [references/agent-orchestration.md](references/agent-orchestration.md) 参照。
+各 agent 固有 prompt の全文・Task ツール利用不可時の in-context fallback は [references/agent-orchestration.md](references/agent-orchestration.md) 参照。
 
 ### Step 3: プランファイルに `## 実装準備` 追記
 
