@@ -1,6 +1,6 @@
 ---
 name: express-intent-in-code
-description: Use on a confirmed working-code target (method/value/type in this change's blast radius) whose name stops at mechanism (`bbox_xhtml`) or shape (`word_coordinate_data` / `useFieldSaveState`) and whose purpose survives only in why-comments, when /review-code-quality hands off a naming / cohesion finding as needs-judgment, or when the user says 「意図が伝わる名前にして」「この関数の目的を名前で表現して」「コメントなしで読めるコードにして」. Lifts one target up a naming ladder (機構名 → what名 → 目的名 → ドメイン抽象); 段4 ドメイン抽象 (`signing_positions`) is the best-effort target, reached by sourcing the real domain word (codebase/spec/UI) or extracting the missing type — never inventing jargon, falling back to intent only with a recorded empty search. Promotes why a name can't carry into types/tests, leaving true why as comments. Outputs before/after diffs, 3 rename candidates, 段4 grounding (or fallback log), and a promote-and-delete list. Do NOT drive-by rename outside the target nor scan a whole diff (that is /review-code-quality; this is the deep one-point transformer).
+description: Use on a confirmed working-code target (method/value/type in this change's blast radius) whose name stops at mechanism (`bbox_xhtml`) or shape (`word_coordinate_data` / `useFieldSaveState`) and whose purpose survives only in why-comments, when /review-code-quality hands off a naming / cohesion finding as needs-judgment, or when the user says 「意図が伝わる名前にして」「この関数の目的を名前で表現して」「コメントなしで読めるコードにして」. Lifts one target up a naming ladder (機構名 → what名 → 目的名 → ドメイン抽象); 段4 ドメイン抽象 (`signing_positions`) is the best-effort target, reached by sourcing the real domain word (codebase/spec/UI) or extracting the missing type — never inventing jargon, falling back to intent only with a recorded empty search. Promotes why a name can't carry into types/tests, leaving true why as comments. Outputs before/after diffs, 3 rename candidates, 段4 grounding (or fallback log), and a promote-and-delete list. Do NOT drive-by rename outside the target nor scan a whole diff (that is /review-code-quality; this is the deep one-point transformer) — the only self-run whole-diff pass is a mechanical grep screening for homonym collisions (one word naming two domain concepts, e.g. auth `token` vs burn-in placeholder `token`) and 段0 noise-word identifiers.
 ---
 
 # Express Intent In Code
@@ -26,7 +26,7 @@ description: Use on a confirmed working-code target (method/value/type in this c
 - 共有語が無いのに造語して段4 に上げること (段4 は実在証拠への接地が前提。探索が空振りなら段3 据え置き + 探索ログ)
 - 段4 へ到達した型を全 call site へ波及させる広域改名 (対象 1 点のみ変換)
 
-**バッチ / パイプライン起動 (単一対象が未指定のとき)**: `/simplify` 等の品質パイプライン後段で、単一対象も `/review-code-quality` からの naming/凝集 handoff も無いまま起動された場合 — diff 全体を改名候補スキャンしない (それは `/review-code-quality` の役割で、本スキルが肩代わりしない)。handoff があればそれを変換対象に取り、handoff も明示対象も無ければ diff 名を列挙せず「handoff 無しのため変換対象なし」と即 no-op 宣言する (無人パイプラインを確認待ちで止めない)。
+**バッチ / パイプライン起動 (単一対象が未指定のとき)**: `/simplify` 等の品質パイプライン後段で、単一対象も `/review-code-quality` からの naming/凝集 handoff も無いまま起動された場合 — diff 全体を改名候補スキャンしない (それは `/review-code-quality` の役割で、本スキルが肩代わりしない)。handoff があればそれを変換対象に取り、handoff も明示対象も無ければ diff 名を列挙せず「handoff 無しのため変換対象なし」と即 no-op 宣言する (無人パイプラインを確認待ちで止めない)。**例外 — grep で拾える 2 兆候は handoff の有無によらず対象に加える**: (a) 多義衝突 (blast radius 内で同じ語が 2 つのドメイン概念を指す。例: URL 認証の `token` と焼き込みプレースホルダーの `token`) と (b) 新規識別子の段0 ノイズ語 (`doc`/`data`/`info`/`target`/`tmp` 等)。診断器の handoff は表層 finding に偏りこの 2 種を落とす実績があるため、機械的な grep 1 パスに限り本スキルが直接スクリーニングする (診断的な網羅レビューには広げない)。スクリーニングや変換中に見つけた**副次候補** (対象外の別衝突・別ノイズ語) は対象化せず、出力の据え置きログに 1 行で残して次の `/review-code-quality` パスの入力にする。
 
 スコープ内/外の全リストは [references/boundary-and-scope.md](references/boundary-and-scope.md)。
 
@@ -50,7 +50,7 @@ description: Use on a confirmed working-code target (method/value/type in this c
 > 各ステップの詳細・アンチパターン・コミット境界の切り方は [references/decision-procedure.md](references/decision-procedure.md) が SSOT。本文は操作チェックリスト。
 
 - **Step 0 適用判定**: 対象が (a) working code で (b) 今回の変更対象 (blast radius 内) か確認。drive-by 改名は中止。着手前に回帰テスト/characterization test の有無を確認し、無ければ先に用意して振る舞いを固定する (改名は意味を変えうる)。対象が 1 点に確定していなければユーザーに確認。
-- **Step 1 現在段の診断**: 対象名を梯子のどこか判定 (機構語リストで段0、用途が読めるかで段1/段3 を切り分け)。1 段ずつ上げる。
+- **Step 1 現在段の診断**: 対象名を梯子のどこか判定 (機構語リストで段0、用途が読めるかで段1/段3 を切り分け)。1 段ずつ上げる。同時に**多義衝突を grep で検査**: 対象名の核となる語が blast radius 内で別のドメイン概念にも使われていないか全出現を分類する。衝突していれば段の高低より優先して片方を実在ドメイン語へ逃す (T11) — 読者は文脈の近い方の意味で誤読するため、正直な what 名でも衝突したままでは有害。
 - **Step 2 caller 観測 (平叙文化)**: 全 caller を grep し「戻り値を次に何に使うか」を 1 動詞句で言語化。caller を読まず目的名をでっち上げない (押印用途を `signature` と決め打つ退行を防ぐ)。複数 caller が別目的なら 1 メソッド 2 役 → 改名でなく分離 (T2) を先に (**caller が 1 つなら 2 役判定は省略**)。**「同一概念 (中立な目的名 1 本) か 2 役 (分割) か」は戻り値の形が同じかでなく、両 call site で真に読める単一目的名を選べるかで判定する** — 選べなければ (どの名前を選んでも片方の call site で嘘になる) 2 役 → 分割し、共有する射影は private 機構メソッドへ。
 - **Step 3 Honest 化と構造の発見**: 目的名へ直行せず、いったん「何を・何から・何を経由して」を全部出した長い正直名へ。`and`/`with` 複数 = 責務複数 (T2)、消せない機構語 = ドメイン型欠落 (T5/T6)。長さは構造を直して縮める (語を削らない)。
 - **Step 4 嘘の除去 (段2)**: 名前に出ない副作用・前提・除外を列挙し、名前へ昇格するか別メソッドへ追い出して名前 = 契約を成立させる。飛ばすと why コメント依存が温存される。
@@ -58,7 +58,7 @@ description: Use on a confirmed working-code target (method/value/type in this c
 - **Step 5.5 段4 ドメイン抽象への到達 (既定目標)**: 段3 に達したら必ず段4 を試みる。**ドメイン語を探索** (概念を 1 文化 → codebase grep → user-facing 文言 → 仕様/ADR/テスト記述/PR タイトル)。実在語が見つかれば新造せず snap (経路A。**複数の実在語があれば repo 頻度でなく「対象の概念を指す語」= use site に近い語を選ぶ**)。段3 でも明確な語が書けない/機構語が消せない/primitive が群れているなら設計のサイン → 分割/型抽出 (T2/T5/T6) で欠落型を出してから命名 (経路B)。**genuine-vs-invented ゲート**で合否判定 (≥2 独立ソース or 1 権威ソース・sentence test・型は複数使用箇所 → PASS / どこにも無い・CS 語彙偽装・新 synonym → FAIL)。ゲートが通る語が無ければ段3 据え置き + **探索ログを記録** (探索せず安住しない)。詳細 [references/domain-abstraction.md](references/domain-abstraction.md)。
 - **Step 6 コメントの蒸留と純化**: 各 why コメントを keep-vs-promote 決定表で振り分け、畳めたものを削除。**順序厳守: 名前/構造変換 → 表明できた why を削除 → 真の why のみ残置** (先にコメントを消さない)。詳細 [references/comment-keep-vs-promote.md](references/comment-keep-vs-promote.md)。
 - **Step 7 過剰昇格の歯止め (T10)**: 意図を足さないラッパ・1 ケース多態・造語目的名・過長名を Inline/据え置きで畳む。rule of three を待つ。
-- **Step 8 fresh-eyes 検証**: after の名前/シグネチャ**だけ** (コメント・plan 無し) を見て目的を言い当てられるか検証する。非自明な対象は [agents/intent-reader.md](agents/intent-reader.md) を Task で起動 (bias-free)、自明な単一改名は cold self-read で代替。推論された目的が caller 観測の目的と食い違えば名前を再調整。
+- **Step 8 fresh-eyes 検証**: after の名前/シグネチャ**だけ** (コメント・plan 無し) を見て目的を言い当てられるか検証する。非自明な対象は [agents/intent-reader.md](agents/intent-reader.md) を Task で起動 (bias-free)、自明な単一改名は cold self-read で代替。**非自明の線引き**: 構造変換 (T2/T5/T6/T8) を伴い変換後の識別子が複数になる場合は非自明とみなし intent-reader を既定とする (Task 起動不能な環境では cold self-read に落とし、その旨を出力に明記)。推論された目的が caller 観測の目的と食い違えば名前を再調整。
 - **Step 9 検証と粒度・出力**: 各変換後に lint/test を通す (Ruby: rubocop+rspec / TS: eslint+prettier / 他言語はプロジェクトのテストランナー、無ければ手動検証を明記)。grep で全 caller/spec/コメント参照の改名漏れを洗う。**広域 gsub/sed は使わず対象限定 Edit**。改名→分割→型化→コメント削除を 1 コミットに混ぜない。出力は下記フォーマット。
 
 ## 技法選択 (trigger → T)
@@ -74,10 +74,10 @@ description: Use on a confirmed working-code target (method/value/type in this c
 | T5 | primitive→値オブジェクト/型 (**段4 経路B**) | Hash/string/数値タプルに同 why (検証済み・座標系・用途) が散る/primitive が群れ欠落型を示す | high |
 | T6 | sum type + 網羅強制 (**段4 経路B**) | 状態タグ+null 同居で不正状態が作れる/switch が複数箇所に散在 | high |
 | T7 | parse, don't validate | `T→bool`/`T→void` が検査結果を捨て、下流で再検証/nil 分岐が散る | med |
-| T8 | 制御フローを目的の流れへ | 深いネスト/再代入で概念がブレる/計算と副作用が同居 | med |
+| T8 | 制御フローを目的の流れへ | 深いネスト/再代入で概念がブレる/計算と副作用が同居/中間対応表 (`x_to_y` hash) を作って後段で逆引きする | med |
 | T9 | テスト/property を why の第二の声に | 改名で why が乗りきらない (用途複数・全称的約束) | med |
 | T10 | Inline/据え置きの歯止め | 意図を足さないラッパ/1 ケース多態/造語目的名/過長名 | med |
-| T11 | 境界・一貫命名の固定 | `min`/`max` が包含か排他か不明/同一概念に名前揺れ | low |
+| T11 | 境界・一貫命名の固定 | `min`/`max` が包含か排他か不明/同一概念に名前揺れ/1 語が blast radius 内で 2 概念を指す (多義衝突。これのみ high 扱い) | low |
 
 ## コメント keep-vs-promote (要約)
 
