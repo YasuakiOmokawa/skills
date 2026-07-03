@@ -199,9 +199,9 @@ doc.signature_anchors.each { ... } # nil 分岐不要
 
 ## T8 制御フローを目的の流れへ (Guard Clauses + パイプライン化 + CQS) (medium)
 
-**trigger**: 深いネストで正常系の主筋が分岐の谷に埋もれる。再代入される中間変数で値の概念が時間軸でブレる。値を返すついでに副作用がある/純粋計算と取得が同居し名前が嘘をつく。
+**trigger**: 深いネストで正常系の主筋が分岐の谷に埋もれる。再代入される中間変数で値の概念が時間軸でブレる。値を返すついでに副作用がある/純粋計算と取得が同居し名前が嘘をつく。**中間対応表 (`x_to_y` hash) を組み立てて後段で逆引きする** (`transform_keys`/二重 lookup が出たら hash の向きが用途と逆のサイン)。
 
-**move**: 異常系をガード節で冒頭に集め早期 return しネストを 1 段に潰す → 最後の 1 行が関数の目的を表明。再代入を `map`/`select`/`const` のパイプラインにし「パース→変換→抽出」の意図を上から下へ一直線に。query (副作用なし述語/名詞) と command (動詞命令形 + `!`) を分ける。
+**move**: 異常系をガード節で冒頭に集め早期 return しネストを 1 段に潰す → 最後の 1 行が関数の目的を表明。再代入を `map`/`select`/`const` のパイプラインにし「パース→変換→抽出」の意図を上から下へ一直線に。query (副作用なし述語/名詞) と command (動詞命令形 + `!`) を分ける。対応表の逆引きは、対応表を消して**データの軸 (本体リスト) でループ**し、射影は小さな意図名メソッドに分ける。**軸転換の前に lookup の契約を確認**: 参照先 (API/hash) が要求集合の全キーに結果を返す (total) か欠落しうる (partial) か。対応表版で自然に落ちていたキー欠落が、軸転換後は nil 参照として顕在化しうる — partial ならガードを足して欠落を沈黙させない。
 
 ```ruby
 # before — 正常系が谷に埋もれる
@@ -219,6 +219,16 @@ def anchor_for(box)
   return unless box.confidence >= MIN
   build_anchor(box)
 end
+```
+
+```ruby
+# before — 対応表 placeholder_to_id を組み、結果のキーを逆引きで変換 (向きが用途と逆)
+extract_coordinates(placeholder_to_id.keys)
+  .transform_keys { |placeholder| placeholder_to_id[placeholder] }
+
+# after — 「座標が必要な項目」の軸でループし、対応表と逆引きを消す
+coordinates = extract_coordinates(items_needing_coordinates.map { |item| placeholder_of(item) })
+items_needing_coordinates.to_h { |item| [item.id, coordinates[placeholder_of(item)]] }
 ```
 
 ---
@@ -256,6 +266,6 @@ sync_save_user  # 同期保存。理由: docs/adr/0007-legacy-api-sync.md
 
 ## T11 境界・範囲・一貫命名の固定 (low)
 
-**trigger**: `max_x`/`x_limit` が包含か排他かを名前で約束しておらず off-by-one の温床。同一概念が `bbox`/`coordinate`/`word_data`/`position` と箇所ごとに揺れ、同一物か別物か判断に対応付けコメントが要る。
+**trigger**: `max_x`/`x_limit` が包含か排他かを名前で約束しておらず off-by-one の温床。同一概念が `bbox`/`coordinate`/`word_data`/`position` と箇所ごとに揺れ、同一物か別物か判断に対応付けコメントが要る。**逆向きの症状 = 多義衝突**: 1 語が blast radius 内で 2 つのドメイン概念を指す (例: URL 認証の `token` と Google Docs 焼き込みプレースホルダーの `token` が同一クラスに同居)。
 
-**move**: 含む両端は `first`/`last`、排他終端は `begin`/`end`、含む上下限は `min_`/`max_` を選び、規約選択自体を包含意図の表明にする。概念の正準名を 1 つ決め全 grep して統一、別概念に同語を流用していないかも検査。命名表を CONTEXT.md/用語集に SSOT 記録。**既存コードベースの慣習が優先する場合はそれに従う** (Surgical Changes)。
+**move**: 含む両端は `first`/`last`、排他終端は `begin`/`end`、含む上下限は `min_`/`max_` を選び、規約選択自体を包含意図の表明にする。概念の正準名を 1 つ決め全 grep して統一、別概念に同語を流用していないかも検査。命名表を CONTEXT.md/用語集に SSOT 記録。**既存コードベースの慣習が優先する場合はそれに従う** (Surgical Changes)。多義衝突は lev low の例外で **high 扱い** — 読者は文脈の近い方の意味で誤読し、正直な what 名でも実害が出る。確立した意味 (認証 token 等) を持つ側を残し、もう一方を実在ドメイン語へ逃す (例: `TokenCoordinates` → `PlaceholderCoordinates`。snap 先は既存の `placeholder_and_value` / `Signature::Placeholder`)。
