@@ -1,7 +1,7 @@
 {
   "name": "qa-ui",
-  "description": "実装完了後にChromeDevTools MCPでUI検証を行う。ACがあればAC項目ごとに画面操作・スクリーンショット・pass/fail判定。FAILなら自動修正→再QAを原則最大3回ループ (root cause が1行で確定する場合のみ+1)。",
-  "version": "1.9.0",
+  "description": "実装完了後にChromeDevTools MCPでUI検証を行う。QA-ID台帳（無ければAC）ごとに画面操作・スクリーンショット・pass/fail判定。FAILなら自動修正→再QAを原則最大3回ループ (root cause が1行で確定する場合のみ+1)。台帳がある場合はauto判定の再実行ゲート+機械集計で完了判定する。",
+  "version": "1.10.0",
   "author": {
     "name": "Yasuaki Omokawa",
     "url": "https://github.com/YasuakiOmokawa"

@@ -59,6 +59,10 @@ develop
 
 Task ツール利用不可で in-context 代替モードを使った場合は、`## 実装準備` 見出しの**直下 1 行目**として備考行を挿入する (詳細は `agent-orchestration.md`)。
 
+## 正本カバレッジ・ゲート結果 / QA 実行台帳 (Step 3.5・Step 4)
+
+Step 3.5 は本テンプレートの Write 完了後に実行され、`## 実装準備` (手動QA手順の末尾、未カバー atom があれば QA-M-NN 追記後) にゲート結果 (`正本カバレッジ: skip (構造化正本なし)` / `正本カバレッジ: 差分 0 件 (...)`) を 1 行残す。Step 4 で初期化する `<plan>.qa-ledger.md` はプランファイルとは別ファイルのため本テンプレートには現れない (フォーマット・状態語彙は [qa-ledger.md](qa-ledger.md) 参照)。
+
 ## Quality standards
 
-Quality standards (PR 上限の precedence・実行可能性・AC トレーサビリティ) は SKILL.md の `## Quality standards` 節を SSOT とする。
+Quality standards (PR 上限の precedence・実行可能性・QA-ID トレーサビリティ) は SKILL.md の `## Quality standards` 節を SSOT とする。

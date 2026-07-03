@@ -77,4 +77,4 @@ subagent として動作中 / tool deferred / dispatch 権限なしの場合:
    > **備考**: 本実行は Task ツール利用不可のため in-context 代替モードで実行 (4 agent 定義をメイン agent が逐次適用)。
    ```
 
-AC トレーサビリティ・PR ガイドライン (≤2 commits / ≤5 files) は通常モードと同じ。
+QA-ID トレーサビリティ・PR ガイドライン (≤2 commits / ≤5 files) は通常モードと同じ。
