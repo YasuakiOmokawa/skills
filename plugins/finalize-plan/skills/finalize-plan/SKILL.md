@@ -1,11 +1,11 @@
 ---
 name: finalize-plan
-description: Turns AC and MECE results from the analysis file into a branch strategy, PR split, and manual/auto QA steps appended to the plan file. Use when the user has completed `/define-acceptance-criteria` + `/mece-plan-review` and is about to move from plan mode into implementation, or says "実装準備を追記して" / "ブランチ戦略と PR 分割を決めて" / "QA 手順をプランに書いて".
+description: Turns AC and MECE results from the analysis file into a branch strategy, PR split, and manual/auto QA steps appended to the plan file, then gates QA-ID coverage against any structured source-of-truth atoms and initializes the QA execution ledger (`<plan>.qa-ledger.md`). Use when the user has completed `/define-acceptance-criteria` + `/mece-plan-review` and is about to move from plan mode into implementation, or says "実装準備を追記して" / "ブランチ戦略と PR 分割を決めて" / "QA 手順をプランに書いて".
 ---
 
 # finalize-plan
 
-分析ファイル (`<plan>.analysis.md`) から AC・MECE 結果を読み込み、プランファイル末尾に `## 実装準備` (ブランチ・PR 分割・QA 手順) を追記する。入力欠落時は即中断。
+分析ファイル (`<plan>.analysis.md`) から AC・MECE 結果を読み込み、プランファイル末尾に `## 実装準備` (ブランチ・PR 分割・QA 手順) を追記する。入力欠落時は即中断。`## 正本抽出結果` があれば QA-ID の正本カバレッジをゲートし、QA-ID ごとの実行台帳 (`<plan>.qa-ledger.md`) を初期化する。
 
 ## Arguments
 
@@ -28,11 +28,13 @@ description: Turns AC and MECE results from the analysis file into a branch stra
 ## Quick start
 
 1. **Step 1**: プランファイルパスを特定
-2. **Step 1.5**: 分析ファイルから `## 受け入れ条件` と `## MECE分析結果` を抽出 (両方必須、片方欠落で中断)
+2. **Step 1.5**: 分析ファイルから `## 受け入れ条件` と `## MECE分析結果` を抽出 (両方必須、片方欠落で中断)。`## 正本抽出結果` があれば追加入力として読む
 3. **Step 1.7**: main agent が AC を QA-ID 形式で 1 回だけ enumerate (`${ENUMERATED_QA_AC}`)
 4. **Step 2A** (直列): branch-planner → pr-splitter
 5. **Step 2B** (並列、同一メッセージ): manual-qa-planner + auto-qa-planner
 6. **Step 3**: 結果を統合してプランファイルに `## 実装準備` を追記
+7. **Step 3.5**: 正本カバレッジ・ゲート (Step 3 の Write 後、プランファイル自体を対象に実行)
+8. **Step 4**: QA 実行台帳 `<plan>.qa-ledger.md` を初期化
 
 ## Workflows
 
@@ -46,6 +48,8 @@ description: Turns AC and MECE results from the analysis file into a branch stra
 ```
 
 例外: 分析ファイルが無く **ledger 駆動** (`/iterate-with-prototypes` の単一正本ファイルで進行中) のセッションでは、本 skill を起動せず iterate-with-prototypes step 6 の ledger 追記代替 (PR 分割 + QA 手順を ledger に書く) に従う。上の中断メッセージは「分析ファイルが本来あるべきなのに無い」場合のみ表示する。
+
+分析ファイルに `## 正本抽出結果` (extract-figma-spec Step5 等が生成する "atom ID + 期待値 + 状態" のテーブル) があれば追加入力として読む。無くてもエラーにはしない (Step 3.5 が skip として扱うフォールバックを維持する)。
 
 ### Step 1.7: QA-ID enumerate (main agent が 1 回だけ実行)
 
@@ -113,11 +117,90 @@ git checkout -b feature/xxx
 
 完全なテンプレ・PR チェーン図・0 件カテゴリ表記ルール・in-context fallback 時の備考挿入位置は [references/output-template.md](references/output-template.md) 参照。
 
+### Step 3.5: 正本カバレッジ・ゲート
+
+Step 3 でプランファイルへ `## 実装準備` を **Write した後** に実行する (出典欄は Write 済みのプランファイル上にしか実在しないため、Step 3 の Write 前には検査できない)。
+
+**`## 正本抽出結果` が無い場合**: `## 実装準備` に次の 1 行を残して終了する。AC 行数と QA-ID 数の突き合わせのような追加検査はしない。
+
+```
+正本カバレッジ: skip (構造化正本なし)
+```
+
+**ある場合**: 分析ファイルの `## 正本抽出結果` から「差分」「未実装」状態の atom (対応不要な「一致」は除外) を集め、プランファイル出典欄で引用済みの atom と `comm -23` で真の集合差分を取る。**検証済み Bash** (fixture で実行検証済み):
+
+```bash
+ANALYSIS_FILE="<plan>.analysis.md"
+PLAN_FILE="<plan>.md"   # Step 3 で Write 済みの実ファイル
+
+if [ ! -s "$ANALYSIS_FILE" ] || ! grep -q '^## 正本抽出結果' "$ANALYSIS_FILE"; then
+  echo "正本カバレッジ: skip (構造化正本なし、または分析ファイル空)"
+  exit 0
+fi
+if [ ! -s "$PLAN_FILE" ]; then
+  echo "⚠️ プランファイルが空/不存在: $PLAN_FILE — Step3 の Write を先に実行してください。" >&2
+  exit 2
+fi
+
+# 1. 要対応 atom: テーブルの1列目 (atom ID列) のみ見る。期待値列に atom ID 風の文字列
+#    (例 HTTP-404) が混ざっても誤って拾わないようにするため。
+awk -F'|' '/^\|/ && ($0 ~ /差分/ || $0 ~ /未実装/) {
+  id = $2; gsub(/^[ \t]+|[ \t]+$/, "", id)
+  if (id ~ /^[A-Z]+-[0-9]+$/) print id
+}' "$ANALYSIS_FILE" | sort -u > /tmp/atoms_required.txt
+
+# 2. 引用 atom: manual形式 (太字見出し "出典: FIG-NN") + auto形式 (テーブル列)
+grep -oE '出典: *[A-Z]+-[0-9]+' "$PLAN_FILE" | grep -oE '[A-Z]+-[0-9]+' > /tmp/cited_manual.txt || true
+grep -oE '^\| *QA-[A-Z]+-[0-9]+ *\| *[A-Z]+-[0-9]+' "$PLAN_FILE" | grep -oE '[A-Z]+-[0-9]+ *$' > /tmp/cited_auto.txt || true
+cat /tmp/cited_manual.txt /tmp/cited_auto.txt | sort -u > /tmp/atoms_cited.txt
+
+# 3. 真のID集合差分
+comm -23 /tmp/atoms_required.txt /tmp/atoms_cited.txt > /tmp/atoms_uncovered.txt
+if [ -s /tmp/atoms_uncovered.txt ]; then
+  echo "正本カバレッジ: 未カバー $(wc -l < /tmp/atoms_uncovered.txt) 件"
+  cat /tmp/atoms_uncovered.txt
+  exit 1
+else
+  echo "正本カバレッジ: 差分 0 件 (要対応 $(wc -l < /tmp/atoms_required.txt) 件 / 引用 $(wc -l < /tmp/atoms_cited.txt) 件)"
+  exit 0
+fi
+```
+
+未カバー atom が出た場合、分析ファイルから該当 atom 行 (期待値原文) を引き、QA-M-NN として手動QA手順へ「出典: <atom ID>」付きで Edit 追記する (原文引用・「自動補完」である旨を明記)。既存の QA 項目と検証内容が実質同一なら、新規 QA-M を作らず既存項目の出典へ atom ID を追加併記してよい (重複手順を増やさないため)。併記は `出典: AC原文 / 出典: FIG-09` のように「出典:」を atom ごとに繰り返す — カンマ区切り列挙 (`出典: AC原文, FIG-09`) はゲートの grep に拾われず未カバーのまま残る。追記後にゲートを再実行し差分ゼロを確認する。ゲート結果 (`skip` / `差分 0 件` / `補完 N 件`) は `## 実装準備` に残す。
+
+補完しても「対象AC」件数 (Step 1.7 由来の集計) は書き換えない — 補完分はゲート結果行にのみ計上する別集計。なお本ゲートが検査するのは正本 atom のカバレッジだけで、QA-ID 全体が manual/auto のどちらかに載っているかの網羅性は Step 4 の孤児検出が担う。
+
+### Step 4: QA 実行台帳の初期化
+
+`<plan>.qa-ledger.md` (プランファイルと同ディレクトリ、拡張子前に `.qa-ledger` を挿入) を、Step 1.7 で enumerate した全 QA-ID に **Step 3.5 で追記した QA-M-NN を合流させた集合**を対象に初期化する (合流しないと補完分がゲートを通した意味を失う)。Step 1.7 の結果が同一セッションに無い場合は、分析ファイル `## 受け入れ条件` の QA-ID ラベルとプランファイルの追記分から再構成する (例: `grep -oE 'QA-[A-Z]+-[0-9]+' "$ANALYSIS_FILE" | sort -u`)。手段は QA-ID ごとに 1 つだけ割り当てる: auto-qa-planner の QA-ID カバレッジマトリクスに載っていれば `auto`、それ以外で manual-qa-planner の見出しに載っていれば `manual`、両方に載っている (dual coverage) 場合は `auto` を正として manual 行は作らない (auto 側でカバー済みなのに manual 側にも pending 行が残って完了しない状態を防ぐ)。どちらにも載っていない QA-ID は `対象外(N/A)` (備考「担当手段未特定、要人間確認」)。**検証済み Bash** (fixture で実行検証済み):
+
+```bash
+ALL_IDS="/tmp/enumerated_qa_ids.txt"   # Step 1.7 の enumerate 結果 + Step 3.5 補完分 (QA-ID 1行1件)
+PLAN_FILE="<plan>.md"
+
+if [ ! -s "$ALL_IDS" ] || [ ! -s "$PLAN_FILE" ]; then
+  echo "⚠️ 入力が空/不存在: ALL_IDS=$ALL_IDS PLAN_FILE=$PLAN_FILE — 台帳初期化を実行不可。" >&2
+  exit 2
+fi
+
+sort -u "$ALL_IDS" > /tmp/all_qa_ids.txt
+awk -F'|' '/^\| *QA-[A-Z]+-[0-9]+ *\|/{id=$2;gsub(/^[ \t]+|[ \t]+$/,"",id);print id}' "$PLAN_FILE" | sort -u > /tmp/auto_qa_ids.txt
+grep -oE '^\*\*QA-[A-Z]+-[0-9]+' "$PLAN_FILE" | tr -d '*' | sort -u > /tmp/manual_qa_ids_all.txt
+
+comm -12 /tmp/all_qa_ids.txt /tmp/auto_qa_ids.txt > /tmp/assign_auto.txt              # auto優先
+comm -23 /tmp/manual_qa_ids_all.txt /tmp/auto_qa_ids.txt > /tmp/manual_candidate.txt   # dualは除外
+comm -12 /tmp/all_qa_ids.txt /tmp/manual_candidate.txt > /tmp/assign_manual.txt
+cat /tmp/assign_auto.txt /tmp/assign_manual.txt | sort -u > /tmp/assigned.txt
+comm -23 /tmp/all_qa_ids.txt /tmp/assigned.txt > /tmp/assign_na.txt                    # どちらにも無い→対象外
+```
+
+`assign_auto.txt` → 手段=auto pending、`assign_manual.txt` → 手段=manual pending、`assign_na.txt` → 状態=対象外(N/A) (備考「担当手段未特定、要人間確認」) として台帳の行を生成する。フォーマット・状態語彙・「最新行が勝つ」規則・実装フェーズでの追記例は [references/qa-ledger.md](references/qa-ledger.md) 参照。
+
 ## Quality standards
 
 - **PR ガイドライン準拠**: ≤2 commits, ≤5 files。この上限は tier 表の「想定 PR 数」より優先する (tier の PR 数は目安であり下限ではない。総ファイル数が少なければ standard でも 1 PR でよい)
 - **実行可能性**: Chrome DevTools MCP で実行可能な手動 QA 手順
-- **AC トレーサビリティ**: QA-H/E/D/R/M 全項目が手動 QA または自動 QA のいずれかでカバーされている
+- **QA-ID トレーサビリティ**: QA-H/E/D/R/M 全項目が手動 QA または自動 QA のいずれかでカバーされている。Step 3.5 の機械 ID 差分結果 (`skip` / `差分 0 件` / `補完 N 件`) を成果物に残す (目視確認ではなく機械判定の結果を残す。skip 時もその理由を残す)
 - **0 件カテゴリ可視化**: 対象 AC 行は 0 件カテゴリも件数を明示 (例 `非影響0`、省略禁止)。書式・canonical カテゴリ名・禁止理由は output-template.md を SSOT とする
 
 ## Advanced
@@ -125,10 +208,11 @@ git checkout -b feature/xxx
 - [references/qa-id-enumeration.md](references/qa-id-enumeration.md) — QA-ID 採番ルール詳細・生成例・Step 1.7 失敗時の `QA-X-NN` fallback
 - [references/agent-orchestration.md](references/agent-orchestration.md) — 各 agent への Task prompt / 並列メッセージ構成 / Task ツール不可時の in-context 代替モード
 - [references/output-template.md](references/output-template.md) — Step 3 出力テンプレ全文 / PR チェーン図 / 0 件カテゴリ表記 / fallback 時の備考行
+- [references/qa-ledger.md](references/qa-ledger.md) — QA 実行台帳のフォーマット・状態語彙・「最新行が勝つ」規則・手段割当規則・実装フェーズでの追記例
 
 ## 併用推奨 skill
 
 - `/define-acceptance-criteria` — 入力となる AC を定義する (前段)
 - `/mece-plan-review` — AC の網羅性を検証してから本スキルに引き継ぐ (前段)
-- `/qa-ui` — 実装完了後、本スキルで定めた QA 手順で UI 検証する (後段)
+- `/qa-ui` — 実装完了後、本スキルが定めた QA 手順と `<plan>.qa-ledger.md` を使って UI 検証する (後段)
 - `/create-pr` — finalize で固めた PR 分割をもとに PR を作成する (後段)

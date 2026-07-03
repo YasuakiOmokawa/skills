@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "omokawa-skills",
-  "version": "3.39.0",
+  "version": "3.40.0",
   "description": "Plan-driven development workflow を構成する個別 skill 群。必要なものだけ install 可能",
   "owner": {
     "name": "Yasuaki Omokawa",
@@ -50,7 +50,7 @@
     {
       "name": "finalize-plan",
       "description": "プランモードで設計が確定した後、ブランチ・PR分割・QA手順を追記する。",
-      "version": "1.18.0",
+      "version": "1.19.0",
       "source": "./plugins/finalize-plan",
       "skills": [
         "./skills/finalize-plan"
@@ -122,7 +122,7 @@
     {
       "name": "qa-ui",
       "description": "実装完了後にChromeDevTools MCPでUI検証を行う。",
-      "version": "1.9.0",
+      "version": "1.10.0",
       "source": "./plugins/qa-ui",
       "skills": [
         "./skills/qa-ui"
@@ -206,7 +206,7 @@
     {
       "name": "express-intent-in-code",
       "description": "機構名やデータ形状で止まった名前を、命名梯子で段4 ドメイン抽象 (ユビキタス言語) まで上げる変換器。ドメイン語を実証拠から探索して接地 (造語は禁止)、欠落型は抽出し why コメント依存を減らす。review-code-quality の申し送りを受ける。",
-      "version": "0.6.0",
+      "version": "0.7.0",
       "source": "./plugins/express-intent-in-code",
       "skills": [
         "./skills/express-intent-in-code"
@@ -218,7 +218,7 @@
     {
       "name": "extract-figma-spec",
       "description": "Figma デザインをコードへ反映するとき、スクショ目視を正本にせず対象ノードごとに全プロパティを構造化データから抽出してチェックリスト化し、実装と1行ずつ照合して反映漏れを防ぐ。",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "source": "./plugins/extract-figma-spec",
       "skills": [
         "./skills/extract-figma-spec"
