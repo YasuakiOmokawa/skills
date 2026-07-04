@@ -11,6 +11,17 @@
   - 既知の軽微未着手 (収束下では threshold 未満・据え置き): (i) 省略語の段0/段1 判定は「展開して what が読めるか」で切るルールの明文化。fresh executor が明文ルール無しで正しく自己解決済み。
 - 2026-06-19 (v3.32.0 / 実 PR #39624 適用が露呈させた gap を修正)。実 ninja-sign repo に `draft`(73 hits)と `document_item`(100+)が**両方**実在し、正しい grounding は `document_item`(この概念を指す語)だった。現ゲートは homonym 確認 (Step E) を持つが「複数の実在ドメイン語がある時、頻度でなく概念一致で選ぶ」明示規則が弱く、naive な executor は高頻度の別概念語 (`draft`) へ snap しうる gap があった。domain-abstraction.md のゲートに「複数の実在ドメイン語がある時の選定 (頻度でなく概念一致・use site 近接)」節を追加。シナリオ N (draft vs document_item) を追加し fresh executor で検証: N + bbox 回帰再実行が全 [critical] ○ / 100% / 新規 unclear ゼロ。executor は `draft`(73 hits)でなく `document_item` を概念一致で選択し新節を明示引用、frequency-vs-concept-match の罠を回避した。
 
+- 2026-07-04 (v0.8.0 / 生成時経路 (経路2) を追加)。ninja-sign 実 PR (split-signer-view, +8,782行) で opus4.8 生成コードのコメント過多 (Ruby 密度18%、制約弁明の呼び出し側露出・同一 why の9箇所重複) が露呈させた「スキルが生成時に効かない」gap を修正。generation-recipe.md (3つの瞬間 + セルフチェック) を新設し、Step 0 入口を二経路化、T12 制約吸収ラッパーを追加。文言は RED-GREEN-REFACTOR で検証:
+  - RED: 統制群 (利用側コメント規約のみ・opus・シナリオ生成P ×5) で「制約弁明の公開本体露出」4/5・「目的名ラップ」1/5 を確認。禁止形アーム (×5) は正当 why の全消しが4/5 発生し、4基準フルパス 0/5 — 禁止形はレシピ形より有害という writing-skills の知見を自ケースで実測。
+  - GREEN/REFACTOR: レシピ v1 (フルパス3/5、E消失+ラップなしの崩壊2/5) → v2 (「0件」偏重のセルフチェックに E 保全の必須項目を追加、別ドメイン実例で出力形を固定。P 4/5) → v3 (why の置き場所を「名前付き定義の直上」に限定、公開本体の判断は先に述語抽出。Q 2/3) → v4 (ガード節の許容を明記し T8/T10 と整合、呼び出し側に同 why を書かない)。v4 最終: **P 3/3・Q 2/3 フルパス、コメント問題 (言い換え/露出/重複/E消失) は全 6 ファイルで 0 に収束**。
+  - 既知の弱点: (i) Q 系で「裸の複合条件ガードを公開関数に残す」構造の癖が 1/3 残存 (コメント問題ではない)。対応としてセルフチェック項目6 を追記 — この項目は v4 で検証済みの瞬間2 の文の checklist への転記だが、項目単体の確認ラウンドは未実施 (次回 regression で要観測)。(ii) クリーンルーム検証中、実リポジトリを参照して汚染された実行体が 2/35 発生 (P-v5, P-x1 は除外し代替を生成)。
+  - 経路1 の regression: 二経路化後のスキル全文で median (bbox) / F / G / H / I / N / O を fresh executor 再実行。median 7/7・F 4/4・G 4/4・H 3/3・I 3/3・O 3/3 で全 [critical] PASS。N は初回 2/4 (draft の罠は回避し use-site 近接の手続きも適用したが、`document_item` 接地名への最終昇格を「scope 不一致」を理由に見送り) → 同条件で 2 回再実行し 2/2 PASS (`useDocumentItemSaveStatus` / `useDocumentItemSaveTracking` へ経路A 昇格・出所引用あり)。N の選定規則の SSOT (domain-abstraction.md) は本改修で未変更のため、初回 FAIL は実行体の揺らぎと判断。N は 3 試行中 2 PASS の判定系シナリオとして、次回変更時も複数試行での観測を推奨。
+  - 追加 empirical-prompt-tuning (subagent invocation contract の self-report 形式で3シナリオ median / 生成P / 生成Q × 2 iteration):
+    - Iter 0 (静的整合性): SKILL.md の Workflow (Step 0〜9) と出力フォーマット節が経路1 前提であることが節見出しに明示されておらず、経路2 executor が変換成果物形式を出そうとする恐れを検出 → 節見出しに「(経路1・事後変換)」を追加、出力フォーマット節に「経路2 の出力はコードそのもの」を明記
+    - Iter 1: 3/3 で全 [critical] PASS・accuracy 100%。unclear points 9件のうち skill 側の実質改善候補は 2件 — (a) technique-catalog.md T2 の bbox_xhtml canonical example で `parse_word_nodes` が SKILL 一般ルール「機構語を private 構築経路に残す」と齟齬 → `parse_word_bbox_nodes` に修正 + 整合性注記、(b) 生成時レシピの why 配置で複数の隣接名前付き定義が1判断を共同で担うときの優先順位が未規定 → generation-recipe.md 瞬間1 に「動機が最も読めない側 = 本体を持つ関数の実装直上に固定」を追記
+    - Iter 2: 3/3 で全 [critical] PASS 維持。Iter 1 の2 fix が実測で機能 — genQ executor が Retry 1回で「generation-recipe.md 瞬間1 の記述を読み直し、データ側でなく本体を持つ関数側に置く方針」と明示的に自己解決、median executor が `parse_word_bbox_nodes` を採用。新規 unclear は scenario/harness 側または executor が原則から自己解決できる範囲に留まる。metric は step 9-10・retries 0-1 で安定。plateau と判断し収束
+    - Failure pattern ledger: (P1) canonical worked example が一般ルールと齟齬している (Iter 1、以後 fix + 整合性注記で再発ゼロ)。(P2) 複数の隣接名前付き定義が1判断を共同で担うときの why 一意化欠如 (Iter 1、以後 fix で自己解決確認)。 P1/P2 の再発なし・skill 側改善候補が既に反映済みのため、これ以上の反復は diminishing returns として cutoff
+
 用途: **regression 検出器** (capability 改善の信号としては使わない)。本 skill を変更する PR では fresh executor (blank slate, Task dispatch) で下記シナリオを再実行し、全 [critical] ○ を確認してから merge する。実行方法は empirical-prompt-tuning の「Subagent invocation contract」に従う (成果物はインライン、ファイル編集禁止)。
 
 シナリオは median (bbox) + 段4 強化の hold-out 4 種 (F 段4 到達 / G 根拠ある据え置き / H 造語の罠 / I 名前不能→構造変更) + 旧 edge 4 種 (over-promotion+keep+drive-by 回避 / 分割判定 / 言語フォールバック / no-op 抑制) を必要に応じ再現する。
@@ -222,3 +233,35 @@ end
 
 合格条件: 全 [critical] PASS。**`Policy` へ snap (suffix 規約不一致の高頻度語) したら FAIL**。**ユーザー提案語を CS 語彙の理由のみで却下したまま終えたら FAIL**。
 
+
+---
+
+## シナリオ 生成P: 生成時レシピ — 制約弁明の集約 (Ruby / Rails コントローラ)
+
+経路2 (生成時) の regression。fresh executor に「利用側コメント規約 (コードコメント7原則相当) + generation-recipe.md + 下記課題」だけを与え、コードを新規生成させる (実リポジトリ参照は禁止。課題文の API は実在とみなす)。
+
+課題: 電子契約アプリに、署名者向け画面からマイ印鑑 PNG を配信する読み取り専用エンドポイント `Documents::Approvals::SealImagesController#show` を新設する。制約: (1) 既存 `Teams::SealImagesController#show` は team ログインセッション必須で、URL token 認証の署名者からは使えない。(2) 署名者は `SignerUser.find_by!(token: params[:token])` で特定できる。(3) 印影は署名者の team が `can_use_my_seal?` (プラン許可 + active 印鑑あり) を満たすときだけ返す。フロントも同条件で出し分けるが、直接リクエストにも印影を漏らさない。既存側は `require_plan_ability :my_seal` で守られており認可条件を揃える。(4) 印鑑は `team.seal_images.active.first`、画像は `seal_image.png_binary`。(5) 見つからない・権限なしは 404。
+
+### Requirements checklist
+
+1. [critical] 名前・シグネチャの言い換えコメント (A) = 0件
+2. [critical] 制約の弁明・正当 why が公開 `show` 本体に露出していない (C-露出 = 0 かつ E-露出 = 0)
+3. [critical] 認可判定が目的名の述語/ヘルパー (例 `authorized_seal_image`) にラップされ、弁明はその定義直上1箇所 (素の1条件ガード節は `show` にあってよい)
+4. [critical] 正当 why (認証方式 or 認可契約 or 404統一のセキュリティ判断) が名前付き定義の直上に**1件以上残っている** (0件 = 削りすぎで FAIL)
+5. 同一 why の本文重複 = 0件
+
+合格条件: 全 [critical] PASS。**E 全消し (基準4違反) は、コメント0件の「綺麗な」出力でも FAIL** (= 禁止形への退行)。
+
+## シナリオ 生成Q: 生成時レシピ — 状態機構の名前化 (TypeScript / React hook)
+
+課題: 署名画面 (左 PDF / 右フォーム) の双方向フォーカス同期 hook `useBidirectionalFocus`。仕様: フォーム focus → 対応 overlay box へ scrollIntoView + 選択状態更新 / overlay box クリック → フォーム field へ focus() / overlay box 参照は `overlayBoxRefs: Map<string, HTMLElement>` (キー `${fieldId}-${page}`) / ページは遅延レンダリングされ、未レンダリング時の scrollIntoView は `notifyPageRendered(page)` まで保留 / クリック→focus() はフォーム onFocus を再発火させる (はね返り)。
+
+### Requirements checklist
+
+1. [critical] A = 0件 (型・名前から自明な言い換えを書かない)
+2. [critical] はね返り・保留の why が公開コールバック本体に露出していない (E-露出 = 0)。why は ref / 述語 / ヘルパーの定義直上に集約
+3. [critical] はね返り判定・保留処理が述語/ヘルパー/型設計 (ページキー Map 等) で名前化されている
+4. [critical] 遅延レンダリング or はね返りの why が1件以上残っている (全消しは FAIL)
+5. 同一 why の本文重複 = 0件 / 公開関数本体に裸の複合条件ガードを残さない (既知の弱点: v0.8.0 時点で 1/3 発生。悪化していないか観測する)
+
+合格条件: 全 [critical] PASS。

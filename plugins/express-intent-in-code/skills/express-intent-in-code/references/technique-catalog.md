@@ -1,4 +1,4 @@
-# 技法カタログ (T1〜T11)
+# 技法カタログ (T1〜T12)
 
 意図 (why) を表明する方向に効く変換手法。SKILL.md の「技法選択」表が trigger→T の引き表、ここが各 T の move と before/after の SSOT。**leverage 順** (high を先に検討)。
 
@@ -66,9 +66,11 @@ end
 private
 
 def word_boxes_in_pdf_coords
-  parse_word_nodes(xhtml).map { |n| to_pdf_coords(n) }
+  parse_word_bbox_nodes(xhtml).map { |n| to_pdf_coords(n) }
 end
 ```
+
+> **一般ルールとの整合**: `parse_word_bbox_nodes` の `bbox` は SKILL アンチパターン「機構語の全消去で grep 不能化」を防ぐため public 名から外した機構語を private 構築経路に残す例。同じ位置に `parse_word_nodes` (bbox 消滅) と書くと canonical worked example が一般ルールと矛盾するので避ける。
 
 ---
 
@@ -269,3 +271,34 @@ sync_save_user  # 同期保存。理由: docs/adr/0007-legacy-api-sync.md
 **trigger**: `max_x`/`x_limit` が包含か排他かを名前で約束しておらず off-by-one の温床。同一概念が `bbox`/`coordinate`/`word_data`/`position` と箇所ごとに揺れ、同一物か別物か判断に対応付けコメントが要る。**逆向きの症状 = 多義衝突**: 1 語が blast radius 内で 2 つのドメイン概念を指す (例: URL 認証の `token` と Google Docs 焼き込みプレースホルダーの `token` が同一クラスに同居)。
 
 **move**: 含む両端は `first`/`last`、排他終端は `begin`/`end`、含む上下限は `min_`/`max_` を選び、規約選択自体を包含意図の表明にする。概念の正準名を 1 つ決め全 grep して統一、別概念に同語を流用していないかも検査。命名表を CONTEXT.md/用語集に SSOT 記録。**既存コードベースの慣習が優先する場合はそれに従う** (Surgical Changes)。多義衝突は lev low の例外で **high 扱い** — 読者は文脈の近い方の意味で誤読し、正直な what 名でも実害が出る。確立した意味 (認証 token 等) を持つ側を残し、もう一方を実在ドメイン語へ逃す (例: `TokenCoordinates` → `PlaceholderCoordinates`。snap 先は既存の `placeholder_and_value` / `Signature::Placeholder`)。
+
+---
+
+## T12 制約吸収ラッパー (high)
+
+**trigger**: 外部制約 (フレームワーク・コマンド・既存エンドポイント・ライブラリの事情) への対応を、**呼び出し箇所のコメントで弁明したくなった**。「〜が使えないため」「〜の制約により」「〜だと 404 になるので」が合図。生成時 (経路2 瞬間2) にも事後変換 (経路1) にも使う。
+
+**move**:
+1. 制約対応のコードを、制約ではなく**目的**を表す名前のメソッド / クラスに抽出する。
+2. 制約の弁明 (残置4類型に該当する部分) は抽出先の**定義直上に1箇所だけ**書く。
+3. 呼び出し側は目的名のみ。制約の説明を呼び出し側に残さない。
+
+```ruby
+# before — 呼び出し側に外部コマンドの制約弁明が露出
+def word_bbox_xml
+  # pdftotext は file 入力しか受けないため一時ファイル経由 (poppler 依存は既存 PdfToText と同じ)
+  Tempfile.create("pdf") { |f| ... `pdftotext -bbox #{f.path}` ... }
+end
+
+# after — 制約対応を目的名に包み、弁明はラッパー定義側1箇所へ
+def word_bbox_xml
+  Poppler::BboxExtraction.from(pdf_bytes)
+end
+
+# Poppler::BboxExtraction 定義側:
+# pdftotext は file 入力しか受けないため一時ファイルを経由する (poppler 依存は既存 PdfToText と同じ)
+```
+
+**効果**: 制約知識の複製を防ぐ。同種の呼び出しが増えても弁明は1箇所のまま (T3 の「同 why が 2+ 箇所に散る」を発生前に予防する生成時版でもある)。
+
+**T2 との違い**: T2 は「複数段を抱えた 1 メソッドの分解」(コメントが抽象の変わり目を区切る)、T12 は「外部制約への対応 1 塊を目的名で隠蔽し弁明を定義側へ集約」。対象が複数段でなくても、弁明コメントを書きたくなった時点で発動する。
