@@ -1,6 +1,6 @@
 ---
 name: express-intent-in-code
-description: Use on a confirmed working-code target (method/value/type in this change's blast radius) whose name stops at mechanism (`bbox_xhtml`) or shape (`word_coordinate_data` / `useFieldSaveState`) and whose purpose survives only in why-comments, when /review-code-quality hands off a naming / cohesion finding as needs-judgment, or when the user says 「意図が伝わる名前にして」「この関数の目的を名前で表現して」「コメントなしで読めるコードにして」. Lifts one target up a naming ladder (機構名 → what名 → 目的名 → ドメイン抽象); 段4 ドメイン抽象 (`signing_positions`) is the best-effort target, reached by sourcing the real domain word (codebase/spec/UI) or extracting the missing type — never inventing jargon. Promotes why a name can't carry into types/tests, leaving true why as comments. Do NOT drive-by rename outside the target nor scan a whole diff (that is /review-code-quality; this is the deep one-point transformer) — the only self-run whole-diff pass is a mechanical grep screening for homonym collisions (e.g. auth `token` vs placeholder `token`) and 段0 noise-word identifiers.
+description: Use on a confirmed working-code target (method/value/type in this change's blast radius) whose name stops at mechanism (`bbox_xhtml`) or shape (`word_coordinate_data` / `useFieldSaveState`) and whose purpose survives only in why-comments, when /review-code-quality hands off a naming / cohesion finding as needs-judgment, or when the user says 「意図が伝わる名前にして」「この関数の目的を名前で表現して」「コメントなしで読めるコードにして」. ALSO use while WRITING new code (経路2 生成時), at the moment you are about to (a) write a comment, (b) leave a bare mechanism or a constraint-workaround justification in a public method body, or (c) explain a boolean / null-vs-undefined meaning in a comment (see references/generation-recipe.md). Lifts one target up a naming ladder (機構名 → what名 → 目的名 → ドメイン抽象); 段4 ドメイン抽象 (`signing_positions`) is the best-effort target, reached by sourcing the real domain word (codebase/spec/UI) or extracting the missing type — never inventing jargon. Promotes why a name can't carry into types/tests, leaving true why as comments. Do NOT drive-by rename outside the target nor scan a whole diff (that is /review-code-quality; this is the deep one-point transformer) — the only self-run whole-diff pass is a mechanical grep screening for homonym collisions (e.g. auth `token` vs placeholder `token`) and 段0 noise-word identifiers.
 ---
 
 # Express Intent In Code
@@ -13,11 +13,13 @@ description: Use on a confirmed working-code target (method/value/type in this c
 
 このスキルは working code を 1 点受け取り、名前/型/構造/テストを why 表明形へ**深く変換する規律**: caller を平叙文化 → 機構/目的を分離 → 目的名へ昇格 → ドメイン語を探索し段4 へ昇格 (or 探索ログを残して据え置き) → 名前で担えない why を型/sum type/テストへ昇格 → コードから絶対に読めない真の why のみコメント残置。`/review-code-quality` の「広く浅い診断」とは別物 (狭く深い一点突破の変換)。境界の詳細は [references/boundary-and-scope.md](references/boundary-and-scope.md)。
 
+**適用は2経路**: **経路1** = 確定済み working code 1 点の事後変換 (上記、Step 0〜9)。**経路2** = **生成時** — 新規コードを書いている最中、(1) コメントを書きたくなった / (2) 機構・制約対応を公開本体に書き始めた / (3) 生のデータ形状に意味説明を添えそうになった、の3つの瞬間に意図をコードへ注入する。経路2 の SSOT は [references/generation-recipe.md](references/generation-recipe.md)。経路2 は新規に書く行だけに適用し、既存行の改名はしない (既存行に及ぶ場合は経路1 の Step 0 判定へ)。
+
 **ゴールは why コメントの撲滅ではなく純化** — 昇格できる why は名前/型/テストへ移して消し、外部仕様・トレードオフ根拠・危険・将来予定の 4 類型だけは残す。
 
 ## When to use / not
 
-**使う**: 対象が確定した working code 1 点 (メソッド/値/型) で、名前が機構や形状止まり・目的が why コメントだけに宿っている。`/review-code-quality` が naming/凝集 finding を needs-judgment として申し送ってきた。
+**使う**: 対象が確定した working code 1 点 (メソッド/値/型) で、名前が機構や形状止まり・目的が why コメントだけに宿っている。`/review-code-quality` が naming/凝集 finding を needs-judgment として申し送ってきた。または**新規コードを書いている最中** (経路2)、コメント・生の機構・意味説明つき boolean を書きそうになった瞬間。
 
 **使わない**:
 - diff 全体を広く浅くスキャンして「何を直すか」診断したい → `/review-code-quality`
@@ -45,9 +47,9 @@ description: Use on a confirmed working-code target (method/value/type in this c
 
 各段の上げ方と bbox_xhtml の全段ウォークスルーは [references/naming-ladder.md](references/naming-ladder.md)。段4 への到達手続き (探索 Step A–H・造語ゲート・据え置き記録) は [references/domain-abstraction.md](references/domain-abstraction.md)。
 
-## Workflow
+## Workflow (経路1・事後変換)
 
-> 各ステップの詳細・アンチパターン・コミット境界の切り方は [references/decision-procedure.md](references/decision-procedure.md) が SSOT。本文は操作チェックリスト。
+> 各ステップの詳細・アンチパターン・コミット境界の切り方は [references/decision-procedure.md](references/decision-procedure.md) が SSOT。本文は操作チェックリスト。**経路2 (生成時) はこの Workflow ではなく下記「生成時レシピ」に従う** — Step 0 の入口判定 (working code 前提) は経路2 には適用されない。
 
 - **Step 0 適用判定**: 対象が (a) working code で (b) 今回の変更対象 (blast radius 内) か確認。drive-by 改名は中止。着手前に回帰テスト/characterization test の有無を確認し、無ければ先に用意して振る舞いを固定する (改名は意味を変えうる)。対象が 1 点に確定していなければユーザーに確認。
 - **Step 1 現在段の診断**: 対象名を梯子のどこか判定 (機構語リストで段0、用途が読めるかで段1/段3 を切り分け)。1 段ずつ上げる。同時に**多義衝突を grep で検査**: 対象名の核となる語が blast radius 内で別のドメイン概念にも使われていないか全出現を分類する。衝突していれば段の高低より優先して片方を実在ドメイン語へ逃す (T11) — 読者は文脈の近い方の意味で誤読するため、正直な what 名でも衝突したままでは有害。
@@ -60,6 +62,15 @@ description: Use on a confirmed working-code target (method/value/type in this c
 - **Step 7 過剰昇格の歯止め (T10)**: 意図を足さないラッパ・1 ケース多態・造語目的名・過長名を Inline/据え置きで畳む。rule of three を待つ。
 - **Step 8 fresh-eyes 検証**: after の名前/シグネチャ**だけ** (コメント・plan 無し) を見て目的を言い当てられるか検証する。非自明な対象は [agents/intent-reader.md](agents/intent-reader.md) を Task で起動 (bias-free)、自明な単一改名は cold self-read で代替。**非自明の線引き**: 構造変換 (T2/T5/T6/T8) を伴い変換後の識別子が複数になる場合は非自明とみなし intent-reader を既定とする (Task 起動不能な環境では cold self-read に落とし、その旨を出力に明記)。推論された目的が caller 観測の目的と食い違えば名前を再調整。
 - **Step 9 検証と粒度・出力**: 各変換後に lint/test を通す (Ruby: rubocop+rspec / TS: eslint+prettier / 他言語はプロジェクトのテストランナー、無ければ手動検証を明記)。grep で全 caller/spec/コメント参照の改名漏れを洗う。**広域 gsub/sed は使わず対象限定 Edit**。改名→分割→型化→コメント削除を 1 コミットに混ぜない。出力は下記フォーマット。
+
+## 生成時レシピ (経路2・要約)
+
+> SSOT は [references/generation-recipe.md](references/generation-recipe.md)。コメントを減らすことでなく、**意図の置き場所を正しく配る**のが目的。
+
+- **瞬間1 コメントを書きたくなった**: 残置4類型 (外部仕様 / 実測根拠 / 危険・セキュリティ判断 / FIXME) に該当 → **書く。削らない。** 置き場所はそれを担う名前付き定義の直上1箇所 (公開本体には書かない。公開本体の式に宿る判断は先に述語へ抽出)。該当しなければ昇格先表で名前/型/定数/抽出へ移してから進み、移せなかったときだけ書く。
+- **瞬間2 機構・制約対応を書き始める**: 公開本体は目的名の呼び出し列とガード節だけ。機構と外部制約対応は目的名の private / ヘルパーへ (T2/T12)、弁明は定義直上1箇所。公開本体の行にコメントを添えたくなったら抽出の合図。
+- **瞬間3 生のデータ形状に意味を説明しそうになった**: boolean 引数 → enum/シンボル、null/undefined の意味差 → 判別可能 union/値オブジェクト (T6)、同じ Hash/tuple が2箇所目 → 型を切る (T5)。造語禁止は経路1 と同じ。
+- **セルフチェック**: コードから読めない why が定義側に残っている (**0箇所は削りすぎで不合格**) / 公開本体にコメント0件 / 言い換え0件 / 同一 why 重複0件 / 2値の意味差コメント0件 / 裸の複合条件ガード0件。
 
 ## 技法選択 (trigger → T)
 
@@ -78,6 +89,7 @@ description: Use on a confirmed working-code target (method/value/type in this c
 | T9 | テスト/property を why の第二の声に | 改名で why が乗りきらない (用途複数・全称的約束) | med |
 | T10 | Inline/据え置きの歯止め | 意図を足さないラッパ/1 ケース多態/造語目的名/過長名 | med |
 | T11 | 境界・一貫命名の固定 | `min`/`max` が包含か排他か不明/同一概念に名前揺れ/1 語が blast radius 内で 2 概念を指す (多義衝突。これのみ high 扱い) | low |
+| T12 | 制約吸収ラッパー | 外部制約 (フレームワーク/コマンド/既存 API) への対応を、呼び出し側のコメントで弁明したくなった (「〜が使えないため」「〜の制約により」) | high |
 
 ## コメント keep-vs-promote (要約)
 
@@ -90,7 +102,7 @@ description: Use on a confirmed working-code target (method/value/type in this c
 
 ## アンチパターン (頻出のみ・全文は decision-procedure.md)
 
-- **why コメント撲滅の誤読**: 外部制約・根拠数値・危険警告まで消す。ゴールは撲滅でなく純化。
+- **why コメント撲滅の誤読**: 外部制約・根拠数値・危険警告まで消す。ゴールは撲滅でなく純化。生成時 (経路2) も同じ — セルフチェックの「0件」項目に引きずられて残置4類型まで消さない (why の記録 0箇所は不合格)。
 - **what 止まりで満足**: `bbox_xhtml → word_coordinate_data` で止め目的に届かない (= ユーザー退行の正体)。caller 用途を動詞句にして役割名まで上げる。
 - **段3 で安住 (探索せず据え置き)**: 段3 に達したのにドメイン語を探さず据え置く。本体を読まないと目的が掴めない名前を残す退行。段4 を必ず試み、据え置くなら探索ログを残す。
 - **段4 を造語で偽装**: 実在証拠の無い「それっぽい」語や CS 語彙 (`Manager`/`Handler`) を段4 名にする。確信ありげな誤誘導名は正直な what 名より comprehension が悪い。grep/仕様/UI 文言に接地できなければ却下。
@@ -100,9 +112,9 @@ description: Use on a confirmed working-code target (method/value/type in this c
 - **過剰昇格**: 意図を足さない 1-2 行ラッパ・1 ケース空 subclass・造語目的名・過長名で間接層だけ増やす。
 - **広域 gsub/sed での改名**: コードを黙って壊す。対象限定 Edit + 適用直後の lint/build 検証を厳守。
 
-## 出力フォーマット
+## 出力フォーマット (経路1・事後変換)
 
-指摘リストではなく**変換成果物**を出す:
+指摘リストではなく**変換成果物**を出す。**経路2 (生成時) の「出力」は書いたコードそのもの**であり、下記のようなレポート形式は要求されない (レシピのセルフチェックを心のなかで通せば足りる)。
 
 ```markdown
 ## express-intent-in-code: <対象>

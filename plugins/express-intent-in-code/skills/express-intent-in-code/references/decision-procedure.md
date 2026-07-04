@@ -2,7 +2,12 @@
 
 SKILL.md の Workflow が要約、ここが手順詳細・アンチパターン・コミット境界の SSOT。
 
-## Step 0 適用判定
+## 入口の二経路
+
+- **経路1 (事後変換)**: 既存 working code 1 点の昇格。以下 Step 0〜9 に従う。
+- **経路2 (生成時)**: いま書いているコードへの適用。[generation-recipe.md](generation-recipe.md) が SSOT。新規に書く行だけに適用し、既存行の改名はしない — 対象が既存コードに及ぶなら経路1 の Step 0 判定へ回す。
+
+## Step 0 適用判定 (経路1)
 
 - 対象が (a) working code で (b) 今回の変更対象 (blast radius 内) か確認。drive-by 改名は**中止** (Surgical Changes)。
 - 改名は意味を変えうる。着手前に対象の回帰テスト/characterization test の有無を確認し、無ければ T9 で先に用意して**振る舞いを固定**する。
