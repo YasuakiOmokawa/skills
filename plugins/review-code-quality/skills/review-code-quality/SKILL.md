@@ -11,6 +11,10 @@ description: Use when finishing self-review of an implementation, before request
 
 **重大度 (全 step 共通):** 🔴 Critical (即修正 / auto-apply 対象) / 🟠 Major (この PR で修正 / auto-apply 対象) / 🟡 Minor (次 PR / 提案のみ) / 🔵 Info (認識のみ) / ✅ Good (維持)。詳細・出力ルールは [references/integration-output.md](references/integration-output.md) を SSOT とする。
 
+## Orchestrated モード
+
+ファイル存在からの推測では判定しない。呼び出し側（将来のオーケストレータ）が Task 起動プロンプトで「orchestrated モードで実行。escalation は `<path>` に記帳して続行せよ」のように明示指示した場合のみ発動する。指示が無い単独起動では現行動作（申し送りファイルのみへの記録）のまま進む。差分は Step 4 の記帳先追加（quality ledger）のみで、深刻度のクローズドセット基準・収束条件を含む詳細は [references/orchestrated-mode.md](references/orchestrated-mode.md) を参照。
+
 ## Task complexity tier
 
 | Tier | 判定 | 実行範囲 |
@@ -85,6 +89,8 @@ business-impact-analyzer の **skip 報告も統合レポートに残す**。
 - **Edit/Bash 不可 (nested 実行)**: 自動適用せず 🔴/🟠 全件を申し送りに回し、冒頭で明示。ファイル書き込みも不可なら申し送り内容をレポート inline に転記して情報欠落を防ぐ ([references/auto-apply.md](references/auto-apply.md))。
 
 各 finding に状態サフィックス (`✏️ 自動適用済 (検証 pass)` / `↩️ 適用 revert (検証 fail) → 申し送り` / `⏭ 申し送り → /polish-before-commit`) を付け、総合サマリー直下に件数行 `自動適用: N 件 (検証 pass) / revert: M 件 / 申し送り: K 件 → /polish-before-commit` を追加 ([references/auto-apply.md](references/auto-apply.md) が SSOT)。
+
+**Orchestrated モード時**: 上記の申し送りファイル書き込みに加え、auto-apply 結果 (適用済み / revert→申し送り) と needs-judgment 全件を quality ledger にも記帳する (申し送りファイルのみへの記録では収束を機械判定できないため)。記帳形式・深刻度クローズドセット・収束条件は [references/orchestrated-mode.md](references/orchestrated-mode.md) を参照。
 
 ## Advanced
 

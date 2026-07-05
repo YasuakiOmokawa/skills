@@ -15,3 +15,17 @@ fresh executor (blank slate, Task dispatch) で下記シナリオを再実行し
 3. plan_code (domain model attribute) 更新のため business-impact の skip 条件に非該当
 4. auto-apply は readability 軸のみ。リスク領域のため needs-judgment 側に倒す
 5. 申し送り先 `$(git rev-parse --git-dir)/quality-review-handoff.md` → /polish-before-commit が受け取る contract を認識
+
+---
+
+以下は v1.19.0 (Orchestrated モード / quality ledger) 追加分。**未収束 (親が収束実行予定)**。
+
+## シナリオ: Orchestrated モードで quality ledger に記帳し収束判定する (Step 4)
+
+Task 起動プロンプトに「orchestrated モードで実行。escalation は `plan.escalation-ledger.md` に記帳して続行せよ」の明示指示あり。Step 4 の振り分け結果: (1) readability の関数50行超過 1 件 → auto-apply-safe で適用・検証 pass、(2) coupling の内容結合 (`instance_variable_set`) 1 件 → needs-judgment、(3) business-impact の認可 chain 該当 1 件 → needs-judgment。quality ledger への記帳内容と、収束判定を答えさせる。
+
+### Requirements checklist
+1. [critical] 3 件全てを quality ledger に記帳する (申し送りファイルのみで終わらせない)
+2. [critical] (1) は深刻度 Major (readability 構造的問題閾値超過) / 状態 `適用済み`、(2)(3) は深刻度 Critical (内容結合 / 認可 chain は Critical 条件に該当) / 状態 `escalated` として記帳する
+3. quality ledger の記帳行が `| 番号 | 出所 | 深刻度 | 状態 | 内容 |` の列構成に従う
+4. 3 件とも Critical/Major が `適用済み` または `escalated` のため、収束判定は「収束」と答える
