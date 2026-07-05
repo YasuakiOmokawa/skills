@@ -11,6 +11,8 @@
 | 番号 | 出所 | 深刻度 (Critical/Major/Minor) | 内容 | 根拠 | 推奨アクション |
 |---|---|---|---|---|---|
 
+- 「番号」は記帳前に ledger を Read し、既存の最終番号 +1 から採番する (ファイルが無ければ 1 から)。
+
 ## polish-before-commit 固有の記帳規則
 
 Orchestrated モード時、以下の 2 箇所は SKILL.md 本文の「ユーザーの明示指示を待つ」「ユーザー承認後に編集」を「escalation ledger に記帳して続行する」に読み替える。

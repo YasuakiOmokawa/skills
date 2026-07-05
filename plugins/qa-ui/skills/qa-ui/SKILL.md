@@ -12,7 +12,7 @@ argument-hint: [確認したい画面やURL（省略可）]
 
 ## Orchestrated モード
 
-ファイル存在からの推測では判定しない。呼び出し側（将来のオーケストレータ）が Task 起動プロンプトで「orchestrated モードで実行。escalation は `<path>` に記帳して続行せよ」のように明示指示した場合のみ発動する。指示が無い単独起動（現行のスラッシュコマンド実行を含む）では以下の差分を参照せず、本 SKILL.md の現行動作（該当時は停止）のまま進む（後方互換）。差分は Step 5 のエスカレート系分岐と Step 6 の完了判定表示のみで、詳細は [references/orchestrated-mode.md](references/orchestrated-mode.md) を参照。
+ファイル存在からの推測では判定しない。呼び出し側（将来のオーケストレータ）が Task 起動プロンプトで「orchestrated モードで実行。escalation は `<path>` に記帳して続行せよ」のように明示指示した場合のみ発動する。指示が無い単独起動（現行のスラッシュコマンド実行を含む）では以下の差分を参照せず、本 SKILL.md の現行動作（該当時は停止）のまま進む（後方互換）。差分は Step 5 のエスカレート系分岐・Step 5.5 の起動条件の読み替え・Step 6 の完了判定表示のみで、詳細は [references/orchestrated-mode.md](references/orchestrated-mode.md) を参照。
 
 ## ワークフロー
 

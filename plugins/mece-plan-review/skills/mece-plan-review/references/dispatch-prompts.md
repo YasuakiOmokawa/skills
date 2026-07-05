@@ -79,8 +79,8 @@ ${PLAN_CONTENT}
 BB / WB が `${ENUMERATED_AC}` の AC 数と異なる行数で AC 判定を返した場合:
 
 1. **1 回リトライ**: 同じ AC リストを再送して再 dispatch。指示に「AC-1 から AC-N まで漏れなく判定行を返す」旨を強調
-2. **2 回目も不一致**: 不足分の AC-ID を `judgment:"言及なし", reason:"subagent 不全により自動補完"` として手動補完し、`[subagent部分結果]` タグを Self-report に付与して進行
-3. **3 回連続失敗** または **全 AC 欠落**: AskUserQuestion で「subagent が応答不能。手動 MECE レビューに切り替えるか中断するか」をユーザに確認（Orchestrated モード時は該当 AC を Critical 扱いで escalation ledger に記帳し続行する。詳細は [orchestrated-mode.md](orchestrated-mode.md)）
+2. **2 回目も不一致**: 不足分の AC-ID を `judgment:"言及なし", reason:"subagent 不全により自動補完"` として手動補完し、`[subagent部分結果]` タグを Self-report に付与して進行 (欠落が一部 AC に限られ補完で進行できる場合はここでリカバリ完了とし、点 3 へは進まない)
+3. **3 回連続失敗** (補完自体が成立しない出力破損が続く場合) または **全 AC 欠落**: AskUserQuestion で「subagent が応答不能。手動 MECE レビューに切り替えるか中断するか」をユーザに確認（Orchestrated モード時は該当 AC を Critical 扱いで escalation ledger に記帳し続行する。詳細は [orchestrated-mode.md](orchestrated-mode.md)）
 
 ## Step 2: Fresh Red Team dispatch (JSONL のみ送信)
 

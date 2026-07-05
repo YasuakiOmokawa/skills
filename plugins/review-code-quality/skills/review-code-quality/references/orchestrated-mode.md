@@ -6,10 +6,14 @@
 
 ## quality ledger 形式
 
+トリガー文言中の `<path>` (escalation ledger のパス) はモード判定と escalation 記帳先の指定であり、quality ledger の記帳先は常に本ファイルの命名規則 `<プラン名>.quality-ledger.md` を使う (プラン名は指定された escalation ledger パスの basename から `.escalation-ledger` を除いて導出し、同じディレクトリに置く)。
+
 ファイル名: `<プラン名>.quality-ledger.md`。1 行 = 1 項目、追記のみ（既存行は書き換えない。同一項目の状態を更新する再記帳では**同じ番号を使う** — 番号+出所の組で最後の行が現在状態になる「最新行が勝つ」規則。番号を変えると別項目扱いになり収束判定が古い行を残す）。
 
 | 番号 | 出所 (review-code-quality/polish) | 深刻度 | 状態 (適用済み/escalated/保留) | 内容 |
 |---|---|---|---|---|
+
+- 「番号」は記帳前に ledger を Read し、既存の最終番号 +1 から採番する (ファイルが無ければ 1 から)。状態更新の再記帳は同じ番号を使う
 
 Step 4 で確定した finding ごとに 1 行記帳する:
 - auto-apply-safe で適用・検証 pass → 状態 `適用済み`
