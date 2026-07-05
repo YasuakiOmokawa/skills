@@ -48,6 +48,7 @@ ChromeDevTools MCPを使い、検証対象 URL の画面を操作・検証する
 |----|------|------|
 | React の `onMouseEnter` / `onMouseLeave` は `mouseenter` / `mouseleave` の dispatch では発火しない | workaround既知 | `evaluate_script` で `mouseover` / `mouseout`（relatedTarget付き）を dispatch する。dispatch方法の誤りで発火しないだけの状態を「実装が壊れている」とFAIL判定しない。workaround適用後は通常のPASS/FAIL判定に戻す（判定スキップ禁止） |
 | ファイルアップロード（multipart POST）は automation 下でファイルチューザ横取りや `ERR_ALPN_NEGOTIATION_FAILED` により失敗する | 真の制約 | サーバ不具合と誤判定せず「検証不能」として報告する。代替検証（curl でのAPI直叩き等、1回）を試行し、結果を併記する |
+| `resize_page` は automation 環境で最小幅 500px にクランプされ、375px 等のモバイル幅を再現できない | workaround既知 | `emulate` の viewport 指定（例: `375x812x2,mobile,touch`）で再現する。クランプされた幅のまま撮影して「モバイル幅で崩れなし」と PASS 判定しない |
 
 ## 入力
 
