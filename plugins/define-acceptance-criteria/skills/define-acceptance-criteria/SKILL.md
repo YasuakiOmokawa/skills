@@ -45,6 +45,8 @@ description: Fills a matrix of 3 required categories (normal, error, edge) by co
 
 **リスク領域** (auth / billing / payment / DB migration / security config) は LoC によらず強制的に **deep**。判定不能なら **standard**。`<plan>.analysis.md` 冒頭の `### Tier` に判定結果と理由を 1 行記録 (例: `Tier: standard (3 files, single domain)`)。
 
+**lite と deep が同時に該当する場合の優先規則**: deep 条件に 1 つでも該当すれば deep を選ぶ (安全側)。例: 1 ファイル <50 LoC の pure UI copy 変更でも auth 領域なら deep。
+
 ## Quantitative scaffolding (SSOT)
 
 | 項目 | lite | standard | deep |

@@ -24,6 +24,17 @@ Step 3.5 (正本カバレッジ・ゲート) と Step 4 (台帳初期化) の新
 2. [critical] `## 正本抽出結果` が無い分析ファイルで実行すると、「正本カバレッジ: skip (構造化正本なし、または分析ファイル空)」の 1 行のみが `## 実装準備` に残り、AC 行数と QA-ID 数の突き合わせのような追加検査は行われない
 3. [critical] Step 4 実行後、Step 1.7 で enumerate した全 QA-ID が `<plan>.qa-ledger.md` に 1 行ずつ存在する。auto-qa-planner の QA-ID カバレッジマトリクスに載る QA-ID は手段=auto、それ以外で manual-qa-planner の見出しに載る QA-ID は手段=manual、どちらにも載らない QA-ID は状態=対象外(N/A) (備考「担当手段未特定、要人間確認」) で初期化される。両方に載る (dual coverage) QA-ID は manual 行が重複生成されない
 
+## シナリオ: PR 割当ゲート (実装QA-ID 列の完全性、v1.22.0 で追加)
+
+Step 3.5 の PR 割当ゲートを検証する。所与: QA-ID カバレッジマトリクスに auto QA-ID 6 件 (QA-H-01 / QA-E-01 / QA-E-02 / QA-D-02 / QA-M-01 / QA-M-02)、PR 分割計画は 3 PR で「実装QA-ID」列を持つが QA-M-02 だけどの PR の実装QA-ID 列にも載っていないプランファイルをフィクスチャとして与え、Step 3.5 の PR 割当ゲートを実行させる (実行は scratchpad フィクスチャで可)。checklist 3 の検証には single-branch 縮約 (「現ブランチ 1 コミット」表記) のフィクスチャも別途構築させ、fail 系 / pass 系 / skip 系の 3 系を実行させる。根拠: 実案件で auto 23 件中 6 件が無割当のまま実装漏れし、qa-ui の再実行ゲートで初めて検出された。
+
+収束記録: 2026-07-06 (v1.22.0 PR)。初回実行で [critical] 2/2 ○ (executor が実フィクスチャで Bash を実行し fail→Edit 補完→pass を実機確認)。skip 系は実装エージェントのフィクスチャ 3 系検証で確認済み。
+
+### Requirements checklist
+1. [critical] ゲート Bash が未割当 1 件 (QA-M-02) を検出して fail し、未割当 QA-ID を列挙する。全件割当済みに直したフィクスチャでは pass する
+2. [critical] fail 時、未割当 QA-ID をいずれかの PR の実装QA-ID 列へ Edit で補完し、ゲートを再実行して未割当 0 件を確認してから先へ進む (未割当を残したまま Step 4 に進まない)
+3. single-branch / no-PR モード (PR 分割なし) では skip 1 行で通過する
+
 ## シナリオ: preflight 契約の生成 (Step 5)
 
 収束記録: 2026-07-05 (v1.20.0 PR)。Iter1-3 で fresh executor が全 [critical] ○ / retries 0。
