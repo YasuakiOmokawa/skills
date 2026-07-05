@@ -84,7 +84,7 @@ Pick the first matching row, top-down:
 
    Escalate inline→**subagent dispatch** when **reviewers' ❌ ≥ 2, OR any single-trigger escalator hit (DB tx boundary / concurrency / security / contract breach), OR `--strict-da`** (full table = SSOT in [references/escalation-rules.md](references/escalation-rules.md)); full DA prompts in [references/reviewer-modes.md](references/reviewer-modes.md).
 5. **Feedback loop**: If DA flags any "fatal" finding → Edit plan → re-run Step 2-4 → re-evaluate DA escalation. Repeat until all DA findings are "acceptable".
-6. **Step 6 — Final report**: One-line-per-issue. See [references/final-report-format.md](references/final-report-format.md).
+6. **Step 6 — Final report**: One-line-per-issue でチャットに表示する。加えて `Write` で `<plan>.design-review.md` (プランファイルパスの拡張子直前に `.design-review` を挿入したパス) へ同内容を保存する。保存内容・パス規則は [references/final-report-format.md](references/final-report-format.md) を参照。
 
 Three execution modes / DA escalation conditions / Fatal vs single-trigger 全表は [references/escalation-rules.md](references/escalation-rules.md) を参照。
 

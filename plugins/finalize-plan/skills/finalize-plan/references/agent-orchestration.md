@@ -25,9 +25,14 @@
 
    ## ベースブランチ (branch-planner 結果):
    ${BRANCH_RESULT}
+
+   ## Enumerated AC (QA-ID 付き、main agent が Step 1.7 で事前分類済み):
+   ${ENUMERATED_QA_AC}
    """)
    → 結果を ${PR_SPLIT_RESULT} として保持
 ```
+
+Step 1.7 で `${ENUMERATED_QA_AC}` を先に生成してから Step 2A を起動する順序を維持する (pr-splitter が各 PR に QA-ID を割り当てるための入力になるため)。
 
 ## Step 2B: manual-qa + auto-qa (並列、同一メッセージ内)
 
