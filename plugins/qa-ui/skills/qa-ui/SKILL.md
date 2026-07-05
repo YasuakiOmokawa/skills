@@ -282,9 +282,9 @@ while read -r id; do
     continue
   fi
   CMD_CLEAN=$(echo "$CMD" | sed -e 's/^`//' -e 's/`$//')
-  if bash -c "$CMD_CLEAN" >/tmp/reexec_out_"$id".log 2>&1; then EXIT=0; else EXIT=$?; fi
+  if bash -c "$CMD_CLEAN" </dev/null >/tmp/reexec_out_"$id".log 2>&1; then EXIT=0; else EXIT=$?; fi
   # rspec は -e 不一致でも exit 0 を返すことがある (実機確認済み)。出力を見て0件実行を検出する。
-  if grep -qE '0 examples|No test files found|no tests' /tmp/reexec_out_"$id".log; then
+  if grep -qE '(^|[^0-9])0 examples|No test files found|no tests' /tmp/reexec_out_"$id".log; then
     STATE="要人間確認"; NOTE="テスト0件を検出 (exit=$EXIT、コマンド不一致の疑い) $(date -Iseconds)"
   elif [ "$EXIT" -eq 0 ]; then
     STATE="PASS"; NOTE="審判再実行 $(date -Iseconds) exit=$EXIT"
@@ -297,6 +297,8 @@ done < /tmp/auto_ids_in_ledger.txt
 
 **注意点**:
 - 実行出力に `0 examples`（RSpec）/ `No test files found`・`no tests`（Vitest）のいずれかを検出したら、exit 0 でも `PASS` にはせず `要人間確認` を記帳する（コマンドの `-e`/`-t` 指定が QA-ID と一致していない疑いのため）
+- `bash -c` への `</dev/null` は削らない（理由: docker/dip 等 stdin を消費するコマンドが while ループの ID リストを飲み込み、2 件目以降を実行しないまま正常終了する — 実測で 23 件中 1 件だけ実行されるループ早期終了が発生した）。テストコマンドを環境に合わせて読み替える場合もこの構造は維持する
+- 0 件検出の正規表現は `(^|[^0-9])0 examples` の形を維持する（理由: `0 examples` 単体は「10 examples」「20 examples」にも部分一致し、正常 pass を `要人間確認` へ誤判定する — 10 examples 全 pass の QA-ID が誤判定された実測あり）
 - プランファイルの QA-ID カバレッジマトリクスにコマンドが定義されていない QA-ID は `要人間確認` を記帳する
 - `CMD_CLEAN` はプランファイルのバッククォート除去のみで、シェルメタ文字のエスケープ処理は行わない。`bash -c` にそのまま渡すため、プランファイルの実行コマンド列に不正な文字列が書かれていると意図しないコマンドが実行されるリスクがある（プランファイルは信頼できる入力という前提で運用する）
 
