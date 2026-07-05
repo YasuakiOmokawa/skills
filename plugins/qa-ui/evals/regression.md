@@ -17,7 +17,7 @@ fresh executor (blank slate, Task dispatch) で下記シナリオを再実行し
 
 ---
 
-以下は v3.1 (QA-ID 台帳ゲート方式) 追加分。fresh executor による収束確認 (Iter1-3 全 [critical] ○) は未実施 — 次回このシナリオ群を変更する PR で実施すること。
+以下は v3.1 (QA-ID 台帳ゲート方式) 追加分。収束記録: 2026-07-05。fresh executor (Task dispatch) で 4 シナリオ × Iter1-3 の 12 実行が全 [critical] ○ / accuracy 100% / retries 0。
 
 ## シナリオ: 検証不能(真の制約) がループを止めない (Step 5 判定)
 
