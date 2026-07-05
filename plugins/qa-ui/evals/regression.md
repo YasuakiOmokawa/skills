@@ -55,3 +55,17 @@ fresh executor (blank slate, Task dispatch) で下記シナリオを再実行し
 1. [critical] 「## UI QA 完了」を宣言しない
 2. [critical] QA-H-02 の pending 行を未完了行として明示し、「## UI QA 部分完了 (人間確認事項あり) または未完了」として応答する
 3. QA-H-02 が解消 (Step 5 の判定ループまたは人間への確認) されるまで完了扱いにしない旨を示す
+
+---
+
+以下は v1.11.0 (preflight 契約参照) 追加分。収束記録: 2026-07-05。fresh executor で Iter1-3 全 [critical] ○ / retries 0 (Iter1 で判定順・パス結合の曖昧さを検出し SKILL.md 修正後に再収束)。
+
+## シナリオ: preflight 参照で URL・テストデータ・権限アカウントを解決する (Step 2 / Phase A・B)
+
+$ARGUMENTS はパスのみ `/teams/42/settings`。プランファイル特定済み、同ディレクトリの `<プラン名>.preflight.md` に ベース URL = http://localhost:3000 / ログイン手段 = 未定 / 権限アカウント一覧 = 管理者権限 (権限分岐 AC の検証用) / テストデータ準備手順 = `bin/rails db:seed:qa_fixture` / 起点ブランチ = develop / サーバ・DB 起動コマンド = `docker compose up -d` が記載されている。権限分岐 AC が 1 件ある。(1) Step 2 の URL 決定、(2) ログイン画面表示時の挙動、(3) Phase A の実行内容、(4) Phase B で尋ねる内容を答えさせる。
+
+### Requirements checklist
+1. [critical] 検証 URL は preflight のベース URL と結合して http://localhost:3000/teams/42/settings に決定し、ベース URL をユーザーに尋ねない
+2. [critical] ログイン画面検出時は従来どおり停止してユーザーにログイン操作を依頼する (preflight があってもエージェントは自動ログインしない)
+3. Phase A: preflight のテストデータ準備手順をドキュメント化済みコマンドと同列に扱い実行する
+4. Phase B: 権限アカウントは preflight 記載を採用し、権限分岐アカウントの確認を省略する
