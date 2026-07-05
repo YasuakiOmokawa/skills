@@ -6,7 +6,7 @@
 
 ## quality ledger 形式
 
-ファイル名: `<プラン名>.quality-ledger.md`。1 行 = 1 項目、追記のみ（既存行は書き換えない。同一項目が複数回記帳された場合は最後の行が現在状態になる — qa-ui の qa-ledger と同じ「最新行が勝つ」規則）。
+ファイル名: `<プラン名>.quality-ledger.md`。1 行 = 1 項目、追記のみ（既存行は書き換えない。同一項目の状態を更新する再記帳では**同じ番号を使う** — 番号+出所の組で最後の行が現在状態になる「最新行が勝つ」規則。番号を変えると別項目扱いになり収束判定が古い行を残す）。
 
 | 番号 | 出所 (review-code-quality/polish) | 深刻度 | 状態 (適用済み/escalated/保留) | 内容 |
 |---|---|---|---|---|
@@ -72,6 +72,6 @@ fi
 ## 記帳例
 
 ```
-| 3 | review-code-quality | Critical | 適用済み | app/models/user.rb の instance_variable_set 直接操作を解消 (検証 pass) |
-| 4 | review-code-quality | Major | escalated | UserService と TeamService の循環依存、責務分離が要判断 |
+| 3 | review-code-quality | Major | 適用済み | app/models/user.rb の 62 行関数を分割 (readability 構造的問題閾値超過、検証 pass) |
+| 4 | review-code-quality | Critical | escalated | UserService と TeamService の循環依存、責務分離が要判断 |
 ```
