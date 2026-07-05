@@ -1,11 +1,11 @@
 ---
 name: finalize-plan
-description: Turns AC and MECE results from the analysis file into a branch strategy, PR split, and manual/auto QA steps appended to the plan file, then gates QA-ID coverage against any structured source-of-truth atoms and initializes the QA execution ledger (`<plan>.qa-ledger.md`). Use when the user has completed `/define-acceptance-criteria` + `/mece-plan-review` and is about to move from plan mode into implementation, or says "実装準備を追記して" / "ブランチ戦略と PR 分割を決めて" / "QA 手順をプランに書いて".
+description: Turns AC and MECE results from the analysis file into a branch strategy, PR split, and manual/auto QA steps appended to the plan file, then gates QA-ID coverage against any structured source-of-truth atoms, initializes the QA execution ledger (`<plan>.qa-ledger.md`), and generates the preflight contract (`<plan>.preflight.md`) so QA input-waiting moves before the loop starts. Use when the user has completed `/define-acceptance-criteria` + `/mece-plan-review` and is about to move from plan mode into implementation, or says "実装準備を追記して" / "ブランチ戦略と PR 分割を決めて" / "QA 手順をプランに書いて".
 ---
 
 # finalize-plan
 
-分析ファイル (`<plan>.analysis.md`) から AC・MECE 結果を読み込み、プランファイル末尾に `## 実装準備` (ブランチ・PR 分割・QA 手順) を追記する。入力欠落時は即中断。`## 正本抽出結果` があれば QA-ID の正本カバレッジをゲートし、QA-ID ごとの実行台帳 (`<plan>.qa-ledger.md`) を初期化する。
+分析ファイル (`<plan>.analysis.md`) から AC・MECE 結果を読み込み、プランファイル末尾に `## 実装準備` (ブランチ・PR 分割・QA 手順) を追記する。入力欠落時は即中断。`## 正本抽出結果` があれば QA-ID の正本カバレッジをゲートし、QA-ID ごとの実行台帳 (`<plan>.qa-ledger.md`) を初期化する。あわせて、QA 開始時に個別で尋ねる入力 (ベース URL・テストデータ準備・権限アカウント等) を事前に一括収集する preflight 契約 (`<plan>.preflight.md`) を生成する。
 
 ## Arguments
 
@@ -35,6 +35,7 @@ description: Turns AC and MECE results from the analysis file into a branch stra
 6. **Step 3**: 結果を統合してプランファイルに `## 実装準備` を追記
 7. **Step 3.5**: 正本カバレッジ・ゲート (Step 3 の Write 後、プランファイル自体を対象に実行)
 8. **Step 4**: QA 実行台帳 `<plan>.qa-ledger.md` を初期化
+9. **Step 5**: プラン内容と branch-planner (Step 2A) の結果から `<プラン名>.preflight.md` を生成 (既存なら不足項目のみ補完、`未定` は AskUserQuestion 1 回にまとめて確認)
 
 ## Workflows
 
@@ -196,6 +197,16 @@ comm -23 /tmp/all_qa_ids.txt /tmp/assigned.txt > /tmp/assign_na.txt             
 
 `assign_auto.txt` → 手段=auto pending、`assign_manual.txt` → 手段=manual pending、`assign_na.txt` → 状態=対象外(N/A) (備考「担当手段未特定、要人間確認」) として台帳の行を生成する。フォーマット・状態語彙・「最新行が勝つ」規則・実装フェーズでの追記例は [references/qa-ledger.md](references/qa-ledger.md) 参照。
 
+### Step 5: Preflight 契約の生成
+
+ループ開始前に一括収集する入力 (`<プラン名>.preflight.md`) を、プラン内容 (Step 3 で書いた手動QA手順) と branch-planner (Step 2A) の結果から生成する。置き場・項目表・セキュリティ規則は [references/preflight.md](references/preflight.md) が SSOT。既に存在する場合は不足項目のみ補完する (既存記載は上書きしない)。
+
+1. ベース URL・テストデータ準備手順・権限アカウント一覧は Step 3 の手動QA手順に記載があればそこから転記する。埋まらなければ `未定`。
+2. ログイン手段は既定で `未定` とする (自動ログインは行わないため、記載が無い限り推測で埋めない)。
+3. 起点ブランチは Step 2A (branch-planner) が確定した値をそのまま転記する。
+4. サーバ・DB 起動コマンドはプラン・README 等に既記載があれば転記、なければ `未定`。
+5. 生成・補完後も `未定` が残る項目があれば、それらをまとめて **AskUserQuestion 1 回**でユーザーに確認する (項目ごとに個別に停止しない)。
+
 ## Quality standards
 
 - **PR ガイドライン準拠**: ≤2 commits, ≤5 files。この上限は tier 表の「想定 PR 数」より優先する (tier の PR 数は目安であり下限ではない。総ファイル数が少なければ standard でも 1 PR でよい)
@@ -209,10 +220,11 @@ comm -23 /tmp/all_qa_ids.txt /tmp/assigned.txt > /tmp/assign_na.txt             
 - [references/agent-orchestration.md](references/agent-orchestration.md) — 各 agent への Task prompt / 並列メッセージ構成 / Task ツール不可時の in-context 代替モード
 - [references/output-template.md](references/output-template.md) — Step 3 出力テンプレ全文 / PR チェーン図 / 0 件カテゴリ表記 / fallback 時の備考行
 - [references/qa-ledger.md](references/qa-ledger.md) — QA 実行台帳のフォーマット・状態語彙・「最新行が勝つ」規則・手段割当規則・実装フェーズでの追記例
+- [references/preflight.md](references/preflight.md) — preflight 契約 (`<plan>.preflight.md`) の置き場・項目表・セキュリティ規則・未定項目の扱い
 
 ## 併用推奨 skill
 
 - `/define-acceptance-criteria` — 入力となる AC を定義する (前段)
 - `/mece-plan-review` — AC の網羅性を検証してから本スキルに引き継ぐ (前段)
-- `/qa-ui` — 実装完了後、本スキルが定めた QA 手順と `<plan>.qa-ledger.md` を使って UI 検証する (後段)
+- `/qa-ui` — 実装完了後、本スキルが定めた QA 手順・`<plan>.qa-ledger.md`・`<plan>.preflight.md` を使って UI 検証する (後段)
 - `/create-pr` — finalize で固めた PR 分割をもとに PR を作成する (後段)
