@@ -1,6 +1,6 @@
 # regression eval
 
-初版作成時点では empirical 検証は未実施（実行記録: 未実施）。skill を変更する PR では fresh executor (Task dispatch) で下記シナリオを再実行し、全 [critical] ○ を確認してから merge する。用途は regression 検出器であり、capability 改善の信号としては扱わない。
+収束記録: 2026-07-06 (v0.1.0 PR)。3 シナリオ × Iter1-3 の 9 実行で fresh executor が全 [critical] ○ / skill 修正 0 回 / retries 0。skill を変更する PR では fresh executor (Task dispatch) で下記シナリオを再実行し、全 [critical] ○ を確認してから merge する。用途は regression 検出器であり、capability 改善の信号としては扱わない。
 
 ## シナリオ: 連鎖ハッピーパス (Phase 1a〜1d の遷移)
 
