@@ -18,7 +18,7 @@ fresh executor (blank slate, Task dispatch) で下記シナリオを再実行し
 
 ---
 
-以下は v1.19.0 (Orchestrated モード / quality ledger) 追加分。**未収束 (親が収束実行予定)**。
+以下は v1.19.0 (Orchestrated モード / quality ledger) 追加分。収束記録: 2026-07-05。fresh executor で Iter1-3 全 [critical] ○ / retries 0 (Iter1 で採番規則・語彙揺れ等の仕様ギャップを検出し修正後に再収束)。
 
 ## シナリオ: Orchestrated モードで quality ledger に記帳し収束判定する (Step 4)
 

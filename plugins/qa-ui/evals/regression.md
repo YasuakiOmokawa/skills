@@ -72,7 +72,7 @@ $ARGUMENTS はパスのみ `/teams/42/settings`。プランファイル特定済
 
 ---
 
-以下は v1.12.0 (Orchestrated モード / escalation ledger) 追加分。**未収束 (親が収束実行予定)**。
+以下は v1.12.0 (Orchestrated モード / escalation ledger) 追加分。収束記録: 2026-07-05。fresh executor で Iter1-3 全 [critical] ○ / retries 0 (Iter1 で採番規則・語彙揺れ等の仕様ギャップを検出し修正後に再収束)。
 
 ## シナリオ: Orchestrated モードで Critical 1件が他 QA-ID の完了を止めない (Step 5 / Step 6)
 
