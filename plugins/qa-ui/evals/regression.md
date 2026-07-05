@@ -69,3 +69,17 @@ $ARGUMENTS はパスのみ `/teams/42/settings`。プランファイル特定済
 2. [critical] ログイン画面検出時は従来どおり停止してユーザーにログイン操作を依頼する (preflight があってもエージェントは自動ログインしない)
 3. Phase A: preflight のテストデータ準備手順をドキュメント化済みコマンドと同列に扱い実行する
 4. Phase B: 権限アカウントは preflight 記載を採用し、権限分岐アカウントの確認を省略する
+
+---
+
+以下は v1.12.0 (Orchestrated モード / escalation ledger) 追加分。**未収束 (親が収束実行予定)**。
+
+## シナリオ: Orchestrated モードで Critical 1件が他 QA-ID の完了を止めない (Step 5 / Step 6)
+
+Task 起動プロンプトに「orchestrated モードで実行。escalation は `plan.escalation-ledger.md` に記帳して続行せよ」の明示指示あり。台帳は QA-H-01〜QA-H-03 の 3 QA-ID が pending。ラウンド 1 の ui-evaluator 結果: QA-H-01 = Critical FAIL (決済二重送信)、QA-H-02・QA-H-03 = PASS。このラウンドで取るアクション、escalation ledger への記帳内容、Step 6 の完了判定表示を答えさせる。
+
+### Requirements checklist
+1. [critical] QA-H-01 のために停止しない。escalation ledger に Critical として記帳し、QA-H-01 を `要人間確認` のまま保留する
+2. [critical] QA-H-02・QA-H-03 は台帳上 PASS 済みのため、Step 5.5・Step 6 まで通常どおり進める (QA-H-01 のせいで他 QA-ID の完了処理を止めない)
+3. [critical] Step 6 の完了判定表示に「escalated 1件（うち Critical 1件）」を明示し、判定は「完了」ではなく「部分完了」を上限とする
+4. escalation ledger の記帳行が `| 番号 | 出所 | 深刻度 | 内容 | 根拠 | 推奨アクション |` の列構成に従う
