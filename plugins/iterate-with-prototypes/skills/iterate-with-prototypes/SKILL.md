@@ -14,7 +14,7 @@ description: Use when starting a complex feature where a PRD or spec exists but 
 ## When to use
 
 - PRD/仕様はあるが、実現可能性 / UX効果 /「既存API・データ構造を流用できる」が未検証
-- 機能が複数のプラン文書 + PR チェーンに跨る規模
+- 機能が複数のプラン文書に跨る規模
 - 実装の大半を AI エージェントに任せる
 
 使わない場合: 未検証の仮定が無い既知機能(`/define-acceptance-criteria` → 実装に直行) / 1 つの問いに答える単発 throwaway(`/prototype` を直接)。
@@ -51,7 +51,7 @@ description: Use when starting a complex feature where a PRD or spec exists but 
 | 3 | 設計 = delivery 品質までリファクタ(機能固定・構造を整える) | `/review-design` | Code-A′(動く・delivery 品質) |
 | 4 | コードから設計書を逆生成(磨く前の素材) | — | Doc-1 |
 | 5 | 設計書を磨く(ドメイン/用語で叩く → AC → MECE → SSOT) | `/grill-with-docs` → `/define-acceptance-criteria` → `/mece-plan-review` → `/dry-ssot-text` | Doc-2(AC + ADR 込み) |
-| 6 | レビュー + デリバリー可能に仕上げる(PR 分割/QA・対外語彙浄化・最終 SSOT) | `/finalize-plan` + `/purge-private-vocab` + `/dry-ssot-text` | Doc-3 + 依存順 PR チェーン |
+| 6 | レビュー + デリバリー可能に仕上げる(QA 手順・対外語彙浄化・最終 SSOT) | `/finalize-plan` + `/purge-private-vocab` + `/dry-ssot-text` | Doc-3 + QA 台帳 (PR 梱包は出荷時に `/create-pr` で判断) |
 
 > step 4→6 は同じ「コード→設計書」でも fidelity が違う: 4 = 素材、5 = 設計の堅牢化(内部品質)、6 = レビュー/デリバリー化(対外品質)。
 > スキル表記: `→` は順序固定(前段の出力が次段の入力)、`+` は順不同/併用。
@@ -59,14 +59,14 @@ description: Use when starting a complex feature where a PRD or spec exists but 
 > step 2(まず動かす)と step 3(次に整える)を**混ぜない** — 機能を 100% 通してから構造を整える(机上設計で間違った骨格を作らせない)。
 > step 5 の `/define-acceptance-criteria`・`/mece-plan-review` は本来「実装前 gate」だが、ここでは目的が変わり **post-code で仕様の正本化 + カバレッジ漏れ検出**に使う。
 > step 5 を Doc-1 (プランファイル) に対して実行すると、両 skill は自らの契約どおり `<plan>.analysis.md` に `## 受け入れ条件` `## MECE分析結果` を書き出す。これは finalize-plan Step 1.5 の入力要件そのものなので、この場合 step 6 は ledger 追記に頼らず **`/finalize-plan` を通常どおり起動する** — QA-ID 台帳・正本カバレッジゲート・PR 割当ゲートは design-first 経由と同一に機能する (finalize-plan の即中断ゲートは弱めず、入力側を要件に合わせて整える方式を採る)。
-> step 4-5 (doc 逆生成 + AC/MECE) 自体を省略した **ledger 駆動セッション**では分析ファイルが無いため step 6 の `/finalize-plan` は起動できない。この場合のみ ledger への追記で代替し、最低限 **PR 分割と QA 手順の 2 点**を書く (/finalize-plan の主要出力と同じ)。
+> step 4-5 (doc 逆生成 + AC/MECE) 自体を省略した **ledger 駆動セッション**では分析ファイルが無いため step 6 の `/finalize-plan` は起動できない。この場合のみ ledger への追記で代替し、最低限 **ブランチ戦略と QA 手順の 2 点**を書く (/finalize-plan の主要出力と同じ。PR 分割は行わない — 梱包は出荷時に /create-pr で判断)。
 > 周回の途中で「戻しにくい決定」が必要になった (可逆・小 blast radius の前提が崩れた) 場合は、loop を中断し `When to use` のガードレールに従って design-first (`/mece-plan-review` 等の実装前ゲート) に切り替える。
 
 ## 効かせる規律
 
 > drift / ledger / 100%-then-design の正本は他所に 1 つずつある(順に Overview・Start here step 3・The loop)。ここはそれらの再掲ではなく、loop 表に組み込めなかった掟だけを置く。
 
-**1. 磨く(内部)と仕上げる(対外)を分ける。** step 5 = 設計の堅牢化(grill/AC/MECE/SSOT)、step 6 = レビュー/デリバリー化(PR 分割/語彙浄化)。混ぜると「対外向けに整える」圧力で設計の堅牢化が甘くなる。
+**1. 磨く(内部)と仕上げる(対外)を分ける。** step 5 = 設計の堅牢化(grill/AC/MECE/SSOT)、step 6 = レビュー/デリバリー化(QA 手順/語彙浄化)。混ぜると「対外向けに整える」圧力で設計の堅牢化が甘くなる。
 
 **2. 効く決定は ADR(Why + 却下案)。** 後で蒸し返される決定は ADR に結晶化する(step 5 の `/grill-with-docs` が ADR を更新)。
 

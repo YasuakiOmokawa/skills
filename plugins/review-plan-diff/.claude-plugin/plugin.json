@@ -1,0 +1,17 @@
+{
+  "name": "review-plan-diff",
+  "description": "確定プラン (finalize-plan 出力) と実装後の diff を突き合わせ、実装漏れ・仕様逸脱・計画外差異・スコープ越境を Critical/Major/Minor で検出する。",
+  "version": "0.1.0",
+  "author": {
+    "name": "Yasuaki Omokawa",
+    "url": "https://github.com/YasuakiOmokawa"
+  },
+  "homepage": "https://github.com/YasuakiOmokawa/skills",
+  "repository": "https://github.com/YasuakiOmokawa/skills",
+  "license": "MIT",
+  "keywords": [
+    "plan-driven",
+    "code-review",
+    "qa"
+  ]
+}
