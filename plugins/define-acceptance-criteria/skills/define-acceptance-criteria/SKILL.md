@@ -146,4 +146,4 @@ observability を含める場合の実効上限は **6 軸** (主軸 5 + observa
 ## 併用推奨 skill
 
 - `/mece-plan-review` — 本 skill 出力の AC を 3 視点で MECE 検証
-- `/finalize-plan` — AC + MECE 結果からブランチ・PR 分割・QA 手順を起こす
+- `/finalize-plan` — AC + MECE 結果からブランチ・QA 手順を起こす

@@ -51,7 +51,7 @@ description: Use on confirmed working code whose name stops at mechanism (`bbox_
 
 > 各ステップの詳細・アンチパターン・コミット境界の切り方は [references/decision-procedure.md](references/decision-procedure.md) が SSOT。本文は操作チェックリスト。**経路2 (生成時) はこの Workflow ではなく下記「生成時レシピ」に従う** — Step 0 の入口判定 (working code 前提) は経路2 には適用されない。
 
-- **Step 0 適用判定**: 対象が (a) working code で (b) 今回の変更対象 (blast radius 内) か確認。drive-by 改名は中止。着手前に回帰テスト/characterization test の有無を確認し、無ければ先に用意して振る舞いを固定する (改名は意味を変えうる)。対象が 1 点に確定していなければユーザーに確認。
+- **Step 0 適用判定**: 対象が (a) working code で (b) 今回の変更対象 (blast radius 内) か確認。drive-by 改名は中止。着手前に回帰テスト/characterization test の有無を確認し、無ければ先に用意して振る舞いを固定する (改名は意味を変えうる)。対象が引数で明示されていなければ quality-review-handoff.md からのフォールバック読み込みを試み、それでも定まらなければユーザーに確認する (詳細: [references/decision-procedure.md](references/decision-procedure.md))。
 - **Step 1 現在段の診断**: 対象名を梯子のどこか判定 (機構語リストで段0、用途が読めるかで段1/段3 を切り分け)。1 段ずつ上げる。同時に**多義衝突を grep で検査**: 対象名の核となる語が blast radius 内で別のドメイン概念にも使われていないか全出現を分類する。衝突していれば段の高低より優先して片方を実在ドメイン語へ逃す (T11) — 読者は文脈の近い方の意味で誤読するため、正直な what 名でも衝突したままでは有害。
 - **Step 2 caller 観測 (平叙文化)**: 全 caller を grep し「戻り値を次に何に使うか」を 1 動詞句で言語化。caller を読まず目的名をでっち上げない (押印用途を `signature` と決め打つ退行を防ぐ)。複数 caller が別目的なら 1 メソッド 2 役 → 改名でなく分離 (T2) を先に (**caller が 1 つなら 2 役判定は省略**)。**「同一概念 (中立な目的名 1 本) か 2 役 (分割) か」は戻り値の形が同じかでなく、両 call site で真に読める単一目的名を選べるかで判定する** — 選べなければ (どの名前を選んでも片方の call site で嘘になる) 2 役 → 分割し、共有する射影は private 機構メソッドへ。
 - **Step 3 Honest 化と構造の発見**: 目的名へ直行せず、いったん「何を・何から・何を経由して」を全部出した長い正直名へ。`and`/`with` 複数 = 責務複数 (T2)、消せない機構語 = ドメイン型欠落 (T5/T6)。長さは構造を直して縮める (語を削らない)。

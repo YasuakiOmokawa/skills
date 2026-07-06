@@ -33,7 +33,7 @@ omokawa-skills は **monorepo + N plugins** 構造。各 skill / command は `pl
 メインエージェントが複数の **specialist エージェント** を `Task` ツールで並列起動して結果を統合する設計パターン。
 - `review-design`: 4 reviewer 並列（Clean Architecture / Hexagonal / DDD / Anti-pattern）
 - `review-code-quality`: 3 analyzer 並列（Cohesion / Coupling / Readability）
-- `finalize-plan`: 4 planner 並列（Branch / PR-split / Manual-QA / Auto-QA）
+- `finalize-plan`: 2 段階（Branch 単独 → Manual-QA / Auto-QA の 2 並列）
 - `model-data`: パイプライン式（Requirements → Conceptual → Logical → DBML）
 
 ## ~/.claude/skills-config/*.md

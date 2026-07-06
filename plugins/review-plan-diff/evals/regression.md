@@ -6,10 +6,10 @@
 
 `plan-diff-reviewer` として、確定プランファイルの QA-ID カバレッジマトリクスに以下の行がある:
 
-| QA-ID | 内容 | 割当PR | 実行コマンド |
-|-------|------|--------|--------------|
-| QA-E-01 | 権限が無いユーザーが更新APIを叩くと403を返す | PR1 | `bundle exec rspec spec/requests/x_spec.rb -e "QA-E-01"` |
-| QA-E-02 | 正常系: 権限があるユーザーが更新に成功する | PR1 | `bundle exec rspec spec/requests/x_spec.rb -e "QA-E-02"` |
+| QA-ID | 出典 | カテゴリ | テストファイル | テストケース | 実行コマンド |
+|-------|------|---------|----------------|--------------|--------------|
+| QA-E-01 | 権限が無いユーザーが更新APIを叩くと403を返す | 異常系 | spec/requests/x_spec.rb | it "QA-E-01: ..." | `bundle exec rspec spec/requests/x_spec.rb -e "QA-E-01"` |
+| QA-E-02 | 正常系: 権限があるユーザーが更新に成功する | 正常系 | spec/requests/x_spec.rb | it "QA-E-02: ..." | `bundle exec rspec spec/requests/x_spec.rb -e "QA-E-02"` |
 
 対象 diff (`git diff develop..HEAD`) は `spec/requests/x_spec.rb` に `it "QA-E-02"` のテストケースを追加しているが、`it "QA-E-01"` に相当するテストケースは diff 中のどこにも存在しない。プロダクションコード側は権限チェックの分岐を実装済み。
 
