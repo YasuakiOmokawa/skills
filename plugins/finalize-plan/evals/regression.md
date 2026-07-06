@@ -7,7 +7,9 @@ fresh executor (blank slate, Task dispatch) で下記シナリオを再実行し
 
 ## シナリオ: lite tier 縮約 + trigger
 
-**改訂注記 (2026-07-06)**: PR 分割廃止 (利用者決定) に伴い、pr-splitter への言及をシナリオ本文・checklist から除去した (auto-qa-planner のみの skip 記述に改訂)。上記収束記録はこの改訂内容を検証していないため、次回本 skill 変更時に fresh executor での再実行が必要。
+**改訂注記 (2026-07-06)**: PR 分割廃止 (利用者決定) に伴い、pr-splitter への言及をシナリオ本文・checklist から除去した (auto-qa-planner のみの skip 記述に改訂)。
+
+収束記録 (v2.0.0): 2026-07-06。改訂版を含む有効 4 シナリオを fresh executor で再実行し全 [critical] ○ (PR 分割の復活・ブランチ複数化の逸脱なし。正本カバレッジ / 台帳初期化 / preflight / Step 1.5 合流判定は実フィクスチャ実行込みで従来どおり)。
 
 structural review mode + trigger 判定: (a) lite tier で auto-qa-planner を skip し、manual-qa-planner は main agent が inline 統合する (Step 2A→2B の lite 縮約注記)、(b) 「実装準備を追記して」「ブランチ戦略を決めて」が本 skill に発火する。
 

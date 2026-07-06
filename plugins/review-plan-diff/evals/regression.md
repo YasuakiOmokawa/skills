@@ -1,6 +1,6 @@
 # regression eval
 
-収束記録: 未実施（廃止されたオーケストレータからの移設時点では fresh executor による Iter1-3 再収束を行っていない。次回本 skill を変更する PR で下記シナリオを実行し、収束記録をこの節に追記すること）。
+収束記録: 2026-07-06 (v0.1.0 PR)。Iter1-3 の 3 実行で fresh executor が全 [critical] ○ / retries 0。
 
 ## シナリオ: QA-ID カバレッジマトリクスに計画されたテストが diff に無い (未実装の検出)
 
