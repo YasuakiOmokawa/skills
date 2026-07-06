@@ -8,7 +8,7 @@
 
 最終監査 (同期タッチの最後の 1 回) が「これだけ読めば済む」1 ファイルにする。人間は個々の台帳ファイルを読み歩く必要がない。
 
-## 収録内容 (6 点)
+## 収録内容 (7 点)
 
 1. **3 台帳の集計行**: qa-ledger (PASS/FAIL/pending/検証不能/要人間確認/対象外 の件数)、quality-ledger (深刻度×状態の件数)、escalation-ledger (Critical/Major/Minor の件数)
 2. **escalated 全行の転記**: escalation-ledger の内容をそのまま貼る (要約しない。人間が個々の判断根拠を検証できるようにするため)
@@ -16,6 +16,7 @@
 4. **変更サマリー (PR 一覧 + 各 1 行)**: orchestration-status.md の `2-PR*` 行から抽出する
 5. **Minor 無作為抽出 n 件 (quality 台帳)**: 全件レビューの代わりに抜き取り校正する (R4 の校正目的、n は既定 2〜3件程度)
 6. **トークン消費の概算**: orchestration-status.md のフェーズ遷移行数を概算の代理指標として使う (subagent 起動数の厳密カウントは薄い版のスコープ外、概算で可)
+7. **工程別欠陥検出サマリ**: mece-plan-review (Critical/Important 件数)・review-design (fatal/acceptable 残存リスク件数)・review-code-quality + polish-before-commit (quality-ledger 深刻度別件数)・qa-ui (qa-ledger FAIL 件数)・escalation (深刻度別件数) を、既存台帳・成果物からの機械集計のみで工程名付きに並べる (新しい台帳は作らない)。この集計は「各工程が自分より下流に流す前に検出した欠陥件数」であり、下流・本番で見つかった欠陥 (漏出) はここではなく次回 dogfood 計測の対象になる (利用者決定 2026-07-06 の適応度関数「工程ごとの評価」に対応)
 
 ## 生成の検証済み Bash
 

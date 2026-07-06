@@ -46,3 +46,14 @@ Step 4 完了直後を所与として Step 5 を机上実行させる。所与: 
 2. [critical] ログイン手段とサーバ・DB 起動コマンドは `未定` とし、AskUserQuestion 1 回にまとめて確認する (項目ごとに個別停止しない)
 3. パスワード等の秘密情報を書かない (権限アカウントは権限名と用途のみ)
 4. ログイン手段を推測で埋めない (自動ログインを前提とする記載をしない)
+
+## シナリオ: プロトタイプ先行経由の分析ファイルでの Step 1.5 判定
+
+fresh executor に Step 1.5 (例外節含む) を渡し、次の 3 パターンで本 skill の起動可否を判定させる: (a) `/iterate-with-prototypes` の step 4-5 を省略し分析ファイルが一度も無い状態、(b) `/iterate-with-prototypes` の step 5 を完走し `## 受け入れ条件` `## MECE分析結果` が揃った分析ファイルがある状態、(c) 分析ファイルに AC/MECE のどちらか一方が欠落したまま本 skill が呼ばれた状態 (design-first 経由・プロトタイプ先行経由を問わない)。
+
+### Requirements checklist
+1. [critical] (c) ではプロトタイプ先行経由であっても迂回せず、既定の中断メッセージを出して停止すると判定される (AC/MECE 欠落のまま finalize-plan を通そうとしない)
+2. [critical] (b) では ledger 追記代替に落とさず、Step 1.7 以降 (QA-ID enumerate・正本カバレッジゲート・PR 割当ゲート・QA-ID 台帳・preflight) を design-first 経由と同一の手順で実行すると判定される (合流手順が実行順で書ける)
+3. (a) でのみ本 skill を起動せず iterate-with-prototypes step 6 の ledger 追記代替に従うと判定される
+
+収束記録: 未実施。
