@@ -268,9 +268,9 @@ AC3: フィーチャーフラグOFF時はメニューに表示されない
 
 例: 「レイアウト変更」で AC が 5個以上に膨れたら、「見出し追加」「サムネイル撤去」「要素順変更」など独立した体験変化ごとに US を分割する。
 
-## タスク粒度の判断（finalize-plan PR ガイドラインとの整合）
+## タスク粒度の判断（本 skill 自身のガイドラインとの整合）
 
-タスクリストは後段 `create-jira-issues` で Jira 化され、その後 `finalize-plan` で PR 分割される。タスク粒度を `finalize-plan` の PR ガイドライン（**2コミット以内 / 5ファイル以下 / 1つの論理的変更単位**）に合わせて出力すると、後段の PR 分割が自然に 1 タスク = 1 PR に収まる。
+タスクリストは後段 `create-jira-issues` で Jira 化され、実装完了後に `/create-pr` が出荷時の PR 梱包 (何本に切るか) を判断する。タスク粒度を本 skill のガイドライン（**2コミット以内 / 5ファイル以下 / 1つの論理的変更単位**、`SKILL.md` 参照）に合わせて出力すると、1 タスク = 1 PR に自然に収まる。
 
 **原理: Tracer Bullet Vertical Slice** — 各タスクは特定ユーザー価値に対して全層（schema/API/UI/test）を貫く end-to-end な薄切り。層ごとの水平分割（model だけ・view だけ・test だけ）にしない。Vertical なら 1 PR で 1 ユーザー価値が demoable / verifiable。
 

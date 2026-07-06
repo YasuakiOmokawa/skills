@@ -1,6 +1,6 @@
 ---
 name: purge-private-vocab
-description: Detects local-plan coinages, abbreviations, and number labels in reader-facing text and rewrites them so readers without the source plan can follow. Use after generating PR description, Jira ticket, design doc, RFC, or other reader-facing text from a local plan/spec file, when readers don't share the source plan, or when the user says "造語チェックして" / "plan 用語を消して" / "PR 説明の語彙を点検して".
+description: Detects local-plan coinages, abbreviations, and number labels in reader-facing text and rewrites them so readers without the source plan can follow. Use after generating PR description, Jira ticket, design doc, RFC, reviewed code comments (plan-coinage residue left after implementation), or other reader-facing text from a local plan/spec file, when readers don't share the source plan, or when the user says "造語チェックして" / "plan 用語を消して" / "PR 説明の語彙を点検して".
 ---
 
 # Purge Private Vocabulary
@@ -37,8 +37,10 @@ description: Detects local-plan coinages, abbreviations, and number labels in re
 
 ### 1. 入力収集
 
-- **target**: 検査対象 (PR body、Jira description、design doc 等)。ファイルパス or インラインテキスト
+- **target**: 検査対象 (PR body、Jira description、design doc、レビュー済みコードのコメント 等)。ファイルパス or インラインテキスト
 - **source plan**: target の生成元 (`~/.claude/plans/<topic>/plan.md` 等)
+
+コメントを書くか・名前/型へ移すかの判断は `/express-intent-in-code`、文面の原則は code-comments 系規約 (7原則) が担い、本 skill は plan 造語の除染のみを担う。
 
 両方を Read。
 
@@ -87,6 +89,8 @@ Q4. 番号/層ラベルか? (`Critical-A`, `α/β/γ 層`, `AC-12`, PR チェー
 **Q1 判定**: codebase identifier = `git grep <語>` が 1+ ヒット、公開規格 = RFC/W3C/ISO/IETF 等、公知 Issue/Jira = 公開 tracker でアクセス可。Figma node-id (`1:2` / `123:456` 等) も Q1 維持 (Figma ツールで解決可能な識別子)。**非 repo / 未マージ flag で `git grep` 不能時**は、backtick 付き snake_case で文中に `Flipper flag` / `class` / `file path` と明示されている、または source plan にファイルパス/flag 記述がある語を codebase identifier とみなす。加えて `Provider` / `Adapter` / `Gateway` のような**一般的なソフトウェア構成概念**は、平易な言い換えがかえって曖昧化する場合、持ち込み可に倒してよい (読者が文脈で解せる一般語のため)。
 
 **Q2 判定**: 見出し+直後本文に平易な説明があれば self-contained。ただし説明に plan 内造語がさらに混入していれば NO。定義が初出より**後**に置かれている (用語使用 → 後置説明の順) 場合は、**Q3 以降へ進まずこの時点で【要 in-line 定義】で確定**する (定義を初出へ `用語 (= 短い説明)` として移し、後置説明文は定義に吸収・削除。Q3 の「source plan にしか定義がない」判定に流すと target 内に後置定義があるせいで素通しになるため、木の分岐でなくここで短絡させる)。迷ったら「plan 未読の同僚が target だけ読み下せるか」を音読で確認。
+
+**Q4 出現回数判定**: 表記ゆれ候補 (同一概念の異表記) を個別に数えると過小カウントし、2+ 回相当が 1 回判定に落ちて誤って【要言い換えまたは削除】に分類されうる。`grep -oE 'パタンA|パタンB'` のようにパターンを OR 結合してから合計を数える。
 
 **Q4 で source plan (分析ファイル) が未提供の場合**: finding ID の原文を参照できないときは、target 文脈から復元できる範囲の展開案に「適用前に原文と照合」の注記を付けて提示し、実値を捏造しない (deep 必須前置の 1:1 索引と同じ原則を standard でも守る)。この照合注記付き修正を 1 件でも含む場合、**tier に関わらず Step 4 の提案レポート提示を省略しない** (lite の直接適用に乗せると、照合されないまま復元文が plan に書き込まれる)。
 
@@ -142,4 +146,6 @@ Q4. 番号/層ラベルか? (`Critical-A`, `α/β/γ 層`, `AC-12`, PR チェー
 - `/create-pr` — plan から PR description を生成 → 本 skill で語彙点検
 - `/create-jira-issues` — plan からチケット生成 → 本 skill で description を点検
 - `/finalize-plan` — 計画完成後、対外公開する design doc に派生させる際
-- `/dry-ssot-text` — 同一文書内の重複集約 (本 skill とは独立した別目的)
+- `/mece-plan-review` — 分析ファイル由来の finding ID (`BB-N`/`WB-N`/`IM-N` 等) が plan 本文に混入した場合、本 skill が除染する (mece-plan-review が前段)
+- `/express-intent-in-code` — 段4 ドメイン抽象での造語禁止原則と同じ思想。命名候補が plan 造語化していないかの相互参照に使える
+- `/dry-ssot-text` — 同一文書内の重複集約 (本 skill とは独立した別目的)。表記ゆれの統一を先に済ませると本 skill の出現回数判定 (grep カウント) の精度が上がるため、`/dry-ssot-text` → 本 skill の順を推奨

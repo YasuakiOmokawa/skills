@@ -51,7 +51,7 @@ description: Use when starting a complex feature where a PRD or spec exists but 
 | 3 | 設計 = delivery 品質までリファクタ(機能固定・構造を整える) | `/review-design` | Code-A′(動く・delivery 品質) |
 | 4 | コードから設計書を逆生成(磨く前の素材) | — | Doc-1 |
 | 5 | 設計書を磨く(ドメイン/用語で叩く → AC → MECE → SSOT) | `/grill-with-docs` → `/define-acceptance-criteria` → `/mece-plan-review` → `/dry-ssot-text` | Doc-2(AC + ADR 込み) |
-| 6 | レビュー + デリバリー可能に仕上げる(QA 手順・対外語彙浄化・最終 SSOT) | `/finalize-plan` + `/purge-private-vocab` + `/dry-ssot-text` | Doc-3 + QA 台帳 (PR 梱包は出荷時に `/create-pr` で判断) |
+| 6 | レビュー + デリバリー可能に仕上げる(QA 手順・対外語彙浄化・最終 SSOT) | `/finalize-plan` + `/dry-ssot-text` + `/purge-private-vocab` | Doc-3 + QA 台帳 (PR 梱包は出荷時に `/create-pr` で判断) |
 
 > step 4→6 は同じ「コード→設計書」でも fidelity が違う: 4 = 素材、5 = 設計の堅牢化(内部品質)、6 = レビュー/デリバリー化(対外品質)。
 > スキル表記: `→` は順序固定(前段の出力が次段の入力)、`+` は順不同/併用。
@@ -89,4 +89,4 @@ description: Use when starting a complex feature where a PRD or spec exists but 
 - `/prototype` — step 1 の throwaway スパイク
 - `/review-design` — step 3 のリファクタ/配置判断
 - `/grill-with-docs` `/define-acceptance-criteria` `/mece-plan-review` `/dry-ssot-text` — step 5 の設計書磨き
-- `/finalize-plan` `/purge-private-vocab` `/dry-ssot-text` — step 6 のレビュー/デリバリー仕上げ
+- `/finalize-plan` `/dry-ssot-text` `/purge-private-vocab` — step 6 のレビュー/デリバリー仕上げ

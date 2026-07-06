@@ -82,11 +82,12 @@ bash ~/.claude/plugins/marketplaces/omokawa-skills/scripts/setup.sh
 5. /define-acceptance-criteria で 受け入れ条件定義
 6. /mece-plan-review で網羅性検証
 7. /review-design で設計レビュー
-8. /finalize-plan でブランチ・PR分割・QA計画を策定
+8. /finalize-plan でブランチ・QA計画を策定
 9. 実装（Figma 反映を含むなら /extract-figma-spec で全プロパティを抽出・照合し反映漏れを防ぐ）
-10. /qa-ui で UI 検証
-11. /review-code-quality + /polish-before-commit で仕上げ
-12. /create-pr でドラフトPR作成
+10. /review-plan-diff でプランと実装 diff を突き合わせ、実装漏れ・計画外差異を検出
+11. /qa-ui で UI 検証
+12. /review-code-quality + /polish-before-commit で仕上げ
+13. /create-pr でドラフトPR作成
 ```
 
 ## ライセンス

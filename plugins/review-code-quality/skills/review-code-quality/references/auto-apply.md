@@ -69,6 +69,7 @@ SKILL.md Step 4 の仕様。Step 3 で統合した **🔴 Critical / 🟠 Major*
 - パス: `$(git rev-parse --git-dir)/quality-review-handoff.md` (= `.git/` 配下。commit されず repo-scoped、session / skill 跨ぎで永続)
 - 書き込みは **overwrite** (毎 run、現 diff に対する needs-judgment の完全集合を上書き)。append しない。
 - needs-judgment が **0 件なら申し送りファイルは作らない** (既存があれば削除する)。
+- naming (public symbol のリネーム) / cohesion (クラス分割・責務分離) の finding は `/polish-before-commit` を待たず、この申し送りファイルを渡して `/express-intent-in-code` を直接起動してよい (深掘り一点変換の後段)。申し送りファイルの**クリア責務は `/polish-before-commit` のまま**変わらない — `/express-intent-in-code` は読み込むだけで削除しない。
 - フォーマット:
 
 ```markdown

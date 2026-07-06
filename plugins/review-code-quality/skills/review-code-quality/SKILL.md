@@ -101,5 +101,6 @@ business-impact-analyzer の **skip 報告も統合レポートに残す**。
 
 ## 併用推奨 skill
 
+- `/express-intent-in-code` — 本 skill が needs-judgment とした naming / 凝集 finding の深掘り一点変換先。quality-review-handoff.md の該当 finding を渡して起動する (後段)
 - `/polish-before-commit` — 本 skill が申し送った needs-judgment 項目を受け取り、フロー末尾でユーザー判断を仰ぐ最終仕上げ役
 - `/qa-ui` — コード品質と並行して実装後 UI を検証する

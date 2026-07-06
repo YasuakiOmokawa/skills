@@ -224,5 +224,6 @@ comm -23 /tmp/all_qa_ids.txt /tmp/assigned.txt > /tmp/assign_na.txt             
 - `/define-acceptance-criteria` — 入力となる AC を定義する (前段)
 - `/mece-plan-review` — AC の網羅性を検証してから本スキルに引き継ぐ (前段)
 - `/iterate-with-prototypes` — プロトタイプ先行経路で進めたスライスも、step 5 (AC/MECE) 完走後の分析ファイルを渡せば本スキルに合流できる (前段、design-first と同格)
+- `/review-plan-diff` — 実装完了後、本スキルが確定したプラン・QA-ID マトリクスと実 diff を突き合わせて実装漏れ・計画外差異を検出する (後段)
 - `/qa-ui` — 実装完了後、本スキルが定めた QA 手順・`<plan>.qa-ledger.md`・`<plan>.preflight.md` を使って UI 検証する (後段)
 - `/create-pr` — 実装完了後、PR 梱包 (何本に切るか) を判断して PR を作成する (後段。PR 分割は finalize-plan では行わない)

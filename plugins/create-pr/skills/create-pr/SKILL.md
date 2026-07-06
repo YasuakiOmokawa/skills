@@ -126,6 +126,7 @@ rm -f "$PR_BODY_FILE"
 
 ## 併用推奨 skill
 
+- `/review-plan-diff` — PR 作成前に、確定プランと実装後の diff を突き合わせ、実装漏れ・計画外差異を検出しておく（前段）
 - `/polish-before-commit` — コミット前にプロジェクト規約・パターン一貫性を仕上げてから本 skill を起動
 - `/finalize-plan` — プランを実装可能形式に変換し、その流れで本 skill を呼ぶ
 - `/purge-private-vocab` — PR description 生成後に plan 内造語を点検
