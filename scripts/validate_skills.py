@@ -24,12 +24,40 @@ def parse_frontmatter(path: str) -> dict:
     if not m:
         err(f"{path}: frontmatter が無い")
         return {}
+    validate_frontmatter_yaml(path, m.group(1))
     fm = {}
     for line in m.group(1).splitlines():
         kv = re.match(r"^([A-Za-z-]+):\s*(.*)$", line)
         if kv:
             fm[kv.group(1)] = kv.group(2).strip()
     return fm
+
+
+def validate_frontmatter_yaml(path: str, block: str) -> None:
+    """frontmatter を厳密な YAML として検証する。
+
+    本スクリプトの行 regex パースは寛容だが、npx skills add (vercel-labs/skills) は
+    厳密な YAML パーサで frontmatter を読む。unquoted 値に「: 」が混入すると
+    そちらでだけ skill が発見不能になり、install/update が黙って失敗する
+    (v1.14.0 の qa-ui description で実際に発生し、`mapping values are not
+    allowed here` で弾かれていた)。
+    """
+    try:
+        import yaml
+    except ImportError:
+        for line in block.splitlines():
+            kv = re.match(r"^([A-Za-z-]+):\s*(.*)$", line)
+            if kv and not kv.group(2).startswith(('"', "'")) and ": " in kv.group(2):
+                err(f"{path}: frontmatter '{kv.group(1)}' の unquoted 値に ': ' を含む (YAML として不正)")
+        return
+    try:
+        data = yaml.safe_load(block)
+    except yaml.YAMLError as e:
+        first = str(e).splitlines()[0] if str(e) else "parse error"
+        err(f"{path}: frontmatter が YAML として不正 ({first})")
+        return
+    if not isinstance(data, dict):
+        err(f"{path}: frontmatter が YAML mapping でない")
 
 
 def check_skill_md(plugin: str, skill_dir: str, skill_md: str) -> None:
