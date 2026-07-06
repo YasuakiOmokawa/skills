@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "omokawa-skills",
-  "version": "3.43.0",
+  "version": "3.44.0",
   "description": "Plan-driven development workflow を構成する個別 skill 群。必要なものだけ install 可能",
   "owner": {
     "name": "Yasuaki Omokawa",
@@ -14,7 +14,7 @@
     {
       "name": "iterate-with-prototypes",
       "description": "PRD はあるが実現可能性・UX・既存API再利用が未検証の複雑機能を、code-first(動かしてから設計し設計書はコードから起こす)で本番まで進める。reversible/blast radius 小の変更向け、スキーマ/公開API契約が主リスクなら不適。",
-      "version": "0.10.0",
+      "version": "0.11.0",
       "source": "./plugins/iterate-with-prototypes",
       "skills": [
         "./skills/iterate-with-prototypes"
@@ -50,7 +50,7 @@
     {
       "name": "finalize-plan",
       "description": "プランモードで設計が確定した後、ブランチ・PR分割・QA手順を追記する。",
-      "version": "1.22.0",
+      "version": "1.23.0",
       "source": "./plugins/finalize-plan",
       "skills": [
         "./skills/finalize-plan"
@@ -122,7 +122,7 @@
     {
       "name": "qa-ui",
       "description": "実装完了後にChromeDevTools MCPでUI検証を行う。",
-      "version": "1.13.0",
+      "version": "1.14.0",
       "source": "./plugins/qa-ui",
       "skills": [
         "./skills/qa-ui"
@@ -230,7 +230,7 @@
     {
       "name": "deliver-from-spec",
       "description": "仕様文書パスを入力に、review-design〜qa-ui までの既存 skill 連鎖を機械ゲートで自動遷移させる薄いオーケストレータ。Phase 0-4 の進捗を状態ファイルへ書き出し、出荷ゲート・監査パック生成までを担う。",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "source": "./plugins/deliver-from-spec",
       "skills": [
         "./skills/deliver-from-spec"

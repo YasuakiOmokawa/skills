@@ -5,23 +5,27 @@
 fresh executor (blank slate, Task dispatch) で下記シナリオを再実行し、全 [critical] ○ を確認してから merge する。
 実行方法は empirical-prompt-tuning の「Subagent invocation contract」に従う (成果物はインライン、ファイル編集禁止)。
 
-## シナリオ: 検証不能 + Major FAIL 混在 (Step 5 判定)
+**注記 (人間委譲既定化 PR)**: 本 PR で manual 割当の QA-ID の既定実行手段を人間委譲に変更した (ブラウザ automation は明示指示時のみのオプションへ降格)。下記シナリオのうち ui-evaluator の結果を前提とするもの（「検証不能 + Major FAIL 混在」「検証不能(真の制約)がループを止めない」「計画外差異が全件QA-G追記される」「preflight参照でURL・テストデータ・権限アカウントを解決する」「OrchestratedモードでCritical 1件が他QA-IDの完了を止めない」の 5 件）は、いずれも「automation モード明示指定時」のシナリオとして読み替える（既定の人間委譲モードでは Step 4 で人間に実行手順書を提示し、その回答を判定入力とする）。再実行済み (2026-07-06、v1.14.0 PR): automation 指定へ読み替えた 5 本すべて全 [critical] ○ (後方互換を確認)。先頭シナリオは検証不能項目が Gotchas カタログ済みの真の制約のままで停止経路の検証意図とずれていたため初見の項目へ差し替え、改訂版の再実行で全 [critical] ○。人間委譲モードの新シナリオを本ファイル末尾に追加した。
 
-親エージェントとして Step 5。ラウンド 1 の ui-evaluator 結果: AC 5 件中 3 PASS / 1 Major FAIL (ボタン文言不一致) / 1 検証不能 (ファイルアップロード AC、automation 制約)。表示メッセージを作成し、ユーザーが「手動で確認した、OK だった」と返答した後のアクションも答える。
+## シナリオ: 初見の検証不能 + Major FAIL 混在 (Step 5 判定、automation モード明示指定時)
+
+親エージェントとして Step 5。automation モードが明示指定されておりラウンド 1 の ui-evaluator 結果: AC 5 件中 3 PASS / 1 Major FAIL (ボタン文言不一致) / 1 検証不能 (外部 IdP リダイレクトが automation 環境から到達できず対象画面に到達不能 — ui-evaluator は分類「初見」と報告、Gotchas テーブルに該当エントリなし)。表示メッセージを作成し、ユーザーが「手動で確認した、OK だった」と返答した後のアクションも答える。
+
+(改訂注記 v1.14.0: 検証不能項目を「ファイルアップロード」から初見の項目へ差し替えた。旧フィクスチャは Gotchas カタログ済みの `真の制約` に該当し、現行 Step 5 では非ブロッキング継続が正しい挙動になってシナリオの意図 — 未カタログ検証不能の停止経路の検証 — とずれていたため。真の制約の非ブロッキング側は次シナリオが担う)
 
 ### Requirements checklist
-1. [critical] 修正ループに入らず停止し、メッセージに検証不能と FAIL の両方 + 返答案内文を含む
+1. [critical] 修正ループに入らず停止し、初見の検証不能を `要人間確認` として記帳したうえで、メッセージに検証不能と FAIL の両方 + 返答案内文を含む
 2. [critical] 返答後: 該当項目を除外して残 FAIL (Major) を最小修正し、ラウンド 2 として Step 4 を再起動する
 3. 再起動時の Step 4 プロンプトで除外項目を検証対象から除き `手動確認済み:` 欄に 1 行注記する
-4. 検証不能の理由 (automation 制約) を表示に含める
+4. 検証不能の理由 (automation 環境から到達不能) を表示に含める
 
 ---
 
 以下は v3.1 (QA-ID 台帳ゲート方式) 追加分。収束記録: 2026-07-05。fresh executor (Task dispatch) で 4 シナリオ × Iter1-3 の 12 実行が全 [critical] ○ / accuracy 100% / retries 0。
 
-## シナリオ: 検証不能(真の制約) がループを止めない (Step 5 判定)
+## シナリオ: 検証不能(真の制約) がループを止めない (Step 5 判定、automation モード明示指定時)
 
-親エージェントとして Step 5。台帳は初期化済みで QA-H-01〜QA-H-03・QA-E-01・QA-D-01 の 5 QA-ID が pending。ラウンド 1 の ui-evaluator 結果: 5 件中 3 PASS / 1 Major FAIL (ボタン文言不一致、QA-H-02) / 1 検証不能 (QA-D-01、multipart アップロード。ui-evaluator の Gotchas テーブル分類は「真の制約」、代替検証として curl で API を直叩きし 200 を確認済みと報告)。このラウンドで台帳に記帳する内容と、次に取るアクションを答える。
+親エージェントとして Step 5。automation モードが明示指定されており、台帳は初期化済みで QA-H-01〜QA-H-03・QA-E-01・QA-D-01 の 5 QA-ID が pending。ラウンド 1 の ui-evaluator 結果: 5 件中 3 PASS / 1 Major FAIL (ボタン文言不一致、QA-H-02) / 1 検証不能 (QA-D-01、multipart アップロード。ui-evaluator の Gotchas テーブル分類は「真の制約」、代替検証として curl で API を直叩きし 200 を確認済みと報告)。このラウンドで台帳に記帳する内容と、次に取るアクションを答える。
 
 ### Requirements checklist
 1. [critical] QA-D-01 を「エスカレートして停止」しない。台帳に `検証不能(真の制約)` として記帳し、非ブロッキング終端として扱う
@@ -29,9 +33,9 @@ fresh executor (blank slate, Task dispatch) で下記シナリオを再実行し
 3. ラウンド 2 の Step 4 プロンプトで QA-D-01 を `手動確認済み:` 欄に含め、再検証対象から除外する
 4. 代替検証 (curl 200) の結果を記帳内容またはユーザー向け報告に含める
 
-## シナリオ: 計画外差異が全件 QA-G 追記される (Step 5 判定)
+## シナリオ: 計画外差異が全件 QA-G 追記される (Step 5 判定、automation モード明示指定時)
 
-親エージェントとして Step 5。台帳は QA-H-01〜QA-H-03 の 3 QA-ID が pending。ラウンド 1 の ui-evaluator 結果: 指定 QA-ID 3 件は全て PASS。加えて「計画外差異の詳細」節に 2 件 (正本と乖離するボタン色の相違 = Minor、正本にあるアイコンの欠落 = Major) が報告された。台帳・プランファイルへの記帳内容と、次のアクションを答える。
+親エージェントとして Step 5。automation モードが明示指定されており、台帳は QA-H-01〜QA-H-03 の 3 QA-ID が pending。ラウンド 1 の ui-evaluator 結果: 指定 QA-ID 3 件は全て PASS。加えて「計画外差異の詳細」節に 2 件 (正本と乖離するボタン色の相違 = Minor、正本にあるアイコンの欠落 = Major) が報告された。台帳・プランファイルへの記帳内容と、次のアクションを答える。
 
 ### Requirements checklist
 1. [critical] 発見された計画外差異 2 件を両方とも QA-G-NN (例: QA-G-01, QA-G-02) として台帳とプランファイルの手動QA手順に追記する (1 件で打ち切らない)
@@ -60,9 +64,9 @@ fresh executor (blank slate, Task dispatch) で下記シナリオを再実行し
 
 以下は v1.11.0 (preflight 契約参照) 追加分。収束記録: 2026-07-05。fresh executor で Iter1-3 全 [critical] ○ / retries 0 (Iter1 で判定順・パス結合の曖昧さを検出し SKILL.md 修正後に再収束)。
 
-## シナリオ: preflight 参照で URL・テストデータ・権限アカウントを解決する (Step 2 / Phase A・B)
+## シナリオ: preflight 参照で URL・テストデータ・権限アカウントを解決する (Step 2 / Phase A・B、automation モード明示指定時)
 
-$ARGUMENTS はパスのみ `/teams/42/settings`。プランファイル特定済み、同ディレクトリの `<プラン名>.preflight.md` に ベース URL = http://localhost:3000 / ログイン手段 = 未定 / 権限アカウント一覧 = 管理者権限 (権限分岐 AC の検証用) / テストデータ準備手順 = `bin/rails db:seed:qa_fixture` / 起点ブランチ = develop / サーバ・DB 起動コマンド = `docker compose up -d` が記載されている。権限分岐 AC が 1 件ある。(1) Step 2 の URL 決定、(2) ログイン画面表示時の挙動、(3) Phase A の実行内容、(4) Phase B で尋ねる内容を答えさせる。
+automation モードが明示指定されている。$ARGUMENTS はパスのみ `/teams/42/settings`。プランファイル特定済み、同ディレクトリの `<プラン名>.preflight.md` に ベース URL = http://localhost:3000 / ログイン手段 = 未定 / 権限アカウント一覧 = 管理者権限 (権限分岐 AC の検証用) / テストデータ準備手順 = `bin/rails db:seed:qa_fixture` / 起点ブランチ = develop / サーバ・DB 起動コマンド = `docker compose up -d` が記載されている。権限分岐 AC が 1 件ある。(1) Step 2 の URL 決定、(2) ログイン画面表示時の挙動、(3) Phase A の実行内容、(4) Phase B で尋ねる内容を答えさせる。
 
 ### Requirements checklist
 1. [critical] 検証 URL は preflight のベース URL と結合して http://localhost:3000/teams/42/settings に決定し、ベース URL をユーザーに尋ねない
@@ -74,12 +78,26 @@ $ARGUMENTS はパスのみ `/teams/42/settings`。プランファイル特定済
 
 以下は v1.12.0 (Orchestrated モード / escalation ledger) 追加分。収束記録: 2026-07-05。fresh executor で Iter1-3 全 [critical] ○ / retries 0 (Iter1 で採番規則・語彙揺れ等の仕様ギャップを検出し修正後に再収束)。
 
-## シナリオ: Orchestrated モードで Critical 1件が他 QA-ID の完了を止めない (Step 5 / Step 6)
+## シナリオ: Orchestrated モードで Critical 1件が他 QA-ID の完了を止めない (Step 5 / Step 6、automation モード明示指定時)
 
-Task 起動プロンプトに「orchestrated モードで実行。escalation は `plan.escalation-ledger.md` に記帳して続行せよ」の明示指示あり。台帳は QA-H-01〜QA-H-03 の 3 QA-ID が pending。ラウンド 1 の ui-evaluator 結果: QA-H-01 = Critical FAIL (決済二重送信)、QA-H-02・QA-H-03 = PASS。このラウンドで取るアクション、escalation ledger への記帳内容、Step 6 の完了判定表示を答えさせる。
+Task 起動プロンプトに「orchestrated モードで実行。escalation は `plan.escalation-ledger.md` に記帳して続行せよ」および automation モードの明示指示あり。台帳は QA-H-01〜QA-H-03 の 3 QA-ID が pending。ラウンド 1 の ui-evaluator 結果: QA-H-01 = Critical FAIL (決済二重送信)、QA-H-02・QA-H-03 = PASS。このラウンドで取るアクション、escalation ledger への記帳内容、Step 6 の完了判定表示を答えさせる。
 
 ### Requirements checklist
 1. [critical] QA-H-01 のために停止しない。escalation ledger に Critical として記帳し、QA-H-01 を `要人間確認` のまま保留する
 2. [critical] QA-H-02・QA-H-03 は台帳上 PASS 済みのため、Step 5.5・Step 6 まで通常どおり進める (QA-H-01 のせいで他 QA-ID の完了処理を止めない)
 3. [critical] Step 6 の完了判定表示に「escalated 1件（うち Critical 1件）」を明示し、判定は「完了」ではなく「部分完了」を上限とする
 4. escalation ledger の記帳行が `| 番号 | 出所 | 深刻度 | 内容 | 根拠 | 推奨アクション |` の列構成に従う
+
+---
+
+以下は v1.14.0 (人間委譲既定化) 追加分。収束記録: 2026-07-06。fresh executor で Iter1-3 の 3 実行が全 [critical] ○ / retries 0。
+
+## シナリオ: 人間委譲（既定）で実行手順書を提示する (Step 1 / Step 4)
+
+台帳は QA-H-01〜QA-H-03 の 3 QA-ID（手段 = manual）が pending。同ディレクトリの `<プラン名>.preflight.md` にベース URL = `http://localhost:3000` / ログイン手段 = 「テストユーザー test@example.com でログイン」/ テストデータ準備手順 = `bin/rails db:seed:qa_fixture`（Phase A で実行済み）が記載されている。ユーザーからの起動指示は「UI を確認して」のみで、automation・ui-evaluator・ブラウザ等の語は含まれない。エージェントが Step 1〜Step 4 で取るアクションを答えさせる。
+
+### Requirements checklist
+1. [critical] 実行モードを人間委譲（既定）と判定し、`mcp__chrome-devtools-direct__list_pages` を含む ChromeDevTools MCP のツールを一切呼び出さない
+2. [critical] QA-H-01〜03 それぞれについて、前提（URL・ログイン手段・テストデータ準備状況）・操作手順・確認点（チェックボックス）を含む実行手順書を QA-ID ごとに 1 ブロックで提示する
+3. [critical] 手順書提示後は ui-evaluator を Task 起動せず、人間の返答（PASS / FAIL+内容 / 検証不能+理由）を待って停止する。返答を台帳へ記帳してから Step 5.5（auto 判定の再実行ゲート）へ進む
+4. 提示前に automation オプションを使わない（ユーザーが「automation で」等と明示していないため）

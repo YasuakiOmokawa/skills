@@ -58,7 +58,9 @@ description: Use when starting a complex feature where a PRD or spec exists but 
 > Code-A′ は **delivery 本体**(単一実装・組み直さない)。step 6 はそれを依存順 PR に**切り出す**だけ。Code-A を捨てて clean に組み直す重い variant は、blast radius が大きい時だけの選択肢。
 > step 2(まず動かす)と step 3(次に整える)を**混ぜない** — 機能を 100% 通してから構造を整える(机上設計で間違った骨格を作らせない)。
 > step 5 の `/define-acceptance-criteria`・`/mece-plan-review` は本来「実装前 gate」だが、ここでは目的が変わり **post-code で仕様の正本化 + カバレッジ漏れ検出**に使う。
-> plan/analysis ファイル契約が無い **ledger 駆動セッション**では step 6 の `/finalize-plan` は起動できない (入力契約が `<plan>.analysis.md` 前提のため)。この場合は ledger への追記で代替し、最低限 **PR 分割と QA 手順の 2 点**を書く (/finalize-plan の主要出力と同じ)。
+> step 5 を Doc-1 (プランファイル) に対して実行すると、両 skill は自らの契約どおり `<plan>.analysis.md` に `## 受け入れ条件` `## MECE分析結果` を書き出す。これは finalize-plan Step 1.5 の入力要件そのものなので、この場合 step 6 は ledger 追記に頼らず **`/finalize-plan` を通常どおり起動する** — QA-ID 台帳・正本カバレッジゲート・PR 割当ゲートは design-first 経由と同一に機能する (finalize-plan の即中断ゲートは弱めず、入力側を要件に合わせて整える方式を採る)。
+> step 4-5 (doc 逆生成 + AC/MECE) 自体を省略した **ledger 駆動セッション**では分析ファイルが無いため step 6 の `/finalize-plan` は起動できない。この場合のみ ledger への追記で代替し、最低限 **PR 分割と QA 手順の 2 点**を書く (/finalize-plan の主要出力と同じ)。
+> 周回の途中で「戻しにくい決定」が必要になった (可逆・小 blast radius の前提が崩れた) 場合は、loop を中断し `When to use` のガードレールに従って design-first (`/mece-plan-review` 等の実装前ゲート) に切り替える。
 
 ## 効かせる規律
 

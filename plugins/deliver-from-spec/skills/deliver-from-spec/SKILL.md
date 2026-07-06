@@ -15,10 +15,11 @@ description: Takes a spec document path and drives the existing plan-driven skil
 
 ## 依存関係の注記
 
-Phase 1a と Phase 1d の完了条件は、本 skill と同時期に着手された次の 2 点の周辺修正を前提にしている:
+Phase 1a と Phase 1d の完了条件は、本 skill と同時期に着手された次の 3 点の周辺修正を前提にしている:
 
 1. `/review-design` が Step 6 の最終レポートを `<plan>.design-review.md` へ固定ファイル名で保存すること (Phase 1a の完了条件、および監査パック (3) の前提部品)
 2. `/finalize-plan` の PR 分割出力に「QA-ID → PR 割当」列があり、全 auto QA-ID の割当を検証するゲートがあること (Phase 1d の完了条件の 1 つ)
+3. `/iterate-with-prototypes` の完了手順に「step 5 (post-code の AC/MECE カバレッジ検証) を完走させて分析ファイルを揃えてから `/finalize-plan` を通常起動する」合流手順があること (Phase 0 のスライス可逆性判定で iwp 経路に分岐したスライスが Phase 1d へ合流するための前提。finalize-plan Step 1.5 の即中断ゲートには手を入れず、入力側を要件に合わせる方式)。未更新の環境では、finalize-plan 起動前に分析ファイルへ `## 受け入れ条件` / `## MECE分析結果` が揃っていることを人間が確認する
 
 いずれかが未着手のリポジトリでは、該当する完了条件を機械判定できない。その場合は該当条件を人間が目視確認したうえで次 Phase へ進めること。
 
@@ -36,17 +37,17 @@ Phase 1a と Phase 1d の完了条件は、本 skill と同時期に着手され
 
 | Phase | 内容 | 起動する skill / agent | 完了条件 | 詳細 |
 |---|---|---|---|---|
-| 0 | preflight 収集 + 版数確認 + status 初期化 | (自前) | preflight 環境系 5 項目確定 | [references/preflight.md](references/preflight.md) |
-| 1a | プラン起案 → 設計レビュー | `/review-design` | `<plan>.design-review.md` 存在 + fatal 0 | [references/phase-1-plan.md](references/phase-1-plan.md) |
+| 0 | preflight 収集 + PRD分解/進捗台帳起票 + スライス可逆性判定 + 版数確認 + status 初期化 | (自前) | preflight 環境系 4 項目確定 | [references/preflight.md](references/preflight.md) |
+| 1a | プラン起案 → 設計レビュー (可逆スライスは `/iterate-with-prototypes` へ分岐) | `/review-design` または `/iterate-with-prototypes` | `<plan>.design-review.md` 存在 + fatal 0 (iwp 経路は ledger 確定) | [references/phase-1-plan.md](references/phase-1-plan.md) |
 | 1b | AC 定義 → MECE 検証 | `/define-acceptance-criteria` → `/mece-plan-review` | 分析ファイルの Critical 0 (AC 修正ループ 2 周まで) | 同上 |
-| 1c | 仕様判断バッチ | (自前 `AskUserQuestion`、full-auto 時は記帳) | 未決仕様判断 0 件 | 同上 |
+| 1c | 仕様判断バッチ | (自前 `AskUserQuestion`、常に停止して確認) | 未決仕様判断 0 件 | 同上 |
 | 1d | finalize | `/finalize-plan` | カバレッジゲート pass + qa-ledger 初期化済み + 全 auto QA-ID が PR 割当済み | 同上 |
 | 2 | PR チェーン直列実装 | `Task(general-purpose)` × PR 数 | 各 PR: テスト green + lint クリーン | [references/phase-2-implementation.md](references/phase-2-implementation.md) |
 | 2.5 | diff × プラン突き合わせ | `Task(general-purpose)` + `agents/plan-diff-reviewer.md` | 指摘の Critical 0 (Major 以下は記帳して続行) | 同上 |
 | 3 | 品質ループ + QA | `/review-code-quality` → `/polish-before-commit` → `/qa-ui` (Orchestrated モード) | quality ledger 収束 + qa-ledger 完了判定 exit 0 | [references/phase-3-4-quality-and-ship.md](references/phase-3-4-quality-and-ship.md) |
 | 4 | 出荷ゲート → create-pr → 監査パック | ゲート bash → `/create-pr` | escalation 台帳 Critical 0 + 監査パック生成済み | 同上 |
 
-同期タッチ (人間の応答を要する箇所) は preflight (1 回目) + 仕様判断バッチ (出た場合のみ) + QA ログイン (認証案件のみ) + 最終監査 (監査パック提示) の **2〜4 回**。
+同期タッチ (人間の応答を要する箇所) は **preflight (1 回目、調整コスト由来)** + **仕様判断バッチ (出た場合のみ、判断価値由来 — 仕様判断は削減対象ではなく設計された人間の工程)** + **QA ログイン (認証案件のみ、判断価値由来 — QA 実行は人間委譲)** + **最終監査 (監査パック提示、判断価値由来 — 出荷判断)** の **2〜4 回**。同期タッチの削減は調整コスト由来 (入力待ち・環境準備・確認の往復) にのみ適用し、判断価値由来の同期タッチは削減対象にしない (利用者決定 2026-07-06)。
 
 ## status ファイルへの追記 (検証済み Bash)
 
@@ -70,9 +71,9 @@ echo "| ${PHASE} | ${STATE} | ${REENTRY} | ${ARTIFACT} | ${TS} |" >> "$STATUS"
 
 Phase 2 は PR ごとに `2-PR1` / `2-PR2` のような枝番フェーズ名でも追記してよい (再開判定は固定 9 フェーズのみを見るため、枝番行があっても再開先の判定を妨げない)。
 
-## Phase 0: preflight + 版数確認 + status 初期化
+## Phase 0: preflight + PRD分解/進捗台帳起票 + スライス可逆性判定 + 版数確認 + status 初期化
 
-preflight 契約 (finalize-plan の既存契約 + 「仕様判断の扱い」欄の追加) の収集手順、版数確認、Phase 0 固有の完了ゲートは [references/preflight.md](references/preflight.md) を参照。
+preflight 契約 (finalize-plan の既存契約をそのまま使用)、PRD 分解と進捗台帳 (`<PRD>.progress-ledger.md`) の起票、スライス単位の可逆性判定 (design-first か `/iterate-with-prototypes` か)、版数確認、Phase 0 固有の完了ゲートは [references/preflight.md](references/preflight.md) を参照。進捗台帳の契約詳細・実装漏れゲートは [references/progress-ledger.md](references/progress-ledger.md) を参照。
 
 ## Phase 1a-1d: プラン確定
 
@@ -127,14 +128,14 @@ Critical が残る場合の扱い (再突入・人間による上書き) は [re
 
 ### 監査パック生成 (検証済み Bash)
 
-3 台帳 (qa-ledger / quality-ledger / escalation-ledger) の集計・escalated 全行転記・design-review 転記・PR 一覧・Minor 無作為抽出・トークン消費概算を `<plan>.audit-pack.md` にまとめる。収録内容の詳細は [references/audit-pack.md](references/audit-pack.md) を参照。
+3 台帳 (qa-ledger / quality-ledger / escalation-ledger) の集計・escalated 全行転記・design-review 転記・PR 一覧・Minor 無作為抽出・トークン消費概算・工程別欠陥検出サマリを `<plan>.audit-pack.md` にまとめる。収録内容の詳細は [references/audit-pack.md](references/audit-pack.md) を参照。
 
-**検証済み Bash**（scratchpad fixture で 5 台帳・ファイル全てが揃っているケースと、全て未生成のケースの両方で例外なく完走することを確認済み。実行時、途中で見つけた `$4`/`$5` 列インデックスの取り違え — orchestration-status.md の成果物パス列は 5 列目であり 4 列目ではない — を fixture 実行で検出し修正済み）:
+**検証済み Bash**（scratchpad fixture で 5 台帳 + analysis.md の計 6 ファイルが揃っているケースと、全て未生成のケースの両方で例外なく完走することを確認済み。実行時、途中で見つけた `$4`/`$5` 列インデックスの取り違え — orchestration-status.md の成果物パス列は 5 列目であり 4 列目ではない — を fixture 実行で検出し修正済み。(7) 工程別欠陥検出サマリ追加時も同じ 2 ケース (全ファイル有り/全ファイル無し) で再検証済み）:
 
 ```bash
 QA_LEDGER="<plan>.qa-ledger.md"; QUALITY_LEDGER="<plan>.quality-ledger.md"
 ESCALATION_LEDGER="<plan>.escalation-ledger.md"; DESIGN_REVIEW="<plan>.design-review.md"
-STATUS="<plan>.orchestration-status.md"
+STATUS="<plan>.orchestration-status.md"; ANALYSIS="<plan>.analysis.md"
 
 echo "## (1) 台帳集計"; echo
 echo "### qa-ledger"
@@ -218,6 +219,77 @@ if [ -s "$STATUS" ]; then
 else
   echo "status ファイル未生成"
 fi
+
+echo; echo "## (7) 工程別欠陥検出サマリ"
+echo "この集計は各工程が下流に流す前に検出した欠陥件数を表す。下流・本番で見つかった欠陥 (漏出) はこの表ではなく次回 dogfood 計測の対象。"
+
+echo; echo "### mece-plan-review (Phase 1b)"
+if [ ! -s "$ANALYSIS" ]; then
+  echo "analysis.md: 記帳なし"
+else
+  MECE_CRITICAL=$(grep -oE '要修正（Critical [0-9]+件）' "$ANALYSIS" | tail -1 | grep -oE '[0-9]+')
+  [ -z "$MECE_CRITICAL" ] && MECE_CRITICAL=0
+  MECE_IMPORTANT=$(awk '
+    /^### Important \/ Nice-to-have/ { insection=1; next }
+    /^###/ { insection=0 }
+    insection && /^\| *[0-9]+ *\|/ && /🟡/ { c++ }
+    END { print c+0 }
+  ' "$ANALYSIS")
+  echo "Critical ${MECE_CRITICAL}件 / Important ${MECE_IMPORTANT}件"
+fi
+
+echo; echo "### review-design (Phase 1a)"
+if [ ! -s "$DESIGN_REVIEW" ]; then
+  echo "design-review.md: 未生成"
+else
+  DR_FATAL=$(grep -oE 'fatal 残存件数: *[0-9]+' "$DESIGN_REVIEW" | tail -1 | grep -oE '[0-9]+')
+  [ -z "$DR_FATAL" ] && DR_FATAL=0
+  DR_ACCEPTABLE=$(awk '
+    /^## Acceptable 残存リスク/ { insection=1; next }
+    /^## / { insection=0 }
+    insection && /^\|/ {
+      if ($0 ~ /指摘元/ || $0 ~ /^\|-+/ || $0 ~ /該当なし/) next
+      c++
+    }
+    END { print c+0 }
+  ' "$DESIGN_REVIEW")
+  echo "fatal ${DR_FATAL}件 / acceptable残存リスク ${DR_ACCEPTABLE}件"
+fi
+
+echo; echo "### review-code-quality + polish-before-commit (Phase 3)"
+if [ ! -s "$QUALITY_LEDGER" ]; then
+  echo "quality-ledger: 記帳なし"
+else
+  awk -F'|' '
+    /^\| *[0-9]+ *\|/ {
+      sev=$4; gsub(/^[ \t]+|[ \t]+$/,"",sev)
+      key=$2"::"$3; rowsev[key]=sev
+    }
+    END { for (k in rowsev) c[rowsev[k]]++; for (s in c) printf "%s %d件\n", s, c[s] }
+  ' "$QUALITY_LEDGER" | sort
+fi
+
+echo; echo "### qa-ui (Phase 3)"
+if [ ! -s "$QA_LEDGER" ]; then
+  echo "qa-ledger: 記帳なし"
+else
+  awk -F'|' '
+    /^\| *QA-/ {
+      id=$2; gsub(/^[ \t]+|[ \t]+$/,"",id)
+      method=$3; gsub(/^[ \t]+|[ \t]+$/,"",method)
+      state=$4; gsub(/^[ \t]+|[ \t]+$/,"",state)
+      key=id"::"method; row[key]=state
+    }
+    END { for (k in row) if (row[k] ~ /^FAIL/) c++; print "FAIL " c+0 "件" }
+  ' "$QA_LEDGER"
+fi
+
+echo; echo "### escalation (工程横断、深刻度別)"
+if [ ! -s "$ESCALATION_LEDGER" ]; then
+  echo "escalated 0件"
+else
+  echo "escalated ${TOTAL}件（うち Critical ${CRITICAL}件 / Major ${MAJOR}件 / Minor ${MINOR}件） — escalation-ledger の「出所」列は記帳元スキルにより QA-ID/AC-ID/スキル名のいずれかで書式が異なるため、工程別ではなく深刻度別の集計に留める"
+fi
 ```
 
 ## 再突入・ハンドオフの規則
@@ -227,7 +299,8 @@ fi
 
 ## 併用推奨 skill
 
-- `/review-design` — Phase 1a で起動
+- `/review-design` — Phase 1a で起動 (不可逆決定を含むスライス)
+- `/iterate-with-prototypes` — Phase 0 のスライス可逆性判定で可逆・小 blast radius と判定された場合、Phase 1a の代わりに起動
 - `/define-acceptance-criteria` — Phase 1b で起動
 - `/mece-plan-review` — Phase 1b で起動 (Orchestrated モード)
 - `/finalize-plan` — Phase 1d で起動

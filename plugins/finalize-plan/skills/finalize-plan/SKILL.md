@@ -48,7 +48,9 @@ description: Turns AC and MECE results from the analysis file into a branch stra
 先に /define-acceptance-criteria → /mece-plan-review を実行してください。
 ```
 
-例外: 分析ファイルが無く **ledger 駆動** (`/iterate-with-prototypes` の単一正本ファイルで進行中) のセッションでは、本 skill を起動せず iterate-with-prototypes step 6 の ledger 追記代替 (PR 分割 + QA 手順を ledger に書く) に従う。上の中断メッセージは「分析ファイルが本来あるべきなのに無い」場合のみ表示する。
+例外: `/iterate-with-prototypes` の step 4-5 (doc 逆生成 + AC/MECE) 自体を省略し、分析ファイルが一度も作られていない **ledger 駆動** セッションでは、本 skill を起動せず iterate-with-prototypes step 6 の ledger 追記代替 (PR 分割 + QA 手順を ledger に書く) に従う。上の中断メッセージは「分析ファイルが本来あるべきなのに無い」場合のみ表示する。
+
+`/iterate-with-prototypes` の step 5 (`/define-acceptance-criteria` → `/mece-plan-review`) を経て `## 受け入れ条件` `## MECE分析結果` を備えた分析ファイルが既に作られている場合、この例外にはあたらない — design-first 経由の分析ファイルと同じ入力として扱い、本 skill を通常どおり起動する。Step 1.7 以降 (QA-ID enumerate・Step 3.5 の正本カバレッジ・ゲート/PR 割当ゲート・Step 4 の QA-ID 台帳・Step 5 の preflight 契約) は分析ファイルの起源 (design-first / プロトタイプ先行) を区別せず同一に動作する。
 
 分析ファイルに `## 正本抽出結果` (extract-figma-spec Step5 等が生成する "atom ID + 期待値 + 状態" のテーブル) があれば追加入力として読む。無くてもエラーにはしない (Step 3.5 が skip として扱うフォールバックを維持する)。
 
@@ -262,5 +264,6 @@ comm -23 /tmp/all_qa_ids.txt /tmp/assigned.txt > /tmp/assign_na.txt             
 
 - `/define-acceptance-criteria` — 入力となる AC を定義する (前段)
 - `/mece-plan-review` — AC の網羅性を検証してから本スキルに引き継ぐ (前段)
+- `/iterate-with-prototypes` — プロトタイプ先行経路で進めたスライスも、step 5 (AC/MECE) 完走後の分析ファイルを渡せば本スキルに合流できる (前段、design-first と同格)
 - `/qa-ui` — 実装完了後、本スキルが定めた QA 手順・`<plan>.qa-ledger.md`・`<plan>.preflight.md` を使って UI 検証する (後段)
 - `/create-pr` — finalize で固めた PR 分割をもとに PR を作成する (後段)
