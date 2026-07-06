@@ -5,3 +5,6 @@
 
 # Dependencies (if ever needed)
 node_modules/
+
+# Python bytecode
+__pycache__/
