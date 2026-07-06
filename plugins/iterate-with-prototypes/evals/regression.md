@@ -23,4 +23,4 @@ fresh executor に The loop 表とその直下の note (step 4→6 の note 群)
 2. [critical] 合流手順が実行順で書ける: 「step5 完走 → 分析ファイル成立 → finalize-plan 通常起動」(a) と「step4-5 省略 → ledger 追記代替」(b) の分岐を取り違えない
 3. (c) では loop を中断し `When to use` のガードレールに従って design-first (`/mece-plan-review` 等の実装前ゲート) へ切り替えると判定される
 
-収束記録: 未実施。
+収束記録: 2026-07-06 (v0.11.0 PR)。初回実行で全 [critical] ○ (合流分岐 (a)/(b)/(c) の 3 判定とも規定どおり)。

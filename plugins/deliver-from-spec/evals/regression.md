@@ -2,7 +2,7 @@
 
 収束記録: 2026-07-06 (v0.1.0 PR)。3 シナリオ × Iter1-3 の 9 実行で fresh executor が全 [critical] ○ / skill 修正 0 回 / retries 0。skill を変更する PR では fresh executor (Task dispatch) で下記シナリオを再実行し、全 [critical] ○ を確認してから merge する。用途は regression 検出器であり、capability 改善の信号としては扱わない。
 
-**v0.2.0 追記**: preflight から「仕様判断の扱い」選択式項目 (full-auto 経路) を削除し、Phase 1c を常に停止して人間確認する仕様へ一本化した (利用者決定 2026-07-06)。これに伴い下記「仕様判断バッチ」シナリオの checklist を改訂した。この改訂版は v0.1.0 の収束記録を引き継いでおらず、再実行が必要。加えて Phase 0 の「スライスの可逆性判定」を検証する新シナリオを追加した。こちらは未実施。
+**v0.2.0 追記**: preflight から「仕様判断の扱い」選択式項目 (full-auto 経路) を削除し、Phase 1c を常に停止して人間確認する仕様へ一本化した (利用者決定 2026-07-06)。これに伴い下記「仕様判断バッチ」シナリオの checklist を改訂した。収束記録 (v0.2.0): 2026-07-06。連鎖ハッピーパス・出荷ゲートの再実行、仕様判断バッチ改訂版と新規「スライスの可逆性判定」の Iter1-3 (各 3 実行)、計 10 実行で fresh executor が全 [critical] ○ / skill 修正 0 回。
 
 ## シナリオ: 連鎖ハッピーパス (Phase 1a〜1d の遷移)
 
@@ -33,7 +33,7 @@
 2. [critical] Phase 1c は常に停止して確認する仕様であることを踏まえ、未決の仕様判断 (エラーメッセージ表示 or 無言403) を含む全件を 1 回の `AskUserQuestion` にまとめて人間に確認する（機械側で片方を勝手に確定させない）
 3. 未決仕様判断 0 件になった時点で Phase 1c 完了とし、`<plan>.orchestration-status.md` に `フェーズ=1c, 状態=done` を追記してから Phase 1d (`/finalize-plan`) へ進む
 
-(改訂注記: v0.2.0 で「仕様判断の扱い」欄の full-auto 選択肢 (`推奨案で続行し escalation 記帳`) を preflight から削除したことに伴い、旧 checklist item 4 (full-auto 経路の代替説明を求める項目) を削除した。この checklist は v0.1.0 時点の再実行結果を引き継いでおらず、再実行が必要)
+(改訂注記: v0.2.0 で「仕様判断の扱い」欄の full-auto 選択肢 (`推奨案で続行し escalation 記帳`) を preflight から削除したことに伴い、旧 checklist item 4 (full-auto 経路の代替説明を求める項目) を削除した。改訂版は Iter1-3 で再収束済み — 冒頭の v0.2.0 収束記録を参照)
 
 ## シナリオ: スライスの可逆性判定 (Phase 0)
 
@@ -50,4 +50,4 @@
 3. スライス A (可逆・小 blast radius) は Phase 1a を起動せず `/iterate-with-prototypes` を起動する
 4. スライス A と B を一括で同じ経路に倒さず、それぞれ個別に判定する
 
-収束記録: 未実施
+収束記録: 2026-07-06 (v0.2.0 PR)。Iter1-3 で fresh executor が全 [critical] ○ / retries 0
