@@ -90,6 +90,97 @@ bash ~/.claude/plugins/marketplaces/omokawa-skills/scripts/setup.sh
 13. /create-pr でドラフトPR作成
 ```
 
+## AIプロトタイプ駆動開発ワークフローの推奨例
+
+```
+## フェーズ0: 技術調査 (候補出しまで)
+
+技術候補の比較・リスク列挙はここまで。確定は spike に譲る
+(実案件で調査結果の誤り 3 点を spike が訂正した。調査は仮説の候補リストであり結論ではない)。
+調査結果はフェーズ1 の仮説 ledger の入力にする
+
+## フェーズ1: PoC (使い捨て検証・速度優先)
+
+prd から poc をつくりたい。/iterate-with-prototypes に従い、検証したい仮説を
+「主張 / 検証方法 / kill 条件」の ledger にしてから spike して。
+使い捨て前提なので AC/MECE/finalize のフル計画装備はこのフェーズでは省略
+
+### Figma 再現度が検証対象の仮説に含まれる場合のみ
+/extract-figma-spec で figma design をソースコードに反映して
+
+/qa-ui を automation で実行して
+
+仮説 ledger の各項目を grounded / killed / unverified で確定し、
+「やらなかったこと」を列挙してプランファイルに記録して
+
+PoC レビューで新しい要望・仮説が出たら、ledger に行を追加して同ブランチで
+追加 spike する (フェーズ1 内で完結させる。例: 手書きサインのリアルタイム反映)
+
+/create-pr    # draft + DONOTMERGE。merge しない参照用
+
+## フェーズ2: 設計確定 (DD 用)
+
+PoC の仮説 ledger (grounded/killed) と「やらなかったこと」各項目 → 対応先
+(ADR / AC / 後続チケット) のマッピング表を作って、本実装設計の入力にして
+
+固めた prd と PoC の学びを参考に本実装を設計。既存コードベースの慣習に従うよう設計して /grill-with-docs
+/review-design
+
+カレントブランチから新しくきって、設計書を /express-intent-in-code のガイドラインに
+したがって実装。コミットは指示があるまで実施しない
+
+/simplify
+/vercel-react-best-practices
+/vercel-composition-patterns
+/review-code-quality
+/express-intent-in-code
+コードコメントと md ファイルに /dry-ssot-text → /purge-private-vocab
+! npx react-doctor@latest --verbose --diff
+/polish-before-commit
+
+/create-pr    # draft。DD 確定用
+
+## フェーズ2.5: DD 作成 → タスク分解
+
+DD テンプレートとプロトタイプ PR に従い、DD 作成
+
+DD に /dry-ssot-text → /purge-private-vocab   # レビュー依頼前に plan 造語を除染
+
+(人間: DD レビュー → LGTM)
+
+/map-user-stories で US / タスクに分解    # 出荷が複数 PR に跨るときのみ。1 タスク ≒ 1 vertical slice ≒ 1 PR
+/create-jira-issues で Jira へ一括登録    # チケット運用するなら
+
+## フェーズ3: 出荷実装 (2.5 で分解したタスクごとに 1 周まわす)
+
+全スライスの進捗は progress-ledger (`<prd>.progress-ledger.md`) に追記して追跡する。
+フル装備 (AC→MECE→finalize) は重篤度の高いスライスに限る。軽微なスライスは
+AC/MECE/finalize を省略し、DD 該当タスクを転記した簡易プラン → 実装 →
+/review-plan-diff → /qa-ui → 品質パス → /create-pr の fast path でよい
+
+DD と該当タスクをもとに出荷用プランファイルをつくって /grill-with-docs
+/define-acceptance-criteria
+/mece-plan-review
+/finalize-plan
+/dry-ssot-text → /purge-private-vocab → japanese-writing.md と照合
+
+プランファイルを /express-intent-in-code のガイドラインで実装。コミットは指示まで禁止
+/review-plan-diff
+/qa-ui
+
+/simplify
+/vercel-react-best-practices
+/vercel-composition-patterns
+/review-code-quality
+/express-intent-in-code
+コードコメントと md ファイルに /dry-ssot-text → /purge-private-vocab
+! npx react-doctor@latest --verbose --diff
+/polish-before-commit
+
+/create-pr    # 正式な出荷 PR (ready for review)
+```
+
+
 ## ライセンス
 
 MIT。詳細は [`LICENSE`](./LICENSE) を参照。
