@@ -2,6 +2,8 @@
 
 ## 作成後に PR description を更新する場合
 
+同一手順は Step 10 で対象ブランチに既存 PR が見つかった場合の本文更新にも適用する (その場合の `<PR_NUMBER>` は `gh pr list` で取得した既存 PR 番号)。
+
 **まず `gh pr edit --body-file <file>` を試す** (gh 2.90.0 以降は成功が確認されている)。**Projects Classic deprecation エラーが出た場合のみ** GitHub REST API (`gh api ... --method PATCH -F body=@<file>`) にフォールバックする。本 skill は npx skills add で配布され gh バージョンを仮定できないため、try-then-fallback が新旧両 gh で堅牢。固定パス禁止 / `mktemp` 規約 (下記) はどちらの経路でも維持する。
 
 ## 前提: 固定パス (`/tmp/pr-body.md` 等) を使わない
