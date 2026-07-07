@@ -1,6 +1,6 @@
 ---
 name: define-acceptance-criteria
-description: Fills a matrix of 3 required categories (normal, error, edge) by controlled-vocabulary perspectives to enumerate acceptance criteria into the analysis file. Use when in plan mode before /mece-plan-review, when the user asks to write AC for a plan ("受け入れ条件を定義して" / "AC を書いて"), or when an AC matrix is needed as MECE input.
+description: Fills a matrix of 3 required categories (normal, error, edge) by controlled-vocabulary perspectives to enumerate acceptance criteria into the analysis file. Use when in plan mode before /mece-plan-review, when the user asks to write AC for a plan ("受け入れ条件を定義して" / "AC を書いて"), when an AC matrix is needed as MECE input, or when delegated to a subagent (Task tool) for the same purpose.
 ---
 
 # define-acceptance-criteria
@@ -142,6 +142,16 @@ observability を含める場合の実効上限は **6 軸** (主軸 5 + observa
 **M 算出**: 簡略式 (各セル 1 項目固定) は `M = N × 3 + K`。各セルに複数項目を含む場合は実数表記に分岐 (`AC: M項目定義済み (内訳: 必須X件 + 非影響確認K件)`)。判定: `M == N × 3 + K` なら簡略式、不一致なら実数表記。
 
 **N / X / K の定義**: N = 主軸数 (observability 等の追加軸は N に含めず `+ observability` のように別表記)。X = 正常系 + 異常系 + エッジケースの**実 AC 行数**、K = 非影響確認の**実 AC 行数** (いずれも理論値 N×3 ではなく実カウント)。
+
+## 委譲実行 (subagent として起動された場合)
+
+- **入力解決**: プランファイルパスは [references/init-common.md](references/init-common.md) の「プランファイル特定」の優先順位で解決する (起動プロンプト本文の明示指定を `$ARGUMENTS` 相当として優先し、`Plan File Info:` は単独起動時のみ参照)。
+- **変更ファイル抽出フォールバック (Step 1)**: 末尾の AskUserQuestion が利用可能ツールに無い場合、自然言語類推による最善推測を `(推定)` 付きで採用し AC 生成を継続する。回答を待って停止しない。
+- **完了報告**: Step 6 完了後の最終メッセージに次を含める。
+  1. 分析ファイルの絶対パス
+  2. `### Tier` の判定結果
+  3. Step 6 の M 値 (AC 件数サマリー1行)
+  4. 変更ファイル一覧が `(推定)` に基づく場合、その旨を要人間判断項目として明記する
 
 ## 併用推奨 skill
 

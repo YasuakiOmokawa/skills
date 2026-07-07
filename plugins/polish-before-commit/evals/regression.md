@@ -30,3 +30,17 @@ Task 起動プロンプトに「orchestrated モードで実行。escalation は
 2. [critical] 記帳後、完了報告して終了する (「コミットへ進めますか?」の質問形にしない)
 3. escalation ledger の記帳行が `| 番号 | 出所 | 深刻度 | 内容 | 根拠 | 推奨アクション |` の列構成に従い、各項目の深刻度 (Major / Minor) を保持する
 4. 申し送りファイル (`quality-review-handoff.md`) を提示後にクリアする (ledger へ転記済みのため stale として残さない)
+
+---
+
+以下は empirical-prompt-tuning 第3ラウンド (GREEN1-5) 追加分。収束記録: 2026-07-07 (次回 minor bump 時に version 反映予定)。fresh executor で Iter2-4 (再評価3ラウンド) 全 [critical] ○ / accuracy 100%。hold-out シナリオで escalation ledger のデフォルトパス規則が一度未定義のため checklist 1 件 (critical) 失敗 (accuracy 83.3%) を検出 → 優先順位を3段に明記する修正後、同一シナリオを新規 fixture で再実行し 6/6 (100%) に回復したことを確認済み。
+
+## シナリオ: Orchestrated モードで escalation ledger の具体パス指定が無い場合のデフォルト解決
+
+Task 起動プロンプトに「orchestrated モードで実行。escalation は記帳して続行せよ」の指示のみで、具体パスも計画・仕様名 (「プラン名」) も明示されていない。加えて Step 8 (最終レビュー) でバグ 1 件・その他 (品質) 指摘複数件が見つかった状態で Step 9 に到達した場合の、(a) escalation ledger ファイルパスの決定方法、(b) Step 8 の報告文言、を答えさせる。
+
+### Requirements checklist
+1. [critical] 明示パスも「プラン名」も無い場合、`references/orchestrated-mode.md` の優先順位 (1: 明示 `<path>` → 2: 呼び出し側指示中の「プラン名」→ 3: `$(git rev-parse --git-common-dir)/escalation-ledger.md`) に従い、3番目の既定値へ迷わず (ユーザーに確認を返さず) フォールバックする
+2. [critical] Step 8 の報告文言が `[最終レビュー: 指摘 N 件 (内訳: バグ X / 規約違反 Y / その他 Z)]` に厳密一致し、内訳の分類基準 (バグ=実行時に誤動作する欠陥、規約違反=Step1収集の明文規約との不一致、その他=それ以外の品質指摘) どおりに数値が割り振られている
+3. Step 9 集約が Step 8 の残存指摘も対象に含め、深刻度をバグ→Major、規約違反・その他→Minor で機械的に決定している
+4. escalation ledger 記帳後、ユーザーの返答を待たず完了報告して終了している

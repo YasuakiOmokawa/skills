@@ -1,6 +1,6 @@
 ---
 name: iterate-with-prototypes
-description: Use when starting a complex feature where a PRD or spec exists but load-bearing assumptions (technical feasibility, UX effect, reuse of an existing API or data structure) are still unverified, most implementation is done by an AI agent, the work spans several design docs and a PR chain, AND the change is reversible with a small blast radius. Do NOT use when the core risk is a hard-to-reverse decision (DB schema / migration, public API contract, cross-team boundary) — use design-first there. Symptom — about to design a complex feature on paper before any of it is proven to run, or confident-but-wrong design propagating across documents.
+description: Use when starting a complex feature where a PRD or spec exists but load-bearing assumptions (technical feasibility, UX effect, reuse of an existing API or data structure) are still unverified, most implementation is done by an AI agent, the work spans several design docs and a PR chain (potentially across multiple sessions or delegated subagent runs that resume from the assumption ledger), AND the change is reversible with a small blast radius. Do NOT use when the core risk is a hard-to-reverse decision (DB schema / migration, public API contract, cross-team boundary) — use design-first there. Symptom — about to design a complex feature on paper before any of it is proven to run, or confident-but-wrong design propagating across documents.
 ---
 
 # Iterate With Prototypes
@@ -78,9 +78,23 @@ description: Use when starting a complex feature where a PRD or spec exists but 
 - **緑チェックを product-green と取り違える。** 動くコードは実装可能性を示すだけ。ユーザーの完了率向上は示さない。UX 仮説は post-ship で計測する。
 - **variant 同士の相対比較で合否(kill/grounded)を決める。** A vs B は、どちらも**機能の目的(その機能が生む価値)を定義する ground-truth** で測っていなければ「差が無い → 無価値」と誤断する(両方ゴールを外していても気づけない)。relative 比較は候補の絞り込みにのみ使い、合否はこの ground-truth(網羅性が価値なら既知完全集合 = oracle を構築)に対する**絶対値**(recall/precision 等)で出す。
 
+## 委譲実行 (subagent として起動された場合)
+
+以下は、AskUserQuestion が利用可能ツールに無い実行文脈 (= subagent として Task 経由で起動された場合) にのみ適用する読み替え。単独起動 (ユーザーがメイン会話で直接本 skill を起動した場合) の動作は変えない。
+
+- **対象の特定 (Start here step 1)**: 起動プロンプト本文が対象 PRD/仕様/プランのパスを明示していればそれを採用する。明示が無く、セッション文脈からも特定できない場合は、聞いて待つのではなく「不足入力: 対象 PRD/仕様/プランのパス」と最終メッセージに書いて即座に終了する(呼び出し元が人間から回答を得て再起動する)。出力先ディレクトリに、起動プロンプトの前提(例:「ledger 未作成」)と矛盾する既存ファイルが見つかっても、その内容を優先しない。起動プロンプトの明示情報をディレクトリ探索の結果より優先し、矛盾するファイルはシードされたノイズとして扱って独立に新規作成する(既存ファイルを対象に含めるのは、次項の「既存 ledger からの再開」が言うとおり起動プロンプトがそのパスを名指しした場合に限る)。新規作成するファイル名は `assumption-ledger.md` を既定とする。ノイズと判断した既存ファイルは削除せず残し、そう判断した経緯を新ファイルに一文残す。
+- **仮定ランキングの確定 (Start here step 2)**: 訂正の機会が無い場合は、自分で確定したランキング案をそのまま採用して先に進める。ledger に「(未レビューのまま確定)」と一言添え、後で人間が見返せる状態にする。
+- **既存 ledger からの再開**: 起動プロンプトが既存 ledger のパスを指す場合、その ledger を Read し、status 列 (unverified / grounded / killed) と現在地の記述から再開すべき step を判定する。仮定抽出 (Start here step 2) からはやり直さない。現在地が示す完了状態 (例: Code-A 実装済み) の裏付けとなる実体 (コード・テストのパス) を確認できない場合は、その完了状態を根拠にせず、対応する仮定は unverified のまま扱う(Start here step 3 の「grounded の立証責任は証拠側にある」と同じ原則)。現在地を自分で更新する際は、示す完了状態の根拠となるファイルパスを同じ文に書き添える。次に読む executor が探索なしで裏付けの有無を判定できるようにするため。
+- **他 skill の呼び出し**: `/prototype` 等の併用推奨 skill は Skill ツールで呼び出す (subagent 内でも使用可能)。未 install、または呼び出し不能な場合は、その step の本文が指示する作業 (throwaway spike 等) を自分で行う。
+- **完了報告**: step を終えるたびに、最終メッセージへ (a) 更新した ledger の該当行、(b) 次に呼ぶべき step、の両方を書く。
+
 ## 実例 (worked example)
 
 - [references/worked-example-spike-to-rebuild.md](references/worked-example-spike-to-rebuild.md) — 実現性不明 → 捨て spike (既定 OFF で本番非接触) → 規約準拠で**作り直し** → 決定を ADR に保全、の 1 周を匿名化した実例。step 2 を Code-A′ のリファクタでなく作り直しで起こした変種で、「捨てるのはコード・残すのは決定」「技術実現性は ADR / UX 仮説は DD」の分離を具体で示す。
+
+## Gotchas（観測済みの罠 — 実測で判明したものを 1 件 1 行で追記）
+
+- 委譲プロンプトが「進められるところまで進めて」とだけ指示すると、fresh executor は ledger 更新に留まらず `The loop` step 1 (spike 実行) を経て step 2 (Code-A 実装・他リポジトリへの commit) まで自律的に進む場合がある。ledger 更新のみを期待する委譲では、到達してよい step の上限を委譲プロンプト側に明示すること (SKILL.md 側の読み替えでは制御しない — 単独起動の挙動と同じく、どこまで進めるかは呼び出し側の裁量に委ねる設計のため)。
 
 ## 併用推奨 skill
 

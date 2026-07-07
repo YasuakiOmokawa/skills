@@ -46,6 +46,42 @@ Requirements checklist:
 2. [critical] pass-through の method を浅い部分として具体的に指摘する
 3. greenfield のため観点ごとに判定根拠を 1 行付記する
 
+## シナリオ: 委譲実行 (subagent として起動された場合)
+
+収束記録: 2026-07-07。baseline (Iter1) で委譲実行時の入力解決順位不明・Step3再実行時のstep番号ズレ・プラン不在時のStep4/6分岐未規定・`${CLAUDE_PLUGIN_ROOT}`解決規則不在を観測し、SKILL.md に `## 委譲実行` 節を新設して解消。Iter2・Iter3・hold-out (計5 fresh executor) で checklist 全 [critical] ○ / accuracy 100% を維持。tool_uses/duration はラウンドにより ±10%/±15% を外れる回があったが (Scenario B の duration が Iter3 で +27%)、機能面 (checklist 合否) には影響なし。3 イテレーション連続で新規不明点 0 には至らず (テーマは毎回異なる軽微なドキュメント精度指摘のロングテール) 発散と判定し、追加の構造修正は打ち切った。詳細は本 skill の Gotchas を参照。
+
+### シナリオ A: プランファイルあり (Task 経由の委譲)
+
+`Task(subagent_type="general-purpose")` で起動され、既存プランファイル (greenfield 新規機能、配置・パターン判定が争点) のパスを渡されて委譲実行する。
+
+Requirements checklist:
+1. [critical] Q1-Q3 の判定に基づき reviewer subset が決定され、選定された reviewer 名が最終報告に明記されている
+2. [critical] Devil's Advocate (Step 5) が Step 3 の reviewer 指摘と異なる角度の指摘を出し、対話待ちで停止せず Step 6 まで完遂している
+3. `<plan>.design-review.md` が Write され、内容が最終報告と一致している
+4. 最終メッセージに保存先パスが明記されている
+5. Step 4 の指摘反映方法が SKILL.md の規定 (プランを直接 Edit し要約貼り付けをしない) に沿っている、または致命指摘が無かった旨が明記されている
+
+### シナリオ B: プランファイル不在 (feature description のみ)
+
+`Task(subagent_type="general-purpose")` で起動され、プランファイルを作成していない自由文の feature description (auth territory 相当) のみでレビューを依頼される。
+
+Requirements checklist:
+1. [critical] 自由文の feature description から Q1-Q3 を判定し、reviewer subset を決定してレビュー内容をチャット応答内に提示している
+2. [critical] プランファイルが存在しないため `<plan>.design-review.md` への Write を試みておらず、保存を skip した旨を最終メッセージで明示している
+3. Devil's Advocate (Step 5) が実行され、fatal / acceptable の判定が最終報告に含まれている
+4. 質問待ちで停止せず、レビュー結果を返して完結している
+5. territory 該当を認識し、reviewer subset・DA モードの選定にそれが反映されている
+
+### シナリオ C (hold-out): 指定されたプランファイルパスが存在しない
+
+`Task(subagent_type="general-purpose")` で起動され、プランファイルパスを渡されるが実体が存在しない (作成前に消えた、パス誤りなど)。
+
+Requirements checklist:
+1. [critical] パスが存在しないことを検知し、内容を捏造せず、質問して待つ状態にせず、その旨を最終メッセージで明示して完結している
+2. [critical] 存在しないファイルパスへの Write/Edit を試みてエラーになっていない
+3. 最終メッセージが「プランファイルが見つからない」事実を明示しており、内容を推測で埋めた気配がない
+4. 委譲実行特有の入力解決順位 (Plan File Info / 会話履歴を参照しない) を踏まえた挙動になっている
+
 ## シナリオ: matrix routing (SKILL.md)
 
 新規 module / interface 設計 (深さ・seam が論点) の plan に対し reviewer subset を選ぶ。

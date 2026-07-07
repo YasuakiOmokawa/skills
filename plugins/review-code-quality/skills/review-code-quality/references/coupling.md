@@ -162,7 +162,7 @@ function sendWelcomeEmail(recipient: EmailRecipient) {
 以下の特徴を持つ場合は coupling-analyzer の責務として検出する:
 - impl 側で enum / state に新しい値を追加したが、対応する spec context (`describe '<新値>のとき'` / `context 'when <新値>'`) が存在しない
 - impl 側で新しい分岐 (新しい if/case ブランチ / Policy の権限ロール追加 / Job の status 値追加) を追加したが、当該ブランチを通る spec が無い
-- グローバル `~/.claude/rules/ruby-coding.md` の「caller 経路 spec を audit」要件と整合: 新規 attribute 値 → caller spec の stub なし context 探索 → 当該 context 不在を Important で報告
+- グローバル `~/.claude/rules/ruby-coding.md` (存在しない環境では参照せず判定を進める) の「caller 経路 spec を audit」要件と整合: 新規 attribute 値 → caller spec の stub なし context 探索 → 当該 context 不在を Important で報告
 - **報告前の実在確認 (必須)**: 「spec context 不在」を報告する前に、対応する spec ファイルを grep し (`grep -n '<新値/分岐キーワード>' spec/<対応ファイル>`)、同カバレッジの spec が本当に無いことを確認する。既存 spec が別の書き方 (共有 example / 別名 context / 値の直接検証) で同じ分岐を既に通している場合は報告しない (既存 spec で網羅済みの gap を報告した誤検出の実績がある)
 
 ## トレードオフ

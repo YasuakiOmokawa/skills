@@ -25,7 +25,7 @@ tools:
 ## 参照ドキュメント
 
 起動時に必ず以下を読み込む:
-- `${CLAUDE_PLUGIN_ROOT}/skills/review-code-quality/references/cohesion.md`
+- `${CLAUDE_PLUGIN_ROOT}/skills/review-code-quality/references/cohesion.md`（`${CLAUDE_PLUGIN_ROOT}` が生文字列のままなら、この agent 定義ファイルと同じ `agents/` ディレクトリから見た `../references/cohesion.md` として読み替える）
 
 ## 検出基準
 

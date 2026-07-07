@@ -16,7 +16,7 @@ SKILL.md "Workflow" の本文と相互参照する canonical 定義集。SKILL.m
 
 Switch from `inline default` to `subagent dispatch` if **any** of:
 
-1. Reviewers with `❌` ≥ 2 (across the 4 reviewer types)
+1. Reviewers with `❌` ≥ 2 (across the 5 reviewer types)
 2. **Single-trigger escalators** (any 1 hit forces escalation):
    - DB transaction boundary violation (external API in callback / multi-Aggregate write / missing saga)
    - Concurrency / idempotency defect (race condition / duplicate notify / multi-tab contention)

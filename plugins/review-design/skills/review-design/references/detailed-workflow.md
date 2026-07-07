@@ -61,4 +61,4 @@ services/user-service.ts → implements UserRepository
 
 ## 7. 設計判断の出力 + Parallel Review
 
-設計判断をまとめた後、SKILL.md の Parallel Review Workflow (Step 2-4) を実行。
+設計判断をまとめた後、SKILL.md の Parallel Review Workflow (Step 3-4) を実行。

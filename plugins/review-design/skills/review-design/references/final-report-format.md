@@ -1,6 +1,6 @@
 # Final report format (Step 6)
 
-The final report has two routes depending on whether the plan was edited.
+The final report has three routes: two depending on whether the plan was edited, plus one for when no plan file exists at all.
 
 ## Problem-free route
 
@@ -8,6 +8,7 @@ Conditions: Parallel Review all ✅ **AND** Devil's Advocate fatal count = 0.
 
 ```
 設計レビュー完了。問題なし。
+保存先: <plan>.design-review.md
 ```
 
 ## Problem-found route
@@ -18,9 +19,23 @@ Conditions: any reviewer returned ❌/⚠️, OR DA flagged ≥1 fatal finding a
 設計レビュー完了。以下を修正しました:
 - <what → how it was fixed (1 issue = 1 line)>
 - <...>
+保存先: <plan>.design-review.md
 ```
 
 The plan file body must contain the corrected design itself, never an analysis summary or report dump.
+
+## プラン不在の場合 (Step 0 で feature description のみが得られ、プランファイルパスが解決できない invocation)
+
+Step 4 の Edit と Step 6 の Write はどちらも保存先パスが無いため実行しない (存在しないパスへの書き込みを試みない)。指摘はプランへの反映でなく、チャット応答内に直接提示する。
+
+```
+設計レビュー完了 (プランファイル不在のためレビュー結果を直接提示)。
+- <reviewer / Devil's Advocate の指摘 (1 issue = 1 line)。指摘が無ければ「問題なし」>
+- <...>
+保存: プランファイル不在のため skip
+```
+
+「1 issue = 1 line」の粒度規則 (下記) は本テンプレートにも適用する。
 
 ### "1 issue = 1 line" granularity
 
