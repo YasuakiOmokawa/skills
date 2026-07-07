@@ -1,6 +1,6 @@
 ---
 name: define-acceptance-criteria
-description: Fills a matrix of 3 required categories (normal, error, edge) by controlled-vocabulary perspectives to enumerate acceptance criteria into the analysis file. Use when in plan mode before /mece-plan-review, when the user asks to write AC for a plan ("受け入れ条件を定義して" / "AC を書いて"), when an AC matrix is needed as MECE input, or when delegated to a subagent (Task tool) for the same purpose.
+description: Fills a matrix of 3 required categories (normal, error, edge) by controlled-vocabulary perspectives to enumerate acceptance criteria into the analysis file. Use when in plan mode before /mece-plan-review, when the user asks to write AC for a plan ("受け入れ条件を定義して" / "AC を書いて"), when an AC matrix is needed as MECE input, or when delegated to a subagent (Task tool) for the same purpose. Not typically invoked during PoC / throwaway-validation phases (the assumption ledger substitutes there).
 ---
 
 # define-acceptance-criteria
@@ -44,6 +44,8 @@ description: Fills a matrix of 3 required categories (normal, error, edge) by co
 各 tier の観点軸数 / 必須セル数 / 技術リスク件数は下の **Quantitative scaffolding 表 (SSOT)** を参照。
 
 **リスク領域** (auth / billing / payment / DB migration / security config) は LoC によらず強制的に **deep**。判定不能なら **standard**。`<plan>.analysis.md` 冒頭の `### Tier` に判定結果と理由を 1 行記録 (例: `Tier: standard (3 files, single domain)`)。
+
+この基準 (リスク領域による強制 deep 判定) は、上流工程で「フル装備 (AC→MECE→finalize) を適用するか軽量 fast path とするか」を判断する材料にも流用できる。
 
 **lite と deep が同時に該当する場合の優先規則**: deep 条件に 1 つでも該当すれば deep を選ぶ (安全側)。例: 1 ファイル <50 LoC の pure UI copy 変更でも auth 領域なら deep。
 
@@ -114,6 +116,7 @@ observability を含める場合の実効上限は **6 軸** (主軸 5 + observa
 - **異常系**: `- [ ] <label>: <条件> → <HTTP status or エラー文言>`。既存挙動の踏襲を期待値にする場合は `既存どおり <status> (実装時に実値確認) (仕様確定要)` の定型で書く
 - **エッジケース**: `- [ ] <label> [境界値: <カテゴリ>]: <条件>` (境界値カテゴリは [references/edge-case-checklist.md](references/edge-case-checklist.md))
 - **非影響確認 (推奨)**: `git status --short` 出力で機械判定 — `M` 含む → (a) 手動列挙 or (b) `git diff` 隣接列挙 / `A` のみ → (c) 省略可 / `D` 含む → (a) 必須。詳細は [references/non-impact-rules.md](references/non-impact-rules.md)。**git 実行不能 (plan mode で未着手 / walk-through / dry-run)** の場合は plan 本文の「変更ファイル予定」リストから推測し、判定根拠に `(推定)` を付与する
+- **振る舞いを変えないリファクタ等**では、各カテゴリを「変更前と同じ入出力を維持すること」を検証する回帰確認として書く (例: `- [ ] <label>: <既存入力> → <変更前と同じ出力 (リファクタ後も維持)>`)
 
 ### Step 4: 技術リスクの生成
 

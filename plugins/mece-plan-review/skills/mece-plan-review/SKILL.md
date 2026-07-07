@@ -1,6 +1,6 @@
 ---
 name: mece-plan-review
-description: Verifies acceptance criteria for MECE coverage with parallel spec/code/wiki analysts and a fresh red-team judge, recording coverage gaps and duplicates in the analysis file. Use when AC is already defined in the analysis file via /define-acceptance-criteria and MECE verification is required before implementation, or when the user says "AC の網羅性を検証して" / "MECE 検証して".
+description: Verifies acceptance criteria for MECE coverage with parallel spec/code/wiki analysts and a fresh red-team judge, recording coverage gaps and duplicates in the analysis file. Use when AC is already defined in the analysis file via /define-acceptance-criteria and MECE verification is required before implementation, or when the user says "AC の網羅性を検証して" / "MECE 検証して". Not typically invoked during PoC / throwaway-validation phases (the assumption ledger substitutes there).
 ---
 
 # MECE Plan Review

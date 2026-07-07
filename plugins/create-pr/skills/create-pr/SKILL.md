@@ -1,12 +1,12 @@
 ---
 name: create-pr
-description: Creates a Conventional-Commits draft PR from the current branch with generated title, body, labels, and milestone, without confirmation. Use when the user says "PR を作って" / "draft PR" / "PR 作成して", optionally with `[base-branch]` and per-section detail-expansion instructions (e.g. "設計判断は詳しく") as arguments.
+description: Creates a Conventional-Commits PR (draft by default; ready for review when the user explicitly requests it) from the current branch with generated title, body, labels, and milestone, without confirmation. Use when the user says "PR を作って" / "draft PR" / "PR 作成して" / "ready for review で PR を作って", optionally with `[base-branch]` and per-section detail-expansion instructions (e.g. "設計判断は詳しく") as arguments.
 disallowed-tools: AskUserQuestion
 ---
 
 # create-pr
 
-カレントブランチから Conventional Commits 形式のドラフト PR を作成する。**ユーザー確認は一切行わず、分析完了後は直接 PR 作成を実行** (frontmatter の `disallowed-tools: AskUserQuestion` で構造的にも強制)。常に `--draft` (ready-PR path なし)、positional argument は `[base-branch]` のみ。
+カレントブランチから Conventional Commits 形式の PR を作成する。**ユーザー確認は一切行わず、分析完了後は直接 PR 作成を実行** (frontmatter の `disallowed-tools: AskUserQuestion` で構造的にも強制)。既定は `--draft`(呼び出し側が ready for review・出荷用等を明示指定した場合のみ付けない)、positional argument は `[base-branch]` のみ。
 
 ## 現在の git 状態 (skill 読み込み時に自動取得)
 
@@ -24,7 +24,7 @@ disallowed-tools: AskUserQuestion
 | **standard** (default) | 2-5 commits, multi-file, single domain | [A] + [B] + [C] + [D] の 4 観点 (現状) | Step 1-10 を順次実行。Pre-work 本質リストは 2-3 点 |
 | **deep** | multi-domain / breaking change / 6+ commits / migration | 4 観点 + 関連 PR 検索 + 既存 issue リンク | Step 4c で plan 全展開、Pre-work 本質リストを **最低 5 点・上限 7 点** に拡張 (5 に届かない場合は domain ごと / PR チェーン段階ごと / migration / observability / rollout / rollback の観点で分解して 5 点まで埋める) |
 
-リスク領域 (auth / billing / payment / migration / security config) は LoC・commit 数によらず **deep**。lite でも `--draft` は維持 (ready PR path なし、現状維持)。**tier 判定の評価時点は Step 1 の `git log [base-branch]..HEAD` 時点** — Step 2 で未コミット分から作る commit は commit 数に数えない (数えると未コミット 1 ファイルの軽微変更が lite から外れてしまうため)。
+リスク領域 (auth / billing / payment / migration / security config) は LoC・commit 数によらず **deep**。draft/ready の判定は tier に依存しない (lite でも既定は `--draft`、呼び出し側の明示指定時のみ ready)。**tier 判定の評価時点は Step 1 の `git log [base-branch]..HEAD` 時点** — Step 2 で未コミット分から作る commit は commit 数に数えない (数えると未コミット 1 ファイルの軽微変更が lite から外れてしまうため)。
 
 **deep tier の追加規約**:
 - **本質リスト 5+ の解釈**: standard tier では scope 過大の兆候、deep tier では正常な分解結果。読み分けの詳細は `references/description-style.md`「Pre-work: 本質リスト」末尾を SSOT とする (本 tier 表は点数の SSOT)。
@@ -35,6 +35,7 @@ disallowed-tools: AskUserQuestion
 - `$ARGUMENTS`: `[base-branch] [詳細展開指示...]`（いずれも省略可）
   - 先頭トークンがリモートブランチとして存在すればベースブランチ（確認: `git ls-remote --heads origin <トークン>`。省略時はリポジトリのデフォルトブランチ）
   - 残り（または全体）は**詳細展開指示**として解釈する（例: `/create-pr develop 設計判断は詳しく`）。詳細展開指示はセッション中のユーザー発話でも受け付ける（Step 6 参照）
+  - draft/ready 指定（例: 「ready for review で」「出荷用」）も詳細展開指示と同様、`$ARGUMENTS` またはセッション中の発話で自然文として受け付ける（Step 10 参照。既定は draft）
 
 ## 委譲実行 (subagent として起動された場合)
 
@@ -55,7 +56,7 @@ disallowed-tools: AskUserQuestion
 5. **Step 3**: `git push -u origin <branch>`
 6. **Step 4-8**: タイトル / 本文 / ラベル生成 (後述)
 7. **Step 9 (必須)**: [references/description-style.md](references/description-style.md) のセルフチェックを **tier 表の観点セット** (lite = [A]+[D] / standard = [A]-[D] 4 観点 / deep = 4 観点 + 関連 PR 検索) で必ず実施 (tier が指定する観点の省略禁止)
-8. **Step 10**: `gh pr create --draft --title ... --body-file ... --label ... --milestone ... --base [base-branch]`
+8. **Step 10**: 対象ブランチに open PR が無ければ `gh pr create --draft --title ... --body-file ... --label ... --milestone ... --base [base-branch]` (ready 指定時は `--draft` を外す)。既に open PR があれば `gh pr create` はスキップし、push 後 `gh pr edit --body-file` で本文更新
 
 PR URL を表示して完了。
 
@@ -73,6 +74,7 @@ PR URL を表示して完了。
 - **type**: feat / fix / docs / style / refactor / perf / test / chore / ci / build
 - **複数 type 混在**: 最も大きな価値変化を生む 1 つを採用。優先順位 `feat` > `fix` > `refactor` > `perf` > `test` > `chore` > `docs` > `style` > `ci` > `build`
 - **scope**: 変更主ドメインの単数形英小文字 (モデル / コントローラ prefix 流用が基本)。複数ドメインなら中心価値の 1 つ、均等で絞れなければ省略。docs / chore / ci でドメイン無しなら省略
+- **タイトル prefix**: 呼び出し側が prefix (例: `[DONOTMERGE]`) を明示指定した場合、`<type>(...)` の直前に半角スペース区切りで付与する。72 文字カウントは prefix 込みで数える
 
 ### Step 6: 本文生成
 
@@ -84,6 +86,7 @@ PR URL を表示して完了。
   - 定型 (Revert 手順 / チェックリスト) → テンプレ準拠
   - それ以外の全セクション → **1 行サマリーのみ** (bullet・複数文段落・表・コードブロックを書かない。該当事実がなければ見出し+空行)。行数の例外は本質列挙系セクションの番号リストと「やらなかったこと」の 1 項目 1 行のみ
   - **詳細展開はユーザーが明示指示したセクションだけ** (`$ARGUMENTS` またはセッション中の発話。例: 「設計判断は詳しく」)。指示されたセクションはサマリー行の直下に散文展開を追加する。棄却案・実測表などの素材が session にあっても、**自己判断では展開せず**完了報告で「展開可能」と伝える (詳細は description-style.md「分量の既定」節)。**指示対象のセクションが解決済みテンプレート (フォールバック構成含む) の見出し集合に無い場合**は新規見出しを追加せず、[references/description-style.md](references/description-style.md)「テンプレートに無い見出しに相当する議論の反映先」節の手順 (代替見出しへの要約、それも無ければ本文非反映 + 完了報告での提示) に従う
+- **本文冒頭の注記**: 呼び出し側が本文冒頭の注記 (例: merge しない参照用) を明示指定した場合、テンプレ本文の最初の見出しより前に独立した 1 行として挿入する (新規見出しは追加しない)
 - **テンプレ内 `<!-- ... -->` コメントは削除しない** (migration 無しでも rollback サンプルブロックを残す)
 - **テンプレに無い見出しは追加しない**
 
@@ -105,7 +108,11 @@ PR URL を表示して完了。
 - **[C] 分量・重複 + 「やらなかったこと」事実整合**: 「やったこと」と「なぜやるのか」の事実重複 / 各セクションが 1 行サマリーを超えていないか (bullet 化・複数文段落・表・コードブロックの混入) / 詳細展開がユーザー指示なしに行われていないか (指示があったセクションは逆に 1〜2 行で済まされていないか) / 動作確認結果のケース列挙 / **「やらなかったこと」各項目が最終 diff と整合するか** (スコープ外として正しいか・先送りが本 PR で確定すべきものでないか。詳細は description-style.md「投稿前の事実整合チェック」)
 - **[D] AI 臭**: 「以下に〜を示す」「具体的には」「適切に」等の生成検出語 / 太字 bullet 3 つ以上 / 機械的絵文字 / 「〜のため」段落内 2 回以上 / 「特になし」埋め文 / 矢印チェーン等の作業中 shorthand (詳細は description-style.md [D])
 
-### Step 10: ドラフト PR 作成
+### Step 10: PR 作成 (新規 / 既存更新)
+
+**既存 PR の確認**: `gh pr list --head <branch> --state open --json number,url` で対象ブランチの open PR を確認する。1 件あれば `gh pr create` をスキップし、push 後に `gh pr edit --body-file` で本文を更新する (本文更新が不要なら push のみで終える。手順は [references/post-create-edit.md](references/post-create-edit.md) の `gh pr edit --body-file` → 失敗時のみ REST API フォールバックに従う)。0 件なら新規作成に進む。完了報告には作成 / 更新した PR の URL を含める。
+
+**draft / ready の判定**: 既定は `--draft`。呼び出し側が「ready for review」「出荷用」等を明示指定した場合のみ `--draft` を付けずに作成する。
 
 `--body-file` を統一採用 (`--body "$(cat ...)"` 経路は使わない)。`$PR_BODY_FILE` は **`mktemp` でユニークパス生成 + コマンド完了後に削除** ([references/post-create-edit.md](references/post-create-edit.md) の「固定パス禁止」参照)。固定パス `/tmp/pr-body.md` は過去セッション残骸混入事故源で禁止。
 
@@ -120,6 +127,8 @@ gh pr create --draft \
   --base develop
 rm -f "$PR_BODY_FILE"
 ```
+
+ready 指定時は上記コマンドから `--draft` を省く。既存 PR を更新する場合は `gh pr create` の代わりに `gh pr edit <number> --body-file "$PR_BODY_FILE"` を使う。
 
 ## Advanced
 

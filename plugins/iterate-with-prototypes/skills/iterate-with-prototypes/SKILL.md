@@ -40,7 +40,7 @@ description: Use when starting a complex feature where a PRD or spec exists but 
    status は **unverified / grounded / killed** の 3 値(本文の「接地」= grounded、表の「kill 条件」成立 = killed。この 3 トークン以外を status 列に書かない)。**grounded の立証責任は証拠側にある** — ground-truth 照合が取れない・観測が kill / grounded どちらの条件にも届かない場合は grounded にせず unverified のまま step 1 へ戻る(判定をでっち上げない。楽観 grounded は「最上位仮定が grounded になってから Code-A 着手」の gate をすり抜けさせる)。
 4. 最上位仮定の spike へ → `The loop` step 1。
 
-> **iterate の実体**: spike は 1 回で終わらないことが多い。spike を配信して触らせる → ledger の仮定/status を更新 → 未解決なら step 1 へ戻る、という**周回**を回す。`The loop` step 2(Code-A)着手は、最上位仮定が grounded になってから。
+> **iterate の実体**: spike は 1 回で終わらないことが多い。spike を配信して触らせる → ledger の仮定/status を更新 → 未解決なら step 1 へ戻る、という**周回**を回す。`The loop` step 2(Code-A)着手は、最上位仮定が grounded になってから。呼び出し側が「ledger 化と spike の検証」のみを依頼している場合(PoC・使い捨て検証など速度優先の文脈で典型)は、最上位仮定が grounded/killed で確定した時点でこの回の作業を終える。step 2(Code-A)着手は、呼び出し側が PRD 網羅実装を明示的に依頼した場合に限る。
 
 ## The loop (code-first・全 6 ステップ)
 

@@ -202,6 +202,8 @@ preflight (Step 0) で `feature-dev` の導入は保証済みのため、`code-r
 Task(subagent_type="feature-dev:code-reviewer", prompt="変更ファイルの git diff をレビューし、バグ・規約違反を報告せよ")
 ```
 
+直前に `/review-code-quality` と `/express-intent-in-code` が完了済みであれば、その旨と `quality-review-handoff.md` の既知 finding 概要を prompt に含め、未発見のバグ・規約違反へ焦点を促す (同種分析の重複を避けるため)。
+
 Task ツールが利用可能ツール一覧に無い場合のみ、main thread で同等のレビュー (変更 diff のバグ・規約違反確認) を直接行い、`[最終レビュー: ... (fallback)]` と明示する (silent skip 禁止)。`feature-dev` 未導入は Step 0 で中止済みなので、ここには未導入状態で到達しない。
 
 **review-only で他者の PR を点検する場合**: code-reviewer には PR head を展開した worktree (`gh pr checkout` または `git worktree add`) の絶対パスと base 読み替え後の diff を渡す。現在の worktree が PR head と一致しないまま実行した場合は、指摘の根拠行を PR head 側で再確認してから採用する (stale なローカル worktree の値を根拠にした誤指摘の実績があるため。`/review-code-quality` の「PR レビューモード」と同じ規則)。
@@ -224,16 +226,17 @@ Task ツールが利用可能ツール一覧に無い場合のみ、main thread 
    HANDOFF="$(git rev-parse --git-common-dir)/quality-review-handoff.md"
    [ -f "$HANDOFF" ] && cat "$HANDOFF"
    ```
+   本 skill 実行前に外部診断ツール (react-doctor 等) の指摘が会話内で共有され、修正しきれず残った指摘がある場合は、その残存指摘も出所「外部診断ツール」として集約リストに追加する (修正済みの指摘は集約不要)。
 2. ファイル先頭の `branch:` が現在のブランチ (`git branch --show-current`) と一致するもののみ採用。不一致なら stale として除外し `[申し送り: stale (別ブランチ) のため除外]` を 1 行明示。
 3. 採用した申し送り項目 + 本 skill の Manual Review Items (前掲・tier 表直後) + **Step 8 (最終レビュー) の指摘のうち auto-fix されず残ったもの**を統合し、同一箇所の重複は 1 件にまとめる (Step 8 由来も次項の出所ラベルでは「polish 検出」に含める — review-code-quality からの申し送りと区別できればよく、出所を 3 系統に分けて併記する必要はない)。
-4. 末尾に **`### ⚠️ ユーザー判断が必要な項目`** セクションを出力。各項目は `/abs/path:line` + 要約 + 出所 (review-code-quality 申し送り / polish 検出) + 推奨対応を併記。1 項目の形式例:
+4. 末尾に **`### ⚠️ ユーザー判断が必要な項目`** セクションを出力。各項目は `/abs/path:line` + 要約 + 出所 (review-code-quality 申し送り / polish 検出 / 外部診断ツール) + 推奨対応を併記。1 項目の形式例:
 
 ```
 ### ⚠️ ユーザー判断が必要な項目
 1. `/repo/app/services/billing_service.rb:42` — 認可チェックを before_action へ寄せるか要判断 (出所: polish 検出) → 推奨: TeamsController と揃え before_action :authorize へ統一
 2. `/repo/spec/models/user_spec.rb:88` — `receive_messages(a:, b:)` の `a:` のみ削除の部分 dead-mock (出所: polish 検出) → 推奨: `b:` を残す書換え案で承認後に編集
 ```
-5. **一覧を提示したらここで本 skill は終了する。** agent 側から commit / `git add` / `/create-pr` を自発実行・提案しない (フロー開始時点で既にコミット / PR を指示済みなら、その指示に従ってよい)。**本 skill の後に外部診断ツール (例: `npx react-doctor`) を実行する場合、その指摘は本 skill の集約一覧に含まれない** — ユーザーが別途確認するか、ツール実行後に Step 8-9 だけ再実行して束ね直す。判断項目の有無で終了時の文言を分ける (自発 commit はしない原則はどちらも同じ):
+5. **一覧を提示したらここで本 skill は終了する。** agent 側から commit / `git add` / `/create-pr` を自発実行・提案しない (フロー開始時点で既にコミット / PR を指示済みなら、その指示に従ってよい)。**本 skill の後に外部診断ツール (例: `npx react-doctor`) を実行する場合は、その指摘は本 skill の集約一覧に含まれない** (本 skill 実行前に共有され修正しきれず残った指摘は Step 9 の 1. のとおり集約対象であり、この後実行ケースとは前提が異なる) — ユーザーが別途確認するか、ツール実行後に Step 8-9 だけ再実行して束ね直す。判断項目の有無で終了時の文言を分ける (自発 commit はしない原則はどちらも同じ):
    - **判断項目 0 件**: 質問形にせず「判断項目なし。コミット可能な状態」と完了報告して終了する (ユーザーの返答を待たない)。
    - **判断項目 1 件以上**: 現行どおり一覧を提示し「polish 完了。コミットへ進めますか?」と 1 文返してユーザーの明示指示を待つ。
    - **Orchestrated モード時**: 判断項目が 1 件以上でもユーザーの返答を待たず、一覧を escalation ledger に記帳したうえで完了報告して終了する。記帳内容は [references/orchestrated-mode.md](references/orchestrated-mode.md) を参照。

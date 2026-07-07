@@ -71,6 +71,7 @@ Pick the first matching row, top-down:
 - `$ARGUMENTS`: feature description (optional。プランファイルパスまたは自由文どちらでもよい)。`--strict-da` forces subagent DA.
 - If empty: read `Plan File Info:` from context → Read plan file. Fall back to conversation context. **この 2 経路は単独起動時のみ有効** (委譲実行時の扱いは「## 委譲実行」参照)。
 - feature description のみ (プランファイルパスなし) でも Step 1 以降は実行できる。プランファイルの有無は Step 4 (Edit 対象) と Step 6 (Write 先) にのみ影響する。
+- プラン本文が PoC の仮説 ledger や「やらなかったこと→対応先」マッピング表を別ファイルで参照している場合は、そのファイルも Read する (Step 5 の grounding 材料として使うため)。
 
 ## Workflow
 
@@ -79,7 +80,7 @@ Pick the first matching row, top-down:
 3. **Step 4 — Plan edit**: Integrate reviewer outputs. If issues found, **rewrite the plan file directly** with `Edit` (do NOT paste analysis summaries into the plan — modify the design itself). Do not emit a report here — flow into Step 5.
 4. **Step 5 — Devil's Advocate (MANDATORY)**: Always run, even when all reviewers returned ✅ (reviewers each see only their own lens). Inline minimal recipe (default mode = main agent self-critiques):
    1. Produce **3 critiques from angles NOT in the Step 3 output** (repeating reviewer points is forbidden), attacking from operations (just-after-deploy / pre-retirement / incident) / scale (100x traffic or data) / cross-team-or-plugin interface / rollback cost.
-   2. **Ground each critique in the actual code before labeling** (when existing code is available): Read the lines the critique depends on, or grep for a counter-example. A critique whose premise does not hold in the code (the claimed sink / caller / scope does not exist as described) is labeled `acceptable`, not `fatal` — ungrounded fatals have produced over-escalation and "fixes" that would break working code. Greenfield (no code yet): ground against the plan's stated structure instead.
+   2. **Ground each critique in the actual code before labeling** (when existing code is available): Read the lines the critique depends on, or grep for a counter-example. A critique whose premise does not hold in the code (the claimed sink / caller / scope does not exist as described) is labeled `acceptable`, not `fatal` — ungrounded fatals have produced over-escalation and "fixes" that would break working code. Greenfield (no code yet): ground against the plan's stated structure instead. 会話文脈や隣接ファイルに PoC (使い捨て検証) の仮説 ledger (grounded/killed) や「やらなかったこと→対応先」マッピング表が存在する場合は、それも grounding 材料に含める。そこで対応済み・意図的 deferral と記録されている論点は対応先 (後続チケット等) が明記されているため `fatal` 化しない。
    3. **Label each critique `fatal` or `acceptable`** (fatal = `anti-pattern-checker` ❌ OR any single-trigger escalator [DB tx boundary / concurrency / security / contract breach]; subjective preference = acceptable). The fatal criteria are a closed set — a problem outside the checker's table and the four escalators stays `acceptable` + recommendation, however severe it looks.
    4. Surface 1-2 hidden assumptions.
 
