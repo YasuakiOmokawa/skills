@@ -178,6 +178,8 @@ DD と該当タスクをもとに出荷用プランファイルをつくって /
 /polish-before-commit
 
 /create-pr    # 正式な出荷 PR (ready for review)
+
+※ /grill-with-docs ... https://github.com/mattpocock/skills
 ```
 
 
