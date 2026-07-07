@@ -156,6 +156,11 @@ observability を含める場合の実効上限は **6 軸** (主軸 5 + observa
   3. Step 6 の M 値 (AC 件数サマリー1行)
   4. 変更ファイル一覧が `(推定)` に基づく場合、その旨を要人間判断項目として明記する
 
+## Gotchas
+
+- perspectives.md の Step A パスパターン表は Rails 慣例 (`app/controllers/` 等) 想定のため、TS/Node バックエンド (`src/controllers/` 等) には literal 一致せず毎回手動補正が発生する。エンドポイント記述からの類推補正とその理由を `### 検討観点` に明記すれば AC 品質への影響はない
+- 1 つの変更種別 (type) に主軸候補 label が複数あり、ドロップ規則の適用でそのうち一部が空セル化する場合、type ごとに主軸を均等配分する必要はない (残った実質的な label をそのまま採用してよい)
+
 ## 併用推奨 skill
 
 - `/mece-plan-review` — 本 skill 出力の AC を 3 視点で MECE 検証

@@ -228,13 +228,14 @@ Task ツールが利用可能ツール一覧に無い場合のみ、main thread 
    ```
    本 skill 実行前に外部診断ツール (react-doctor 等) の指摘が会話内で共有され、修正しきれず残った指摘がある場合は、その残存指摘も出所「外部診断ツール」として集約リストに追加する (修正済みの指摘は集約不要)。
 2. ファイル先頭の `branch:` が現在のブランチ (`git branch --show-current`) と一致するもののみ採用。不一致なら stale として除外し `[申し送り: stale (別ブランチ) のため除外]` を 1 行明示。
-3. 採用した申し送り項目 + 本 skill の Manual Review Items (前掲・tier 表直後) + **Step 8 (最終レビュー) の指摘のうち auto-fix されず残ったもの**を統合し、同一箇所の重複は 1 件にまとめる (Step 8 由来も次項の出所ラベルでは「polish 検出」に含める — review-code-quality からの申し送りと区別できればよく、出所を 3 系統に分けて併記する必要はない)。
-4. 末尾に **`### ⚠️ ユーザー判断が必要な項目`** セクションを出力。各項目は `/abs/path:line` + 要約 + 出所 (review-code-quality 申し送り / polish 検出 / 外部診断ツール) + 推奨対応を併記。1 項目の形式例:
+3. 採用した申し送り項目 + 本 skill の Manual Review Items (前掲・tier 表直後) + **Step 8 (最終レビュー) の指摘のうち auto-fix されず残ったもの** + **1. で追加した外部診断ツールの残存指摘**を統合する。同一箇所・同一の設計判断を指す指摘は出所が異なっても 1 件にまとめ出所欄に複数ラベルを併記し、それ以外は各項目 1 件のまま扱う (Step 8 由来も次項の出所ラベルでは「polish 検出」に含める — review-code-quality からの申し送りと区別できればよく、出所を 3 系統に分けて併記する必要はない)。
+4. 末尾に **`### ⚠️ ユーザー判断が必要な項目`** セクションを出力。各項目は `/abs/path:line` + 要約 + 出所 (review-code-quality 申し送り / polish 検出 / 外部診断ツール、複数該当時は併記) + 推奨対応を併記。1 項目の形式例:
 
 ```
 ### ⚠️ ユーザー判断が必要な項目
 1. `/repo/app/services/billing_service.rb:42` — 認可チェックを before_action へ寄せるか要判断 (出所: polish 検出) → 推奨: TeamsController と揃え before_action :authorize へ統一
 2. `/repo/spec/models/user_spec.rb:88` — `receive_messages(a:, b:)` の `a:` のみ削除の部分 dead-mock (出所: polish 検出) → 推奨: `b:` を残す書換え案で承認後に編集
+3. `/repo/src/components/SettingsPanel.tsx:1` — props 増加に伴うコンポーネント分割の要否 (出所: review-code-quality 申し送り / 外部診断ツール) → 推奨: 同一論点のため分割要否の判断をまとめて実施 (二重対応を避ける)
 ```
 5. **一覧を提示したらここで本 skill は終了する。** agent 側から commit / `git add` / `/create-pr` を自発実行・提案しない (フロー開始時点で既にコミット / PR を指示済みなら、その指示に従ってよい)。**本 skill の後に外部診断ツール (例: `npx react-doctor`) を実行する場合は、その指摘は本 skill の集約一覧に含まれない** (本 skill 実行前に共有され修正しきれず残った指摘は Step 9 の 1. のとおり集約対象であり、この後実行ケースとは前提が異なる) — ユーザーが別途確認するか、ツール実行後に Step 8-9 だけ再実行して束ね直す。判断項目の有無で終了時の文言を分ける (自発 commit はしない原則はどちらも同じ):
    - **判断項目 0 件**: 質問形にせず「判断項目なし。コミット可能な状態」と完了報告して終了する (ユーザーの返答を待たない)。
@@ -242,12 +243,18 @@ Task ツールが利用可能ツール一覧に無い場合のみ、main thread 
    - **Orchestrated モード時**: 判断項目が 1 件以上でもユーザーの返答を待たず、一覧を escalation ledger に記帳したうえで完了報告して終了する。記帳内容は [references/orchestrated-mode.md](references/orchestrated-mode.md) を参照。
 6. 提示後、申し送りファイルをクリアする (次フローに stale を持ち越さない): `[ -f "$HANDOFF" ] && rm "$HANDOFF"`
 
-**Step 9 レポート文言** (2 バリアント、いずれかを必ず出力):
+**Step 9 レポート文言** (3 バリアント、いずれかを必ず出力):
 
 | 条件 | 文言 |
 |---|---|
 | 判断項目 0 件 | `[ユーザー判断項目: なし]` |
-| 判断項目あり | `[ユーザー判断項目: N 件 (申し送り X / polish 検出 Y)]` |
+| 判断項目あり (外部診断ツール由来の残存指摘なし) | `[ユーザー判断項目: N 件 (申し送り X / polish 検出 Y)]` |
+| 判断項目あり (外部診断ツール由来の残存指摘 1 件以上、統合先が無く単独計上のもの) | `[ユーザー判断項目: N 件 (申し送り X / polish 検出 Y / 外部診断ツール Z)]` |
+
+## Gotchas（観測済みの罠 — 実測で判明したものを 1 件 1 行で追記）
+
+- **規約 hit 数の数え方**: tier 判定基準の「規約 hit 数」は「規約への一致件数」とだけ定義され、1 規約に複数箇所で違反がある場合に規約の項目数で数えるか違反箇所数で数えるかが未定義。fresh executor 2 回の検証で解釈が割れた (既知ギャップとして据え置き、今回の改修テーマ外)
+- **quality-ledger 不在時の申し送り深刻度**: Orchestrated モードの Step 9 深刻度決定で「review-code-quality 申し送りは quality-ledger 側の深刻度を引き継ぐ」とあるが、review-code-quality が non-orchestrated 実行等で quality-ledger 自体を生成していない場合の fallback が未定義。hold-out 検証 2 回で executor が根拠を推測で補う必要があった (既知ギャップとして据え置き、今回の改修テーマ外)
 
 ## 前提 plugin
 

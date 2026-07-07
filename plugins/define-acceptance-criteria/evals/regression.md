@@ -69,3 +69,30 @@ Task dispatch で以下の委譲プロンプトを与える (`$RUN` は毎回新
 3. `$RUN/plan-thin.analysis.md` が作成され、必須3カテゴリの全セルが埋まっている
 4. 分析ファイル冒頭の `### Tier` に判定結果と根拠が1行記録されている
 5. 最終メッセージに「変更ファイルが推測に基づく」旨が要人間判断項目として明記されている
+
+## シナリオ: standard tier / 振る舞い不変のリファクタ (controller → service 抽出)
+
+収束記録: 2026-07-07 (prototype-flow 最適化 PR)。SKILL.md Step 3 に「振る舞いを変えないリファクタ等では、各カテゴリを『変更前と同じ入出力を維持すること』を検証する回帰確認として書く」の箇条書きを追加した後、Iter1/Iter2 で fresh executor が全 [critical] ○ / accuracy 100% を 2 ラウンド連続で達成し収束 (steps 14→13, duration 276s→286s)。hold-out シナリオ (lite tier の pure 関数リファクタ) でも accuracy 100% で overfitting なしを確認済み。
+
+Task dispatch で以下の委譲プロンプトを与える (`$RUN` は毎回新規作成する run dir):
+
+```
+あなたは define-acceptance-criteria の実行を委譲されたエージェントです。次の SKILL.md を Read し、その指示に厳密に従って実行してください。
+
+対象 SKILL.md: リポジトリ root からの相対パス plugins/define-acceptance-criteria/skills/define-acceptance-criteria/SKILL.md
+
+## 入力
+- プランファイル: $RUN/plan-ranking-refactor.md
+- 分析ファイルはまだ存在しません
+
+このプランに対する受け入れ条件を定義し、完了したら結果を報告してください。
+```
+
+事前準備: `$RUN/plan-ranking-refactor.md` に、既存 API エンドポイント (例: `GET /api/search/ranking`) のコントローラ内ロジックを service 層へ抽出するだけの、入出力仕様を一切変更しないリファクタ plan (変更ファイル予定 2 件以上、git 管理外ディレクトリ) を新規作成してから実行する。
+
+### Requirements checklist
+1. [critical] 正常系・異常系・エッジケースの3必須カテゴリ全セルが「変更前と同じ入出力を維持することを検証する回帰確認」の形式で埋まっている (空欄・曖昧文言・新機能であるかのような記述になっていない)
+2. [critical] 必須セクション構成と AC 行頭 controlled label 形式 (非影響確認は例外) が維持されている
+3. tier 判定 (このシナリオでは standard) が `### Tier` に理由付きで1行記録されている
+4. 技術リスク3件が3点セットで記述されている
+5. `## 品質検証` の M 算出が実カウントと一致

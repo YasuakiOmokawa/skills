@@ -26,7 +26,7 @@ description: Use when starting a complex feature where a PRD or spec exists but 
 起動直後の第一手(`The loop` step 1 は「最も危険な仮定」を知っている前提なので、その前に必ず):
 
 1. **対象を特定** — PRD/仕様/プランを探す。取れなければ 1 度だけ聞く(**branch 名から決めつけない**)。`When to use` で使用可否を判定し、不適なら `/prototype` か `/define-acceptance-criteria` へ誘導して抜ける。
-2. **仮定を自分で抽出してランク** — load-bearing な未検証仮定を**自分で**列挙し、**不確実性 × 外れた時の手戻り**で順位付け(ユーザーに丸投げせず、順位案を出して訂正してもらう)。
+2. **仮定を自分で抽出してランク** — load-bearing な未検証仮定を**自分で**列挙し、**不確実性 × 外れた時の手戻り**で順位付け(ユーザーに丸投げせず、順位案を出して訂正してもらう)。候補にこのセッションでは検証手段が無い仮定(実機・外部環境でしか観測できない等)が混じる場合、その執行可否も順位判断の入力に含める(実行不能な仮定を最上位に置くと spike が進められない)。「検証手段が無い」と決めつける前に、実行可能な範囲を実際に 1 回試す(対象ツール・環境の有無を確認する等)。試さずに「〜が要るから無理」と推測しない。
 3. **単一正本(ledger)を作る = 最初の成果物** — `主張 / 検証方法 / kill 条件 / status` の表で 1 ファイル。**検証方法と kill 条件は実行可能に書く**: ①何を ground-truth(source-of-truth)として数値照合するか名指す ②scalar な予算(レイテンシ/精度等)は percentile + 計測窓に固定(例: p95 ≤ 1s)③代表入力を列挙(正常/エッジ)④境界は推測せず観測で確定(put→get・実測)。以後の TODO・決定・AC はすべてここに集約する。方法論用語 (ledger / spike / kill 条件 / grounded 等) を使う ledger は、**冒頭に用語定義 (glossary) 1 ブロックを最初から置く** — 後から読む人・別エージェントが decode できない造語を書いた時点で防ぐ (事後に数十箇所を除染するより安い。規律 3 の「書いた時点で漏らさない」と同根)。
 
    例(1 行):
@@ -35,12 +35,12 @@ description: Use when starting a complex feature where a PRD or spec exists but 
    |---|---|---|---|
    | 既存 SearchIndex API を流用して全文検索を賄える | 本番 SearchIndex に代表クエリ 20 件(正常 15 / エッジ 5)を投げ、返却 ID 集合を本番 DB の期待集合(=ground-truth)と照合。レイテンシは p95 計測 | recall < 0.9 もしくは p95 > 1s が再現 | unverified |
 
-   この行は **1 仮定に複数観測基準(recall と latency)**を持つ例(同一データ経路なので 1 行に同居)。**別仮定は行を分ける**(`The loop` step 1 の「verdict を仮定ごとに分ける」と整合)。
+   この行は **1 仮定に複数観測基準(recall と latency)**を持つ例(同一データ経路なので 1 行に同居)。**別仮定は行を分ける**(`The loop` step 1 の「verdict を仮定ごとに分ける」と整合)。同一の処理経路(同じ関数・同じ判定ロジック)に対する複数の代表入力(境界値・エッジケースなど)は、仮定を分けず検証方法欄に列挙して 1 行に収める。行を分けるのは、判定対象の処理経路自体が別々で、別々の kill 条件を持つ場合に限る。
 
    status は **unverified / grounded / killed** の 3 値(本文の「接地」= grounded、表の「kill 条件」成立 = killed。この 3 トークン以外を status 列に書かない)。**grounded の立証責任は証拠側にある** — ground-truth 照合が取れない・観測が kill / grounded どちらの条件にも届かない場合は grounded にせず unverified のまま step 1 へ戻る(判定をでっち上げない。楽観 grounded は「最上位仮定が grounded になってから Code-A 着手」の gate をすり抜けさせる)。
 4. 最上位仮定の spike へ → `The loop` step 1。
 
-> **iterate の実体**: spike は 1 回で終わらないことが多い。spike を配信して触らせる → ledger の仮定/status を更新 → 未解決なら step 1 へ戻る、という**周回**を回す。`The loop` step 2(Code-A)着手は、最上位仮定が grounded になってから。呼び出し側が「ledger 化と spike の検証」のみを依頼している場合(PoC・使い捨て検証など速度優先の文脈で典型)は、最上位仮定が grounded/killed で確定した時点でこの回の作業を終える。step 2(Code-A)着手は、呼び出し側が PRD 網羅実装を明示的に依頼した場合に限る。
+> **iterate の実体**: spike は 1 回で終わらないことが多い。spike を配信して触らせる → ledger の仮定/status を更新 → 未解決なら step 1 へ戻る、という**周回**を回す。`The loop` step 2(Code-A)着手は、最上位仮定が grounded になってから(下位の仮定が unverified のままでも、この gate には影響しない)。呼び出し側が「ledger 化と spike の検証」のみを依頼している場合(PoC・使い捨て検証など速度優先の文脈で典型)は、最上位仮定が grounded/killed で確定した時点でこの回の作業を終える。step 2(Code-A)着手は、呼び出し側が PRD 網羅実装を明示的に依頼した場合に限る。
 
 ## The loop (code-first・全 6 ステップ)
 
@@ -86,6 +86,7 @@ description: Use when starting a complex feature where a PRD or spec exists but 
 - **仮定ランキングの確定 (Start here step 2)**: 訂正の機会が無い場合は、自分で確定したランキング案をそのまま採用して先に進める。ledger に「(未レビューのまま確定)」と一言添え、後で人間が見返せる状態にする。
 - **既存 ledger からの再開**: 起動プロンプトが既存 ledger のパスを指す場合、その ledger を Read し、status 列 (unverified / grounded / killed) と現在地の記述から再開すべき step を判定する。仮定抽出 (Start here step 2) からはやり直さない。現在地が示す完了状態 (例: Code-A 実装済み) の裏付けとなる実体 (コード・テストのパス) を確認できない場合は、その完了状態を根拠にせず、対応する仮定は unverified のまま扱う(Start here step 3 の「grounded の立証責任は証拠側にある」と同じ原則)。現在地を自分で更新する際は、示す完了状態の根拠となるファイルパスを同じ文に書き添える。次に読む executor が探索なしで裏付けの有無を判定できるようにするため。
 - **他 skill の呼び出し**: `/prototype` 等の併用推奨 skill は Skill ツールで呼び出す (subagent 内でも使用可能)。未 install、または呼び出し不能な場合は、その step の本文が指示する作業 (throwaway spike 等) を自分で行う。
+- **Code-A 実装時に対象コードベースが渡されていない場合 (`The loop` step 2)**: 起動プロンプトが PRD/ledger のみで対象コードベースへのパスを示さない (委譲実行でよくある) 場合、Code-A は特定フレームワーク/ディレクトリ構成に依存しない standalone モジュールとして書き、実システムへの組み込み点をコード内コメントで明示する。対象コードベースの構成を無断で発明しない。
 - **完了報告**: step を終えるたびに、最終メッセージへ (a) 更新した ledger の該当行、(b) 次に呼ぶべき step、の両方を書く。
 
 ## 実例 (worked example)
@@ -95,6 +96,8 @@ description: Use when starting a complex feature where a PRD or spec exists but 
 ## Gotchas（観測済みの罠 — 実測で判明したものを 1 件 1 行で追記）
 
 - 委譲プロンプトが「進められるところまで進めて」とだけ指示すると、fresh executor は ledger 更新に留まらず `The loop` step 1 (spike 実行) を経て step 2 (Code-A 実装・他リポジトリへの commit) まで自律的に進む場合がある。ledger 更新のみを期待する委譲では、到達してよい step の上限を委譲プロンプト側に明示すること (SKILL.md 側の読み替えでは制御しない — 単独起動の挙動と同じく、どこまで進めるかは呼び出し側の裁量に委ねる設計のため)。
+- 対象コードベースが渡されない委譲実行で Code-A を standalone モジュールとして書く場合、既存エンドポイントの request/response 契約(multipart のフィールド名など)は推測で埋まる。契約が未確認であることをコード内コメントか ledger の仮定行に明示しないと、後続工程がその推測を確認済みの事実と誤認しうる。
+- ledger の仮定表には優先順位を示す列が無いため、既存 ledger から再開する executor は「主張」欄の行の並び順から最上位仮定を推測することになる。持ち越す場合は行頭に順位(例: `#1`)を書き添えると、再開時の推測に頼らずに済む。
 
 ## 併用推奨 skill
 

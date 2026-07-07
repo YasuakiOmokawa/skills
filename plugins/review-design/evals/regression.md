@@ -82,6 +82,30 @@ Requirements checklist:
 3. 最終メッセージが「プランファイルが見つからない」事実を明示しており、内容を推測で埋めた気配がない
 4. 委譲実行特有の入力解決順位 (Plan File Info / 会話履歴を参照しない) を踏まえた挙動になっている
 
+## シナリオ: PoC 経由 grounding (Step 0 / Step 5.2)
+
+収束記録: 2026-07-07。Step 0 に「プラン本文が PoC の仮説 ledger やマッピング表を別ファイルで参照している場合はそれも Read する」、Step 5.2 に「PoC 仮説 ledger・マッピング表も grounding 材料に含め、対応済み・意図的 deferral の論点は fatal 化しない」を追加した回の検証。baseline (Iter1) で median (対応先チケット明記の deferral) + greenfield edge (PoC 材料なし) の 2 シナリオが即座に全 [critical] ○ / accuracy 100%。fresh executor 2 巡目 (Iter2) + hold-out (対応先チケットの無い「killed」ケースへの一般化確認) でも同様に全 [critical] ○ を維持し、2 round 連続で本テーマに関する新規不明点 0 のため即時収束、プロンプト修正は不要だった (baseline から文言変更なしで収束)。escalation-rules.md の ❌ カウント単位・Task complexity tier の Row 2/3 境界・Step 4 の actionable ⚠️ 判定基準に関する不明点も複数観測されたが、いずれも今回の Step 0 / Step 5.2 差分とは無関係な既存箇所であり、同日の別 PR (委譲実行) の eval で「発散、追加修正打ち切り」と既に判定済みの領域と重複するため、本ラウンドの修正対象には含めていない (Gotchas への 1 件追記のみ実施)。
+
+### シナリオ A: PoC 経由の本実装 (対応先チケットが明記された deferral)
+
+先行 PoC の結果に基づき本実装のスコープを絞ったプラン (グローバル通知 ON/OFF 同期サービスの新設)。同ディレクトリに PoC 仮説 ledger / マッピング表ファイルがあり、「モバイルクライアントが送信済みのチャンネル別 opt-out フィールドは無視し、後続チケット PROJ-123 で対応 (意図的 deferral)」という行が記録されている。プラン自身には、この未対応フィールドを黙って無視する旨の記載がある (モバイルとの契約破棄に見えるが、実は PoC で合意済みの暫定仕様)。
+
+Requirements checklist:
+1. [critical] Devil's Advocate がこの「チャンネル別 opt-out 未対応」を fatal (contract breach 等) と報告しない。マッピング表の deferral 記録を根拠に acceptable 扱いとする
+2. [critical] マッピング表ファイルを実際に Read している (self-report で確認できる)
+3. reviewer subset の選定根拠が Q1-Q3 に基づき明記されている
+4. `<plan>.design-review.md` が Write され、内容が最終報告と一致する
+
+### シナリオ B (hold-out): PoC 経由の本実装 (対応先チケットの無い「killed」ケースへの一般化)
+
+シナリオ A の変種。PoC 仮説 ledger に記録された論点が「後続チケットへの deferral」ではなく、実測データに基づき対応先チケットなしで恒久的に見送られた (killed) ケース。プランには、その未対応機能への言及がある。
+
+Requirements checklist:
+1. [critical] Devil's Advocate が未対応機能の欠落を fatal と報告しない。「対応先チケットが無い killed」ケースであっても、ledger の実測データに基づく却下理由を根拠に acceptable 扱いとする (deferral 特有の文言「後続チケット」に一致しないことを理由に fatal 化しない)
+2. [critical] PoC 仮説 ledger ファイルを実際に Read している
+3. reviewer subset の選定根拠が明記されている
+4. `<plan>.design-review.md` が Write され、内容が最終報告と一致する
+
 ## シナリオ: matrix routing (SKILL.md)
 
 新規 module / interface 設計 (深さ・seam が論点) の plan に対し reviewer subset を選ぶ。

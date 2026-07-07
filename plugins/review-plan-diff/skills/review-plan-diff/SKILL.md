@@ -77,6 +77,10 @@ Task:
 - **`Task` が利用可能ツール一覧に無い場合**: Step 3 は実行できないため、`agents/plan-diff-reviewer.md` を Read し、そのワークフローに従って自分で突き合わせ判定を行う。
 - **`${CLAUDE_PLUGIN_ROOT}` が生文字列のまま見える場合**: 今読んでいる本 SKILL.md が置かれているディレクトリを skill root とみなし、`${CLAUDE_PLUGIN_ROOT}/skills/review-plan-diff/` をその絶対パスに読み替えてから Step 3 のプロンプトへ埋め込む。
 
+## Gotchas（観測済みの罠 — 失敗を 1 件観測するたび 1 行追記）
+
+- `${CLAUDE_PLUGIN_ROOT}` 解決規則が「## 委譲実行」節にのみ書かれているため、単独起動時にも Step 3 の dispatch 文面から参照される規則だと見落としやすい (実行評価で複数回指摘された。誤判定には至っていないため未修正)
+
 ## 併用推奨 skill
 
 - `/finalize-plan` — 突き合わせ対象の QA-ID カバレッジマトリクスを供給する

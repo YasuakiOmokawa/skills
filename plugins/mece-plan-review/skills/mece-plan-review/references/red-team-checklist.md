@@ -148,11 +148,11 @@ BB / WB Analyst の出力は **JSONLines** (findings + AC 判定) と **Markdown
 
 #### お見合い検出 (JSONLines、両者言及ゼロの領域)
 \`\`\`jsonl
-{"id":"M1","area":"security","perspective":"純技術リスク補完","content":"<発見事項>","severity":"critical"}
+{"id":"M1","area":"business","perspective":"暗黙の前提","content":"<発見事項>","severity":"critical"}
 {"id":"M2","area":"observability","perspective":"責任の継ぎ目","content":"...","severity":"important"}
 \`\`\`
 
-**perspective 値**: 「事前分析チェック観点」(曖昧表現 / 責任の継ぎ目 / 暗黙の前提 / スコープ外 / 楽観的見積もり) または「純技術リスク補完」(セキュリティ / パフォーマンス / 依存ライブラリ / 並行性 / 観測性)。
+**perspective 値**: 「事前分析チェック観点」の 5 値 (曖昧表現 / 責任の継ぎ目 / 暗黙の前提 / スコープ外 / 楽観的見積もり) のみ。**純技術リスク由来の発見 (セキュリティ / パフォーマンス / 依存ライブラリ / 並行性 / 観測性) は M ブロックに起票せず、次の「純技術リスク補完 (T)」ブロックへ振り分ける** (M と T は対象領域を排他にする。同一発見を両ブロックに二重起票しない)。
 
 #### 純技術リスク補完 (JSONLines、お見合いの一部)
 \`\`\`jsonl
@@ -172,7 +172,7 @@ BB / WB Analyst の出力は **JSONLines** (findings + AC 判定) と **Markdown
 **sources**: 統合元の id 配列 (BB/WB/M/T のいずれか)。
 
 #### MECE 判定 (Markdown)
-- 漏れ件数: N (お見合い検出された件数 = M1, M2, ... の数)。判定不能 (Unknown) がある場合は `漏れ件数: N (+ Unknown K 件は未確定)` と併記する (棄権を「漏れゼロ」と誤読させないため)
+- 漏れ件数: N (お見合い検出された件数 = M1, M2, ... と T1, T2, ... の合計数。T は「純技術リスク補完」節の注記どおり、お見合いの一部として合算する)。判定不能 (Unknown) がある場合は `漏れ件数: N (+ Unknown K 件は未確定)` と併記する (棄権を「漏れゼロ」と誤読させないため)
 - 重複件数: K (4 分類クロスリファレンスのうち class が `真の合意` または `補強し合う合意` の数)
 - 判定: MECE OK / 要修正 (Critical N件)
 - 判定不能 (Unknown): [証拠不足で class / severity を確定できなかった項目を理由付きで列挙。0 件ならこの行ごと省略]

@@ -39,7 +39,7 @@ description: Detects local-plan coinages, abbreviations, and number labels in re
 
 - **target**: 検査対象 (PR body、Jira description、design doc、レビュー済みコードのコメント 等)。ファイルパス or インラインテキスト
 - **source plan**: target の生成元 (`~/.claude/plans/<topic>/plan.md` 等)
-- **target が変更差分全体の場合**: コードコメント + 変更/新規 md ファイルをまとめて検査する用例では、対象ファイル一覧を確定したうえで出現回数 (Q4) を差分全体で通算してから判定する (ファイル単位に分割して数えると過小カウントする)。提案レポートは変更セット全体で 1 通に統合する。
+- **target が変更差分全体の場合**: コードコメント + 変更/新規 md ファイルをまとめて検査する用例では、対象ファイル一覧を確定したうえで出現回数 (Q4) を差分全体で通算してから判定する (ファイル単位に分割して数えると過小カウントする)。提案レポートは変更セット全体で 1 通に統合する。Task complexity tier の字数・ヒット数もこの集合 (変更後ファイルの該当箇所全体) で判定し、diff の追加行のみに限定しない (Q2 の self-contained 判定と同じ範囲で数える)。
 
 コメントを書くか・名前/型へ移すかの判断は `/express-intent-in-code`、文面の原則は code-comments 系規約 (7原則) が担い、本 skill は plan 造語の除染のみを担う。
 

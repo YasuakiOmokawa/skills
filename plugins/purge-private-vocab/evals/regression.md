@@ -62,6 +62,34 @@ Requirements checklist:
 1. [critical] source plan のパスが渡されていないことをその場で認識し、当て推量で存在しないパスを補完・探索せず、Q1/Q2 だけで機械判定できる候補語のみを処理する縮退動作に入っている
 2. [critical] source plan でしか判定できない候補語について、断定的に「持ち込み可」または「削除」と決めつけず、提案レポート上で「source plan 未確認のため要確認」と明記している
 
+## シナリオ: 変更差分全体の Q4 通算カウント (G-ppv-1)
+
+収束記録: 2026-07-07。Step 1 入力収集に「target が変更差分全体の場合、出現回数 (Q4) は差分全体で通算し、提案レポートは1通に統合する」を追加した PR で Iter1-2 を実施。Iter1 で「tier (lite/standard) 判定の字数・ヒット数を diff の追加行のみで数えるか、変更後ファイル内容全体で数えるか」が unclear point として浮上したため、Step 1 の追加文に「Task complexity tier の字数・ヒット数もこの集合 (変更後ファイルの該当箇所全体) で判定する」を追記し、Iter2 の fresh executor で再発しないことを確認した。
+用途: **regression 検出器**。target が複数ファイルにまたがる変更差分であるケース (Step 1 の当該規則) を変更する PR では、fresh executor (blank slate, Task dispatch) で下記シナリオを再実行し、全 [critical] PASS を確認してから merge する。
+
+### フィクスチャ構成
+- git repo (baseline commit 1 つ) に、コメント修正 2 ファイル + md 1 ファイルの変更を作業ツリーに加える
+- 造語「案D」(source plan で定義) を 3 ファイルにそれぞれ 1 回ずつ配置する (ファイル単位では 1 回で閾値未満、通算すると 3 回で閾値以上になる)
+- 番号ラベル `K-2` (source plan で定義) を md ファイルに 1 回配置する (Q4 の番号ラベル規則により出現回数によらず言い換え対象)
+
+委譲プロンプト:
+```
+あなたは purge-private-vocab の実行を委譲されたエージェントです。次の SKILL.md を Read し、その指示に厳密に従って実行してください。
+
+対象 SKILL.md: <plugin>/skills/purge-private-vocab/SKILL.md
+
+## 入力
+- target: $RUN/repo (作業ツリーの git diff、3ファイル: 2つのコード変更 + 1つの md 変更)
+- source plan: $RUN/source-plan.md
+
+この3ファイルの差分をレビュー済みなので、社内プラン用語が残ってないか点検して。問題があれば直接修正まで完了させて。
+```
+
+Requirements checklist:
+1. [critical] plan 造語の出現回数を対象ファイル全体で通算してから判定しており、ファイル単位に分割して数えた結果 (各1回) を理由に「要言い換えまたは削除」に誤分類していない
+2. [critical] 提案レポートが変更セット全体で1通に統合されている (ファイルごとの個別レポートになっていない)
+3. 番号ラベル (`K-2` 等) が出現回数によらず実値への言い換えとして提案されている
+
 ### シナリオ C (hold-out: target 自体が不在)
 
 委譲プロンプト:

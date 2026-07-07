@@ -44,3 +44,17 @@ Task 起動プロンプトに「orchestrated モードで実行。escalation は
 2. [critical] Step 8 の報告文言が `[最終レビュー: 指摘 N 件 (内訳: バグ X / 規約違反 Y / その他 Z)]` に厳密一致し、内訳の分類基準 (バグ=実行時に誤動作する欠陥、規約違反=Step1収集の明文規約との不一致、その他=それ以外の品質指摘) どおりに数値が割り振られている
 3. Step 9 集約が Step 8 の残存指摘も対象に含め、深刻度をバグ→Major、規約違反・その他→Minor で機械的に決定している
 4. escalation ledger 記帳後、ユーザーの返答を待たず完了報告して終了している
+
+---
+
+以下は v0.24.0 (Step 9 外部診断ツール残存指摘の集約 / Step 8 起動プロンプトの既知 finding 共有) 追加分。収束記録: 2026-07-07。Iter1-2 で fresh executor 全 [critical] ○ / accuracy 100%。hold-out シナリオ (Orchestrated モード × 外部診断ツール由来の深刻度判定) で1巡目に `references/orchestrated-mode.md` の深刻度決定規則が外部診断ツールの扱いを明記しておらず、executor が既存項目からの類推で深刻度を補う必要があった (checklist 1 件 [critical] 失敗)。同ファイルに「外部診断ツール由来で既存項目と統合されなかった単独項目は Minor 固定」を明記する修正後、同一シナリオを新規 fixture で再実行し 4/4 (100%) に回復したことを確認済み。
+
+## シナリオ: Orchestrated モードで外部診断ツール由来の残存指摘の深刻度を判定する
+
+Task 起動プロンプトに「orchestrated モードで実行。escalation は `record.escalation-ledger.md` に記帳して続行せよ」の明示指示あり。会話内で外部診断ツール (react-doctor 等) の指摘 3 件が共有済みで、2 件は既に修正、1 件 (`src/utils/date.ts:12` の日付フォーマット共通化要否) は構造判断が要り残存。申し送りファイル・Manual Review Items・Step 8 残存指摘はいずれも 0 件で、この外部診断ツール由来の 1 件が他項目と統合されず単独計上になる。この状態での Step 9 集約時のレポート文言と escalation ledger 記帳内容 (深刻度・根拠欄) を答えさせる。
+
+### Requirements checklist
+1. [critical] 外部診断ツール由来で他項目と統合されなかった単独項目の深刻度を Minor と判定し、その根拠を `references/orchestrated-mode.md` の明示規則 (「外部診断ツール由来で既存項目と統合されなかった単独項目は Minor 固定」) から直接引用できる (既存項目からの類推によるブリッジを要しない)
+2. Step 9 のレポート文言が 3 バリアント表の該当行と厳密一致し `[ユーザー判断項目: 1 件 (申し送り 0 / polish 検出 0 / 外部診断ツール 1)]` の形式で出力される
+3. 修正済みの 2 件は集約リスト・escalation ledger のいずれにも記帳されない
+4. escalation ledger 記帳後、ユーザーの返答を待たず完了報告して終了する
