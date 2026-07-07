@@ -95,19 +95,20 @@ Task の戻り値がエラーまたはタイムアウト:
   → Red Team に「BB or WB のいずれかが取得できなかった」旨を伝え、残りの結果のみで Step 2 を継続
 ```
 
-### Red Team subagent 失敗
+### Red Team subagent 失敗 (Task 不可時のフォールバックも兼ねる)
 
 ```
-Red Team が失敗した場合:
+Red Team が失敗した場合、または Task (Agent) ツールが利用可能ツール一覧に無く nested dispatch 自体ができない場合:
   → メインエージェントが手動で BB+WB の結果を統合 (フォールバック)
+  → 統合時は references/red-team-checklist.md のチェックリストを main agent 自身に適用する (Red Team の判定ロジックを代行)
   → 結果に [Red Team フォールバック] タグ付与
 ```
 
 ### プランファイル書き込み失敗
 
-AskUserQuestion でパス確認を依頼。
+AskUserQuestion でパス確認を依頼（Orchestrated モード時は分析ファイルへの記録を完了させたうえでプランファイル側のみ「未反映」として escalation ledger に Critical 扱いで記帳し続行する。詳細は [orchestrated-mode.md](orchestrated-mode.md)）。
 
 ### 分析ファイル lock / non-git リポジトリ
 
-- 分析ファイル書込み時に lock 検出 → 1 回リトライ、それでも失敗なら AskUserQuestion で対応確認
+- 分析ファイル書込み時に lock 検出 → 1 回リトライ、それでも失敗なら AskUserQuestion で対応確認（Orchestrated モード時は分析ファイルへの書込みを断念し、Step 3 の全内容を最終メッセージにそのまま埋め込んで返す。詳細は [orchestrated-mode.md](orchestrated-mode.md)）
 - non-git リポ (`git remote get-url origin` 失敗) → `${REPO_NAME}` を「unknown-repo」として継続、Wiki Researcher は `[non-git: Devin 未使用]` で skip

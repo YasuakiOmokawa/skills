@@ -41,4 +41,4 @@
 ## 注意
 
 - `git switch -c` で切替できる前提として、`git status` で worktree が clean か uncommitted のみであることを確認
-- merge / rebase 最中などで状態が複雑な場合はユーザに状況確認を促す
+- merge / rebase 最中などで状態が複雑な場合、`disallowed-tools: AskUserQuestion` により対話確認はできない。状況（検出した状態・判断に迷う理由）を最終メッセージに説明し、処理を終了する（返答を待たない）

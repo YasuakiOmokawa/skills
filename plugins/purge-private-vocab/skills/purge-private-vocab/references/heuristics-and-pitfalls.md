@@ -55,7 +55,7 @@ grep -oE '[A-Z][A-Za-z]*-[0-9A-Za-z]+' <target>
 
 **症状**: target にある「Single Switch」が plan 内造語か codebase 由来か判別できないまま「要言い換え」に分類してしまう。
 
-**修正**: source plan path を最初に確認。直前の Claude Code session で plan を扱っていれば `~/.claude/plans/<topic>/plan.md` を Read。無ければユーザに確認。
+**修正**: source plan path を最初に確認。直前の Claude Code session で plan を扱っていれば `~/.claude/plans/<topic>/plan.md` を Read。見つからない場合の扱いは SKILL.md の「委譲実行 (subagent として起動された場合)」節の入力解決順位に従う。
 
 ### ❌ Dry-run なしで直接書き換え
 

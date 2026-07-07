@@ -146,6 +146,14 @@ description: Use on confirmed working code whose name stops at mechanism (`bbox_
 
 `/review-code-quality` から申し送られた場合は、元 finding にひも付けて返す。
 
+## 委譲実行 (subagent として起動された場合)
+
+以下は AskUserQuestion が利用可能ツールに無い実行文脈 (= subagent として委譲実行された場合) にのみ適用する読み替え。単独起動 (ユーザーがメイン会話で直接起動) では確認する現行動作を維持する。
+
+- **Step 0 対象未確定**: `quality-review-handoff.md` が無く対象も明示されない場合、確認を待たず「handoff 無しのため変換対象なし」を最終メッセージで宣言して終了する (詳細: [references/decision-procedure.md](references/decision-procedure.md) Step 0)。
+- **Step 5.5 探索行き詰まり**: ドメイン語がどの候補ソースにも見つからず確認もできない場合、段3 据え置き + 探索ログの記録へ進む (詳細: [references/domain-abstraction.md](references/domain-abstraction.md) Step G)。
+- **Step 8 fresh-eyes 検証**: Task (Agent) ツールが利用可能ツール一覧に無い場合のみ cold self-read に切り替え、その旨を出力に明記する (詳細: [references/decision-procedure.md](references/decision-procedure.md) Step 8)。
+
 ## 併用推奨 skill
 
 - `/review-code-quality` — 診断器。naming/凝集 finding を needs-judgment として本スキルへ渡す前段 (直列関係)。

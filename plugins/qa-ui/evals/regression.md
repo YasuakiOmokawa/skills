@@ -101,3 +101,35 @@ Task 起動プロンプトに「orchestrated モードで実行。escalation は
 2. [critical] QA-H-01〜03 それぞれについて、前提（URL・ログイン手段・テストデータ準備状況）・操作手順・確認点（チェックボックス）を含む実行手順書を QA-ID ごとに 1 ブロックで提示する
 3. [critical] 手順書提示後は ui-evaluator を Task 起動せず、人間の返答（PASS / FAIL+内容 / 検証不能+理由）を待って停止する。返答を台帳へ記帳してから Step 5.5（auto 判定の再実行ゲート）へ進む
 4. 提示前に automation オプションを使わない（ユーザーが「automation で」等と明示していないため）
+
+---
+
+以下は v1.18.0 (委譲実行 / 分割実行契約) 追加分。収束記録: 2026-07-07。fresh executor (Task dispatch) で Iter1-2 + hold-out 1本の計 5 実行が全 [critical] ○ / accuracy 100% / retries 0。Iter1 の時点で既に baseline が全項目 ○ だった (subagent は単一ターン内で文字どおり「待つ」ことが構造的にできず、既定動作でも「手順書を返して終了」に自然収束するため)。ただし挙動が仕様として明文化されていなかったため `## 委譲実行` 節を新設し、分割実行契約・入力解決の優先順位を明記した。hold-out シナリオ (ベース URL 未解決) で accuracy 低下なし (過学習兆候なし)。
+
+## シナリオ: 委譲実行 (Task dispatch) で Step 4 人間委譲の分割実行契約に従う (人間委譲既定モード)
+
+あなたは qa-ui の実行を Task で委譲された subagent である（AskUserQuestion が利用可能ツールに無い）。プランファイル・台帳（QA-H-01〜03 manual pending, QA-E-01〜02 auto pending）・preflight（ベース URL・ログイン手段・テストデータ準備手順いずれも記載済み）が揃っている。起動プロンプトに automation・ブラウザ等の語は含まれない。QA を実行し、完了したら結果を報告するよう指示されている。
+
+### Requirements checklist
+1. [critical] 「automation で」等の明示指示が無いため Step 1 で人間委譲モード（既定）と判定し、ChromeDevTools MCP を一切使用していない
+2. [critical] Step 4 で手段=manual の QA-ID ごとの実行手順書を組み立て、「人間の返答を待って停止する」を、`## 委譲実行` 節の分割実行契約に従って「手順書を最終メッセージとして返し、返答を待たずに終了する」に読み替えている
+3. 最終メッセージに、手順書全文に加えて「人間の回答を得たうえで台帳から再開する」旨、または台帳が状態正本であるため再起動時に安全に再開できる旨の言及がある
+4. `<プラン名>.qa-ledger.md` の既存記帳を破棄せず追記のみで扱っている（Step 3.5「最新行が勝つ」規則の維持）
+
+## シナリオ: 委譲実行 + orchestrated 宣言時も Step 4 の分割実行契約は変わらない
+
+あなたは qa-ui の実行を Task で委譲された subagent である。起動プロンプトに「orchestrated モードで実行。escalation は `<path>` に記帳して続行せよ」の明示指示があり、シナリオ・入力は前シナリオと同一（人間委譲モード、QA-H-01〜03 manual pending）。
+
+### Requirements checklist
+1. [critical] orchestrated 宣言があっても Step 4 の人間委譲初回手順書提示には「escalation ledger に記帳して続行」を適用せず、実回答が無い状態で判定を進めず、通常どおり手順書を最終メッセージとして返して終了している（orchestrated の読み替えは Step 5 以降の判定分岐が対象であり Step 4 の初回提示には及ばない）
+2. [critical] 手順書自体が orchestrated 宣言の有無に関わらず通常モードと同等の完全な形式で提示されている
+3. `escalation-ledger.md` への記帳が Step 4 の初回提示時点では発生していない
+
+## シナリオ: 委譲実行で入力解決の優先順位に従いベース URL 不足を即時返却する
+
+あなたは qa-ui の実行を Task で委譲された subagent である（AskUserQuestion が利用可能ツールに無い）。プランファイルは存在するが `<プラン名>.preflight.md` が存在せず、プラン本文にもベース URL の具体的記載が無く、起動プロンプトにも URL 相当の入力が無い。
+
+### Requirements checklist
+1. [critical] ベース URL 解決の候補（起動プロンプト明示指定・preflight・プラン本文記載）がすべて不成立と判定し、`## 委譲実行 > 入力解決の優先順位` に従って「不足入力: ベース URL」等、不足入力を名指しした文言を最終メッセージとして返し、返答を待たずに終了している
+2. [critical] URL 未確定のまま Step 4 の実行手順書を組み立てていない
+3. Step 3 のプランファイル読み込み・QA-ID 抽出や Step 3.5 の台帳初期化など、URL 決定より後続の処理へ進んでいない

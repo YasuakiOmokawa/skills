@@ -69,7 +69,7 @@ ${PARALLEL_REVIEW_RESULT}
 When DA flags any "fatal" finding (inline or subagent — procedure is identical):
 
 1. `Edit` the plan file to fix the offending design.
-2. Re-run Parallel Review (Step 2-4) against the fixed plan.
+2. Re-run Parallel Review (Step 3-4) against the fixed plan.
 3. Repeat until **all** DA findings are "acceptable".
 4. **Re-evaluate DA escalation** each iteration. The fixed plan may downgrade ❌ counts, so what was subagent last round may be inline this round (and vice versa).
 

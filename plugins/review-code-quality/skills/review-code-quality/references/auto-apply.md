@@ -35,7 +35,7 @@ SKILL.md Step 4 の仕様。Step 3 で統合した **🔴 Critical / 🟠 Major*
 
 - cohesion: クラス分割 / 責務分離 / モジュール抽出
 - coupling: 依存方向の変更 / rescue 設計変更 / cross-file な密結合解消
-- 引数型・シグネチャ変更 (caller 経路 spec の audit が必要 — `~/.claude/rules/ruby-coding.md` 参照)
+- 引数型・シグネチャ変更 (caller 経路 spec の audit が必要 — `~/.claude/rules/ruby-coding.md` 参照。存在しない環境では参照せず判定を進める)
 - ファイル / メソッドの行数超過に対する「分割」(分割単位は設計判断)
 - public symbol のリネーム (cross-file 影響)
 - レイヤー違反の移動 (templates→hooks 等、import 経路 = cross-file)

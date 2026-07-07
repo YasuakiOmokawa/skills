@@ -9,7 +9,7 @@ description: Turns AC and MECE results from the analysis file into a branch stra
 
 ## Arguments
 
-- `$ARGUMENTS`: プランファイルパス (省略時は会話コンテキストの `Plan File Info:` から取得、見つからなければ確認)
+- `$ARGUMENTS`: プランファイルパス (省略時は会話コンテキストの `Plan File Info:` から取得、見つからなければ確認。解決順位・委譲実行時の扱いは下記「## 委譲実行」参照)
 
 ## Task complexity tier
 
@@ -39,6 +39,30 @@ description: Turns AC and MECE results from the analysis file into a branch stra
 8. **Step 4**: QA 実行台帳 `<plan>.qa-ledger.md` を初期化
 9. **Step 5**: プラン内容と branch-planner (Step 2A) の結果から `<プラン名>.preflight.md` を生成 (既存なら不足項目のみ補完、`未定` は AskUserQuestion 1 回にまとめて確認)
 
+## 委譲実行 (subagent として起動された場合)
+
+本 skill が Task 委譲で subagent として起動された場合、以下の読み替えを適用する。単独起動 (ユーザーがメイン会話で直接起動) の動作は変えない。
+
+### 入力解決の順位
+
+プランファイルパスは次の順で解決する: ① `$ARGUMENTS` → ② 起動プロンプト本文の明示指定 (Task 委譲時はこれが `$ARGUMENTS` 相当) → ③ 会話コンテキストの `Plan File Info:` (単独起動時のみ有効)。①〜③のいずれでも解決できない場合、ファイル探索やセッション文脈からの当て推量でパスを補完せず、「不足入力: プランファイルパス」を最終メッセージに含めて即座に終了する (返答を待たない)。
+
+### 質問分岐の読み替え
+
+AskUserQuestion が利用可能ツールに無い実行文脈 (= subagent) では、Step 5 の未定項目確認・Step 1.7 fallback の AC 分類不能確認・branch-planner §0 の起点ブランチ確認のいずれも、質問を試みず該当項目を最終メッセージに列挙して終了する。判定基準は AskUserQuestion が利用可能ツール一覧にあるかどうかであり、subagent かどうかでは判定しない。
+
+### Task 起動可否
+
+Task (Agent) ツールが自分の利用可能ツール一覧に無い場合のみ [references/agent-orchestration.md](references/agent-orchestration.md) の in-context fallback に切り替える。subagent として動作していること自体は fallback の理由にならない (subagent からの nested Task 起動は深さ 5 まで可能)。
+
+### `${CLAUDE_PLUGIN_ROOT}` の解決
+
+本文・agent 定義中の `${CLAUDE_PLUGIN_ROOT}` が生文字列のまま見える場合、いま読んでいる SKILL.md の所在ディレクトリを skill root とみなし、`${CLAUDE_PLUGIN_ROOT}/skills/finalize-plan/` をその絶対パスへ読み替える。nested Task の prompt に埋め込むパス・in-context fallback で Read する agent 定義パスは、読み替え後の絶対パスを使う (プレースホルダ文字列や相対パスのまま渡さない)。
+
+### 完了報告
+
+最終メッセージに必ず含める: (a) Write した成果物の絶対パス (プランファイル・`<plan>.qa-ledger.md`・`<plan>.preflight.md`)、(b) Step 3.5 の正本カバレッジ・ゲート結果と Step 4 の手段割当件数 (auto/manual/対象外)、(c) 未定項目・要人間確認項目の一覧。
+
 ## Workflows
 
 ### Step 1.5: 分析ファイル抽出 (片方欠落で即中断)
@@ -53,6 +77,8 @@ description: Turns AC and MECE results from the analysis file into a branch stra
 例外: `/iterate-with-prototypes` の step 4-5 (doc 逆生成 + AC/MECE) 自体を省略し、分析ファイルが一度も作られていない **ledger 駆動** セッションでは、本 skill を起動せず iterate-with-prototypes step 6 の ledger 追記代替 (ブランチ戦略 + QA 手順を ledger に書く) に従う。上の中断メッセージは「分析ファイルが本来あるべきなのに無い」場合のみ表示する。
 
 `/iterate-with-prototypes` の step 5 (`/define-acceptance-criteria` → `/mece-plan-review`) を経て `## 受け入れ条件` `## MECE分析結果` を備えた分析ファイルが既に作られている場合、この例外にはあたらない — design-first 経由の分析ファイルと同じ入力として扱い、本 skill を通常どおり起動する。Step 1.7 以降 (QA-ID enumerate・Step 3.5 の正本カバレッジ・ゲート・Step 4 の QA-ID 台帳・Step 5 の preflight 契約) は分析ファイルの起源 (design-first / プロトタイプ先行) を区別せず同一に動作する。
+
+委譲実行では、起動プロンプトに「iterate-with-prototypes 経由で分析ファイル未生成」のような経路情報が明示されている場合のみこの例外を適用する。経路情報が無く判別できない場合は、安全側として通常フロー (分析ファイル欠落時の中断メッセージ) を適用する — 判別不能を理由に ledger 駆動の例外を推測適用しない。
 
 分析ファイルに `## 正本抽出結果` (extract-figma-spec Step5 等が生成する "atom ID + 期待値 + 状態" のテーブル) があれば追加入力として読む。無くてもエラーにはしない (Step 3.5 が skip として扱うフォールバックを維持する)。
 
@@ -203,7 +229,7 @@ comm -23 /tmp/all_qa_ids.txt /tmp/assigned.txt > /tmp/assign_na.txt             
 2. ログイン手段は既定で `未定` とする (自動ログインは行わないため、記載が無い限り推測で埋めない)。
 3. 起点ブランチは Step 2A (branch-planner) が確定した値をそのまま転記する。
 4. サーバ・DB 起動コマンドはプラン・README 等に既記載があれば転記、なければ `未定`。
-5. 生成・補完後も `未定` が残る項目があれば、それらをまとめて **AskUserQuestion 1 回**でユーザーに確認する (項目ごとに個別に停止しない)。
+5. 生成・補完後も `未定` が残る項目があれば、それらをまとめて **AskUserQuestion 1 回**でユーザーに確認する (項目ごとに個別に停止しない。AskUserQuestion が利用可能ツールに無い場合の読み替えは「## 委譲実行」参照)。
 
 ## Quality standards
 
@@ -227,3 +253,7 @@ comm -23 /tmp/all_qa_ids.txt /tmp/assigned.txt > /tmp/assign_na.txt             
 - `/review-plan-diff` — 実装完了後、本スキルが確定したプラン・QA-ID マトリクスと実 diff を突き合わせて実装漏れ・計画外差異を検出する (後段)
 - `/qa-ui` — 実装完了後、本スキルが定めた QA 手順・`<plan>.qa-ledger.md`・`<plan>.preflight.md` を使って UI 検証する (後段)
 - `/create-pr` — 実装完了後、PR 梱包 (何本に切るか) を判断して PR を作成する (後段。PR 分割は finalize-plan では行わない)
+
+## Gotchas
+
+- preflight.md の項目表 (ベース URL / ログイン手段 / 権限アカウント一覧 / サーバ・DB 起動コマンド) は Web アプリ前提で設計されており、CLI ツール等 URL/認証を持たないプロジェクトでは字面通り埋まらない。`未定` と一律に残さず、根拠 (ソース確認済みで機構が存在しない等) を添えて `該当なし` と記載する運用が 3 回の委譲実行評価 (finalize-plan tuning iter1-3) で安定して機能した

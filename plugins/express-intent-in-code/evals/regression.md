@@ -22,6 +22,15 @@
     - Iter 2: 3/3 で全 [critical] PASS 維持。Iter 1 の2 fix が実測で機能 — genQ executor が Retry 1回で「generation-recipe.md 瞬間1 の記述を読み直し、データ側でなく本体を持つ関数側に置く方針」と明示的に自己解決、median executor が `parse_word_bbox_nodes` を採用。新規 unclear は scenario/harness 側または executor が原則から自己解決できる範囲に留まる。metric は step 9-10・retries 0-1 で安定。plateau と判断し収束
     - Failure pattern ledger: (P1) canonical worked example が一般ルールと齟齬している (Iter 1、以後 fix + 整合性注記で再発ゼロ)。(P2) 複数の隣接名前付き定義が1判断を共同で担うときの why 一意化欠如 (Iter 1、以後 fix で自己解決確認)。 P1/P2 の再発なし・skill 側改善候補が既に反映済みのため、これ以上の反復は diminishing returns として cutoff
 
+- 2026-07-07 (委譲実行摩擦の解消。plugin.json の version bump は本チューニングでは未実施、別バッチで反映予定)。design-doc.md の共通契約 (規則2: dialogue approver 不在時は確認待ちでなく宣言して終了) に基づき、decision-procedure.md Step 0 に「AskUserQuestion が利用可能ツールに無い実行文脈では handoff 無しのため変換対象なしを宣言して終了する」読み替え、Step 8 に「Task ツールが利用可能ツール一覧に無い場合のみ cold self-read へ切替え、その旨を明記する」tie-break、domain-abstraction.md Step G に「human reachable でない場合は確認を仰がず据え置きの記録へ進む」分岐を追加。SKILL.md に統一見出し「## 委譲実行 (subagent として起動された場合)」を新設し3箇所を要約参照した。
+  - Iter1 (baseline, RED): シナリオA (明示ターゲット) は全 [critical] ○。シナリオB (対象未指定・handoff無し) は [critical] 2件が × (「ユーザーに確認」で停止し無人実行で最終メッセージが宣言でなく質問文になる) — 想定どおり RED を確認。
+  - Iter2 (改修後): シナリオA/B とも全 [critical] ○・accuracy 100%。
+  - Iter3 (再現性確認、fresh executor・スキル無変更): シナリオA/B とも全 [critical] ○・accuracy 100% 維持。両シナリオで surfaced した新規不明点 (Step 8 の段レベル不一致、diff 非存在時のバッチ走査範囲) はいずれも delegation テーマ外の一般的な曖昧さで 2 ラウンド共通のため収束条件 (2 連続で新規不明点0) を満たすと判定 (委譲テーマの新規不明点は 0)。
+  - hold-out シナリオC (handoff ファイルは存在するが naming/凝集以外の finding のみ記載): 全 [critical] ○・accuracy 100%、直近平均からの低下なし (過学習兆候なし)。「handoff 無し」の文字どおりの読みに overfit せず「該当 finding 無し」への汎化を確認。
+  - 経路1 の regression (単独起動動作の後方互換): median (bbox_xhtml) を fresh executor で再実行し全 [critical] (7件) PASS。Step 0/8 の読み替えは AskUserQuestion 有無に紐づく条件分岐のため、単独起動相当の経路には影響しないことを確認。
+  - Failure pattern ledger: (P3) バッチ/パイプライン起動の no-op 宣言が SKILL.md Overview にのみ記述され、手続き詳細の SSOT である decision-procedure.md Step 0 に欠落 (Iter1 シナリオB、fix で Step 0 へ移設し再発ゼロ)。
+  - 今回のスコープ外として記録するのみに留めた事項 (delegation テーマでなく一般的な skill 品質の曖昧さ。次回非 delegation テーマのチューニングで再訪): Step 8 fresh-eyes (intent-reader) が grounding 未共有のため段4 判定済みの語を段3 相当と保守的に見立てる不一致 (agents/intent-reader.md に Gotchas 1行を追記済み)、diff が存在しないバッチ起動時の走査範囲未定義、decision-procedure.md Step 6 「真の why 0件」時の扱い、命名梯子/技法選択の語彙リスト重複、「新規識別子」の定義が経路2 とバッチ起動で書き分けられていない、第三種の命名欠陥 (多義衝突・段0ノイズ語以外) の分類、handoff ファイルパターン検索の曖昧さ。
+
 用途: **regression 検出器** (capability 改善の信号としては使わない)。本 skill を変更する PR では fresh executor (blank slate, Task dispatch) で下記シナリオを再実行し、全 [critical] ○ を確認してから merge する。実行方法は empirical-prompt-tuning の「Subagent invocation contract」に従う (成果物はインライン、ファイル編集禁止)。
 
 シナリオは median (bbox) + 段4 強化の hold-out 4 種 (F 段4 到達 / G 根拠ある据え置き / H 造語の罠 / I 名前不能→構造変更) + 旧 edge 4 種 (over-promotion+keep+drive-by 回避 / 分割判定 / 言語フォールバック / no-op 抑制) を必要に応じ再現する。
@@ -265,3 +274,49 @@ end
 5. 同一 why の本文重複 = 0件 / 公開関数本体に裸の複合条件ガードを残さない (既知の弱点: v0.8.0 時点で 1/3 発生。悪化していないか観測する)
 
 合格条件: 全 [critical] PASS。
+
+---
+
+以下は 2026-07-07 (委譲実行摩擦の解消) 追加分。収束記録: 上記参照。fresh executor (Task dispatch、AskUserQuestion/EnterPlanMode/ExitPlanMode/ScheduleWakeup 不可) で下記 3 シナリオを実行し全 [critical] ○・accuracy 100%。
+
+## シナリオ: 委譲実行 (Task dispatch) で対象明示時は通常どおり変換する
+
+working code: todo アプリの `feature/priority` ブランチに、優先度でソートする関数 (取得元/内部表現由来の機構名 + 直上に日本語 why コメント) が追加されている。`/review-code-quality` から naming/凝集 finding としてこの関数が申し送られている想定で、対象を明示して委譲する。
+
+### Requirements checklist
+
+1. [critical] 対象関数が段4 (ドメイン抽象) または探索ログ付きの段3据え置きのいずれかまで変換され、該当ファイルに Edit が適用されている
+2. [critical] Step 8 fresh-eyes 検証で nested Task (`agents/intent-reader.md`) の起動が試みられている (Task が利用可能な環境で無条件に cold self-read へ切り替えていない)
+3. 変換後にプロジェクトのテストランナー相当の検証、またはそれが無い場合の手動検証の明記がされている
+4. 出力フォーマット (診断 / 改名候補3案 / 段4到達根拠または据え置き根拠 / before-after diff / 昇格して削除したコメント / 残す真の why) の各節が最終報告に含まれている
+5. 対象限定の Edit のみが行われ、対象外ファイルが変更されていない
+
+合格条件: 全 [critical] PASS。
+
+## シナリオ: 委譲実行 + 対象未指定・handoff 無しは確認待ちでなく no-op 宣言で終了する
+
+対象リポジトリに `quality-review-handoff.md` が存在せず、委譲プロンプトにも対象の明示指定が無い状態で「このリポジトリの命名を良くしてください」とだけ指示される。
+
+### Requirements checklist
+
+1. [critical] `quality-review-handoff.md` 相当のファイルが存在しないことを確認したうえで、diff 全体や全識別子を対象にした改名候補スキャンを行っていない
+2. [critical] 「ユーザーに確認」で停止する代わりに、「handoff 無しのため変換対象なし」相当の no-op 宣言を最終メッセージに含めて終了している
+3. 多義衝突 (blast radius 内で同じ語が2つのドメイン概念を指す) や段0ノイズ語 (`doc`/`data`/`info`/`target`/`tmp` 等) の grep スクリーニングが実行されている、または該当なしと明記されている
+4. リポジトリ内のファイルが実際には変更されていない (no-op 宣言と実態が一致している)
+5. 副次候補が見つかった場合、対象化せず据え置きログとして1行で記録している (該当が無ければ本項目は「該当なし」の明記で満たされる)
+
+合格条件: 全 [critical] PASS。**「ユーザーの返答を待つ」旨を宣言して成果物ゼロで終える、または no-op 宣言と裏腹にファイルを変更していたら FAIL**。
+
+## シナリオ: 委譲実行 + handoff は存在するが該当 finding が無い (hold-out・過学習チェック)
+
+対象リポジトリに `quality-review-handoff.md` は存在するが、記載されている finding がパフォーマンス・テストカバレッジのみで naming/凝集 finding を含まない。対象の明示指定も無い状態で「このリポジトリの命名を改善してください」と指示される。
+
+### Requirements checklist
+
+1. [critical] `quality-review-handoff.md` を確認したうえで、記載されている finding が naming/凝集 finding でないことを認識し、それらを誤って対象化していない
+2. [critical] 「ユーザーに確認」で停止する代わりに、「該当する naming/凝集 finding が無いため変換対象なし」相当の no-op 宣言を最終メッセージに含めて終了している
+3. 多義衝突・段0ノイズ語の grep スクリーニングが実行されている、または該当なしと明記されている
+4. リポジトリ内のファイルが実際には変更されていない (no-op 宣言と実態が一致している)
+5. 副次候補が見つかった場合、対象化せず据え置きログとして1行で記録している (該当が無ければ本項目は「該当なし」の明記で満たされる)
+
+合格条件: 全 [critical] PASS。**「handoff が存在する」という表層だけで naming finding があると誤認し無関係な finding を対象化したら FAIL** (= 「handoff 無し」の文字どおりの読みへの過学習)。

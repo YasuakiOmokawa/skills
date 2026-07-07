@@ -6,7 +6,7 @@
 
 ## escalation ledger 形式
 
-ファイル名: `<プラン名>.escalation-ledger.md`。1 行 = 1 項目、追記のみ（既存行は書き換えない）。
+ファイル名は優先順で決める: (1) 発動条件の `<path>` が明示指定されていればそれを使う。(2) 未指定だが呼び出し側の指示に計画・仕様名 (「プラン名」) が含まれていれば `<プラン名>.escalation-ledger.md` を使う。(3) いずれも無ければ対象リポジトリの `$(git rev-parse --git-common-dir)/escalation-ledger.md` を既定値として使う (プラン名が無い場合に確実に導出できる場所のため)。1 行 = 1 項目、追記のみ（既存行は書き換えない）。
 
 | 番号 | 出所 | 深刻度 (Critical/Major/Minor) | 内容 | 根拠 | 推奨アクション |
 |---|---|---|---|---|---|
@@ -18,7 +18,7 @@
 Orchestrated モード時、以下の 2 箇所は SKILL.md 本文の「ユーザーの明示指示を待つ」「ユーザー承認後に編集」を「escalation ledger に記帳して続行する」に読み替える。
 
 1. **Manual Review Items #4 (dead mock の部分削除)**: 削除せず、書換え候補（残す identifier / 削除する identifier）を「保留」として escalation ledger に記帳する。深刻度は Minor 固定（実装の欠陥ではなく spec 整理判断のため）。
-2. **Step 9 (判断申し送りの集約)**: 判断項目が 1 件以上でもユーザーの返答を待たず、Step 9 の一覧（申し送り + Manual Review Items）を escalation ledger にそれぞれ 1 行ずつ記帳したうえで、完了報告して終了する。深刻度は各項目の出所側（review-code-quality 申し送りは quality-ledger 側の深刻度を引き継ぐ、polish 検出の Manual Review Items は Minor 固定）に従う。
+2. **Step 9 (判断申し送りの集約)**: 判断項目が 1 件以上でもユーザーの返答を待たず、Step 9 の一覧（申し送り + Manual Review Items + Step 8 最終レビューの残存指摘）を escalation ledger にそれぞれ 1 行ずつ記帳したうえで、完了報告して終了する。深刻度は各項目の出所側で決める: review-code-quality 申し送りは quality-ledger 側の深刻度を引き継ぐ、polish 検出の Manual Review Items は Minor 固定、Step 8 (最終レビュー) 由来で上記いずれにも該当しない項目は Step 8 の内訳分類 (バグ / 規約違反 / その他) から機械的に決める（バグ → Major、規約違反・その他 → Minor）。
 
 いずれの場合も申し送りファイル (`quality-review-handoff.md`) のクリア (Step 9 手順 6) は Orchestrated モードの有無に関わらず実施する（ledger へ転記済みのため stale として残す必要がない）。
 
