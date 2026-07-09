@@ -66,7 +66,7 @@ SKILL.md Step 4 の仕様。Step 3 で統合した **🔴 Critical / 🟠 Major*
 
 ## 申し送りファイル (contract — `/polish-before-commit` と共有)
 
-- パス: `$(git rev-parse --git-dir)/quality-review-handoff.md` (= `.git/` 配下。commit されず repo-scoped、session / skill 跨ぎで永続)
+- パス: `$(git rev-parse --git-common-dir)/quality-review-handoff.md` (= 共有 `.git/` 配下。commit されず repo-scoped、session / skill 跨ぎで永続)。`--git-dir` は使わない — linked worktree では worktree 固有ディレクトリを返し、読み手の /polish-before-commit が読む `--git-common-dir` 側とずれて申し送りが届かなくなる (書き手と読み手でパスが食い違い、needs-judgment が「判断項目なし」として握りつぶされた実測事例)。通常の checkout では両者は同じ値になる
 - 書き込みは **overwrite** (毎 run、現 diff に対する needs-judgment の完全集合を上書き)。append しない。
 - needs-judgment が **0 件なら申し送りファイルは作らない** (既存があれば削除する)。
 - naming (public symbol のリネーム) / cohesion (クラス分割・責務分離) の finding は `/polish-before-commit` を待たず、この申し送りファイルを渡して `/express-intent-in-code` を直接起動してよい (深掘り一点変換の後段)。申し送りファイルの**クリア責務は `/polish-before-commit` のまま**変わらない — `/express-intent-in-code` は読み込むだけで削除しない。

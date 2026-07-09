@@ -255,6 +255,7 @@ Task ツールが利用可能ツール一覧に無い場合のみ、main thread 
 
 - **規約 hit 数の数え方**: tier 判定基準の「規約 hit 数」は「規約への一致件数」とだけ定義され、1 規約に複数箇所で違反がある場合に規約の項目数で数えるか違反箇所数で数えるかが未定義。fresh executor 2 回の検証で解釈が割れた (既知ギャップとして据え置き、今回の改修テーマ外)
 - **quality-ledger 不在時の申し送り深刻度**: Orchestrated モードの Step 9 深刻度決定で「review-code-quality 申し送りは quality-ledger 側の深刻度を引き継ぐ」とあるが、review-code-quality が non-orchestrated 実行等で quality-ledger 自体を生成していない場合の fallback が未定義。hold-out 検証 2 回で executor が根拠を推測で補う必要があった (既知ギャップとして据え置き、今回の改修テーマ外)
+- **申し送りファイルは rm 前に必ず Read する**: `branch:` と内容が現在のフローの成果物であることを確認してから消す (linked worktree 環境で、パス探索の fallback が拾った別セッションの残骸 handoff を未読のまま rm した実測事例。stale (別ブランチ) は Step 9 の除外対象であって削除対象ではない)
 
 ## 前提 plugin
 
