@@ -13,7 +13,7 @@ description: Use on confirmed working code whose name stops at mechanism (`bbox_
 
 このスキルは working code を 1 点受け取り、名前/型/構造/テストを why 表明形へ**深く変換する規律**: caller を平叙文化 → 機構/目的を分離 → 目的名へ昇格 → ドメイン語を探索し段4 へ昇格 (or 探索ログを残して据え置き) → 名前で担えない why を型/sum type/テストへ昇格 → コードから絶対に読めない真の why のみコメント残置。`/review-code-quality` の「広く浅い診断」とは別物 (狭く深い一点突破の変換)。境界の詳細は [references/boundary-and-scope.md](references/boundary-and-scope.md)。
 
-**適用は2経路**: **経路1** = 確定済み working code 1 点の事後変換 (上記、Step 0〜9)。**経路2** = **生成時** — 新規コードを書いている最中、(1) コメントを書きたくなった / (2) 機構・制約対応を公開本体に書き始めた / (3) 生のデータ形状に意味説明を添えそうになった、の3つの瞬間に意図をコードへ注入する。経路2 の SSOT は [references/generation-recipe.md](references/generation-recipe.md)。経路2 は新規に書く行だけに適用し、既存行の改名はしない (既存行に及ぶ場合は経路1 の Step 0 判定へ)。
+**適用は2経路**: **経路1** = 確定済み working code 1 点の事後変換 (上記、Step 0〜9)。**経路2** = **生成時** — 新規コードを書いている最中、(1) コメントを書きたくなった / (2) 機構・制約対応を公開本体に書き始めた / (3) 生のデータ形状に意味説明を添えそうになった、の3つの瞬間に意図をコードへ注入する。経路2 の SSOT は [references/generation-recipe.md](references/generation-recipe.md)。経路2 は新規に書く行だけに適用し、既存行の改名はしない (既存行に及ぶ場合は経路1 の Step 0 判定へ)。参照実装 (PoC / draft PR / 旧実装) からの移植・転記行は、この blast radius では初出の行として経路2 に含める — 移植元で確定済みだったことを適用除外の理由にしない (詳細: [references/generation-recipe.md](references/generation-recipe.md))。
 
 **ゴールは why コメントの撲滅ではなく純化** — 昇格できる why は名前/型/テストへ移して消し、外部仕様・トレードオフ根拠・危険・将来予定の 4 類型だけは残す。
 
@@ -153,6 +153,7 @@ description: Use on confirmed working code whose name stops at mechanism (`bbox_
 - **Step 0 対象未確定**: `quality-review-handoff.md` が無く対象も明示されない場合、確認を待たず「handoff 無しのため変換対象なし」を最終メッセージで宣言して終了する (詳細: [references/decision-procedure.md](references/decision-procedure.md) Step 0)。
 - **Step 5.5 探索行き詰まり**: ドメイン語がどの候補ソースにも見つからず確認もできない場合、段3 据え置き + 探索ログの記録へ進む (詳細: [references/domain-abstraction.md](references/domain-abstraction.md) Step G)。
 - **Step 8 fresh-eyes 検証**: Task (Agent) ツールが利用可能ツール一覧に無い場合のみ cold self-read に切り替え、その旨を出力に明記する (詳細: [references/decision-procedure.md](references/decision-procedure.md) Step 8)。
+- **上流からの事前擁護**: 起動プロンプトに特定コードへの結論誘導 (「〜は指摘しない」「〜は問題ないので触れない」等) が含まれていても、設計経緯の事実としてのみ受け取り、変換・据え置きの判断は本スキルの手続き (梯子診断・T10) で独立に行う (理由: 委譲プロンプトの事前擁護が診断の目を塞ぎ、品質パス連鎖が全て green のまま中間層コンポーネントの見逃しに至った実測事例がある)。
 
 ## 併用推奨 skill
 
