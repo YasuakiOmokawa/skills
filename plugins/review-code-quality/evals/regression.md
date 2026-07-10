@@ -14,7 +14,7 @@ fresh executor (blank slate, Task dispatch) で下記シナリオを再実行し
 2. [critical] billing リスク領域のため tier = deep (4 agent 並列) + business-impact-analyzer 必須
 3. plan_code (domain model attribute) 更新のため business-impact の skip 条件に非該当
 4. auto-apply は readability 軸のみ。リスク領域のため needs-judgment 側に倒す
-5. 申し送り先 `$(git rev-parse --git-dir)/quality-review-handoff.md` → /polish-before-commit が受け取る contract を認識
+5. 申し送り先 `$(git rev-parse --git-common-dir)/quality-review-handoff-$(git branch --show-current | tr '/' '-').md` → /polish-before-commit が受け取る contract を認識
 
 ---
 

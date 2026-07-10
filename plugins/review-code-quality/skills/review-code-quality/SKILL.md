@@ -92,7 +92,7 @@ business-impact-analyzer の **skip 報告も統合レポートに残す**。
 統合した 🔴 Critical / 🟠 Major を [references/auto-apply.md](references/auto-apply.md) の 5 条件で **auto-apply-safe / needs-judgment** に振り分ける。
 
 - **auto-apply-safe** (**readability 軸の finding のみ** — cohesion / coupling / business-impact は条件を満たしても常に申し送り。かつ局所・public interface 不変・意味保存・非リスク領域): Edit で適用 → 編集言語に応じて lint/test を実行 (Ruby: rubocop + rspec / TS: eslint + prettier)。検証 fail なら逆 Edit で revert し申し送りへ。
-- **needs-judgment** (クラス分割 / 責務分離 / シグネチャ変更 / レイヤー移動 / business-impact 全件 / 修正方針が一意でないもの): 自動適用せず申し送りファイル `$(git rev-parse --git-common-dir)/quality-review-handoff.md` に overwrite 書き込み。判断に迷ったら needs-judgment 側へ倒す。
+- **needs-judgment** (クラス分割 / 責務分離 / シグネチャ変更 / レイヤー移動 / business-impact 全件 / 修正方針が一意でないもの): 自動適用せず申し送りファイル `$(git rev-parse --git-common-dir)/quality-review-handoff-$(git branch --show-current | tr '/' '-').md` に overwrite 書き込み (ブランチ名を含める理由と `--git-dir` 禁止は [references/auto-apply.md](references/auto-apply.md) 参照)。判断に迷ったら needs-judgment 側へ倒す。
 - **review-only (ユーザーが「ファイル変更しない」「レビューのみ」と指示 / 他者の PR を点検)**: auto-apply を行わず 🔴/🟠 を全件申し送りに回す (書き込み不可ならレポート inline に転記)。冒頭で「review-only のため auto-apply は提案に留める」と明示する。
 - **Edit/Bash 不可 (利用可能ツール一覧に無い場合。nested 実行かどうかとは無関係)**: 自動適用せず 🔴/🟠 全件を申し送りに回し、冒頭で明示。ファイル書き込みも不可なら申し送り内容をレポート inline に転記して情報欠落を防ぐ ([references/auto-apply.md](references/auto-apply.md))。
 
@@ -115,6 +115,6 @@ business-impact-analyzer の **skip 報告も統合レポートに残す**。
 
 ## 併用推奨 skill
 
-- `/express-intent-in-code` — 本 skill が needs-judgment とした naming / 凝集 finding の深掘り一点変換先。quality-review-handoff.md の該当 finding を渡して起動する (後段)
+- `/express-intent-in-code` — 本 skill が needs-judgment とした naming / 凝集 finding の深掘り一点変換先。申し送りファイル (quality-review-handoff-<branch>.md) の該当 finding を渡して起動する (後段)
 - `/polish-before-commit` — 本 skill が申し送った needs-judgment 項目を受け取り、フロー末尾でユーザー判断を仰ぐ最終仕上げ役
 - `/qa-ui` — コード品質と並行して実装後 UI を検証する

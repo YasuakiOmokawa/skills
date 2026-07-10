@@ -20,7 +20,7 @@ Orchestrated モード時、以下の 2 箇所は SKILL.md 本文の「ユーザ
 1. **Manual Review Items #4 (dead mock の部分削除)**: 削除せず、書換え候補（残す identifier / 削除する identifier）を「保留」として escalation ledger に記帳する。深刻度は Minor 固定（実装の欠陥ではなく spec 整理判断のため）。
 2. **Step 9 (判断申し送りの集約)**: 判断項目が 1 件以上でもユーザーの返答を待たず、Step 9 の一覧（申し送り + Manual Review Items + Step 8 最終レビューの残存指摘 + 外部診断ツールの残存指摘）を escalation ledger にそれぞれ 1 行ずつ記帳したうえで、完了報告して終了する。深刻度は各項目の出所側で決める: review-code-quality 申し送りは quality-ledger 側の深刻度を引き継ぐ、polish 検出の Manual Review Items は Minor 固定、**外部診断ツール由来で既存項目と統合されなかった単独項目は Minor 固定**（ツールの提案であり自 skill が欠陥として確認済みの指摘ではないため。既存項目と統合された場合は統合先の出所のルールに従う）、Step 8 (最終レビュー) 由来で上記いずれにも該当しない項目は Step 8 の内訳分類 (バグ / 規約違反 / その他) から機械的に決める（バグ → Major、規約違反・その他 → Minor）。
 
-いずれの場合も申し送りファイル (`quality-review-handoff.md`) のクリア (Step 9 手順 6) は Orchestrated モードの有無に関わらず実施する（ledger へ転記済みのため stale として残す必要がない）。
+いずれの場合も申し送りファイル (`quality-review-handoff-<branch>.md`) のクリア (Step 9 手順 6) は Orchestrated モードの有無に関わらず実施する（ledger へ転記済みのため stale として残す必要がない）。
 
 ## 記帳例
 

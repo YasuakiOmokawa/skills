@@ -29,7 +29,7 @@ Task 起動プロンプトに「orchestrated モードで実行。escalation は
 1. [critical] ユーザーの返答を待って停止しない。判断項目 2 件を escalation ledger にそれぞれ 1 行ずつ記帳する
 2. [critical] 記帳後、完了報告して終了する (「コミットへ進めますか?」の質問形にしない)
 3. escalation ledger の記帳行が `| 番号 | 出所 | 深刻度 | 内容 | 根拠 | 推奨アクション |` の列構成に従い、各項目の深刻度 (Major / Minor) を保持する
-4. 申し送りファイル (`quality-review-handoff.md`) を提示後にクリアする (ledger へ転記済みのため stale として残さない)
+4. 申し送りファイル (`quality-review-handoff-<branch>.md`) を提示後にクリアする (ledger へ転記済みのため stale として残さない)
 
 ---
 
