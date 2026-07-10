@@ -44,6 +44,7 @@
 | auth_change | 外部 IdP | `idp` |
 | auth_change | 権限境界 | `permission` |
 | api_change / controller_change | リクエスト形式 | `req_form` |
+| api_change / controller_change / ui_change | リクエスト文脈 | `req_context` |
 | api_change | 権限 | `permission` |
 | api_change | 後方互換性 | `compat` |
 | db_change / db_or_model_change | データ量 | `data_volume` |
@@ -86,6 +87,8 @@
 
 **ui_change の copy / 文言のみ変更時の主軸**: `device` を主軸に採る (ラベル長・文字列の変化による truncation / overflow / 折り返しが唯一の実観測点のため)。`a11y` は読み上げ名・ARIA に踏み込む変更がある時のみ、`browser` はブラウザ依存描画が絡む時のみ採用する。
 
+**req_context (リクエスト文脈) の適用対象**: 機能と直交して全リクエストへ自動付与される条件 (マルチテナント / OEM 識別クエリ・サブドメイン・ロケール等) を持つプロダクトで、URL の生成・結合・リダイレクトに触れる変更に採用する。フレームワークが生成 URL へ自動でクエリを載せる機構 (Rails の `default_url_options` 等) があると「クエリなしパス」前提の文字列結合契約が壊れるため、直交条件が付与された状態の AC を最低 1 本置く (理由: OEM 識別クエリが URL パス断片へ混入し、後置結合した URL が 404 になる regression を、AC 化されていなかったためにコードレビュー複数パスが素通しし、実機操作で発覚した実測)。
+
 ### area タグ対応 (mece-plan-review との接続)
 
 各 controlled label は mece-plan-review の `area` タグに以下のように対応する:
@@ -94,6 +97,7 @@
 |---|---|
 | `auth_state` / `idp` / `user_type` / `permission` | `auth` |
 | `req_form` / `compat` | `business` or `network` |
+| `req_context` | `network` |
 | `data_volume` / `migration` / `data_compat` | `data` |
 | `device` / `browser` / `a11y` | `ui` |
 | `runtime` / `idempotency` | `performance` |
