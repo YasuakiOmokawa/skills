@@ -9,9 +9,9 @@ description: Auto-fixes convention and pattern-consistency issues, runs lint, an
 
 **review-only モード (ファイル変更不可)**: user が「ファイル変更はしない」「レビューのみ」「他者の PR」を指示した場合は編集せず、auto-fix Step (4/5/6/7) は候補提示に留め各 Step を `[<Step>: review-only により提案のみ]` と報告する (`<Step>` は各 Step のレポート文言表のラベル: パターン一貫性 / lint / dead-mock 削除 / コメント改善)。実行するのは Step 0 (preflight) + Step 1 (規約収集) + Step 8 (最終レビュー) + Step 9 (集約)。対象が Ruby/TS/JS/Python 外 (Helm/YAML 等) の場合も Step 4/5/6/7 は言語スコープ外として skip し Step 8 中心で点検する (どちらも編集せず点検に倒す点は同じ)。明示指示が無い場合の一次検出は「## 委譲実行」節を参照。
 
-**他者 PR の点検時の Step 9 読み替え**: 申し送りの採用判定は「`branch:` == 点検対象 (PR head ブランチ名)」で行う (カレントブランチ基準にすると自ブランチ宛の無関係な申し送りを混入させる)。自ブランチ宛の申し送りは採用もクリアもしない — Step 9 の申し送りファイル削除 (`rm`) は自ブランチのフロー最終段でのみ実行する。終了文言は「コミットへ進めますか?」でなく「レビュー点検完了。指摘一覧を確認してください」とする (commit する対象が無いため)。
+**他者 PR の点検時の Step 9 読み替え**: 読むファイルも PR head ブランチ名で引き (`quality-review-handoff-<PR head ブランチ名>.md`)、申し送りの採用判定は「`branch:` == 点検対象 (PR head ブランチ名)」で行う (カレントブランチ基準にすると自ブランチ宛の無関係な申し送りを混入させる)。自ブランチ宛の申し送りは採用もクリアもしない — Step 9 の申し送りファイル削除 (`rm`) は自ブランチのフロー最終段でのみ実行する。終了文言は「コミットへ進めますか?」でなく「レビュー点検完了。指摘一覧を確認してください」とする (commit する対象が無いため)。
 
-**フロー最終段の役割**: この skill はフローの最後に置かれることを想定する。代表的な前段列 (可変) は `/simplify` → `/vercel-react-best-practices` → `/review-code-quality` → 本 skill だが、実運用ではこの間に `/vercel-composition-patterns`・`/express-intent-in-code`、文章チェーン (`/dry-ssot-text` → `/purge-private-vocab`) 等が挟まる場合がある。Step 9 で `/review-code-quality` からの申し送り (`.git/quality-review-handoff.md`) と本 skill の Manual Review Items を集約し、**末尾でユーザー判断が必要な項目を一覧提示してから止まる** (連続スキル実行で個別レポートが transcript に埋もれ握りつぶされるのを防ぐため)。
+**フロー最終段の役割**: この skill はフローの最後に置かれることを想定する。代表的な前段列 (可変) は `/simplify` → `/vercel-react-best-practices` → `/review-code-quality` → 本 skill だが、実運用ではこの間に `/vercel-composition-patterns`・`/express-intent-in-code`、文章チェーン (`/dry-ssot-text` → `/purge-private-vocab`) 等が挟まる場合がある。Step 9 で `/review-code-quality` からの申し送り (`.git/quality-review-handoff-<branch>.md`) と本 skill の Manual Review Items を集約し、**末尾でユーザー判断が必要な項目を一覧提示してから止まる** (連続スキル実行で個別レポートが transcript に埋もれ握りつぶされるのを防ぐため)。
 
 **Orchestrated モード**: ファイル存在からの推測では判定しない。呼び出し側（将来のオーケストレータ）が Task 起動プロンプトで「orchestrated モードで実行。escalation は `<path>` に記帳して続行せよ」のように明示指示した場合のみ発動する。指示が無い単独起動では現行動作（判断項目 1 件以上で停止しユーザーの明示指示を待つ）のまま進む。差分は Manual Review Items #4 (dead mock 部分削除) と Step 9 のみで、詳細は [references/orchestrated-mode.md](references/orchestrated-mode.md) を参照。
 
@@ -202,7 +202,7 @@ preflight (Step 0) で `feature-dev` の導入は保証済みのため、`code-r
 Task(subagent_type="feature-dev:code-reviewer", prompt="変更ファイルの git diff をレビューし、バグ・規約違反を報告せよ")
 ```
 
-直前に `/review-code-quality` と `/express-intent-in-code` が完了済みであれば、その旨と `quality-review-handoff.md` の既知 finding 概要を prompt に含め、未発見のバグ・規約違反へ焦点を促す (同種分析の重複を避けるため)。
+直前に `/review-code-quality` と `/express-intent-in-code` が完了済みであれば、その旨と申し送りファイル (`quality-review-handoff-<branch>.md`) の既知 finding 概要を prompt に含め、未発見のバグ・規約違反へ焦点を促す (同種分析の重複を避けるため)。
 
 Task ツールが利用可能ツール一覧に無い場合のみ、main thread で同等のレビュー (変更 diff のバグ・規約違反確認) を直接行い、`[最終レビュー: ... (fallback)]` と明示する (silent skip 禁止)。`feature-dev` 未導入は Step 0 で中止済みなので、ここには未導入状態で到達しない。
 
@@ -221,11 +221,12 @@ Task ツールが利用可能ツール一覧に無い場合のみ、main thread 
 
 このフローの**最終出力**として、ユーザー判断が必要な項目を 1 箇所に集約・提示してから止まる (Step 0 preflight で中止した場合はフロー自体が止まるため、この Step には到達せず集約も行わない)。連続スキル実行で個別レポートが transcript に埋もれ握りつぶされるのを防ぐ。
 
-1. 申し送りファイルを読む (`--git-dir` でなく `--git-common-dir` を使う: `git worktree add` で作った linked worktree では `--git-dir` が worktree 固有ディレクトリを返し、main 側と共有の申し送りファイルを見失うため。通常の worktree では両者は同じ値になり挙動は変わらない):
+1. 申し送りファイルを読む (`--git-dir` でなく `--git-common-dir` を使う: `git worktree add` で作った linked worktree では `--git-dir` が worktree 固有ディレクトリを返し、main 側と共有の申し送りファイルを見失うため。通常の worktree では両者は同じ値になり挙動は変わらない。ファイル名のブランチ名は、共有 `--git-common-dir` を使う複数 worktree の並行セッションが単一ファイルを相互 overwrite しないための分離):
    ```bash
-   HANDOFF="$(git rev-parse --git-common-dir)/quality-review-handoff.md"
+   HANDOFF="$(git rev-parse --git-common-dir)/quality-review-handoff-$(git branch --show-current | tr '/' '-').md"
    [ -f "$HANDOFF" ] && cat "$HANDOFF"
    ```
+   ブランチ名付きファイルが無い場合は旧パス `$(git rev-parse --git-common-dir)/quality-review-handoff.md` も確認し、`branch:` が現在ブランチと一致する場合のみ採用する (書き手の /review-code-quality が旧版のままの移行期対応。不一致なら並行セッションの成果物なので削除もしない)。
    本 skill 実行前に外部診断ツール (react-doctor 等) の指摘が会話内で共有され、修正しきれず残った指摘がある場合は、その残存指摘も出所「外部診断ツール」として集約リストに追加する (修正済みの指摘は集約不要)。
 2. ファイル先頭の `branch:` が現在のブランチ (`git branch --show-current`) と一致するもののみ採用。不一致なら stale として除外し `[申し送り: stale (別ブランチ) のため除外]` を 1 行明示。
 3. 採用した申し送り項目 + 本 skill の Manual Review Items (前掲・tier 表直後) + **Step 8 (最終レビュー) の指摘のうち auto-fix されず残ったもの** + **1. で追加した外部診断ツールの残存指摘**を統合する。同一箇所・同一の設計判断を指す指摘は出所が異なっても 1 件にまとめ出所欄に複数ラベルを併記し、それ以外は各項目 1 件のまま扱う (Step 8 由来も次項の出所ラベルでは「polish 検出」に含める — review-code-quality からの申し送りと区別できればよく、出所を 3 系統に分けて併記する必要はない)。
