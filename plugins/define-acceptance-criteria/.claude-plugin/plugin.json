@@ -1,7 +1,7 @@
 {
   "name": "define-acceptance-criteria",
   "description": "プランファイルの受け入れ条件・技術リスクを定義する時に使用。プランモードでの直接実行のほか、subagent への委譲実行でも同じ手順で完結する。詳細は分析ファイル（`<plan>.analysis.md`）に書き出し、プランファイル末尾には品質検証サマリーのみ追記する。/mece-plan-reviewの前に実行し、MECEの検証ターゲットを定義する。",
-  "version": "0.22.0",
+  "version": "0.23.0",
   "author": {
     "name": "Yasuaki Omokawa",
     "url": "https://github.com/YasuakiOmokawa"
