@@ -43,7 +43,7 @@ description: Fills a matrix of 3 required categories (normal, error, edge) by co
 
 各 tier の観点軸数 / 必須セル数 / 技術リスク件数は下の **Quantitative scaffolding 表 (SSOT)** を参照。
 
-**リスク領域** (auth / billing / payment / DB migration / security config) は LoC によらず強制的に **deep**。判定不能なら **standard**。`<plan>.analysis.md` 冒頭の `### Tier` に判定結果と理由を 1 行記録 (例: `Tier: standard (3 files, single domain)`)。
+**リスク領域** (auth / billing / payment / DB migration / security config) は LoC によらず強制的に **deep**。判定不能なら **standard**。`<plan>.analysis.md` 冒頭の `### Tier` 見出しの直下の行に判定結果と理由を 1 行記録 (見出し行に結合しない。例: `### Tier` の次行に `Tier: standard (3 files, single domain)`)。
 
 この基準 (リスク領域による強制 deep 判定) は、上流工程で「フル装備 (AC→MECE→finalize) を適用するか軽量 fast path とするか」を判断する材料にも流用できる。
 
@@ -97,6 +97,8 @@ description: Fills a matrix of 3 required categories (normal, error, edge) by co
 | ui_change | `device` / `a11y` / `browser` |
 | batch_change | `idempotency` / `data_volume` / `runtime` |
 | 全種別 追加候補 | `observability` (主軸数にカウントしない) |
+
+**状況条件付き label は inline 表の優先順より先に判定する**: URL の生成・結合・リダイレクトに触れる変更は `req_context`、既存レコードの部分更新で参照実装からキーを間引く変更は `unsent_keys` を、該当行の既定 label より優先して主軸に含める (適用条件の詳細は perspectives.md。inline 表は状況条件の無い median path 用のため、これらを含まない)。
 
 **inline 表で完結できるのは Step 1.5 の機械抽出が単一主種別のときのみ。** 複数主種別が抽出された場合 (例: controller + service の直列実装で api_change + service_change) は、下の deterministic classifier とドロップ規則に従って主軸を確定する (inline 表の 1 行をそのまま使わない)。複数主種別での主軸採用 / 副作用軸 1 つ追加 (併用可) / observability 特例 / 表に無い場合の汎用候補軸 (Step B) などの運用詳細は [references/selection-rules.md](references/selection-rules.md) を参照。選定理由を分析ファイル `### 検討観点` に 1 文ずつ明記。
 

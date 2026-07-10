@@ -54,7 +54,7 @@ Subjective preference = "acceptable", never "fatal".
 Task(subagent_type="general-purpose", prompt="""
 You are a fresh subagent acting as Devil's Advocate. Produce 3 critiques against
 the Parallel Review output, label each fatal/acceptable, and avoid restating any
-existing points.
+existing points. Surface 1-2 hidden assumptions.
 
 ## Parallel Review output:
 ${PARALLEL_REVIEW_RESULT}

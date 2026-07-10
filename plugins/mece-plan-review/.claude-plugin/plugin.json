@@ -1,7 +1,7 @@
 {
   "name": "mece-plan-review",
   "description": "分析ファイル内の受け入れ条件（AC）に対し BB (仕様) / WB (コード) / Wiki Researcher / Fresh Red Team の 4 視点で MECE 完全性検証を実施し、ユースケース漏れ・技術的対応漏れ・お見合いを検出して分析ファイルに記録する。分析ファイルに AC が定義済みで実装前に MECE 検証が必要な時に使用。事前に /define-acceptance-criteria で AC を定義しておくこと。",
-  "version": "1.28.0",
+  "version": "1.29.0",
   "author": {
     "name": "Yasuaki Omokawa",
     "url": "https://github.com/YasuakiOmokawa"

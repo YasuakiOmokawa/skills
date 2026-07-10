@@ -45,6 +45,7 @@
 | auth_change | 権限境界 | `permission` |
 | api_change / controller_change | リクエスト形式 | `req_form` |
 | api_change / controller_change / ui_change | リクエスト文脈 | `req_context` |
+| api_change / controller_change | 部分更新時の未送信キー挙動 | `unsent_keys` |
 | api_change | 権限 | `permission` |
 | api_change | 後方互換性 | `compat` |
 | db_change / db_or_model_change | データ量 | `data_volume` |
@@ -89,6 +90,8 @@
 
 **req_context (リクエスト文脈) の適用対象**: 機能と直交して全リクエストへ自動付与される条件 (マルチテナント / OEM 識別クエリ・サブドメイン・ロケール等) を持つプロダクトで、URL の生成・結合・リダイレクトに触れる変更に採用する。フレームワークが生成 URL へ自動でクエリを載せる機構 (Rails の `default_url_options` 等) があると「クエリなしパス」前提の文字列結合契約が壊れるため、直交条件が付与された状態の AC を最低 1 本置く (理由: OEM 識別クエリが URL パス断片へ混入し、後置結合した URL が 404 になる regression を、AC 化されていなかったためにコードレビュー複数パスが素通しし、実機操作で発覚した実測)。
 
+**unsent_keys (部分更新時の未送信キー挙動) の適用対象**: 既存レコードを PATCH/POST で部分更新する変更で、参照実装 (旧 UI / 旧経路) からキーを間引いた場合に採用する。nested attributes (`*_attributes=`) や汎用 setter は未送信キーを無条件代入 (nil 上書き) することがあり既存値保持とは挙動が分かれるため、サーバ側の代入処理まで読んで確認する AC を最低 1 本置く (理由: payload を id と value に絞った結果 `document_items_attributes=` が未送信キーを無条件代入し、保存済みマイ印鑑が最終送信で消える regression を作った事例。品質レビュー 6 パスは素通りし、サーバ往復を追跡した最終レビューで検出)。
+
 ### area タグ対応 (mece-plan-review との接続)
 
 各 controlled label は mece-plan-review の `area` タグに以下のように対応する:
@@ -98,7 +101,7 @@
 | `auth_state` / `idp` / `user_type` / `permission` | `auth` |
 | `req_form` / `compat` | `business` or `network` |
 | `req_context` | `network` |
-| `data_volume` / `migration` / `data_compat` | `data` |
+| `data_volume` / `migration` / `data_compat` / `unsent_keys` | `data` |
 | `device` / `browser` / `a11y` | `ui` |
 | `runtime` / `idempotency` | `performance` |
 | `flag_state` / `rollout` / `flag_removal` | `business` |
