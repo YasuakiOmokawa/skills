@@ -47,8 +47,8 @@ BB Analyst と独立に動くため互いの分析結果は参照しない。責
 
 **判定の既定規則**: 「この欠陥は **それ単独で能動的に** 害を成立させるか? それとも害を **容易にする** だけか?」 — 成立させるなら Critical、容易にするだけなら Important。以下 4 類型に **現に該当** する指摘のみ Critical 認定:
 
-1. **データロス / 破壊的変更** (DB drop, schema break, irreversible mutation, 既存データの整合性破壊)
-2. **能動的に成立するセキュリティ侵害** — それ単独で不正アクセス / 権限昇格が **成立する** 欠陥 (実装由来: 認証バイパス / SQL・XSS injection / CSRF / SSRF / IDOR / open redirect / race condition による権限昇格 / mass-assignment 等。OWASP Top 10 のカテゴリ名は概念ラベルに使ってよい)
+1. **データロス / 破壊的変更** (DB drop, schema break, irreversible mutation, 既存データの整合性破壊、部分 payload 送信による既存データの無条件上書き = nested attributes の未送信キー = nil 代入)
+2. **能動的に成立するセキュリティ侵害** — それ単独で不正アクセス / 権限昇格が **成立する** 欠陥 (実装由来: 認証バイパス / SQL・XSS injection / CSRF / SSRF / IDOR / open redirect / race condition による権限昇格 / mass-assignment 等。OWASP Top 10 のカテゴリ名は概念ラベルに使ってよい)。攻撃者が既に有効な認証情報・セッションを保持している前提でのみ害が成立・継続する欠陥 (例: パスワード変更後のセッション未失効) は、単独で成立させるのでなく容易にする側 = Important に分類する
 3. **既存ユーザ動線の破壊** (現行コードの挙動が変わってユーザ操作が不可になる。遅延・文言品質の低下は含まない)
 4. **ロールバック不能** (revert できない migration, 削除不可能な外部影響)
 
@@ -105,6 +105,7 @@ BB Analyst と独立に動くため互いの分析結果は参照しない。責
 - has_one / has_many / belongs_to (関連の有無が状態になる)
 - delegate (委譲先メソッドの確認)
 - paranoid / soft-delete (削除済データの扱い)
+- nested attributes 代入 (`*_attributes=`) / 汎用 setter — 部分 payload 送信時、未送信キーが無条件代入で nil 上書きされるか既存値保持かを、モデル定義と strong params まで読んで確認 (update/PATCH 系エンドポイントが絡むプランで必須)
 ```
 
 ### 類似実装のメソッド一覧
@@ -177,6 +178,8 @@ AC は dispatch 時に `AC-1, AC-2, ...` の序数付きリストで渡される
 {"id":"WB-I1","severity":"important","area":"auth","issue":"...","evidence":"...","suggestion":"..."}
 {"id":"WB-N1","severity":"nice","area":"observability","issue":"...","evidence":"...","suggestion":"..."}
 \`\`\`
+
+**findings は severity を問わず 1 つの JSONL ブロックにまとめて返すこと (severity 別にブロックを分割しない)**。dispatch 側の抽出は「findings 1 ブロック + AC 判定 1 ブロック」の 2 ブロック構成を前提とするため、分割すると AC 判定ブロックを取りこぼす。
 
 **severity 値**: `critical` / `important` / `nice` の 3 つ。Critical 閾値に該当しないものは `critical` を絶対に使わない。
 

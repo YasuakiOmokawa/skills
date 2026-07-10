@@ -204,6 +204,8 @@ Task(subagent_type="feature-dev:code-reviewer", prompt="変更ファイルの gi
 
 直前に `/review-code-quality` と `/express-intent-in-code` が完了済みであれば、その旨と申し送りファイル (`quality-review-handoff-<branch>.md`) の既知 finding 概要を prompt に含め、未発見のバグ・規約違反へ焦点を促す (同種分析の重複を避けるため)。
 
+diff が URL の生成・リダイレクト・route helper (`url_for` 系)・パス断片の受け渡しに触れる場合、フレームワークの暗黙のリクエスト文脈自動付与 (Rails の `default_url_options` 等) によるクエリ混入で「クエリなしパス」前提の結合契約が壊れていないかを観点として prompt に含める (静的レビューでの早期発見の一助であり、実行検証の代替にはならない — Gotchas 参照)。
+
 Task ツールが利用可能ツール一覧に無い場合のみ、main thread で同等のレビュー (変更 diff のバグ・規約違反確認) を直接行い、`[最終レビュー: ... (fallback)]` と明示する (silent skip 禁止)。`feature-dev` 未導入は Step 0 で中止済みなので、ここには未導入状態で到達しない。
 
 **review-only で他者の PR を点検する場合**: code-reviewer には PR head を展開した worktree (`gh pr checkout` または `git worktree add`) の絶対パスと base 読み替え後の diff を渡す。現在の worktree が PR head と一致しないまま実行した場合は、指摘の根拠行を PR head 側で再確認してから採用する (stale なローカル worktree の値を根拠にした誤指摘の実績があるため。`/review-code-quality` の「PR レビューモード」と同じ規則)。
@@ -255,8 +257,8 @@ Task ツールが利用可能ツール一覧に無い場合のみ、main thread 
 ## Gotchas（観測済みの罠 — 実測で判明したものを 1 件 1 行で追記）
 
 - **規約 hit 数の数え方**: tier 判定基準の「規約 hit 数」は「規約への一致件数」とだけ定義され、1 規約に複数箇所で違反がある場合に規約の項目数で数えるか違反箇所数で数えるかが未定義。fresh executor 2 回の検証で解釈が割れた (既知ギャップとして据え置き、今回の改修テーマ外)
-- **quality-ledger 不在時の申し送り深刻度**: Orchestrated モードの Step 9 深刻度決定で「review-code-quality 申し送りは quality-ledger 側の深刻度を引き継ぐ」とあるが、review-code-quality が non-orchestrated 実行等で quality-ledger 自体を生成していない場合の fallback が未定義。hold-out 検証 2 回で executor が根拠を推測で補う必要があった (既知ギャップとして据え置き、今回の改修テーマ外)
 - **申し送りファイルは rm 前に必ず Read する**: `branch:` と内容が現在のフローの成果物であることを確認してから消す (linked worktree 環境で、パス探索の fallback が拾った別セッションの残骸 handoff を未読のまま rm した実測事例。stale (別ブランチ) は Step 9 の除外対象であって削除対象ではない)
+- **URL 生成への暗黙リクエスト文脈混入は静的レビューで取りこぼしやすい**: フレームワークがリクエストスコープの値を URL 生成へ自動付与する挙動 (Rails の `default_url_options` 等) は diff を読むだけでは気づきにくく、実行して観測しない限り見落としやすい (実測: `_sp` クエリの混入で `/id?token=` の結合契約が壊れ 404 になったが、品質レビュー 7 パス全通過後にユーザーの実機操作で発覚)
 
 ## 前提 plugin
 

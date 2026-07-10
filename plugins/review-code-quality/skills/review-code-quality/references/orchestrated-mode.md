@@ -35,6 +35,8 @@ Step 4 で確定した finding ごとに 1 行記帳する:
 
 business-impact の Read のみ (✅ Good) は quality ledger に記帳しない（是正対象ではないため）。
 
+quality ledger 自体が生成されていない場合 (review-code-quality が non-orchestrated 実行で quality ledger を作らなかった等)、申し送り側 (`quality-review-handoff-<branch>.md`) に深刻度情報が無ければ Major として畳み込む (上表と照合する参照先が無く、Critical 相当を取りこぼさない側に倒すため)。
+
 ## 収束条件 (機械判定可能)
 
 quality ledger の Critical/Major 行（最新行、「最新行が勝つ」規則を適用）が**全て `適用済み` または `escalated`** であれば、品質ループは完了とみなせる。Minor 行の `保留` は収束条件に算入しない (Minor は次 PR 以降でよいため)。

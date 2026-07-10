@@ -87,7 +87,7 @@ These remain internal. The user-facing report stays in the two templates above p
 
 **パス規則**: Step 0 で解決したプランファイルパスの拡張子直前に `.design-review` を挿入する (例: `feature-x.md` → `feature-x.design-review.md`)。
 
-**保存内容**: チャット表示と同じ本文に加えて、後続のオーケストレータ監査パックが機械参照するための 2 節を追記する (チャットには出さない情報だが、保存ファイルには必須)。
+**保存内容**: チャット表示と同じ本文に加えて、後続のオーケストレータ監査パックが機械参照するための 3 節を追記する (チャットには出さない情報だが、保存ファイルには必須)。
 
 ```
 <チャット表示と同じ本文 (問題なし route または修正済み route)>
@@ -102,7 +102,12 @@ fatal 残存件数: 0
 |---|---|---|
 | DA | <Step 5 最終ラウンドで acceptable と判定された critique> | <grounding / 判定理由> |
 | <reviewer name> | <Step 3 で ⚠️ のまま Edit されなかった指摘> | <理由> |
+
+## Hidden assumption
+
+- <Step 5.4 で洗い出した hidden assumption (1-2 件)>
 ```
 
 - 「Fatal 残存」は Step 5 のフィードバックループが収束した時点の値であり、常に `0` (fatal が残っていればループが継続しているため到達しない)
 - 「Acceptable 残存リスク」は Step 5 最終ラウンドの DA acceptable 判定と、Step 3 で ⚠️ のまま残った reviewer 指摘を 1 行 1 件で列挙する。該当が 1 件もない場合も見出し行は残し、本文に「該当なし」と書く (表の有無ではなく行の値で後続が判定できるようにするため)
+- 「Hidden assumption」は Step 5.4 で洗い出した前提を 1 行 1 件で列挙する。該当なしの場合も見出し行は残し「該当なし」と書く
