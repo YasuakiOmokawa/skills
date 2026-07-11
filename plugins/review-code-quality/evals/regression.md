@@ -57,3 +57,5 @@ Task で review-code-quality の実行を委譲されたエージェントとし
 4. Step 1 でスコープ確定後の対象ファイル数に応じた tier (lite/standard/deep) 判定が行われている
 5. 統合レポートに severity 別件数と auto-apply の結果件数行 (自動適用/revert/申し送り) が含まれている
 6. self-report の Trace または Discretionary fill-ins に、base branch 解決の経緯 (何を試し何が決め手になったか) が記録されている
+
+収束記録: 2026-07-11 (description への PR レビューモードトリガー明記)。plugin.json の description に PR レビューモードのトリガー語と、business-impact 軸が Ruby/Rails 限定である旨を追記した。fresh executor で deep/billing 机上シナリオと委譲実行 median (4 agent 並列・base branch 明示) を再実行し全 [critical] ○。委譲 median 実行で「同一箇所に cohesion finding が併存する readability finding の分離評価可否」が未規定と判明したため、auto-apply.md に「併存時は needs-judgment に倒す」を明文化した (観測された安全側挙動の規定化)。

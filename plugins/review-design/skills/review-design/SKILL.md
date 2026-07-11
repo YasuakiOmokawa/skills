@@ -1,6 +1,6 @@
 ---
 name: review-design
-description: Reviews code placement and pattern choices before implementation using selected architecture reviewers (anti-pattern plus DDD, Hexagonal, Clean, Deep-Module) and a mandatory adversarial critique, editing the plan directly on fatal findings. Use when starting a new feature, adding a file or module, designing a module's interface (deep vs shallow / where a seam goes), deciding "where should this code live", or when the user requests a design review with `/review-design`.
+description: Reviews code placement and pattern choices before implementation using selected architecture reviewers (anti-pattern plus DDD, Hexagonal, Clean, Deep-Module) and a mandatory adversarial critique, editing the plan directly on fatal findings. Use when starting a new feature, adding a file or module, designing a module's interface (deep vs shallow / where a seam goes), deciding "where should this code live", or when the user requests a design review with `/review-design`. ALSO use when the change touches auth / billing / payment / migration / security territory — run even if placement seems obvious (this territory rule overrides the skip conditions).
 ---
 
 # review-design

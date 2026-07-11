@@ -1,6 +1,6 @@
 ---
 name: polish-before-commit
-description: Auto-fixes convention and pattern-consistency issues, runs lint, and aggregates remaining judgment calls before stopping for the user (or, when explicitly delegated in orchestrated mode, escalating to a ledger and returning instead of waiting). Requires the Claude `feature-dev` plugin for the final review step and halts with install guidance when it is missing. Use when finalizing a branch, just before `git commit` or `/create-pr`, or whenever the user says "仕上げて" / "polish" / "コミット前チェック".
+description: Auto-fixes convention and pattern-consistency issues, runs lint, and aggregates remaining judgment calls before stopping for the user (or, when explicitly delegated in orchestrated mode, escalating to a ledger and returning instead of waiting). Requires the Claude `feature-dev` plugin for the final review step and halts with install guidance when it is missing. Use when finalizing a branch, just before `git commit` or `/create-pr`, when reviewing someone else's PR without editing files (review-only mode), or whenever the user says "仕上げて" / "polish" / "コミット前チェック" / "レビューのみで見て".
 ---
 
 # polish-before-commit
@@ -67,7 +67,7 @@ description: Auto-fixes convention and pattern-consistency issues, runs lint, an
 0. **preflight (全 tier 必須・最初に実行)**: `feature-dev` plugin (Step 8 の `feature-dev:code-reviewer` が依存) の導入を確認。未導入なら**インストール方法を提示して即終了**し、以降の Step を一切実行しない (下記 Workflow Step 0)。
 1. 引数 `$ARGUMENTS` あり → そのファイルを対象。なし → `git diff --name-only origin/${BASE_BRANCH:-develop}...HEAD` (ブランチ全体) で取得 (0 件なら終了)。**ただしブランチ全体と未コミット+staged 差分が大きく乖離する長命ブランチでは、今 commit しようとしている未コミット+staged 差分 (冒頭 3-4 行目) を既定スコープにする** (本 skill は commit 直前の用途なので、過去コミット分まで巻き込まない。ブランチ全体を polish したい時のみ明示指定し、判断に迷えば user に確認)。
 2. 規約を収集 (下記 Workflow Step 1) → 規約 hit 数 + ファイル数で tier 表の実行範囲を確定 → tier 対応 Step を順に実行。
-3. 各 Step の結果を**文言バリアント表に厳密一致**させた最終レポートを返す (silent skip 禁止)。省略文言の使い分け: **tier 由来の省略**は `[<Step>: tier-{lite,standard,deep} により省略]`、**条件不一致由来のスキップ** (Step 6 の撤去なし等) は各 Step 固有のスキップバリアント文言を優先する。最後に Step 9 で `### ⚠️ ユーザー判断が必要な項目` を集約提示し、commit へ進まず判断を仰ぐ。
+3. 各 Step の結果を**文言バリアント表に厳密一致**させた最終レポートを返す (silent skip 禁止)。バリアント表を持つのは Step 0/4/5/6/7/8/9 のみで、表の無い Step (規約収集・対象ファイル確定・処理方式) は bracket 文言不要 (要約 1 行で足りる)。省略文言の使い分け: **tier 由来の省略**は `[<Step>: tier-{lite,standard,deep} により省略]`、**条件不一致由来のスキップ** (Step 6 の撤去なし等) は各 Step 固有のスキップバリアント文言を優先する。最後に Step 9 で `### ⚠️ ユーザー判断が必要な項目` を集約提示し、commit へ進まず判断を仰ぐ。
 
 ## Workflow
 

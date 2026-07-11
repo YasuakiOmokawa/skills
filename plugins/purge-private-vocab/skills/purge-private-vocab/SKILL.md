@@ -1,6 +1,6 @@
 ---
 name: purge-private-vocab
-description: Detects local-plan coinages, abbreviations, and number labels in reader-facing text and rewrites them so readers without the source plan can follow. Use after generating PR description, Jira ticket, design doc, RFC, reviewed code comments (plan-coinage residue left after implementation), or other reader-facing text from a local plan/spec file, when readers don't share the source plan, or when the user says "造語チェックして" / "plan 用語を消して" / "PR 説明の語彙を点検して".
+description: Detects local-plan coinages, abbreviations, and number labels in reader-facing text and rewrites them so readers without the source plan can follow. Use after generating PR description, Jira ticket, design doc, RFC, reviewed code comments (plan-coinage residue left after implementation), or other reader-facing text from a local plan/spec file, when readers don't share the source plan, when a plan document itself must be checked because upstream analysis-file finding IDs (BB-N / WB-N / IM-N) leaked into it, or when the user says "造語チェックして" / "plan 用語を消して" / "PR 説明の語彙を点検して".
 ---
 
 # Purge Private Vocabulary

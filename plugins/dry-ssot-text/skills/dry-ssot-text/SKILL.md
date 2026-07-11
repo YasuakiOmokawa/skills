@@ -1,6 +1,6 @@
 ---
 name: dry-ssot-text
-description: Collapses repeated explanations of one concept into a single source of truth plus cross-references, while keeping navigation aids like TOCs and progress tables. Use when an AI-generated document (plan / design doc / RFC / PR description) has grown long with the same concept explained in multiple places, when the same why-explanation is repeated across multiple code comments, or when the user says "この文書の重複をまとめて" / "この文書を DRY にして" / "同じ説明が何回も出てくるので整理して". Prose duplication inside code comments is in scope; code structure duplication / refactoring is out of scope.
+description: Collapses repeated explanations of one concept into a single source of truth plus cross-references, while keeping navigation aids like TOCs and progress tables. Use when an AI-generated document (plan / design doc / RFC / PR description) has grown long with the same concept explained in multiple places, when the same why-explanation is repeated across multiple code comments, or when the user says "この文書の重複をまとめて" / "この文書を DRY にして" / "同じ説明が何回も出てくるので整理して". Also use when a change set spans multiple files (code comments + changed/new docs) with the same explanation duplicated across them. Prose duplication inside code comments is in scope; code structure duplication / refactoring is out of scope.
 ---
 
 # DRY/SSOT Text Refactor
@@ -37,6 +37,7 @@ AI 生成の長文 (plan / design doc / RFC / PR / README) で同一概念が複
 | **必要: checklist サマリ** | AC リスト 1 行 + 詳細は §設計詳細。QA-ID カバレッジマトリクスのような ID 紐付け表も同様に確認用として扱う | **しない** | 確認用 |
 | **必要: header + body 同名** | 「§Provider 内吸収型」見出しと本文冒頭 | **しない** | index 機能 |
 | **必要: 日付付き追記ログ** | プランファイルの日付付きフェーズ完了ログ・再入ログ (`- <日付> フェーズN 完了: ...`) | **しない** | 書式が同じでも各行が異なる事実を記録する監査証跡であり、旧版が新版に包含される重複とはみなさない |
+| **必要: 用語集の短い定義** | glossary の 1-2 行定義エントリが本文の説明と重なって見える | **しない** | 反復説明でなく独立した参照用定義 (本文側が長文で同じ説明を繰り返す場合はその本文側のみ集約対象) |
 
 ## 委譲実行 (subagent として起動された場合)
 
@@ -85,6 +86,12 @@ AI 生成の長文 (plan / design doc / RFC / PR / README) で同一概念が複
 - **関連が弱い PR の扱い**: PR の内容が SSOT に直結しない場合、**default は省略** (リンクを貼らない)。関連性が補完的に有用なら 1 句で関連性を補足。迷ったら省略 (過リンク防止を優先)
 - **既存表記スタイルの維持**: 元文書が散文ならそのまま散文で残す (表記スタイル変更は別 task)
 - **AC / checklist 内のクロスリファレンス**: 括弧書き `(<参照テキスト>参照)` は括弧構造を保ちつつ中身をアンカーリンクに置換 (例: 元 `(Token rotation の挙動表参照)` → `(§[Token rotation 挙動表](#token-rotation-挙動表) 参照)`)
+
+**対象がソースコードコメントの場合**:
+- canonical の置き場所は、最も文脈が濃い箇所 (定義本体または主要呼び出し元) を 1 箇所選ぶ。コードコメントと md 文書が同一概念で重複する混在ケースでは、md 側に既存の専用セクションがあればそれを canonical とし、コード側コメントは全てそこへの短い参照に統一する
+- 他のコメントは markdown アンカーリンクでなく「削除」または「短い参照 1 文」に置換する (grep で正本へ到達できるなら削除可 — 冒頭の対象範囲節の規則と同じ)
+- dry-run レポート (§4) は行範囲でなく `grep` 結果 (ファイルパス:行番号) で重複箇所を示す
+- 実行順序: コメントを名前/型/定数へ蒸留できるかの判断は `/express-intent-in-code` が先、蒸留し切れず残ったコメントの重複集約を本 skill が後に行う
 
 ### 4. Dry-run レポート (standard / deep tier では必須 — 条件は tier 表が canonical)
 

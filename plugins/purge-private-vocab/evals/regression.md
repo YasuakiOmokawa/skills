@@ -107,3 +107,5 @@ Requirements checklist:
 Requirements checklist:
 1. [critical] target パスが実在しないことを確認し、内容を推測・捏造せず「不足入力: target」相当の趣旨を返して即座に処理を打ち切っている
 2. [critical] target が存在しないにもかかわらず Edit 等の書き込み操作を一切実行していない
+
+収束記録: 2026-07-11 (description への plan 自体が target になる経路の追加)。plugin.json の description に「plan 自体が target になる経路 (分析ファイル由来 finding ID の混入)」を追加した。決定木 + lite tier の structural シナリオを fresh executor で再実行し全 [critical] ○ / 新規不明点 0 で収束を確認した。
