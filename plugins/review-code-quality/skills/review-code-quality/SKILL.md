@@ -1,6 +1,6 @@
 ---
 name: review-code-quality
-description: Use when finishing self-review of an implementation, before requesting PR review, when a diff updates a domain model attribute (`plan_code` / `role` / `status` 等), or when the user says "コード品質をレビューして" / "品質レビュー". Analyzes the diff across cohesion, coupling, and readability (plus business-impact for domain-attribute changes), auto-applies only mechanically safe readability-axis critical/major fixes (cohesion/coupling/business-impact findings are always handed off), and routes design-judgment items to /polish-before-commit.
+description: Use when finishing self-review of an implementation, before requesting PR review, when inspecting someone else's PR or a PR not checked out locally (PR review mode), when a diff updates a domain model attribute (`plan_code` / `role` / `status` 等), or when the user says "コード品質をレビューして" / "品質レビュー". Analyzes the diff across cohesion, coupling, and readability (plus business-impact for domain-attribute changes — Ruby/Rails diffs only, skipped when the diff has no .rb/.rake files), auto-applies only mechanically safe readability-axis critical/major fixes (cohesion/coupling/business-impact findings are always handed off), and routes design-judgment items to /polish-before-commit.
 ---
 
 # Review Code Quality

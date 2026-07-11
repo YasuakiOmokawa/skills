@@ -58,3 +58,5 @@ Task 起動プロンプトに「orchestrated モードで実行。escalation は
 2. Step 9 のレポート文言が 3 バリアント表の該当行と厳密一致し `[ユーザー判断項目: 1 件 (申し送り 0 / polish 検出 0 / 外部診断ツール 1)]` の形式で出力される
 3. 修正済みの 2 件は集約リスト・escalation ledger のいずれにも記帳されない
 4. escalation ledger 記帳後、ユーザーの返答を待たず完了報告して終了する
+
+収束記録: 2026-07-11 (description への review-only モードトリガー追加)。plugin.json の description に review-only モードのトリガー語を追加した。standard tier 机上シナリオを fresh executor で 2 回実行し、1 回目は「バリアント表を持たない Step の報告体裁」が不明点として出たため、Quick start 3 に適用範囲 (Step 0/4/5/6/7/8/9 のみ対象、表の無い Step は要約 1 行) を明記する修正を行った。2 回目は全 [critical] ○ / 新規不明点 0 で収束。

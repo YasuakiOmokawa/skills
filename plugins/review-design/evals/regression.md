@@ -115,3 +115,5 @@ Requirements checklist:
 2. [critical] `anti-pattern-checker` を含める (常時必須)
 3. reviewer を選んだ根拠を matrix の該当行 (Q1/Q2 分岐 or None ブランチ行 or Row 3 tier) で説明する
 4. [critical] Step 6 でチャット表示に加え、プランパスから導出した `<plan>.design-review.md` へ保存する (拡張子前に `.design-review` を挿入)。保存内容に `## Fatal 残存` (0 件) と `## Acceptable 残存リスク` (1 行 1 件、空なら「該当なし」) と `## Hidden assumption` (1-2 件、該当なしも「該当なし」と明記) の 3 節を含める (v1.20.0 で追加 — オーケストレータ監査パックの前提部品)
+
+収束記録: 2026-07-11 (description への territory 強制実行トリガー追加)。plugin.json の description に auth/billing/payment/migration/security の territory 強制実行トリガー (skip 条件より優先) を追加した。fresh executor で matrix routing シナリオと委譲実行 (プラン不在・auth territory) シナリオを再実行し全 [critical] ○ / 新規不明点 0。territory 認識が Row 4 compound (全 5 territory 該当 + Devil's Advocate subagent 強制) に正しく反映されることを確認し収束。

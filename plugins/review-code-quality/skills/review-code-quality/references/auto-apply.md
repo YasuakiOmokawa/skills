@@ -44,7 +44,7 @@ SKILL.md Step 4 の仕様。Step 3 で統合した **🔴 Critical / 🟠 Major*
 
 **axis / リスク領域の優先規則**: finding の所属 axis (cohesion / coupling / business-impact) と リスク領域 (条件④: auth / billing / payment / migration) は、auto-apply-safe の具体例文言に**優先する**。例: billing 領域の `rescue` finding が文面上「局所的な nil ガード追加」に見えても、coupling axis かつ billing 領域なので **needs-judgment**。safe 具体例 (リネーム / nil ガード等) は **readability axis かつ非リスク領域** のときだけ適用する。
 
-**判断に迷ったら needs-judgment 側に倒す** (誤った自動 refactor より、握りつぶし防止の申し送りの方が安全)。
+**判断に迷ったら needs-judgment 側に倒す** (誤った自動 refactor より、握りつぶし防止の申し送りの方が安全)。同一箇所 (同一関数・同一行範囲) に cohesion / coupling / business-impact の finding が併存する readability finding は、単独で 5 条件を満たしていても needs-judgment に倒す (併存 finding の修正方針が readability 修正を作り直しにしうるため、一括で申し送る)。
 
 ## 適用手順
 
