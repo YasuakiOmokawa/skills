@@ -43,6 +43,7 @@ omokawa-skills は **monorepo + N plugins** 構造。各 skill / command は `pl
 - `jira.md` — Jira Cloud ID, プロジェクトキー, MCP プレフィックス
 - `release-labels.md` — Productivity / AI Contribution / Release Level ラベル定義
 - `environments.md` — integration 環境名（rollback 対象）
+- `ai-prototype-flow/` — ai-prototype-flow が参照する DD テンプレート・実例（組織の内部文書のためリポジトリには置かない。setup.sh が手元のファイルをコピーして配置）
 
 スキル本文では「このファイルを Read で取得」と書き、ハードコードしない。
 
