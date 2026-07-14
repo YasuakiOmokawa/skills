@@ -45,6 +45,8 @@ description: Fills a matrix of 3 required categories (normal, error, edge) by co
 
 **リスク領域** (auth / billing / payment / DB migration / security config) は LoC によらず強制的に **deep**。判定不能なら **standard**。`<plan>.analysis.md` 冒頭の `### Tier` 見出しの直下の行に判定結果と理由を 1 行記録 (見出し行に結合しない。例: `### Tier` の次行に `Tier: standard (3 files, single domain)`)。
 
+**DB migration の範囲**: 既存本番テーブルの schema 変更 (column 追加・型変更・NOT NULL 制約追加・index 追加・rename 等) と data migration が対象。新規テーブル作成のみで既存テーブルへの schema 影響が無く、かつ他機能への副作用も無い場合は **standard で可** (schema 影響が新規テーブル内に閉じる。ただし新規テーブルが既存 domain の canonical テーブルを置き換える migration を伴う場合は既存 schema 変更に準じて **deep**)。
+
 この基準 (リスク領域による強制 deep 判定) は、上流工程で「フル装備 (AC→MECE→finalize) を適用するか軽量 fast path とするか」を判断する材料にも流用できる。
 
 **lite と deep が同時に該当する場合の優先規則**: deep 条件に 1 つでも該当すれば deep を選ぶ (安全側)。例: 1 ファイル <50 LoC の pure UI copy 変更でも auth 領域なら deep。
@@ -104,7 +106,7 @@ description: Fills a matrix of 3 required categories (normal, error, edge) by co
 
 **主軸 / 副作用軸の deterministic classifier**: 変更種別 → デフォルト観点軸表の該当 type 行に現れた controlled label は **主軸**、Step B 汎用候補軸 (`flag_removal` / `non_invasive` / `dep_loc` / `layer` / `contract` 等) と `observability` は **副作用軸**。複数主種別共存時は各 type の最も中心的な 1 label を 1 主軸として採用 (= 副軸格上げ禁止)。
 
-**主軸候補が tier 軸数を超える場合の deterministic ドロップ**: (1) plan の不変条件からセルが空 / 自明になる軸を先にドロップ (例: 「auth 不変・誰でも閲覧可」と明示 → `permission` をドロップ)。**存在するが不変の横断機能** (既存認可など) をドロップした場合は、非影響確認に regression 1 行を必ず残す、(2) plan 本文で明示された関心 (後方互換 / データ量等) に対応する軸は優先的に残す、(3) なお超過するなら表の行順 (上位種別優先) で決める。table-listed label は概念的に cross-cutting に見えても主軸 (例: `compat`) であり副軸格上げ禁止。
+**主軸候補が tier 軸数を超える場合の deterministic ドロップ**: (1) plan の不変条件からセルが空 / 自明になる軸を先にドロップ (例: 「auth 不変・誰でも閲覧可」と明示 → `permission` をドロップ)。**存在するが不変の横断機能** (既存認可など) をドロップした場合は、非影響確認に regression 1 行を必ず残す、(2) plan 本文で明示された関心 (後方互換 / データ量等) に対応する軸は優先的に残す、(3) なお超過するなら表の行順 (上位種別優先) で決める。**tie-break で主軸をドロップした場合も、規則 (1) と同様にドロップされた関心 (401/404 の権限判定等) を非影響確認に regression 1 行として補完する** (規則 (1) は「plan の不変条件で空セル化」、規則 (3) は「主軸数超過」を根拠にする違いはあるが、いずれも主軸から外した cross-cutting な関心を非影響確認で拾う扱いは共通)。table-listed label は概念的に cross-cutting に見えても主軸 (例: `compat`) であり副軸格上げ禁止。
 
 **Cross-cutting behaviors の label**: retry / timeout / circuit-breaker などの cross-cutting 挙動が複数 change-type で出現する場合、変更種別表の特定行に閉じ込めず Step B 汎用候補軸として扱う (例: api_change の同期エンドポイントで「リトライ 3 回」なら `idempotency` を Step B 汎用候補軸として副作用軸採用)。
 

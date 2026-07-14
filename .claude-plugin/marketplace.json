@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "omokawa-skills",
-  "version": "3.58.0",
+  "version": "3.59.0",
   "description": "Plan-driven development workflow を構成する個別 skill 群。必要なものだけ install 可能",
   "owner": {
     "name": "Yasuaki Omokawa",
@@ -14,7 +14,7 @@
     {
       "name": "iterate-with-prototypes",
       "description": "PRD はあるが実現可能性・UX・既存API再利用が未検証の複雑機能を、code-first(動かしてから設計し設計書はコードから起こす)で本番まで進める。reversible/blast radius 小の変更向け、スキーマ/公開API契約が主リスクなら不適。",
-      "version": "0.15.0",
+      "version": "0.16.0",
       "source": "./plugins/iterate-with-prototypes",
       "skills": [
         "./skills/iterate-with-prototypes"
@@ -26,7 +26,7 @@
     {
       "name": "define-acceptance-criteria",
       "description": "プランファイルの受け入れ条件・技術リスクを定義する時に使用。プランモードでの直接実行のほか、subagent への委譲実行でも同じ手順で完結する。",
-      "version": "0.25.0",
+      "version": "0.26.0",
       "source": "./plugins/define-acceptance-criteria",
       "skills": [
         "./skills/define-acceptance-criteria"
@@ -62,7 +62,7 @@
     {
       "name": "review-design",
       "description": "新機能の実装開始前、「このコードはどこに置くべきか」と迷った時に使用。",
-      "version": "1.24.0",
+      "version": "1.25.0",
       "source": "./plugins/review-design",
       "skills": [
         "./skills/review-design"
@@ -86,7 +86,7 @@
     {
       "name": "polish-before-commit",
       "description": "コミット前やPR作成前に、プロジェクト規約への準拠・パターン一貫性を確認・修正する。",
-      "version": "0.29.0",
+      "version": "0.30.0",
       "source": "./plugins/polish-before-commit",
       "skills": [
         "./skills/polish-before-commit"
@@ -122,7 +122,7 @@
     {
       "name": "qa-ui",
       "description": "実装完了後にChromeDevTools MCPでUI検証を行う。",
-      "version": "1.20.0",
+      "version": "1.21.0",
       "source": "./plugins/qa-ui",
       "skills": [
         "./skills/qa-ui"
@@ -170,7 +170,7 @@
     {
       "name": "dry-ssot-text",
       "description": "AI生成ドキュメント（プラン・設計書・RFC・PR説明）を単一の情報源（SSOT）に統合",
-      "version": "0.14.0",
+      "version": "0.15.0",
       "source": "./plugins/dry-ssot-text",
       "skills": [
         "./skills/dry-ssot-text"
