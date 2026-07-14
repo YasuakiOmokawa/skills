@@ -47,6 +47,7 @@ description: Auto-fixes convention and pattern-consistency issues, runs lint, an
 2. 影響範囲調査: メソッド名・引数・戻り値の変更
 3. ビジネスロジック: バリデーション追加 / 認可変更
 4. Dead mock の**部分削除** (`receive_messages(a:, b:)` のうち一部 identifier だけ削除): 書換え候補を併記してユーザー承認後に編集 (Orchestrated モード時は削除せず、書換え候補を escalation ledger に保留として記帳する。[references/orchestrated-mode.md](references/orchestrated-mode.md) 参照)
+5. **Reference-free dead file (Ruby 以外)**: 直近ブランチで追加された `__mocks__/**` や `spike*` / `scratch*` prefix の TS/JS/Python ファイルで、外部参照が grep で 0 件 (`import` / `require` / test loader での参照無し) のもの。Step 6 の dead-mock 削除は Ruby/RSpec 限定のため、他言語の spike 残骸は自動削除せず Manual Review に集約して user 判断を仰ぐ (誤検出時に削除するとテスト setup が壊れうるため)。判定は Step 8 で feature-dev:code-reviewer が拾った「dead file」指摘を優先し、独自 grep で追加検出する範囲はこの 3 prefix に限定する。
 
 ## 現在の対象 (skill 読み込み時に自動取得)
 

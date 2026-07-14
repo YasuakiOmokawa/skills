@@ -37,7 +37,7 @@ description: Use when starting a complex feature where a PRD or spec exists but 
 
    この行は **1 仮定に複数観測基準(recall と latency)**を持つ例(同一データ経路なので 1 行に同居)。**別仮定は行を分ける**(`The loop` step 1 の「verdict を仮定ごとに分ける」と整合)。同一の処理経路(同じ関数・同じ判定ロジック)に対する複数の代表入力(境界値・エッジケースなど)は、仮定を分けず検証方法欄に列挙して 1 行に収める。行を分けるのは、判定対象の処理経路自体が別々で、別々の kill 条件を持つ場合に限る。
 
-   status は **unverified / grounded / killed** の 3 値(本文の「接地」= grounded、表の「kill 条件」成立 = killed。この 3 トークン以外を status 列に書かない)。**grounded の立証責任は証拠側にある** — ground-truth 照合が取れない・観測が kill / grounded どちらの条件にも届かない場合は grounded にせず unverified のまま step 1 へ戻る(判定をでっち上げない。楽観 grounded は「最上位仮定が grounded になってから Code-A 着手」の gate をすり抜けさせる)。
+   status は **unverified / grounded / killed** の 3 値(本文の「接地」= grounded、表の「kill 条件」成立 = killed。この 3 トークン以外を status 列に書かない)。**grounded の立証責任は証拠側にある** — ground-truth 照合が取れない・観測が kill / grounded どちらの条件にも届かない場合は grounded にせず unverified のまま step 1 へ戻る(判定をでっち上げない。楽観 grounded は「最上位仮定が grounded になってから Code-A 着手」の gate をすり抜けさせる)。**複合主張の分離**: 1 主張が観測次元を跨り (例: 「HEIC も安定処理」= 拡張子受理 + EXIF 補正 + 内容抽出精度)、観測次元の一部だけが kill 条件に触れる場合は、主張を狭く切り直して grounded 側と unverified 側の別行に分離する — 全体 recall だけ見て grounded にすると kill 条件に触れた次元が握りつぶされる (先の recall + latency のように同一データ経路の複数観測基準を 1 行に持つケースとは別問題で、こちらは判定対象の次元自体が別なので行を分ける)。
 4. 最上位仮定の spike へ → `The loop` step 1。
 
 > **iterate の実体**: spike は 1 回で終わらないことが多い。spike を配信して触らせる → ledger の仮定/status を更新 → 未解決なら step 1 へ戻る、という**周回**を回す。`The loop` step 2(Code-A)着手は、最上位仮定が grounded になってから(下位の仮定が unverified のままでも、この gate には影響しない)。呼び出し側が「ledger 化と spike の検証」のみを依頼している場合(PoC・使い捨て検証など速度優先の文脈で典型)は、最上位仮定が grounded/killed で確定した時点でこの回の作業を終える。step 2(Code-A)着手は、呼び出し側が PRD 網羅実装を明示的に依頼した場合に限る。
