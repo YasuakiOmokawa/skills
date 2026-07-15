@@ -1,7 +1,7 @@
 {
   "name": "qa-ui",
   "description": "実装完了後のUI検証。既定は人間委譲 — QA-ID台帳のmanual項目ごとに前提・操作手順・確認点をまとめた実行手順書を組み立てて人間に依頼し、返答を台帳に記帳する (ChromeDevTools MCPは使わない)。ブラウザautomationは明示指示時のみのオプション。不合格は最小修正→該当QA-IDのみ再確認を原則最大3ラウンド (root causeが1行で確定する場合のみ+1)。台帳がある場合はauto判定の再実行ゲート+機械集計で完了判定する。",
-  "version": "1.21.0",
+  "version": "1.22.0",
   "author": {
     "name": "Yasuaki Omokawa",
     "url": "https://github.com/YasuakiOmokawa"
