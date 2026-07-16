@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "omokawa-skills",
-  "version": "3.60.0",
+  "version": "3.61.0",
   "description": "Plan-driven development workflow を構成する個別 skill 群。必要なものだけ install 可能",
   "owner": {
     "name": "Yasuaki Omokawa",
@@ -242,7 +242,7 @@
     {
       "name": "ai-prototype-flow",
       "description": "AI プロトタイプ駆動開発フロー (PoC → 設計確定 → DD 作成 → 出荷実装) の 1 フェーズだけを実行する薄い dispatcher。gdocs PRD の凍結スナップショットによる案件初期化、status モード (現在地レポート)、再入ルール (PRD/Figma 変更・未知サブ問題・正本管理) を備える。組織固有の DD テンプレート・実例は同梱しない — セットアップスクリプト (scripts/setup.sh) が ~/.claude/skills-config/ai-prototype-flow/ に配置したものを参照する。",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "source": "./plugins/ai-prototype-flow",
       "skills": [
         "./skills/ai-prototype-flow"
