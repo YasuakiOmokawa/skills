@@ -7,21 +7,11 @@ description: Auto-fixes convention and pattern-consistency issues, runs lint, an
 
 **提案だけでなく、自動修正まで行う。** プロジェクト規約・パターン一貫性・impl/spec 整合 (現状 Ruby/RSpec の delegate/def 撤去後 dead-mock 削除のみ、TS/JS/Python は範囲外で skip) を点検し、Step 4 → 5 → 6 → 7 は順序固定で再評価ループ禁止。
 
-**review-only モード (ファイル変更不可)**: user が「ファイル変更はしない」「レビューのみ」「他者の PR」を指示した場合は編集せず、auto-fix Step (4/5/6/7) は候補提示に留め各 Step を `[<Step>: review-only により提案のみ]` と報告する (`<Step>` は各 Step のレポート文言表 bracket 内の実 label に厳密一致させる: `パターン一貫性` / `lint` / `dead mock` / `コメント改善`。variant 表を label の SSOT とし本文の言及とズレたら表を優先する)。**review-only overlay は Step 4/5/6/7 の tier 由来 skip・条件由来 skip の両方より優先する** (user 明示指示は最上位のため、たとえ Step 6 が条件不一致 (Ruby なし等) で通常なら条件バリアントを出す場面でも review-only 時は `[dead mock: review-only により提案のみ]` を出力する)。実行するのは Step 1 (規約収集) + Step 8 (最終レビュー) + Step 9 (集約)。対象が Ruby/TS/JS/Python 外 (Helm/YAML 等) の場合も Step 4/5/6/7 は言語スコープ外として skip し Step 8 中心で点検する (どちらも編集せず点検に倒す点は同じ)。明示指示が無い場合の一次検出は「## 委譲実行」節を参照。
-
-**他者 PR の点検時の Step 9 読み替え**: 読むファイルも PR head ブランチ名で引き (`quality-review-handoff-<PR head ブランチ名>.md`)、申し送りの採用判定は「`branch:` == 点検対象 (PR head ブランチ名)」で行う (カレントブランチ基準にすると自ブランチ宛の無関係な申し送りを混入させる)。自ブランチ宛の申し送りは採用もクリアもしない — Step 9 の申し送りファイル削除 (`rm`) は自ブランチのフロー最終段でのみ実行する。終了文言は「コミットへ進めますか?」でなく「レビュー点検完了。指摘一覧を確認してください」とする (commit する対象が無いため)。
+**特殊モードの読み替え**: review-only (ファイル変更不可) / 他者 PR 点検 / subagent 委譲 (`Task` 起動) 時の検出・報告・Step 9 の読み替えは [references/execution-modes.md](references/execution-modes.md) を参照する (通常フロー = 単独起動・自ブランチ・ファイル編集可 では読み込み不要)。user が「ファイル変更はしない」「レビューのみ」「他者の PR」を指示した場合、または利用可能ツール一覧が subagent 委譲を示す場合に適用する。
 
 **フロー最終段の役割**: この skill はフローの最後に置かれることを想定する。代表的な前段列 (可変) は `/simplify` → `/vercel-react-best-practices` → `/review-code-quality` → 本 skill だが、実運用ではこの間に `/vercel-composition-patterns`・`/express-intent-in-code`、文章チェーン (`/dry-ssot-text` → `/purge-private-vocab`) 等が挟まる場合がある。Step 9 で `/review-code-quality` からの申し送り (`.git/quality-review-handoff-<branch>.md`) と本 skill の Manual Review Items を集約し、**末尾でユーザー判断が必要な項目を一覧提示してから止まる** (連続スキル実行で個別レポートが transcript に埋もれ握りつぶされるのを防ぐため)。
 
 **Orchestrated モード**: ファイル存在からの推測では判定しない。呼び出し側（将来のオーケストレータ）が Task 起動プロンプトで「orchestrated モードで実行。escalation は `<path>` に記帳して続行せよ」のように明示指示した場合のみ発動する。指示が無い単独起動では現行動作（判断項目 1 件以上で停止しユーザーの明示指示を待つ）のまま進む。差分は Manual Review Items #4 (dead mock 部分削除) と Step 9 のみで、詳細は [references/orchestrated-mode.md](references/orchestrated-mode.md) を参照。
-
-## 委譲実行 (subagent として起動された場合)
-
-以下は、本 skill が `Task` で委譲された subagent として動く場合にのみ関係する読み替えである。判定はいずれも「利用可能ツール一覧」という観測可能な条件で行い、文字列一致による推測はしない。単独起動 (メイン会話でユーザーが直接起動) の現行動作はこれらの条件に当てはまらない限り変えない。
-
-- **Orchestrated モード**: 発動条件・記帳先・記帳規則は上記「Orchestrated モード」段落と [references/orchestrated-mode.md](references/orchestrated-mode.md) が正本 (本節では繰り返さない)。
-- **review-only の一次検出**: `AskUserQuestion` が利用可能ツール一覧に無く、かつ実行モードの明示指定 (review-only / orchestrated 等) も起動プロンプトに無い場合に限り、`git log -1 --format='%an'` と `git config user.name` を比較する。不一致なら review-only を既定にする (ユーザーに確認できない状況で他者のブランチを誤って auto-fix する事故を防ぐため)。一致する場合、または `AskUserQuestion` が利用可能な単独起動では、現行どおり明示宣言が無い限り通常モードのまま進む。
-- **Task / Skill 不可時の fallback**: `Task` が利用可能ツール一覧に無い場合のみ、Step 3 (パターン一貫性の並列処理) は並列化せず main thread で順次処理する。`Skill` が利用可能ツール一覧に無い場合のみ、Step 8 (最終レビュー) は同 Step 記載の fallback 手順に切り替える。
 
 ## Task complexity tier
 
@@ -87,7 +77,7 @@ Step 2 は Quick start の通り。Step 3 の並列化判定は 3 分岐:
 - **ファイル > 5 かつ単一言語**: main thread で順次処理 (subagent 並列化しない — 単一言語では規約セットが共通で分散のオーバーヘッドが節約時間を上回る)
 - **ファイル > 5 かつ複数言語混在**: `subagent_type: "general-purpose"` で並列 (規約・対象ファイル・[references/pattern-consistency.md](references/pattern-consistency.md) を渡す)
 
-`Task` が利用可能ツール一覧に無い場合は並列化せず main thread で順次処理する (「## 委譲実行」節参照)。
+`Task` が利用可能ツール一覧に無い場合は並列化せず main thread で順次処理する ([references/execution-modes.md](references/execution-modes.md) の「委譲実行」節参照)。
 
 ### 4. パターン一貫性
 
