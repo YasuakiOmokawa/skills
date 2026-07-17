@@ -1,13 +1,13 @@
 ---
 name: polish-before-commit
-description: Auto-fixes convention and pattern-consistency issues, runs lint, and aggregates remaining judgment calls before stopping for the user (or, when explicitly delegated in orchestrated mode, escalating to a ledger and returning instead of waiting). Requires the Claude `feature-dev` plugin for the final review step and halts with install guidance when it is missing. Use when finalizing a branch, just before `git commit` or `/create-pr`, when reviewing someone else's PR without editing files (review-only mode), or whenever the user says "仕上げて" / "polish" / "コミット前チェック" / "レビューのみで見て".
+description: Auto-fixes convention and pattern-consistency issues, runs lint, and aggregates remaining judgment calls before stopping for the user (or, when explicitly delegated in orchestrated mode, escalating to a ledger and returning instead of waiting). Runs the built-in `/code-review` skill at xhigh effort as the final review step (no plugin dependency). Use when finalizing a branch, just before `git commit` or `/create-pr`, when reviewing someone else's PR without editing files (review-only mode), or whenever the user says "仕上げて" / "polish" / "コミット前チェック" / "レビューのみで見て".
 ---
 
 # polish-before-commit
 
 **提案だけでなく、自動修正まで行う。** プロジェクト規約・パターン一貫性・impl/spec 整合 (現状 Ruby/RSpec の delegate/def 撤去後 dead-mock 削除のみ、TS/JS/Python は範囲外で skip) を点検し、Step 4 → 5 → 6 → 7 は順序固定で再評価ループ禁止。
 
-**review-only モード (ファイル変更不可)**: user が「ファイル変更はしない」「レビューのみ」「他者の PR」を指示した場合は編集せず、auto-fix Step (4/5/6/7) は候補提示に留め各 Step を `[<Step>: review-only により提案のみ]` と報告する (`<Step>` は各 Step のレポート文言表のラベル: パターン一貫性 / lint / dead-mock 削除 / コメント改善)。実行するのは Step 0 (preflight) + Step 1 (規約収集) + Step 8 (最終レビュー) + Step 9 (集約)。対象が Ruby/TS/JS/Python 外 (Helm/YAML 等) の場合も Step 4/5/6/7 は言語スコープ外として skip し Step 8 中心で点検する (どちらも編集せず点検に倒す点は同じ)。明示指示が無い場合の一次検出は「## 委譲実行」節を参照。
+**review-only モード (ファイル変更不可)**: user が「ファイル変更はしない」「レビューのみ」「他者の PR」を指示した場合は編集せず、auto-fix Step (4/5/6/7) は候補提示に留め各 Step を `[<Step>: review-only により提案のみ]` と報告する (`<Step>` は各 Step のレポート文言表のラベル: パターン一貫性 / lint / dead-mock 削除 / コメント改善)。実行するのは Step 1 (規約収集) + Step 8 (最終レビュー) + Step 9 (集約)。対象が Ruby/TS/JS/Python 外 (Helm/YAML 等) の場合も Step 4/5/6/7 は言語スコープ外として skip し Step 8 中心で点検する (どちらも編集せず点検に倒す点は同じ)。明示指示が無い場合の一次検出は「## 委譲実行」節を参照。
 
 **他者 PR の点検時の Step 9 読み替え**: 読むファイルも PR head ブランチ名で引き (`quality-review-handoff-<PR head ブランチ名>.md`)、申し送りの採用判定は「`branch:` == 点検対象 (PR head ブランチ名)」で行う (カレントブランチ基準にすると自ブランチ宛の無関係な申し送りを混入させる)。自ブランチ宛の申し送りは採用もクリアもしない — Step 9 の申し送りファイル削除 (`rm`) は自ブランチのフロー最終段でのみ実行する。終了文言は「コミットへ進めますか?」でなく「レビュー点検完了。指摘一覧を確認してください」とする (commit する対象が無いため)。
 
@@ -21,7 +21,7 @@ description: Auto-fixes convention and pattern-consistency issues, runs lint, an
 
 - **Orchestrated モード**: 発動条件・記帳先・記帳規則は上記「Orchestrated モード」段落と [references/orchestrated-mode.md](references/orchestrated-mode.md) が正本 (本節では繰り返さない)。
 - **review-only の一次検出**: `AskUserQuestion` が利用可能ツール一覧に無く、かつ実行モードの明示指定 (review-only / orchestrated 等) も起動プロンプトに無い場合に限り、`git log -1 --format='%an'` と `git config user.name` を比較する。不一致なら review-only を既定にする (ユーザーに確認できない状況で他者のブランチを誤って auto-fix する事故を防ぐため)。一致する場合、または `AskUserQuestion` が利用可能な単独起動では、現行どおり明示宣言が無い限り通常モードのまま進む。
-- **Task 不可時の fallback**: `Task` が利用可能ツール一覧に無い場合のみ、Step 3 (パターン一貫性の並列処理) は並列化せず main thread で順次処理し、Step 8 (最終レビュー) は同 Step 記載の fallback 手順に切り替える。
+- **Task / Skill 不可時の fallback**: `Task` が利用可能ツール一覧に無い場合のみ、Step 3 (パターン一貫性の並列処理) は並列化せず main thread で順次処理する。`Skill` が利用可能ツール一覧に無い場合のみ、Step 8 (最終レビュー) は同 Step 記載の fallback 手順に切り替える。
 
 ## Task complexity tier
 
@@ -31,13 +31,13 @@ description: Auto-fixes convention and pattern-consistency issues, runs lint, an
 | **standard** (default) | 2-5 ファイル, 規約 hit 1-3 | Step 1-5 + Step 8 + Step 9 (Step 6/7 は条件 hit 時のみ) |
 | **deep** | 6+ ファイル / 規約 hit 4+ / Ruby delegate or def 撤去あり / multi-language | 全 Step (1-9) |
 
-**Step 0 (preflight)** は全 tier で最初に必ず実行する (`feature-dev` 未導入なら他の Step に入る前に中止)。**Step 1 (規約の収集) も tier 判定の前に全 tier で必ず実行**する (tier 判定基準の「規約 hit 数」は Step 1 の収集結果からしか得られないため)。上表の「実行 Step」列は **Step 0/1 通過後にどの検査・修正 Step (4 以降) を実行するか**を指し、lite でも Step 0/1 は飛ばさない。リスク領域 (auth / billing / payment / migration) は LoC によらず **deep**。
+**Step 1 (規約の収集) は tier 判定の前に全 tier で必ず実行**する (tier 判定基準の「規約 hit 数」は Step 1 の収集結果からしか得られないため)。上表の「実行 Step」列は **Step 1 通過後にどの検査・修正 Step (4 以降) を実行するか**を指し、lite でも Step 1 は飛ばさない。リスク領域 (auth / billing / payment / migration) は LoC によらず **deep**。
 
 補足:
 - **規約 hit 数**: Step 1 で収集した明文規約への一致件数のみを指す (Step 4 の既存パターン多数派逸脱は判定軸が別のため含めない)。Step 1 はリポジトリ内 `CLAUDE.md`/`rules` とグローバル `~/.claude/CLAUDE.md`/`rules` の両方を収集対象とするため、hit 数は両者を合算した件数で数える (起源による区別はしない)。
 - **Step 4 / Step 7**: tier 表の「実行 Step」列に無い tier では、各 Step 固有の条件判定 (規約の有無等) より tier-skip を優先し `[<Step>: tier-{lite,standard,deep} により省略]` を出力する。Step 固有の条件不一致文言は、その tier の「実行 Step」列に含まれる場合のみ使う。
 - **Step 6 (dead-mock 削除)**: Ruby PR で `delegate :X` / `def X` 撤去を含む場合のみ実行する。Step 4/7 と異なり tier 表の「実行 Step」列の記載に関わらず、条件一致で tier 問わず発火する。
-- **Step 9 (判断申し送りの集約)**: Step 0 で中止した場合を除き、tier 問わず必ず実行する (フロー最終出力のため lite でも省略不可)。
+- **Step 9 (判断申し送りの集約)**: tier 問わず必ず実行する (フロー最終出力のため lite でも省略不可)。
 
 ## Manual Review Items (自動修正せず提案のみ → Step 9 で集約)
 
@@ -47,7 +47,7 @@ description: Auto-fixes convention and pattern-consistency issues, runs lint, an
 2. 影響範囲調査: メソッド名・引数・戻り値の変更
 3. ビジネスロジック: バリデーション追加 / 認可変更
 4. Dead mock の**部分削除** (`receive_messages(a:, b:)` のうち一部 identifier だけ削除): 書換え候補を併記してユーザー承認後に編集 (Orchestrated モード時は削除せず、書換え候補を escalation ledger に保留として記帳する。[references/orchestrated-mode.md](references/orchestrated-mode.md) 参照)
-5. **Reference-free dead file (Ruby 以外)**: 直近ブランチで追加された `__mocks__/**` や `spike*` / `scratch*` prefix の TS/JS/Python ファイルで、外部参照が grep で 0 件 (`import` / `require` / test loader での参照無し) のもの。Step 6 の dead-mock 削除は Ruby/RSpec 限定のため、他言語の spike 残骸は自動削除せず Manual Review に集約して user 判断を仰ぐ (誤検出時に削除するとテスト setup が壊れうるため)。判定は Step 8 で feature-dev:code-reviewer が拾った「dead file」指摘を優先し、独自 grep で追加検出する範囲はこの 3 prefix に限定する。
+5. **Reference-free dead file (Ruby 以外)**: 直近ブランチで追加された `__mocks__/**` や `spike*` / `scratch*` prefix の TS/JS/Python ファイルで、外部参照が grep で 0 件 (`import` / `require` / test loader での参照無し) のもの。Step 6 の dead-mock 削除は Ruby/RSpec 限定のため、他言語の spike 残骸は自動削除せず Manual Review に集約して user 判断を仰ぐ (誤検出時に削除するとテスト setup が壊れうるため)。判定は Step 8 の `/code-review` が拾った「dead file」指摘を優先し、独自 grep で追加検出する範囲はこの 3 prefix に限定する。
 
 ## 現在の対象 (skill 読み込み時に自動取得)
 
@@ -59,56 +59,15 @@ description: Auto-fixes convention and pattern-consistency issues, runs lint, an
 
 !`git diff --name-only --cached`
 
-!`(grep -q '"feature-dev@' ~/.claude/plugins/installed_plugins.json 2>/dev/null || ls -d ~/.claude/plugins/cache/*/feature-dev >/dev/null 2>&1) && echo 'preflight: feature-dev INSTALLED' || echo 'preflight: feature-dev MISSING'`
-
-> 上 5 行は Claude Code が skill 読み込み時に実行し結果へ置換する (読み取り専用・冪等)。2-4 行目はそれぞれ ブランチ全体 / 未コミット (worktree) / staged 差分で、スコープ判定 (Quick start 1) に使う。失敗時のフォールバックは原因別: (a) 生コマンド文字列のまま見える (注入非対応環境) → Step 0 / Quick start 1 の同コマンドを Bash で実行。(b) `unknown revision` 等のエラー (base branch が develop でない) → 次の順で能動的に解決する (`/create-pr` Step 0b と同じ手順、`git remote show origin` 単独には頼らない — remote の HEAD symref が dangling だと `(unknown)` を返し base を特定できないため): ① `gh repo view --json defaultBranchRef --jq .defaultBranchRef.name` ② 失敗時 `git symbolic-ref refs/remotes/origin/HEAD --short | sed 's@^origin/@@'` ③ いずれも失敗なら `main` を既定にする。決定した値を `BASE_BRANCH=<base>` として以降のコマンドに指定して再実行する (以降の `${BASE_BRANCH:-develop}` はこの値を優先して使う)。
+> 上 4 行は Claude Code が skill 読み込み時に実行し結果へ置換する (読み取り専用・冪等)。2-4 行目はそれぞれ ブランチ全体 / 未コミット (worktree) / staged 差分で、スコープ判定 (Quick start 1) に使う。失敗時のフォールバックは原因別: (a) 生コマンド文字列のまま見える (注入非対応環境) → Quick start 1 の同コマンドを Bash で実行。(b) `unknown revision` 等のエラー (base branch が develop でない) → 次の順で能動的に解決する (`/create-pr` Step 0b と同じ手順、`git remote show origin` 単独には頼らない — remote の HEAD symref が dangling だと `(unknown)` を返し base を特定できないため): ① `gh repo view --json defaultBranchRef --jq .defaultBranchRef.name` ② 失敗時 `git symbolic-ref refs/remotes/origin/HEAD --short | sed 's@^origin/@@'` ③ いずれも失敗なら `main` を既定にする。決定した値を `BASE_BRANCH=<base>` として以降のコマンドに指定して再実行する (以降の `${BASE_BRANCH:-develop}` はこの値を優先して使う)。
 
 ## Quick start
 
-0. **preflight (全 tier 必須・最初に実行)**: `feature-dev` plugin (Step 8 の `feature-dev:code-reviewer` が依存) の導入を確認。未導入なら**インストール方法を提示して即終了**し、以降の Step を一切実行しない (下記 Workflow Step 0)。
 1. 引数 `$ARGUMENTS` あり → そのファイルを対象。なし → `git diff --name-only origin/${BASE_BRANCH:-develop}...HEAD` (ブランチ全体) で取得 (0 件なら終了)。**ただしブランチ全体と未コミット+staged 差分が大きく乖離する長命ブランチでは、今 commit しようとしている未コミット+staged 差分 (冒頭 3-4 行目) を既定スコープにする** (本 skill は commit 直前の用途なので、過去コミット分まで巻き込まない。ブランチ全体を polish したい時のみ明示指定し、判断に迷えば user に確認)。
 2. 規約を収集 (下記 Workflow Step 1) → 規約 hit 数 + ファイル数で tier 表の実行範囲を確定 → tier 対応 Step を順に実行。
-3. 各 Step の結果を**文言バリアント表に厳密一致**させた最終レポートを返す (silent skip 禁止)。バリアント表を持つのは Step 0/4/5/6/7/8/9 のみで、表の無い Step (規約収集・対象ファイル確定・処理方式) は bracket 文言不要 (要約 1 行で足りる)。省略文言の使い分け: **tier 由来の省略**は `[<Step>: tier-{lite,standard,deep} により省略]`、**条件不一致由来のスキップ** (Step 6 の撤去なし等) は各 Step 固有のスキップバリアント文言を優先する。最後に Step 9 で `### ⚠️ ユーザー判断が必要な項目` を集約提示し、commit へ進まず判断を仰ぐ。
+3. 各 Step の結果を**文言バリアント表に厳密一致**させた最終レポートを返す (silent skip 禁止)。バリアント表を持つのは Step 4/5/6/7/8/9 のみで、表の無い Step (規約収集・対象ファイル確定・処理方式) は bracket 文言不要 (要約 1 行で足りる)。省略文言の使い分け: **tier 由来の省略**は `[<Step>: tier-{lite,standard,deep} により省略]`、**条件不一致由来のスキップ** (Step 6 の撤去なし等) は各 Step 固有のスキップバリアント文言を優先する。最後に Step 9 で `### ⚠️ ユーザー判断が必要な項目` を集約提示し、commit へ進まず判断を仰ぐ。
 
 ## Workflow
-
-### 0. 前提 plugin チェック (preflight / 全 tier 必須・最初に実行)
-
-本 skill は最終レビュー (Step 8) で Claude 公式 plugin `feature-dev` の `code-reviewer` agent を使う。**他の Step に着手する前に**導入を確認し、未導入なら自動修正を一切行わずインストール方法を提示して終了する (auto-fix を進めてから Step 8 で止めると、修正だけが宙に浮くため最初に fail-fast する)。
-
-```bash
-if grep -q '"feature-dev@' ~/.claude/plugins/installed_plugins.json 2>/dev/null \
-   || ls -d ~/.claude/plugins/cache/*/feature-dev 2>/dev/null | grep -q .; then
-  echo "feature-dev: INSTALLED"
-else
-  echo "feature-dev: MISSING"
-fi
-```
-
-冒頭の自動取得に `preflight: feature-dev INSTALLED / MISSING` が出ていればそれを判定に採用してよい (bash 再実行は不要)。
-
-- `INSTALLED` → `[preflight: feature-dev 導入済み]` を出力して Step 1 へ進む。
-- `MISSING` → **ここで終了**する (Step 1〜9 を一切実行しない)。中止は「未到達」であり「到達したが省略」ではないため、Step 1-9 の skip 文言 (`[<Step>: …により省略]`) も Step 9 の集約も出力しない。出力は次の 2 つだけを**この順で**返す:
-  1. Step 0 の中止レポート文言 (下表「未導入 (中止)」): `[preflight: feature-dev 未導入のため中止 (インストール方法を提示)]`
-  2. 下記の**ユーザー向けメッセージ**。agent 自身は `/plugin` を実行せず提示するだけで、`# marketplace 未追加の場合のみ` のコメントも含め改変せず転記する (条件判断はユーザーに委ねる)。`/plugin` 行はユーザーが実行する独立コードブロックとして見せる:
-
-ユーザー向けメッセージ (内容をそのまま提示):
-
-⚠️ `feature-dev` plugin が未導入のため polish-before-commit を中止しました。Step 8 の最終レビューで Claude 公式 plugin `feature-dev` の `code-reviewer` agent を使います。以下で導入してから再実行してください:
-
-```
-/plugin marketplace add anthropics/claude-plugins-official   # marketplace 未追加の場合のみ
-/plugin install feature-dev@claude-plugins-official
-```
-
-導入後にもう一度 `/polish-before-commit` を実行してください。
-
-**Step 0 レポート文言** (2 バリアント、いずれかを必ず出力):
-
-| 条件 | 文言 |
-|---|---|
-| 導入済み | `[preflight: feature-dev 導入済み]` |
-| 未導入 (中止) | `[preflight: feature-dev 未導入のため中止 (インストール方法を提示)]` |
 
 ### 1. 規約の収集
 
@@ -197,19 +156,19 @@ Step 1 で収集した規約テキストに「コメント」「comment」キー
 
 ### 8. 最終レビュー
 
-preflight (Step 0) で `feature-dev` の導入は保証済みのため、`code-reviewer` agent を直接呼ぶ:
+組み込みの `/code-review` skill を effort `xhigh` で実行する (検出エージェントと検証エージェントを分離した多段構成のため、単発レビュアーより取りこぼしと誤検知の両方に強い):
 
 ```
-Task(subagent_type="feature-dev:code-reviewer", prompt="変更ファイルの git diff をレビューし、バグ・規約違反を報告せよ")
+Skill(skill="code-review", args="xhigh")
 ```
 
-直前に `/review-code-quality` と `/express-intent-in-code` が完了済みであれば、その旨と申し送りファイル (`quality-review-handoff-<branch>.md`) の既知 finding 概要を prompt に含め、未発見のバグ・規約違反へ焦点を促す (同種分析の重複を避けるため)。
+直前に `/review-code-quality` と `/express-intent-in-code` が完了済みであれば、その旨と申し送りファイル (`quality-review-handoff-<branch>.md`) の既知 finding 概要を args に追記し、未発見のバグ・規約違反へ焦点を促す (同種分析の重複を避けるため)。
 
-diff が URL の生成・リダイレクト・route helper (`url_for` 系)・パス断片の受け渡しに触れる場合、フレームワークの暗黙のリクエスト文脈自動付与 (Rails の `default_url_options` 等) によるクエリ混入で「クエリなしパス」前提の結合契約が壊れていないかを観点として prompt に含める (静的レビューでの早期発見の一助であり、実行検証の代替にはならない — Gotchas 参照)。
+diff が URL の生成・リダイレクト・route helper (`url_for` 系)・パス断片の受け渡しに触れる場合、フレームワークの暗黙のリクエスト文脈自動付与 (Rails の `default_url_options` 等) によるクエリ混入で「クエリなしパス」前提の結合契約が壊れていないかを観点として args に含める (静的レビューでの早期発見の一助であり、実行検証の代替にはならない — Gotchas 参照)。
 
-Task ツールが利用可能ツール一覧に無い場合のみ、main thread で同等のレビュー (変更 diff のバグ・規約違反確認) を直接行い、`[最終レビュー: ... (fallback)]` と明示する (silent skip 禁止)。`feature-dev` 未導入は Step 0 で中止済みなので、ここには未導入状態で到達しない。
+`Skill` ツールが利用可能ツール一覧に無い場合のみ、main thread で同等のレビュー (変更 diff のバグ・規約違反確認) を直接行い、`[最終レビュー: ... (fallback)]` と明示する (silent skip 禁止)。
 
-**review-only で他者の PR を点検する場合**: code-reviewer には PR head を展開した worktree (`gh pr checkout` または `git worktree add`) の絶対パスと base 読み替え後の diff を渡す。現在の worktree が PR head と一致しないまま実行した場合は、指摘の根拠行を PR head 側で再確認してから採用する (stale なローカル worktree の値を根拠にした誤指摘の実績があるため。`/review-code-quality` の「PR レビューモード」と同じ規則)。
+**review-only で他者の PR を点検する場合**: PR head を展開した worktree (`gh pr checkout` または `git worktree add`) 上で `/code-review` を実行し、base 読み替え後の diff を対象にする。現在の worktree が PR head と一致しないまま実行した場合は、指摘の根拠行を PR head 側で再確認してから採用する (stale なローカル worktree の値を根拠にした誤指摘の実績があるため。`/review-code-quality` の「PR レビューモード」と同じ規則)。
 
 **Step 8 レポート文言** (2 バリアント、いずれかを必ず出力):
 
@@ -220,9 +179,9 @@ Task ツールが利用可能ツール一覧に無い場合のみ、main thread 
 
 内訳 3 分類の判定基準: **バグ** = 実行時に誤動作する欠陥 (誤った出力・例外・データ破損等)。**規約違反** = Step 1 で収集した明文規約との不一致。**その他** = 上記いずれでもない品質指摘 (デッドコード・命名・テスト不足等)。
 
-### 9. 判断申し送りの集約 (フロー最終 / 全 tier 必須・ただし Step 0 中止時は実行しない)
+### 9. 判断申し送りの集約 (フロー最終 / 全 tier 必須)
 
-このフローの**最終出力**として、ユーザー判断が必要な項目を 1 箇所に集約・提示してから止まる (Step 0 preflight で中止した場合はフロー自体が止まるため、この Step には到達せず集約も行わない)。連続スキル実行で個別レポートが transcript に埋もれ握りつぶされるのを防ぐ。
+このフローの**最終出力**として、ユーザー判断が必要な項目を 1 箇所に集約・提示してから止まる。連続スキル実行で個別レポートが transcript に埋もれ握りつぶされるのを防ぐ。
 
 1. 申し送りファイルを読む (`--git-dir` でなく `--git-common-dir` を使う: `git worktree add` で作った linked worktree では `--git-dir` が worktree 固有ディレクトリを返し、main 側と共有の申し送りファイルを見失うため。通常の worktree では両者は同じ値になり挙動は変わらない。ファイル名のブランチ名は、共有 `--git-common-dir` を使う複数 worktree の並行セッションが単一ファイルを相互 overwrite しないための分離):
    ```bash
@@ -260,10 +219,6 @@ Task ツールが利用可能ツール一覧に無い場合のみ、main thread 
 - **規約 hit 数の数え方**: tier 判定基準の「規約 hit 数」は「規約への一致件数」とだけ定義され、1 規約に複数箇所で違反がある場合に規約の項目数で数えるか違反箇所数で数えるかが未定義。fresh executor 2 回の検証で解釈が割れた (既知ギャップとして据え置き、今回の改修テーマ外)
 - **申し送りファイルは rm 前に必ず Read する**: `branch:` と内容が現在のフローの成果物であることを確認してから消す (linked worktree 環境で、パス探索の fallback が拾った別セッションの残骸 handoff を未読のまま rm した実測事例。stale (別ブランチ) は Step 9 の除外対象であって削除対象ではない)
 - **URL 生成への暗黙リクエスト文脈混入は静的レビューで取りこぼしやすい**: フレームワークがリクエストスコープの値を URL 生成へ自動付与する挙動 (Rails の `default_url_options` 等) は diff を読むだけでは気づきにくく、実行して観測しない限り見落としやすい (実測: `_sp` クエリの混入で `/id?token=` の結合契約が壊れ 404 になったが、品質レビュー 7 パス全通過後にユーザーの実機操作で発覚)
-
-## 前提 plugin
-
-- **`feature-dev` (Claude 公式)** — Step 8 の最終レビューで `code-reviewer` agent を使う。未導入時は Step 0 (preflight) で中止し、`/plugin install feature-dev@claude-plugins-official` を案内する。
 
 ## 併用推奨 skill
 
