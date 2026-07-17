@@ -1,7 +1,7 @@
 {
   "name": "ai-prototype-flow",
   "description": "AI プロトタイプ駆動開発フロー (PoC → 設計確定 → DD 作成 → 出荷実装) の 1 フェーズだけを実行する薄い dispatcher。gdocs PRD の凍結スナップショットによる案件初期化、status モード (現在地レポート)、再入ルール (PRD/Figma 変更・未知サブ問題・正本管理) を備える。組織固有の DD テンプレート・実例は同梱しない — セットアップスクリプト (scripts/setup.sh) が ~/.claude/skills-config/ai-prototype-flow/ に配置したものを参照する。",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "author": {
     "name": "Yasuaki Omokawa",
     "url": "https://github.com/YasuakiOmokawa"

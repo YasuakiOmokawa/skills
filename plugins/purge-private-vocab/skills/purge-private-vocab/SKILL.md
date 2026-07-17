@@ -9,6 +9,8 @@ description: Detects local-plan coinages, abbreviations, and number labels in re
 
 **核心原則**: 「読者が source plan を持っていない前提で読み下せるか」。書き手 (AI 自身) が plan を読んだ状態で書くと無意識に plan 内造語を持ち込む。
 
+> **subagent として委譲起動された場合** (起動プロンプトが「委譲されたエージェント」等と明示、または利用可能ツールに AskUserQuestion が無い): 入力解決順位・self-approve 判定・source plan 欠落時の縮退動作が通常フローと異なる。Workflow に入る前に [references/execution-contexts.md](references/execution-contexts.md) の「委譲実行」節を必ず Read し、本文の該当 Step (Step 1 / Step 4 / Step 5) に優先して適用すること。
+
 ## Task complexity tier
 
 | Tier | 判定 | アクション |
@@ -16,14 +18,9 @@ description: Detects local-plan coinages, abbreviations, and number labels in re
 | **lite (skip)** | target = plan そのもの / 読者全員が plan 共有済のチーム内資料 / API ref (codebase 直 map) | **skip** |
 | **lite** | target ≤300 字 or plan-only 語ヒット ≤2 | 1-pass 直接修正 (dry-run レポート省略、Step 4 飛ばして Step 5 のみ) |
 | **standard** (default) | 中規模 doc (PR description / Jira description 等、300-2000 字) | Step 1-5 全実行、dry-run レポート提示 → 承認後 Edit |
-| **deep** | design doc / RFC / 公開資料 / 2000+ 字 | dry-run + 適用後の再読検証必須 + heuristics-and-pitfalls.md 全件チェック + 下記 **deep 必須前置**を Step 1 で実施 |
+| **deep** | design doc / RFC / 公開資料 / 2000+ 字 | dry-run + 適用後の再読検証必須 + heuristics-and-pitfalls.md 全件チェック + [references/execution-contexts.md](references/execution-contexts.md) の **deep 必須前置** (target 文構造の直読み / ID の 1:1 索引 / layer label の実コンポーネント名解決) を Step 1 で実施 |
 
 **plan そのものが target になる場合 (lite(skip) の例外)**: plan の読者 (チームメンバー / 将来の別エージェント) が持たない上流文書 (分析ファイル・MECE 結果等) 由来の語彙 — `BB-N` / `WB-N` / `IM-N` 等の finding ID — が plan に混入している場合は、plan 自体を target として検査する (skip しない)。このとき source = 分析ファイル、target = plan の多段連鎖として扱う (「分析ファイル → plan → 読者」で、plan は中間文書でも読者にとっては対外文書)。
-
-**deep 必須前置** (Step 1 の入力収集を拡張):
-1. **target の文構造を直読み**: `**用語**: 説明` のような Label vs Body 構造かを目視確認し、Label vs Body 分離ルートの適用可否を Step 3 までに確定する
-2. **AC-* / Critical-* / RFC-* 等の ID 紐付け**: target に登場する全 ID (`AC-7`, `Critical-A` 等) を source plan / analysis ファイルから 1:1 で索引し、各 ID の元内容を「展開」または「文ごと削除」のどちらにするか Step 4 提案レポートに明記する
-3. **layer label (α/β/γ 層 等) の対応コンポーネント名解決**: source plan から各 layer の実コンポーネント名 (Web / Service / Persistence 等) を引き、推測補完にせず実値で言い換える候補を Step 3 までに用意する。**実コンポーネント名を解決できない場合 (source plan 不在等) の扱いは Q4 の層ラベル規則を SSOT とする** (関係性ベースの一般表現への言い換え・捏造禁止はそちらに集約)
 
 ## Core Pattern: 3 分類
 
@@ -132,19 +129,7 @@ Q4. 番号/層ラベルか? (`Critical-A`, `α/β/γ 層`, `AC-12`, PR チェー
 
 ## 委譲実行 (subagent として起動された場合)
 
-### 入力解決順位 (Step 1)
-target・source plan とも、① 起動プロンプト本文の明示指定 (Task 委譲時はこれが一次情報源) → ② セッション文脈 (単独起動時のみ有効) → ③ `~/.claude/plans/<topic>/plan.md` 等のファイル探索、の順で解決する。①が具体パスを明示している場合、そのパスが実在しなければその時点で「見つからない」と確定する。②③は①が具体パスを示していない場合のみのフォールバックであり、①の具体パスが外れたことの埋め合わせとして別ディレクトリ・別ファイル名を探索する用途には使わない。
-
-target が①〜③いずれでも見つからない場合は「不足入力: target」を最終メッセージで返して即座に終了する (返答を待たない)。
-
-source plan が①〜③いずれでも見つからない場合、AskUserQuestion 相当の確認手段が無い実行文脈では停止して回答を待てないため、次の縮退動作に入る:
-- Q1/Q2 だけで機械判定できる候補語 (codebase identifier・target 内で self-contained な語) のみ処理する
-- Q3 以降の判定が必要な候補語のうち、Q4 の「層ラベルで source plan が無く実コンポーネント名を解決できない場合」規則 (関係性ベースの一般表現へ言い換え) または「Q4 で source plan (分析ファイル) が未提供の場合」規則 (照合注記付き復元) が明示的に対象とする語はそちらに従う。**この 2 規則のどちらにも該当しない語 (英数字ラベル・略称等) は**、持ち込み可/削除のいずれにも断定せず、提案レポートに「source plan 未確認のため要確認」と明記する
-- 存在しないパスを推測して Read しない
-- 縮退動作に入った旨を最終メッセージの冒頭付近で明示する
-
-### 対話承認者の判定基準 (Step 4)
-「対話承認者がいるか」は AskUserQuestion が利用可能ツール一覧にあるかで判定する。無い実行文脈 (大半の subagent 委譲) では、提案レポート提示後に承認待ちで停止せず、提示自体を監査痕跡として self-approve し Step 5 まで完了する。AskUserQuestion が使える単独起動時の現行動作 (承認を待つ) は変えない。
+subagent 委譲で起動された場合の追加規則 — **入力解決順位** (Step 1: ①起動プロンプト明示 → ②セッション文脈 → ③ファイル探索、①の具体パスが外れたら埋め合わせ探索しない)、**source plan 欠落時の縮退動作** (Q1/Q2 のみ機械判定、判定不能語は「source plan 未確認のため要確認」と明記、target 不在なら「不足入力: target」で即終了)、**対話承認者の判定基準** (Step 4: AskUserQuestion が無ければ提示自体を監査痕跡として self-approve し Step 5 まで完了) — は [references/execution-contexts.md](references/execution-contexts.md) の「委譲実行」節に verbatim で置く。委譲起動時は Workflow に入る前に必ず Read すること。
 
 ## Quick Reference
 
@@ -157,6 +142,7 @@ source plan が①〜③いずれでも見つからない場合、AskUserQuestio
 ## Advanced
 
 - [references/heuristics-and-pitfalls.md](references/heuristics-and-pitfalls.md) — 検出パターン全表 + grep 例 + Common pitfalls (codebase identifier の誤書換、in-line 定義の冗長化、anchor の機械削除で文破綻、source plan 未収集、dry-run 飛ばし)
+- [references/execution-contexts.md](references/execution-contexts.md) — deep tier / subagent 委譲の実行文脈別の追加規則 (deep 必須前置、入力解決順位、縮退動作、self-approve 判定)。deep 起動・委譲起動でのみ参照
 
 ## 併用推奨 skill
 

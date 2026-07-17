@@ -117,3 +117,18 @@ Requirements checklist:
 4. [critical] Step 6 でチャット表示に加え、プランパスから導出した `<plan>.design-review.md` へ保存する (拡張子前に `.design-review` を挿入)。保存内容に `## Fatal 残存` (0 件) と `## Acceptable 残存リスク` (1 行 1 件、空なら「該当なし」) と `## Hidden assumption` (1-2 件、該当なしも「該当なし」と明記) の 3 節を含める (v1.20.0 で追加 — オーケストレータ監査パックの前提部品)
 
 収束記録: 2026-07-11 (description への territory 強制実行トリガー追加)。plugin.json の description に auth/billing/payment/migration/security の territory 強制実行トリガー (skip 条件より優先) を追加した。fresh executor で matrix routing シナリオと委譲実行 (プラン不在・auth territory) シナリオを再実行し全 [critical] ○ / 新規不明点 0。territory 認識が Row 4 compound (全 5 territory 該当 + Devil's Advocate subagent 強制) に正しく反映されることを確認し収束。
+
+## 収束記録: SKILL.md スリム化 (2026-07-17、v1.26.0)
+
+empirical-prompt-tuning でスリム化。SKILL.md 123 行 / 15.3KB → 115 行 / 12.9KB。挙動変更なし・description 変更なし。
+
+**移動 (verbatim、1 hop 化)**:
+- Task complexity tier の「Row 3 と Row 4 の compound」「Row 4 territory の core path 境界例 (領収書/ログイン UI/権限表示など周辺機能を Row 3 に落とす基準)」の 2 段落 → 新規 [references/task-tier-boundaries.md](../skills/review-design/references/task-tier-boundaries.md)。SKILL.md には Row 1-4 表と Row 1/Row 4 precedence (read-only getter は Row 1 skip / 新規 write path・guard・callback は Row 4 強制) を残し、1 行ポインタで参照。
+- 「委譲実行」節の 5 bullet (入力解決順位 / 不在・不足時の即時完結 / Task 不可時 fallback / Design It Twice 非対話進行 / `${CLAUDE_PLUGIN_ROOT}` 解決 / 完了報告) → 新規 [references/delegated-execution.md](../skills/review-design/references/delegated-execution.md)。SKILL.md には「委譲起動なら進む前に必ず Read」の自己識別トリガー + 規定項目の見出し列挙を残す。
+
+**検証**: fresh executor (blank slate, Task dispatch) で 2 ラウンド実行。
+- Round 1 (6 シナリオ): 委譲 A/B/C・matrix routing・PoC A grounding・greenfield reviewer → 全 [critical] ○。
+- Round 2 (5 シナリオ): 委譲 A/B/C・matrix routing・deep-module a/b/c (hold-out) → 全 [critical] ○。hold-out で accuracy 低下なし = 過学習なし。
+- 移動先は毎回 1 hop で正しく到達: 委譲 C は両ラウンドとも delegated-execution.md を明示 Read して不在パスを捏造せず完結、委譲 B は同ファイルの fallback 規定を適用 (Round2 で spawn 上限 200/200 に当たり in-context fallback に正しく切替)。territory 判定 (Row 4 表セルに inline 残置) は auth territory → all 5 選定を正しく駆動。
+- 2 ラウンド連続で全 [critical] ○ かつスリムに起因する新規不明点 0 → 収束。両ラウンドで観測された不明点 (プラン不在 + DA fatal 時の feedback loop、spawn 上限の fallback 分類、Step 4 の Edit-on-fatal 境界、Row 3 tier vs None ブランチ行の precedence) はいずれも今回スリムで触れていない既存セクションの long-tail で、2026-07-07 の委譲実行 eval で既に「発散、追加修正打ち切り」と判定済みの領域。挙動変更禁止のため本スリムでは対象外とした。
+- `python3 scripts/validate_skills.py` pass。`git diff HEAD` で SKILL.md からの削除は上記 2 移動のみ (verbatim 退避) と確認、消失ルール 0。

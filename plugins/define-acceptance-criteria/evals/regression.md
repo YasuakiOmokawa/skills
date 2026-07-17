@@ -98,3 +98,7 @@ Task dispatch で以下の委譲プロンプトを与える (`$RUN` は毎回新
 5. `## 品質検証` の M 算出が実カウントと一致
 
 収束記録: 2026-07-11 (M 算出の N 定義明確化)。委譲実行シナリオ A を fresh executor で再実行し全 [critical] ○。M 算出の N 定義について「裁量追加した副作用軸 (compat 等) を N に数えるか」が不明点として出たため、N をセル充填基準 (必須 3 カテゴリのセルを充填した軸は N に数え、matrix 外別表記の observability 等のみ除外) で明確化した。机上再確認で迷いなく一意適用できることを確認し収束。
+
+収束記録: 2026-07-17 (v0.27.0 / SKILL.md スリム化)。Step 2 の低頻度・相互排他な分岐 (deterministic classifier / 主軸超過ドロップ規則 / cross-cutting label / observability 6 軸上限) を SKILL.md から references/selection-rules.md へ **verbatim 退避** (1 hop)。SKILL.md 171 行 → 163 行 (17,488 → 15,563 byte)。median path (単一主種別・inline 表) は SKILL.md 内で自己完結を維持し、「存在するが不変の横断機能をドロップ→非影響確認に regression 1 行」の point-of-use 要約は SKILL.md に残置。上記 4 シナリオを fresh executor (blank slate, Task dispatch) で 2 ラウンド実行し、全 [critical] ○ / accuracy ~100% を 2 連続達成。複数主種別シナリオ (1 / リファクタ) は退避先 selection-rules.md へ 1 hop 到達し classifier + ドロップ規則 + 認可 regression を正しく適用できることを確認 (退避による劣化なし)。挙動変更・ルール統合はなく、消失ルール 0 (git 突き合わせ済み)。修正 diff は 0 のため過学習リスクなし (hold-out は不要)。
+
+**申し送り (本 slim の対象外・既存の capability 課題)**: Iter2 のリファクタ executor が「deterministic classifier の『各 type 最も中心的な 1 label』を厳守すると 2 主種別で 2 軸しか出ず、standard = 3 軸に 1 本足りない。3 本目の補充規則が明示されていない」と指摘。これは退避前から存在する記述上のギャップ (selection-rules.md の「複数種別該当時は union を 3-5 に絞る」で実質補えるが、classifier の 1-per-type 表現と併読しないと解消しない) で、slim が新たに生んだものではなく、[critical] 不合格にもつながっていない。閉じるには補充規則の新設 = 挙動変更が必要なため本スリム化 PR の対象外とし、capability 改善として別途検討する。

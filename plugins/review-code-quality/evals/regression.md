@@ -59,3 +59,7 @@ Task で review-code-quality の実行を委譲されたエージェントとし
 6. self-report の Trace または Discretionary fill-ins に、base branch 解決の経緯 (何を試し何が決め手になったか) が記録されている
 
 収束記録: 2026-07-11 (description への PR レビューモードトリガー明記)。plugin.json の description に PR レビューモードのトリガー語と、business-impact 軸が Ruby/Rails 限定である旨を追記した。fresh executor で deep/billing 机上シナリオと委譲実行 median (4 agent 並列・base branch 明示) を再実行し全 [critical] ○。委譲 median 実行で「同一箇所に cohesion finding が併存する readability finding の分離評価可否」が未規定と判明したため、auto-apply.md に「併存時は needs-judgment に倒す」を明文化した (観測された安全側挙動の規定化)。
+
+---
+
+収束記録: 2026-07-17 (v1.28.0)。empirical-prompt-tuning でのスリム化 (SKILL.md 120 行 17181 byte → 115 行 16517 byte、-664 byte)。本文の重複を SSOT へ寄せる参照化のみで、ルールの削除・統合による希釈はしていない: (1) 委譲実行節の Task 使用可否から「深さ 5」重複説明を除き execution.md「Task 使用可否の自己判定」を SSOT と明記、(2) 対象 diff フォールバック (b) の base 特定コマンド重複を Step 1「base ブランチの確定」への参照に置換、(3) Quick start step 2 の分岐 3 行を 1 行 + execution.md 参照に集約、(4) Step 1 末尾の AskUserQuestion 確認可否重複を「委譲実行」節参照に、(5) Step 2 の Task 判定重複を own-tool-list 参照に、(6) Step 3 の「すべての結果を受信」前提 2 段落を 1 段落に統合。上記 4 シナリオ (deep/billing 注入 fallback・orchestrated ledger・委譲 median・委譲 edge/working tree clean) を fresh executor (blank slate, Task dispatch) で 2 ラウンド連続実行し、全 [critical] ○ / 全要件 ○ / retries 0 / tool_uses 2-4 (skew なし) を確認。2 連続で新規不明点 0 (観測された不明点は base 解決の terminal action・business-impact の deep 時 dispatch 判断・内容依存分岐で、いずれもスリム化した節と無関係かつ変更前から存在する既知の裁量点)。edge シナリオ (working tree clean + base 省略) でも accuracy 低下なし。description は変更なし (Iter 0 で本文カバレッジと整合を確認済み)。`python3 scripts/validate_skills.py` pass。
