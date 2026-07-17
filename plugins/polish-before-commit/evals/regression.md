@@ -7,10 +7,10 @@ fresh executor (blank slate, Task dispatch) で下記シナリオを再実行し
 
 ## シナリオ: standard tier + 注入非対応 + base=main
 
-「現在の対象 (自動取得)」節が生コマンド文字列のまま。$ARGUMENTS なし。変更 2 ファイル (app/models/user.rb + spec)、規約 hit 1 (コメント原則)、delegate/def 撤去なし、feature-dev INSTALLED、base branch は main。申し送りファイルは存在せず、各 Step の検出結果は違反 0 件とする。実行 Step 列と各 Step の確定レポート文言 (バリアント表準拠) を出させる。
+「現在の対象 (自動取得)」節が生コマンド文字列のまま。$ARGUMENTS なし。変更 2 ファイル (app/models/user.rb + spec)、規約 hit 1 (コメント原則)、delegate/def 撤去なし、base branch は main。申し送りファイルは存在せず、各 Step の検出結果は違反 0 件とする。実行 Step 列と各 Step の確定レポート文言 (バリアント表準拠) を出させる。
 
 ### Requirements checklist
-1. [critical] Step 0 (preflight) を最初に実行し `[preflight: feature-dev 導入済み]` を出力
+1. [critical] Step 8 (最終レビュー) を組み込み `/code-review` の effort xhigh (`Skill(skill="code-review", args="xhigh")`) で実行する。feature-dev preflight (旧 Step 0) は実行しない (v0.31.0 で撤去)
 2. [critical] Step 1 (規約の収集) を tier 判定より前に実行する
 3. base=main のためフォールバック (b) で BASE_BRANCH=main を特定して diff 取得
 4. [critical] Step 9 の後、commit / /create-pr へ自動で進まない。判断項目 0 件なら質問せず「判断項目なし。コミット可能な状態」と完了報告して終了し、1 件以上なら一覧を提示して「コミットへ進めますか?」でユーザーの明示指示を待つ (v0.19.0 で 0 件時の質問を廃止)
@@ -60,3 +60,5 @@ Task 起動プロンプトに「orchestrated モードで実行。escalation は
 4. escalation ledger 記帳後、ユーザーの返答を待たず完了報告して終了する
 
 収束記録: 2026-07-11 (description への review-only モードトリガー追加)。plugin.json の description に review-only モードのトリガー語を追加した。standard tier 机上シナリオを fresh executor で 2 回実行し、1 回目は「バリアント表を持たない Step の報告体裁」が不明点として出たため、Quick start 3 に適用範囲 (Step 0/4/5/6/7/8/9 のみ対象、表の無い Step は要約 1 行) を明記する修正を行った。2 回目は全 [critical] ○ / 新規不明点 0 で収束。
+
+収束記録: 2026-07-17 (v0.31.0 Step 8 を組み込み `/code-review` の effort xhigh に切替、feature-dev preflight (旧 Step 0) を撤去)。保存済み 4 シナリオを fresh executor (blank slate, 並列 4 dispatch) で再実行し、全 [critical] ○ / 新規不明点 0。シナリオ 1 の checklist 項目 1 は本切替に合わせて `/code-review` xhigh 実行 + preflight 非実行の検証に差し替えた。
