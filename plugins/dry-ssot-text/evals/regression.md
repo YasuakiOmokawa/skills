@@ -54,3 +54,9 @@ structural review mode + trigger 判定: (a) 55 行・重複 3 箇所 → 重複
 4. コード構造そのもの (メソッド重複等) は対象外のまま、コメント文面の重複のみが集約対象になっている
 
 収束記録: 2026-07-11 (コメント分岐・複数ファイルスコープ・用語集判定・混在 canonical 規則の追加)。Workflow §3 に「対象がソースコードコメントの場合」の分岐 (canonical 選定・削除/短参照・grep ベース dry-run・express-intent-in-code との実行順序) を新設し、description に複数ファイル横断スコープ、Core Pattern 判定表に「用語集の短い定義 = 必要重複」行、コード+md 混在時の canonical 規則 (md 側の既存専用セクション優先) を追記した。既存 4 シナリオ再実行 + standard tier 強制の差分全体シナリオ + 混在 canonical 机上シナリオの計 6 実行で全 [critical] ○、最終 2 実行は新規不明点 0 で収束。既存 S4 (差分全体) は fixture が lite 境界に落ち dry-run レポートが生成されず req1 が検証不能だったため、重複 6+ 箇所で standard を強制する改訂版への差し替えが望ましい。
+
+---
+
+収束記録: 2026-07-17 (v0.16.0 / progressive disclosure スリム化)。SKILL.md を 150 行 16.3KB → 130 行 14.5KB に縮小。Workflow §3 のクロスリファレンス置換の具体機構 (Before/After 例・置換時の注意 6 項・anchor 生成規則・「対象がソースコードコメントの場合」の canonical 選定手順) を新規 `references/cross-reference-mechanics.md` へ verbatim 退避し、§3 本文には remedy の 3 分岐判断 (長文=アンカー / 線形短文=言い換え+lite 扱い / コードコメント=削除・短参照) を明示のまま残して 1 hop の参照ポインタを置いた。Quick Reference の anchor 生成規則の行も同 reference への参照に置換。挙動変更・ルール統合による希釈は行っていない (`git show HEAD` 突き合わせで §3 の全個別ルールが SKILL.md か reference のいずれかに残存することを確認、消失ルール 0)。description は変更なし (Iter 0 で本文カバレッジとのギャップなしを確認)。
+
+上記 4 シナリオ (S1 tier 競合 / S2 委譲パス明示 / S3 委譲不足入力 / S4 差分全体、S4 は 6 重複で standard を強制する改訂版 fixture) を fresh executor (Task dispatch, blank slate) で 2 連続実行し、両イテレーションとも全 16 [critical] ○ (4 シナリオ × 4 checklist)。surface した不明点はいずれも本スリム化が導入したものではなく、既知の catalogued Gotcha (§3 remedy の型名 vs 行数閾値の tie-break, SKILL.md L119) か、本 PR で触れていない節 (description のキーワード隣接・dry-run override 文言・委譲実行の指示語判定) に関するもので、pre-slim baseline (2026-07-11 収束時) と同じ潜在曖昧点。moved reference の到達性は S2 (両 iter でアンカー remedy を採用し記号を除いた日本語アンカーを正しく生成) と S4 (両 iter で standard tier + コードコメント canonical 規則をワンホップ経由で適用) が実証した。過学習チェック用の hold-out (standard tier の長文 RFC + 記号入り見出しのアンカー生成) はセッションの subagent spawn 上限到達により未実行 — ただし移動した anchor 生成規則・AC 括弧規則は S2 が実質的に踏んでおり、規則本文は HEAD から verbatim で不変。`python3 scripts/validate_skills.py` pass。

@@ -102,15 +102,7 @@ description: Fills a matrix of 3 required categories (normal, error, edge) by co
 
 **状況条件付き label は inline 表の優先順より先に判定する**: URL の生成・結合・リダイレクトに触れる変更は `req_context`、既存レコードの部分更新で参照実装からキーを間引く変更は `unsent_keys` を、該当行の既定 label より優先して主軸に含める (適用条件の詳細は perspectives.md。inline 表は状況条件の無い median path 用のため、これらを含まない)。
 
-**inline 表で完結できるのは Step 1.5 の機械抽出が単一主種別のときのみ。** 複数主種別が抽出された場合 (例: controller + service の直列実装で api_change + service_change) は、下の deterministic classifier とドロップ規則に従って主軸を確定する (inline 表の 1 行をそのまま使わない)。複数主種別での主軸採用 / 副作用軸 1 つ追加 (併用可) / observability 特例 / 表に無い場合の汎用候補軸 (Step B) などの運用詳細は [references/selection-rules.md](references/selection-rules.md) を参照。選定理由を分析ファイル `### 検討観点` に 1 文ずつ明記。
-
-**主軸 / 副作用軸の deterministic classifier**: 変更種別 → デフォルト観点軸表の該当 type 行に現れた controlled label は **主軸**、Step B 汎用候補軸 (`flag_removal` / `non_invasive` / `dep_loc` / `layer` / `contract` 等) と `observability` は **副作用軸**。複数主種別共存時は各 type の最も中心的な 1 label を 1 主軸として採用 (= 副軸格上げ禁止)。
-
-**主軸候補が tier 軸数を超える場合の deterministic ドロップ**: (1) plan の不変条件からセルが空 / 自明になる軸を先にドロップ (例: 「auth 不変・誰でも閲覧可」と明示 → `permission` をドロップ)。**存在するが不変の横断機能** (既存認可など) をドロップした場合は、非影響確認に regression 1 行を必ず残す、(2) plan 本文で明示された関心 (後方互換 / データ量等) に対応する軸は優先的に残す、(3) なお超過するなら表の行順 (上位種別優先) で決める。**tie-break で主軸をドロップした場合も、規則 (1) と同様にドロップされた関心 (401/404 の権限判定等) を非影響確認に regression 1 行として補完する** (規則 (1) は「plan の不変条件で空セル化」、規則 (3) は「主軸数超過」を根拠にする違いはあるが、いずれも主軸から外した cross-cutting な関心を非影響確認で拾う扱いは共通)。table-listed label は概念的に cross-cutting に見えても主軸 (例: `compat`) であり副軸格上げ禁止。
-
-**Cross-cutting behaviors の label**: retry / timeout / circuit-breaker などの cross-cutting 挙動が複数 change-type で出現する場合、変更種別表の特定行に閉じ込めず Step B 汎用候補軸として扱う (例: api_change の同期エンドポイントで「リトライ 3 回」なら `idempotency` を Step B 汎用候補軸として副作用軸採用)。
-
-observability を含める場合の実効上限は **6 軸** (主軸 5 + observability 1)。主種別が 3 種類以上の場合は **副作用軸を 1 つに絞る** (合計が上限を超えるのを避けるため)。
+**inline 表で完結できるのは Step 1.5 の機械抽出が単一主種別のときのみ。** 複数主種別が抽出された場合 (例: controller + service の直列実装で api_change + service_change)、または主軸候補が tier 軸数を超える場合は、inline 表の 1 行をそのまま使わず [references/selection-rules.md](references/selection-rules.md) の deterministic classifier・ドロップ規則・cross-cutting/observability 上限に従って主軸を確定する。既存認可など**存在するが不変の横断機能**を主軸からドロップした場合は非影響確認に regression 1 行を残す (詳細は selection-rules.md)。複数主種別での主軸採用 / 副作用軸 1 つ追加 (併用可) / observability 特例 / 表に無い場合の汎用候補軸 (Step B) の運用詳細も同ファイル。選定理由を分析ファイル `### 検討観点` に 1 文ずつ明記。
 
 ### Step 3: 受け入れ条件の生成
 

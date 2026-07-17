@@ -73,3 +73,24 @@ Task で委譲起動。プラン内容が認証 (auth) 領域を含むため tie
 4. プランファイルの `## 品質検証` に規定フォーマットの1行が追記されている
 5. プラン本文が書き換えられておらず、finding ID がプラン本文に持ち込まれていない
 6. 最終メッセージに分析ファイルの絶対パス、MECE判定 (OK/要修正)、Critical 件数が含まれている
+
+---
+
+## シナリオ: lite-mode inline 実行 (AC ≤5 件・非リスク) — 将来検証用、未実行
+
+lite-mode inline 実行経路 (退避案は見送り、現在は SKILL.md inline 記載のまま) を fresh executor で検証する目的のシナリオ。既存 5 シナリオはいずれも lite 経路を通らないため、この経路は本セッションの検証で未カバーだった。将来 lite-mode 周りを変更する際、または退避案を再提案する際に初回 PASS を確認すること。Task で委譲起動、AC 4 件・非リスク領域 (フロント変更のみ) のプラン + 分析ファイル (`### Tier` = lite) を渡す。
+
+### Requirements checklist
+1. [critical] AC 件数 (4) と非リスク領域から tier=lite と判定し、Step 1/Step 2 の並列 subagent を dispatch せず BB/WB 2 視点を main agent が inline 実行している (nested Task を起動しない)
+2. [critical] Wiki Researcher と Fresh Red Team を skip し、inline BB/WB で Critical 候補 0 のとき「MECE OK / Critical 0」を確定値として 1 行サマリーに記載している
+3. inline BB/WB で Critical 候補が 1 件でも出た場合の格上げ (standard へ、auth/billing/payment/migration 露呈時は deep へ) を正しく説明できている
+4. 出力が標準と同じ Step 3 形式 (分析ファイル末尾セクション + プラン 1 行サマリー) で提示されている
+5. 最終メッセージに分析ファイルの絶対パスと MECE判定 (OK/要修正)・Critical 件数が含まれている
+
+---
+
+再検証記録: 2026-07-17 (v1.30.0)。SKILL.md の DRY 集約を 1 点だけ適用: Step 2 の JSONL 抽出正規表現・2 ブロック連結手順を本文から除き、既に verbatim 保持する [references/dispatch-prompts.md](../skills/mece-plan-review/references/dispatch-prompts.md) Step 2 節 (SSOT) への参照に集約 (⚠️ Red Team freshness 不変条件・二重用途・Task 不可フォールバックは本文に維持)。判定ロジック段梯・チェックリスト・出力テンプレート・skill 間契約の文言 (BB-N/WB-N finding ID・分析ファイル書式) は本文に維持。`git show HEAD` 突き合わせと dispatch-prompts.md 側の content-match で消失ルール 0 を確認。`python3 scripts/validate_skills.py` pass。description は無変更 (Iter 0 でカバレッジ整合を確認)。
+
+検証は保存 5 シナリオを fresh executor (blank slate, Task dispatch) で 1 ラウンド実行し、全シナリオで全 [critical] ○ / 変更起因の新規不明点 0。deep hold-out と median の executor がいずれも Step 2 抽出正規表現を dispatch-prompts.md から特定・適用でき、本集約が navigation を壊さないことを実地確認した。median executor はセッションの nested subagent 上限到達により Red Team を synthesis-and-errors.md 記載の Red Team フォールバックへ決定的に退避したが、これは既定分岐で [critical] は満たしている。deep executor が挙げた新規不明点 2 件 (ac-enumerate.md の観点ラベル既定・init-common.md の委譲時リポ解決順) はいずれも本改修が触れていない別ファイルの既知論点で、過去の再検証記録 (2026-07-07) でも担当外として計上済み。
+
+当初は lite-mode inline 実行手順の references 退避も候補にしたが、その退避内容を検証する lite シナリオが保存 5 シナリオに無く、初回検証に必要な追加ラウンドが共有セッションの subagent 累積上限 (200/200) 到達で dispatch 不可だった。fresh executor 未検証の変更を出荷しない方針で lite-mode 退避は見送り、SKILL.md inline のまま維持した (別セッションで上記 lite-mode シナリオを検証のうえ再提案する)。本セッションで出荷するのは Step 2 集約のみで、これは 1 ラウンドの全 [critical] ○ が完全にカバーしている。
