@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "omokawa-skills",
-  "version": "3.66.0",
+  "version": "3.67.0",
   "description": "Plan-driven development workflow を構成する個別 skill 群。必要なものだけ install 可能",
   "owner": {
     "name": "Yasuaki Omokawa",
@@ -230,7 +230,7 @@
     {
       "name": "review-plan-diff",
       "description": "確定プラン (finalize-plan 出力) と実装後の diff を突き合わせ、実装漏れ・仕様逸脱・計画外差異・スコープ越境を Critical/Major/Minor で検出する。",
-      "version": "0.6.0",
+      "version": "0.7.0",
       "source": "./plugins/review-plan-diff",
       "skills": [
         "./skills/review-plan-diff"
