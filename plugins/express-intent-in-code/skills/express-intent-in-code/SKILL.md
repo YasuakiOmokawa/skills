@@ -60,7 +60,7 @@ description: Use on confirmed working code whose name stops at mechanism (`bbox_
 - **Step 5.5 段4 ドメイン抽象への到達 (既定目標)**: 段3 に達したら必ず段4 を試みる。**ドメイン語を探索** (概念を 1 文化 → codebase grep → user-facing 文言 → 仕様/ADR/テスト記述/PR タイトル)。実在語が見つかれば新造せず snap (経路A。**複数の実在語があれば repo 頻度でなく「対象の概念を指す語」= use site に近い語を選ぶ**)。段3 でも明確な語が書けない/機構語が消せない/primitive が群れているなら設計のサイン → 分割/型抽出 (T2/T5/T6) で欠落型を出してから命名 (経路B)。**genuine-vs-invented ゲート**で合否判定 (≥2 独立ソース or 1 権威ソース・sentence test・型は複数使用箇所 → PASS / どこにも無い・CS 語彙偽装・新 synonym → FAIL)。ゲートが通る語が無ければ段3 据え置き + **探索ログを記録** (探索せず安住しない)。詳細 [references/domain-abstraction.md](references/domain-abstraction.md)。
 - **Step 6 コメントの蒸留と純化**: 各 why コメントを keep-vs-promote 決定表で振り分け、畳めたものを削除。**順序厳守: 名前/構造変換 → 表明できた why を削除 → 真の why のみ残置** (先にコメントを消さない)。詳細 [references/comment-keep-vs-promote.md](references/comment-keep-vs-promote.md)。
 - **Step 7 過剰昇格の歯止め (T10)**: 意図を足さないラッパ・1 ケース多態・造語目的名・過長名を Inline/据え置きで畳む。rule of three を待つ。
-- **Step 8 fresh-eyes 検証**: after の名前/シグネチャ**だけ** (コメント・plan 無し) を見て目的を言い当てられるか検証する。非自明な対象は [agents/intent-reader.md](agents/intent-reader.md) を Task で起動 (bias-free)、自明な単一改名は cold self-read で代替。**非自明の線引き**: 構造変換 (T2/T5/T6/T8) を伴い変換後の識別子が複数になる場合は非自明とみなし intent-reader を既定とする (Task 起動不能な環境では cold self-read に落とし、その旨を出力に明記)。推論された目的が caller 観測の目的と食い違えば名前を再調整。
+- **Step 8 fresh-eyes 検証**: after の名前/シグネチャ**だけ** (コメント・plan 無し) を見て目的を言い当てられるか検証する。非自明な対象は [agents/intent-reader.md](agents/intent-reader.md) を Task で起動 (bias-free)、自明な単一改名は cold self-read で代替。**非自明の線引き**: 構造変換 (T2/T5/T6/T8) を伴い変換後の識別子が複数になる場合、または新規 public 型フィールド・公開シンボルの命名を含む場合は非自明とみなし intent-reader を既定とする (自己命名は cold self-read では常に明瞭に見えるため。Task 起動不能な環境では cold self-read に落とし、その旨を出力に明記)。推論された目的が caller 観測の目的と食い違えば名前を再調整。
 - **Step 9 検証と粒度・出力**: 各変換後に lint/test を通す (Ruby: rubocop+rspec / TS: eslint+prettier / 他言語はプロジェクトのテストランナー、無ければ手動検証を明記)。grep で全 caller/spec/コメント参照の改名漏れを洗う。**広域 gsub/sed は使わず対象限定 Edit**。改名→分割→型化→コメント削除を 1 コミットに混ぜない。出力は下記フォーマット。
 
 ## 生成時レシピ (経路2・要約)
@@ -70,6 +70,7 @@ description: Use on confirmed working code whose name stops at mechanism (`bbox_
 - **瞬間1 コメントを書きたくなった**: 残置4類型 (外部仕様 / 実測根拠 / 危険・セキュリティ判断 / FIXME) に該当 → **書く。削らない。** 置き場所はそれを担う名前付き定義の直上1箇所 (公開本体には書かない。公開本体の式に宿る判断は先に述語へ抽出)。該当しなければ昇格先表で名前/型/定数/抽出へ移してから進み、移せなかったときだけ書く。
 - **瞬間2 機構・制約対応を書き始める**: 公開本体は目的名の呼び出し列とガード節だけ。機構と外部制約対応は目的名の private / ヘルパーへ (T2/T12)、弁明は定義直上1箇所。公開本体の行にコメントを添えたくなったら抽出の合図。
 - **瞬間3 生のデータ形状に意味を説明しそうになった**: boolean 引数 → enum/シンボル、null/undefined の意味差 → 判別可能 union/値オブジェクト (T6)、同じ Hash/tuple が2箇所目 → 型を切る (T5)。造語禁止は経路1 と同じ。
+- **新規識別子の命名**: 比喩語 1 語 (anchor / gravity 等) で置く前に「何が・どの条件で・どうなる」の正直文を書いてから圧縮する。動作名詞 (overflow / update 等) を含む名前には主語を載せる (「何が○○するのか」に名前だけで答えられるか)。
 - **セルフチェック**: コードから読めない why が定義側に残っている (**0箇所は削りすぎで不合格**) / 公開本体にコメント0件 / 言い換え0件 / 同一 why 重複0件 / 2値の意味差コメント0件 / 裸の複合条件ガード0件。
 
 ## 技法選択 (trigger → T)
