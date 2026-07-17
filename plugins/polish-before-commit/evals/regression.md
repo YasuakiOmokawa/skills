@@ -62,3 +62,36 @@ Task 起動プロンプトに「orchestrated モードで実行。escalation は
 収束記録: 2026-07-11 (description への review-only モードトリガー追加)。plugin.json の description に review-only モードのトリガー語を追加した。standard tier 机上シナリオを fresh executor で 2 回実行し、1 回目は「バリアント表を持たない Step の報告体裁」が不明点として出たため、Quick start 3 に適用範囲 (Step 0/4/5/6/7/8/9 のみ対象、表の無い Step は要約 1 行) を明記する修正を行った。2 回目は全 [critical] ○ / 新規不明点 0 で収束。
 
 収束記録: 2026-07-17 (v0.31.0 Step 8 を組み込み `/code-review` の effort xhigh に切替、feature-dev preflight (旧 Step 0) を撤去)。保存済み 4 シナリオを fresh executor (blank slate, 並列 4 dispatch) で再実行し、全 [critical] ○ / 新規不明点 0。シナリオ 1 の checklist 項目 1 は本切替に合わせて `/code-review` xhigh 実行 + preflight 非実行の検証に差し替えた。
+
+---
+
+収束記録: 2026-07-17 (v0.32.0 empirical-prompt-tuning 8 iterations で計 11 修正)。fresh executor 累計 21 dispatch (Iter 1-9、各回 3 並列)、全ラウンドで accuracy 100% を維持。累計修正は次のとおり: (1) Step 6 label SoT 一元化 + skip 文言優先順、(2) Step 4 Priority 2 fallthrough、(3) review-only overlay を条件由来 skip より優先、(4) Step 9 の polish 検出 Y 集計基準を dedup 後件数と明記、(5) dead-mock-removal.md に検出成功 3 バリアント追加、(6) Step 9 統合項目は上位深刻度側にのみカウント、(7) orchestrated 記帳の重複防止 (Step 6 既記帳分は Step 9 で再記帳しない)、(8) tier 表 deep 条件を OR 明示、(9) standard 行末尾但し書きの実行 Step 列扱い明示、(10) Step 8 args 追記の「完了済み」signal を handoff ファイル存在で判定と明示、(11) Step 3 並列化判定を 3 分岐化 (files>5 単一言語は main thread 順次) + Step 7 hit 判定の tier 独立性明示 + Step 4「違反なし」の 2 経路統合脚注。
+
+追加シナリオ (regression suite に登録推奨):
+
+## シナリオ: deep tier + orchestrated モード + 3 出所の同一箇所 dedup + dead mock 部分削除 (Iter 9 δ)
+
+Task 起動プロンプト明示指示「orchestrated モードで実行。escalation は `plan-teardown.escalation-ledger.md` に記帳して続行せよ」。deep tier (6 files + delegate 撤去) の Ruby PR で、`app/services/legacy_billing.rb:88` に対して「申し送り Major + Manual Review Minor + Step 8 規約違反 Minor」の 3 出所が重なる複雑ケース。Manual Review #4 (dead mock 部分削除) を Step 6 実行時に ledger に事前記帳し、Step 9 集約時は再記帳せず bracket 集計 (X=1/Y=2/N=3) にのみ含める挙動を検証する。
+
+### Requirements checklist
+1. [critical] tier=deep (OR 規則) + 全 Step 実行
+2. [critical] Step 3 が「files >5 かつ単一言語」で main thread 順次処理を選択 (3 分岐の中央条件)
+3. [critical] Step 6 `[dead mock: Manual Review 1 件 (保留)]` + Step 6 時点で ledger 1 行記帳
+4. [critical] `legacy_billing.rb:88` を 3 出所 dedup し上位 Major で申し送り側に 1 カウント、Y には計上しない
+5. [critical] bracket 文言 `[ユーザー判断項目: 3 件 (申し送り 1 / polish 検出 2)]` に厳密一致
+6. [critical] Step 9 の ledger 記帳で Step 6 既記帳 Manual Review #4 は再記帳しない
+7. [critical] orchestrated モードでユーザー返答を待たず完了報告
+8. Step 8 `[最終レビュー: 指摘 3 件 (内訳: バグ 1 / 規約違反 1 / その他 1)]`
+
+## シナリオ: lite/standard 境界 + Manual Review #5 (Reference-free dead file) (Iter 9 θ)
+
+新規追加 only ファイル (`src/spike_analytics.ts` +25/-0) で、Step 8 の dead file 指摘と Manual Review #5 が同一箇所 (`spike*` prefix + 外部参照 0) を指す standard tier ケース。Step 4 の「違反なし」を 2 経路 (違反 0 経路 / 判定不能経路) いずれでも同一文言で出す統合脚注、Step 7 の hit 判定が tier 表の hit 数と独立 (`typescript-coding.md` にコメント節なしなら hit 1 でも Step 7 skip) の 2 点を検証する。
+
+### Requirements checklist
+1. [critical] tier=standard (lite の hit=0 AND を満たさない)
+2. [critical] Manual Review #5 を自動削除せず Step 9 集約に登録
+3. [critical] Step 8 dead file 指摘を優先、独自 grep は 3 prefix 限定
+4. [critical] bracket 文言 `[ユーザー判断項目: 1 件 (申し送り 0 / polish 検出 1)]` に厳密一致 (Step 8 + Manual Review #5 dedup)
+5. [critical] Step 4 は新規追加 only でも `[パターン一貫性: 違反なし]` (2 経路統合脚注に依拠)
+6. [critical] Step 7 は tier hit 1 でも `typescript-coding.md` にコメント節なしのため skip
+7. [critical] 通常モード + 判断項目 1 件 → 「polish 完了。コミットへ進めますか?」で停止

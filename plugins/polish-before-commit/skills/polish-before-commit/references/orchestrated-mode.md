@@ -17,8 +17,8 @@
 
 Orchestrated モード時、以下の 2 箇所は SKILL.md 本文の「ユーザーの明示指示を待つ」「ユーザー承認後に編集」を「escalation ledger に記帳して続行する」に読み替える。
 
-1. **Manual Review Items #4 (dead mock の部分削除)**: 削除せず、書換え候補（残す identifier / 削除する identifier）を「保留」として escalation ledger に記帳する。深刻度は Minor 固定（実装の欠陥ではなく spec 整理判断のため）。
-2. **Step 9 (判断申し送りの集約)**: 判断項目が 1 件以上でもユーザーの返答を待たず、Step 9 の一覧（申し送り + Manual Review Items + Step 8 最終レビューの残存指摘 + 外部診断ツールの残存指摘）を escalation ledger にそれぞれ 1 行ずつ記帳したうえで、完了報告して終了する。深刻度は各項目の出所側で決める: review-code-quality 申し送りは quality ledger 側の深刻度を引き継ぐ（quality ledger が無く申し送り側にも深刻度情報が無ければ Major として畳み込む。規則の正本は review-code-quality の references/orchestrated-mode.md）、polish 検出の Manual Review Items は Minor 固定、**外部診断ツール由来で既存項目と統合されなかった単独項目は Minor 固定**（ツールの提案であり自 skill が欠陥として確認済みの指摘ではないため。既存項目と統合された場合は統合先の出所のルールに従う）、Step 8 (最終レビュー) 由来で上記いずれにも該当しない項目は Step 8 の内訳分類 (バグ / 規約違反 / その他) から機械的に決める（バグ → Major、規約違反・その他 → Minor）。
+1. **Manual Review Items #4 (dead mock の部分削除)**: 削除せず、書換え候補（残す identifier / 削除する identifier）を「保留」として escalation ledger に記帳する。深刻度は Minor 固定（実装の欠陥ではなく spec 整理判断のため）。**この記帳は Step 6 実行時に行う** (Step 9 集約より前)。
+2. **Step 9 (判断申し送りの集約)**: 判断項目が 1 件以上でもユーザーの返答を待たず、Step 9 の一覧（申し送り + Manual Review Items + Step 8 最終レビューの残存指摘 + 外部診断ツールの残存指摘）を escalation ledger にそれぞれ 1 行ずつ記帳したうえで、完了報告して終了する。**ただし規則 1 で Step 6 時点に既に記帳済の Manual Review Items #4 (dead mock 部分削除) は再記帳しない** (重複を防ぐため、Step 9 では未記帳のもののみを追記する。集約の bracket 文言 (X/Y/Z カウント) には既記帳分も含めて計上する — カウントは「集約対象の総件数」であり「今この Step で新規追加した行数」ではないため)。深刻度は各項目の出所側で決める: review-code-quality 申し送りは quality ledger 側の深刻度を引き継ぐ（quality ledger が無く申し送り側にも深刻度情報が無ければ Major として畳み込む。規則の正本は review-code-quality の references/orchestrated-mode.md）、polish 検出の Manual Review Items は Minor 固定、**外部診断ツール由来で既存項目と統合されなかった単独項目は Minor 固定**（ツールの提案であり自 skill が欠陥として確認済みの指摘ではないため。既存項目と統合された場合は統合先の出所のルールに従う）、Step 8 (最終レビュー) 由来で上記いずれにも該当しない項目は Step 8 の内訳分類 (バグ / 規約違反 / その他) から機械的に決める（バグ → Major、規約違反・その他 → Minor）。
 
 いずれの場合も申し送りファイル (`quality-review-handoff-<branch>.md`) のクリア (Step 9 手順 6) は Orchestrated モードの有無に関わらず実施する（ledger へ転記済みのため stale として残す必要がない）。
 
