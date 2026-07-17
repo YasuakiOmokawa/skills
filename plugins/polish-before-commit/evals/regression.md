@@ -95,3 +95,5 @@ Task 起動プロンプト明示指示「orchestrated モードで実行。escal
 5. [critical] Step 4 は新規追加 only でも `[パターン一貫性: 違反なし]` (2 経路統合脚注に依拠)
 6. [critical] Step 7 は tier hit 1 でも `typescript-coding.md` にコメント節なしのため skip
 7. [critical] 通常モード + 判断項目 1 件 → 「polish 完了。コミットへ進めますか?」で停止
+
+収束記録: 2026-07-17 (v0.33.0 progressive disclosure 分割)。review-only / 他者 PR 点検 / 委譲実行の 3 低頻度モードを references/execution-modes.md へ verbatim 退避 (挙動変更なし)。全 6 シナリオを fresh executor で再実行し全 [critical] ○。保存シナリオに無い review-only 経路も ad-hoc executor 1 本で検証し、execution-modes.md への 1 hop 到達とブラケット文言・overlay 優先規則の適用を確認。既知の記述ギャップ (自ブランチ review-only の終了文言が「コミットへ進めますか?」のままになる点) は分割前からの記述で未修正 — review-only 専用シナリオの suite 追加も含め別 PR で検討。

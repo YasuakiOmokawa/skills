@@ -86,3 +86,5 @@ $ARGUMENTS なし (「PR を作って」のみ)。対象ブランチに未 push 
 3. `gh pr edit <対象PR番号>` の PR 番号が事前確認結果の番号と一致する (捏造しない)
 4. `gh pr edit` は実行せず、組み立てた完全なコマンド文字列を最終メッセージで報告して終了している
 5. 完了報告に既存 PR の番号または URL を含めている
+
+収束記録: 2026-07-17 (v0.26.0 progressive disclosure 分割)。委譲実行節を references/delegated-execution.md、積み PR gotcha を references/stacked-pr-base.md へ verbatim 退避し、Quick start の三重記述を短縮 (挙動変更なし)。全 7 シナリオを fresh executor で再実行し全 [critical] ○ (17/17)。委譲実行シナリオ 5/6 で delegated-execution.md への 1 hop 到達を確認。

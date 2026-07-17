@@ -362,3 +362,5 @@ export function notifyAndRecord(document: Document, approver: Approver) {
 5. handoff に無い他ファイル (経路2 で既に整えたコントローラ等) には手を入れていない (対象限定)
 
 合格条件: 全 [critical] PASS。**「経路2 済みのため対象なし」を理由に no-op 宣言したら FAIL** (= G-EIIC-1 が防ぐべき退行)。
+
+収束記録: 2026-07-17 (v0.16.0 progressive disclosure 分割)。バッチ/パイプライン起動パラグラフを references/batch-invocation.md へ退避 (SKILL.md diff は 1 行のみ、挙動変更なし)。全 13 シナリオを fresh executor で再実行し、移設内容に関わる委譲 B/C/D 含め [critical] ○ (batch-invocation.md への 1 hop 到達と行番号付き引用を確認)。シナリオ O は 3 試行中 2 PASS — 今回未変更の domain-abstraction.md 側の判定揺らぎで N の収束記録 (3 試行中 2 PASS) と同型、分割由来の regression ではない。O/N は判定系シナリオとして複数試行での観測を継続する。

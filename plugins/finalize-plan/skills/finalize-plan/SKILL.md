@@ -105,43 +105,13 @@ PoC / 使い捨て検証中であれば本来 finalize-plan は不要 — /itera
 - **Step 2B 並列**: `manual-qa-planner` + `auto-qa-planner` を**同一メッセージ内**で並列起動。両 planner は再分類せず `${ENUMERATED_QA_AC}` の QA-ID を信頼する
 - **lite tier の縮約**: tier 表に従い auto-qa-planner は起動しない (skip)。manual-qa-planner も dispatch せず、main agent 自身が手動 QA 手順を 1 セクションに統合して書く (= 表の「inline」の意味)
 
-3 agent はいずれも `Task(subagent_type="general-purpose")` で起動し、prompt 冒頭で agent 定義ファイルを Read させる (repo 制約上 typed subagent_type は使わない)。最小レシピ:
-
-```
-Task(subagent_type="general-purpose", prompt="""
-${CLAUDE_PLUGIN_ROOT}/skills/finalize-plan/agents/<agent>.md を読み込み、以下を基に <成果物> を策定:
-## プラン:
-${PLAN_CONTENT}
-## Enumerated AC:
-${ENUMERATED_QA_AC}      # qa planner が QA-ID の対応付けに使う
-## MECE 分析結果:
-${MECE_CONTENT}          # qa planner のみ
-""")
-```
-
-各 agent 固有 prompt の全文・Task ツール利用不可時の in-context fallback は [references/agent-orchestration.md](references/agent-orchestration.md) 参照。
+3 agent はいずれも `Task(subagent_type="general-purpose")` で起動し、prompt 冒頭で agent 定義ファイルを Read させる (repo 制約上 typed subagent_type は使わない)。各 agent 固有 prompt の全文 (最小レシピ含む)・並列メッセージ構成・Task ツール利用不可時の in-context fallback は [references/agent-orchestration.md](references/agent-orchestration.md) 参照。
 
 ### Step 3: プランファイルに `## 実装準備` 追記
 
-```markdown
----
+Step 2A/2B の結果を統合し、プランファイル末尾に `## 実装準備` を追記する。3 サブセクション: **ブランチ戦略** (単一の作業ブランチ・命名理由・既存ブランチ確認) / **手動QA手順** (環境 `{BASE_URL}` は QA 実行時にユーザーから取得、`**対象AC**: N項目（正常系X / 異常系Y / エッジケースZ / 非影響W / MECE追加V）`、Chrome DevTools MCP で実行可能な手順) / **自動QA（テストコード仕様）** (RSpec / Vitest 仕様)。カテゴリ名・0 件表記は output-template.md SSOT 準拠。
 
-## 実装準備
-
-### ブランチ戦略
-git checkout -b feature/xxx
-命名理由: [理由] / 既存ブランチ確認: [重複なし | 連番付与]
-
-### 手動QA手順
-**環境**: {BASE_URL}（QA 実行時にユーザーから取得）
-**対象AC**: N項目（正常系X / 異常系Y / エッジケースZ / 非影響W / MECE追加V）（カテゴリ名・0件表記は output-template.md SSOT 準拠）
-[Chrome DevTools MCP で実行可能な手順]
-
-### 自動QA（テストコード仕様）
-[RSpec / Vitest 仕様]
-```
-
-完全なテンプレ・0 件カテゴリ表記ルール・in-context fallback 時の備考挿入位置は [references/output-template.md](references/output-template.md) 参照。
+完全なテンプレ全文・0 件カテゴリ表記ルール・in-context fallback 時の備考挿入位置は [references/output-template.md](references/output-template.md) 参照。
 
 ### Step 3.5: 正本カバレッジ・ゲート
 
@@ -153,44 +123,7 @@ Step 3 でプランファイルへ `## 実装準備` を **Write した後** に
 正本カバレッジ: skip (構造化正本なし、または分析ファイル空)
 ```
 
-**ある場合**: 分析ファイルの `## 正本抽出結果` から「差分」「未実装」状態の atom (対応不要な「一致」は除外) を集め、プランファイル出典欄で引用済みの atom と `comm -23` で真の集合差分を取る。**検証済み Bash** (fixture で実行検証済み):
-
-```bash
-ANALYSIS_FILE="<plan>.analysis.md"
-PLAN_FILE="<plan>.md"   # Step 3 で Write 済みの実ファイル
-
-if [ ! -s "$ANALYSIS_FILE" ] || ! grep -q '^## 正本抽出結果' "$ANALYSIS_FILE"; then
-  echo "正本カバレッジ: skip (構造化正本なし、または分析ファイル空)"
-  exit 0
-fi
-if [ ! -s "$PLAN_FILE" ]; then
-  echo "⚠️ プランファイルが空/不存在: $PLAN_FILE — Step3 の Write を先に実行してください。" >&2
-  exit 2
-fi
-
-# 1. 要対応 atom: テーブルの1列目 (atom ID列) のみ見る。期待値列に atom ID 風の文字列
-#    (例 HTTP-404) が混ざっても誤って拾わないようにするため。
-awk -F'|' '/^\|/ && ($0 ~ /差分/ || $0 ~ /未実装/) {
-  id = $2; gsub(/^[ \t]+|[ \t]+$/, "", id)
-  if (id ~ /^[A-Z]+-[0-9]+$/) print id
-}' "$ANALYSIS_FILE" | sort -u > /tmp/atoms_required.txt
-
-# 2. 引用 atom: manual形式 (太字見出し "出典: FIG-NN") + auto形式 (テーブル列)
-grep -oE '出典: *[A-Z]+-[0-9]+' "$PLAN_FILE" | grep -oE '[A-Z]+-[0-9]+' > /tmp/cited_manual.txt || true
-grep -oE '^\| *QA-[A-Z]+-[0-9]+ *\| *[A-Z]+-[0-9]+' "$PLAN_FILE" | grep -oE '[A-Z]+-[0-9]+ *$' > /tmp/cited_auto.txt || true
-cat /tmp/cited_manual.txt /tmp/cited_auto.txt | sort -u > /tmp/atoms_cited.txt
-
-# 3. 真のID集合差分
-comm -23 /tmp/atoms_required.txt /tmp/atoms_cited.txt > /tmp/atoms_uncovered.txt
-if [ -s /tmp/atoms_uncovered.txt ]; then
-  echo "正本カバレッジ: 未カバー $(wc -l < /tmp/atoms_uncovered.txt) 件"
-  cat /tmp/atoms_uncovered.txt
-  exit 1
-else
-  echo "正本カバレッジ: 差分 0 件 (要対応 $(wc -l < /tmp/atoms_required.txt) 件 / 引用 $(wc -l < /tmp/atoms_cited.txt) 件)"
-  exit 0
-fi
-```
+**ある場合**: 分析ファイルの `## 正本抽出結果` から「差分」「未実装」状態の atom (対応不要な「一致」は除外) を集め、プランファイル出典欄で引用済みの atom と `comm -23` で真の集合差分を取る。atom ID はテーブルの **1 列目 (atom ID 列) のみ**から読む — 期待値列に atom ID 風の文字列 (例 HTTP-404) が混ざっても拾わない (誤検出すると幻の「未カバー」を出す)。**検証済み Bash** (fixture で実行検証済み、要対応 atom 抽出・引用 atom 収集・ID 集合差分の全文) は [references/coverage-gate-bash.md](references/coverage-gate-bash.md) 参照。出力は未カバー時 `正本カバレッジ: 未カバー N 件`、カバー時 `正本カバレッジ: 差分 0 件 (...)`。
 
 未カバー atom が出た場合、分析ファイルから該当 atom 行 (期待値原文) を引き、QA-M-NN として手動QA手順へ「出典: <atom ID>」付きで Edit 追記する (原文引用・「自動補完」である旨を明記)。既存の QA 項目と検証内容が実質同一なら、新規 QA-M を作らず既存項目の出典へ atom ID を追加併記してよい (重複手順を増やさないため)。併記は `出典: AC原文 / 出典: FIG-09` のように「出典:」を atom ごとに繰り返す — カンマ区切り列挙 (`出典: AC原文, FIG-09`) はゲートの grep に拾われず未カバーのまま残る。追記後にゲートを再実行し差分ゼロを確認する。ゲート結果 (`skip` / `差分 0 件` / `補完 N 件`) は `## 実装準備` に残す。**`## 実装準備` に既存の `正本カバレッジ:` 行がある場合は最新の結果で置換する（重複追記しない）**（再実行・Step 3.5 のやり直しで行が積み重なると、どれが最新か機械判定できなくなるため）。
 
@@ -243,6 +176,7 @@ comm -23 /tmp/all_qa_ids.txt /tmp/assigned.txt > /tmp/assign_na.txt             
 - [references/qa-id-enumeration.md](references/qa-id-enumeration.md) — QA-ID 採番ルール詳細・生成例・Step 1.7 失敗時の `QA-X-NN` fallback
 - [references/agent-orchestration.md](references/agent-orchestration.md) — 各 agent への Task prompt / 並列メッセージ構成 / Task ツール不可時の in-context 代替モード
 - [references/output-template.md](references/output-template.md) — Step 3 出力テンプレ全文 / 0 件カテゴリ表記 / fallback 時の備考行
+- [references/coverage-gate-bash.md](references/coverage-gate-bash.md) — Step 3.5 正本カバレッジ・ゲートの検証済み Bash 全文
 - [references/qa-ledger.md](references/qa-ledger.md) — QA 実行台帳のフォーマット・状態語彙・「最新行が勝つ」規則・手段割当規則・実装フェーズでの追記例
 - [references/preflight.md](references/preflight.md) — preflight 契約 (`<plan>.preflight.md`) の置き場・項目表・セキュリティ規則・未定項目の扱い
 
