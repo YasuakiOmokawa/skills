@@ -4,14 +4,28 @@
 
 **なぜ必要か**: 呼ばれなくなった mock は CI ではエラーにならない (RSpec は未使用 stub を error にしない)。lint でも検出されない。レビュー時に発見され差し戻しになる。
 
-## スキップ条件と文言バリアント
+## レポート文言バリアント
 
-| 条件 | スキップ文言 |
+silent skip / silent success 禁止。以下のいずれかを必ず 1 行出力する (スキップ 4 + 検出成功 3 = 計 7 バリアント):
+
+**スキップ側:**
+
+| 条件 | 文言 |
 |---|---|
 | 変更ファイルに `*.rb` が無い | `[dead mock: スキップ (Ruby/RSpec 対象外)]` |
 | `spec/` ディレクトリが存在しない | `[dead mock: スキップ (Ruby/RSpec 対象外)]` |
 | 検出手順 1 で削除された identifier が 0 件 (= delegate / def 撤去なし) | `[dead mock: スキップ (撤去なし)]` |
 | 検出手順 1 で identifier が 1 件以上、かつ 検出手順 2 で残存 mock 0 件 | `[dead mock: 検出済み撤去なし]` (識別子 N 件確認、残存 0 件) |
+
+**検出成功側 (削除単位分類の結果に応じて):**
+
+| 条件 | 文言 |
+|---|---|
+| auto 削除のみ (単独 stub / 全 identifier 撤去済 receive_messages / caller-only spec 残存の it block) を N 件実行 | `[dead mock: auto N 件削除]` |
+| Manual Review 保留のみ (部分削除など) を M 件検出、auto 削除なし | `[dead mock: Manual Review M 件 (保留)]` |
+| auto 削除 N 件 + Manual Review 保留 M 件が両方発生 | `[dead mock: auto N 件削除 / Manual Review M 件 (保留)]` |
+
+Orchestrated モード時は「Manual Review M 件 (保留)」に含まれる項目を escalation ledger に「保留」として記帳する (SKILL.md の Manual Review Items #4 読み替え規則)。文言自体は同一 (ledger 記帳の実施は文言選択に影響しない)。
 
 検出手順 1 の出力で identifier 0 件と確定した時点で手順 2 を実行せず即スキップ報告して良い (rg 不要)。
 
