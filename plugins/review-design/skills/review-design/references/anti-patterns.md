@@ -309,6 +309,71 @@ class Contract
 end
 ```
 
+## 9. Reinventing Platform Primitives（標準機能の再発明）
+
+### 症状
+
+言語・ランタイム・フレームワークに同等の組込みがあるのに、以下を手書きしようとしている。
+
+- 数値・日付・通貨・相対時刻のフォーマット
+- URL / query string の組み立てと parse
+- deep copy
+- 一意 ID の生成
+- リソースの後始末（tempfile / timer / socket の close）
+- リダイレクト等の防御ロジック（オープンリダイレクト対策など）
+- UI プリミティブ（dialog / details など）
+
+```js
+// ❌ 桁区切りを手書き正規表現で実装
+function formatThousands(value) {
+  return String(value).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
+```
+
+```ruby
+# ❌ Tempfile を手動で unlink（例外時に後始末が漏れる）
+tmp = Tempfile.new('export')
+tmp.write(data)
+process(tmp.path)
+tmp.close
+tmp.unlink
+```
+
+### 問題点
+
+- 自前実装は実装コードだけでなく、それを検証するテストコードも一緒に生む。標準機能を使えば両方が不要になる。
+- エッジケース（任意精度・ロケール・エンコーディング・例外時の後始末）を標準側が保証する。手書きは境界条件を取りこぼしやすい（上の桁区切りは負数・小数・ロケール差で破綻し、手動 unlink は例外経路で漏れる）。
+
+### 改善
+
+```js
+// ✅ Intl.NumberFormat に委譲（ロケール・桁区切りを標準が保証）
+new Intl.NumberFormat().format(value);
+// ES2023 以降は文字列入力を任意精度10進として丸めずに扱える
+```
+
+```ruby
+# ✅ Tempfile.create のブロック形（ブロック終了時に自動で close + unlink）
+Tempfile.create('export') do |tmp|
+  tmp.write(data)
+  tmp.flush
+  process(tmp.path)
+end
+```
+
+**再発明を消すときの後始末**: 標準機能を直接呼ぶ形へ置換したら、再発明していた自前実装コードと、それ専用のユニットテストの両方を削除する。標準機能へ委譲すれば実装もそれを検証するテストも不要になるためで、片方だけ消す（実装を消してテストを残す、あるいはテストが組込みの出力を再検証するだけになって残る）のは片手落ち。例: 上の桁区切りなら `formatThousands` とその `formatThousands.test.ts` を共に削除し、呼び出し側は `new Intl.NumberFormat().format(value)` を直接使う。
+
+### エスケープハッチ
+
+環境制約（tsconfig の `lib` target / サポートブラウザ / framework バージョン）で今は標準機能を使えない場合のみ、自前実装を許容する。その際は置換先を実装イメージ付きの TODO コメントで残し、制約が外れたら畳めるようにする。ただし許容できるのは対象リポの設定（tsconfig の `lib` / `target`、browserslist 等）と照合して実在が確認できる制約に限る。設定上はその標準機能が使えるのに TODO で「使えない」と主張しているだけの場合は、エスケープハッチは成立せず ❌ とする。
+
+```js
+// TODO: lib target を ES2023 以降へ上げたら new Intl.NumberFormat().format(value) に置換する
+function formatThousands(value) {
+  return String(value).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
+```
+
 ## チェックリスト
 
 設計時に以下を確認:
@@ -323,3 +388,4 @@ end
 | 6 | Shotgun Surgery | 変更が1箇所で済むか？ |
 | 7 | Premature Abstraction | 本当に必要な抽象化か？ |
 | 8 | Feature Envy | データを持つクラスにロジックがあるか？ |
+| 9 | Reinventing Platform Primitives | 標準機能があるのに自前実装していないか？ |

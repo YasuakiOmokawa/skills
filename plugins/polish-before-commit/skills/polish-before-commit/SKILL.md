@@ -141,7 +141,7 @@ Step 2 は Quick start の通り。Step 3 の並列化判定は 3 分岐:
 
 ### 7. コメント改善
 
-Step 1 で収集した規約テキストに「コメント」「comment」キーワードを含む節が**ある場合のみ**実施。なければ独自判断で追加・削除しない。先行パス (`/express-intent-in-code` や `/dry-ssot-text` 等) で判断済みの箇所は対象外とし、規約準拠の機械的観点のみに限定する。**この hit 判定は tier 表の「規約 hit 数」とは独立**: tier 表の hit 数は全収集規約の件数を数えるが、Step 7 の実行判定は「収集規約の中に『コメント』『comment』キーワード節が含まれるか」で行う (tier=standard で hit 1 でも、その 1 件が `typescript-coding.md` (キーワード節なし) なら Step 7 は `[コメント改善: スキップ（規約に原則なし）]` を出力する)。
+Step 1 で収集した規約テキストに「コメント」「comment」キーワードを含む節が**ある場合のみ**実施。なければ独自判断で追加・削除しない。先行パス (`/express-intent-in-code` や `/dry-ssot-text` 等) で判断済みの箇所は対象外とし、規約準拠の機械的観点のみに限定する。**この hit 判定は tier 表の「規約 hit 数」とは独立**: tier 表の hit 数は全収集規約の件数を数えるが、Step 7 の実行判定は「収集規約の中に『コメント』『comment』キーワード節が含まれるか」で行う (tier=standard で hit 1 でも、その 1 件が `typescript-coding.md` (キーワード節なし) なら Step 7 は `[コメント改善: スキップ（規約に原則なし）]` を出力する)。**ただし comment-writing メタ規約 — 「書くと決めたコメントの文面」を定め先行パス `/express-intent-in-code` が適用する規約 (例: `~/.claude/rules/code-comments.md`) — はこの hit 母集団に数えない**: その領域は先行パスが所有済みで Step 7 は対象外だから、Step 1 が収集するグローバル規約セットに含まれていても Step 7 実行の根拠にはならない。hit 判定は diff に適用される coding convention (repo `CLAUDE.md`/`rules`・言語別 coding 規約) のコメント原則節の有無だけで行う (repo `CLAUDE.md` の「コメント原則」節はこれに該当し Step 7 を発火させる)。
 
 **Step 7 レポート文言** (3 バリアント、いずれかを必ず出力):
 
