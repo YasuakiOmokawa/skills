@@ -1,6 +1,6 @@
 # Integration & output specification
 
-SKILL.md Step 3 の統合分析・出力フォーマット仕様。Step 2 の 4 agent 結果を統合してレビュー結果を組み立てる際に従う。
+SKILL.md Step 3 の統合分析・出力フォーマット仕様。Step 2 の 3 agent 結果を統合してレビュー結果を組み立てる際に従う。
 
 ## 重大度定義
 
@@ -14,7 +14,7 @@ SKILL.md Step 3 の統合分析・出力フォーマット仕様。Step 2 の 4 
 
 ## 統合分析の前提
 
-Step 2 で起動した 4 agent (並列実行モード) の**すべての結果を受信してから** Step 3 を開始する (部分結果での先行実行は禁止、root cause 集約の前提が崩れるため)。main thread 代替実行の場合は 4 観点を順次完了してから本ステップへ進む。
+Step 2 で起動した 3 agent (並列実行モード) の**すべての結果を受信してから** Step 3 を開始する (部分結果での先行実行は禁止、root cause 集約の前提が崩れるため)。main thread 代替実行の場合は 3 観点を順次完了してから本ステップへ進む。
 
 business-impact-analyzer は起動条件 (domain model attribute update) を満たさない場合 skip 報告で返る。**skip 報告も統合結果に残す**。
 

@@ -15,23 +15,21 @@
 
 - 「番号」は記帳前に ledger を Read し、既存の最終番号 +1 から採番する (ファイルが無ければ 1 から)。状態更新の再記帳は同じ番号を使う
 
-Step 4 で確定した finding ごとに 1 行記帳する:
-- auto-apply-safe で適用・検証 pass → 状態 `適用済み`
-- auto-apply-safe で適用したが検証 fail → revert 後、状態 `escalated`（申し送りへ回った扱いのため）
-- needs-judgment（cohesion / coupling / business-impact 全件、修正方針が一意でない readability 等） → 状態 `escalated`
-- review-only / Edit・Bash 不可で申し送りに回した全件 → 状態 `escalated`
+Step 4 で確定した finding ごとに 1 行記帳する。本 skill はファイルを変更せず 🔴/🟠 を全件申し送るため、記帳する状態は常に `escalated`:
+- 🔴/🟠 全件（cohesion / coupling / business-impact、needs-judgment 申し送り） → 状態 `escalated`
+- review-only / Write・Bash 不可で申し送りに回した全件 → 状態 `escalated`
 
-`保留` は本 skill からは記帳しない（`/polish-before-commit` が Manual Review Items の dead mock 部分削除等、判断待ちの項目を記帳する際に使う状態）。
+`適用済み` は本 skill からは記帳しない（ファイルを変更しないため）。ledger 全体の状態語彙としては残り（auto-fix する `/polish-before-commit` 側が使う）、収束判定では `escalated` と同値（解決済み）として扱う。`保留` も本 skill からは記帳しない（`/polish-before-commit` が Manual Review Items の dead mock 部分削除等、判断待ちの項目を記帳する際に使う状態）。
 
 ## 深刻度クローズドセット基準 (review-design の fatal 判定と同型)
 
-`references/business-impact.md` / `references/coupling.md` / `references/cohesion.md` / `references/readability.md` に既存の検出基準から、quality ledger 記帳時の深刻度を閉じた条件列挙で決める（判定の揺れ幅を絞るため、この列挙に無い理由での格上げ・格下げはしない）。
+`references/business-impact.md` / `references/coupling.md` / `references/cohesion.md` に既存の検出基準から、quality ledger 記帳時の深刻度を閉じた条件列挙で決める（判定の揺れ幅を絞るため、この列挙に無い理由での格上げ・格下げはしない）。
 
 | 深刻度 | 該当条件 (いずれか 1 つで確定、上から優先) |
 |---|---|
 | **Critical** | business-impact: 永続化 chain 該当 (feature-flag revival / auth bypass 等)／business-impact: 認可 chain 該当／coupling: 内容結合 (`instance_variable_set` / `send(:private_method)` / モンキーパッチ)／coupling: 循環依存 (A→B→A) |
-| **Major** | (Critical 非該当のとき) business-impact: 外部送信 chain 該当／business-impact: UI制御 chain 該当／coupling: 制御結合 (boolean 引数で内部動作分岐)／coupling: デメテルの法則違反／coupling: spec-coverage-gap／cohesion: 複数責務 (AND 説明 or public 5+ メソッド)／readability: 構造的問題閾値超過 (300行超 / 関数50行超 / ネスト3超 / 引数4超) |
-| **Minor** | (上記いずれも非該当のとき) business-impact: 分類軸該当のみ／cohesion: 偶発的凝集 or 論理的凝集 (フラグ分岐)／readability: 曖昧な命名 / 否定形ブール値 / diff スコープ規律逸脱 |
+| **Major** | (Critical 非該当のとき) business-impact: 外部送信 chain 該当／business-impact: UI制御 chain 該当／coupling: 制御結合 (boolean 引数で内部動作分岐)／coupling: デメテルの法則違反／coupling: spec-coverage-gap／cohesion: 複数責務 (AND 説明 or public 5+ メソッド) |
+| **Minor** | (上記いずれも非該当のとき) business-impact: 分類軸該当のみ／cohesion: 偶発的凝集 or 論理的凝集 (フラグ分岐) |
 
 business-impact の Read のみ (✅ Good) は quality ledger に記帳しない（是正対象ではないため）。
 
@@ -78,6 +76,6 @@ fi
 ## 記帳例
 
 ```
-| 3 | review-code-quality | Major | 適用済み | app/models/user.rb の 62 行関数を分割 (readability 構造的問題閾値超過、検証 pass) |
-| 4 | review-code-quality | Critical | escalated | UserService と TeamService の循環依存、責務分離が要判断 |
+| 3 | review-code-quality | Major | escalated | app/models/user.rb の複数責務クラス、責務分離が要判断 (cohesion 複数責務) |
+| 4 | review-code-quality | Critical | escalated | UserService と TeamService の循環依存、責務分離が要判断 (coupling 循環依存) |
 ```

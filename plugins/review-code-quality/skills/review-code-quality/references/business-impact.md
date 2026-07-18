@@ -2,14 +2,14 @@
 
 ## なぜ「業務副作用」が独立観点として必要か
 
-cohesion / coupling / readability の 3 analyzer は **コード自体の品質** を評価する。一方、本 reference が対象とする「業務副作用 chain」は:
+cohesion / coupling の 2 analyzer は **コード自体の品質** を評価する。一方、本 reference が対象とする「業務副作用 chain」は:
 
 - attribute を read してさらに別の attribute を上書き永続化する **2 段階副作用** (例: `Plan#sync_freee_billing_status` 経由の機能フラグ復活)
 - attribute 値を gate にする policy / before_action での **認可 bypass**
 
 これらは spec が「変更ファイル直近」までしか保証しないため、spec green でも検出されない。コード品質 3 analyzer でも検出されない (caller 側の業務分岐は当該ファイルの責務ではないため)。
 
-過去事例: 2026-05-20 PR#39551 で `base_license=nil` の意味多重化により失効ユーザの `plan_code='starter'` が維持され、`Plan#sync_freee_billing_status` が starter 機能フラグを毎回上書き永続化 → 有料機能フラグ復活の Critical バグを生んだ。この時、`/simplify` (3 agent) と `/review-code-quality` (3 analyzer) を通過していた。
+過去事例: 2026-05-20 PR#39551 で `base_license=nil` の意味多重化により失効ユーザの `plan_code='starter'` が維持され、`Plan#sync_freee_billing_status` が starter 機能フラグを毎回上書き永続化 → 有料機能フラグ復活の Critical バグを生んだ。この時、`/simplify` (3 agent) と `/review-code-quality` のコード品質 analyzer (cohesion / coupling) を通過していた (business-impact-analyzer 追加前)。
 
 ## 副作用 chain の典型パターン
 

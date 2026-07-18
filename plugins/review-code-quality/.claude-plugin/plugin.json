@@ -13,6 +13,6 @@
     "code-review",
     "cohesion",
     "coupling",
-    "readability"
+    "business-impact"
   ]
 }
