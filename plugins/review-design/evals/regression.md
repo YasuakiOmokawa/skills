@@ -157,3 +157,13 @@ Requirements checklist:
 1. [critical] 観点 9 を ❌ ではなく ⚠️ と判定する。かつその ⚠️ を、制約主張を鵜呑みにせず tsconfig の `lib`/`target` と照合して制約の実在 (ES2019 では BigInt も Intl の文字列任意精度入力も使えず標準機能で代替できない) を確認したうえで下している (実在を確認せずに ❌ へ倒しもしない)
 2. [critical] 自前実装の即時削除を fatal として要求しない (実在確認済みの環境制約による許容ケースと認識し、プランを ❌ 前提で書き換えない)
 3. ⚠️ 判定の条件として、TODO コメントに置換先の実装イメージが含まれていることを確認する (置換先未記載の裸の TODO なら ⚠️ の条件を満たさない旨を認識する)
+
+## 収束記録: §9 新シナリオの初回 fresh-executor 実行 (2026-07-18)
+
+上記「標準機能の再発明」§9 シナリオの申し送り (「fresh executor での収束確認は未実施 — 次に本 skill を変更する PR で他シナリオと併せて初回実行し、全 [critical] ○ を確認すること」) を、本 PR で解消した。全保存済みシナリオ (greenfield reviewer / deep-module a·b·c / 委譲 A·B·C / PoC grounding A·B / matrix routing / §9 A·B) を評価意図秘匿の fresh executor (blank slate、requirements checklist を渡さず skill を盲目実行させ、成果物ファイルと最終報告を orchestrator 側で checklist 照合) で再実行した。§9 以外の 8 系統は 1 ラウンドで全 [critical] ○ (既存の収束記録が直前クリアとして先行)。
+
+§9 A は初回 2 回 (fresh executor 2 体) とも観点 9 を ❌ 判定し `Intl.NumberFormat` へ置換したが、いずれも「桁区切り出力を再検証するだけの専用ユニットテスト」を残し (1 体はテストケースを増やした)、checklist A-2 の「自前実装とそのユニットテストの両方を削除 (実装だけ消してテストを残す片手落ちにしない)」を満たさなかった。原因は skill 側の欠陥: anti-patterns.md §9 問題点は「標準機能を使えば実装もテストも不要になる」と述べるだけで、Step 4 の plan 書き換え時に「再発明コードと専用テストを両方消す」actionable な指示が reviewer の ❌ 推奨にも改善節にも無く、executor が中身を委譲へ差し替えつつ冗長テストを温存した。修正として anti-pattern-checker.md §9 (高頻度カテゴリ対照表の直後) に「❌ の推奨修正: 標準機能を直接呼ぶ形へ置換し、再発明していた自前実装と専用テストの両方を削除する」を追記し、anti-patterns.md §9 改善に同旨の「再発明を消すときの後始末」段落 (桁区切りの具体例付き) を追記した。判定ロジック (✅/⚠️/❌) は不変で、修正は ❌ 修正時の後始末だけを actionable 化したもの。修正後 §9 A を fresh executor 2 体で再実行し、両体とも冗長な専用テストを削除 (観点 9 の推奨に明示的に言及) → 全 [critical] ○ の 2 連続クリア。薄い locale 集約 wrapper の存置は残ったが、これは再発明ではなく委譲であり、checklist が禁じる「テストの片手落ち温存」は解消済み。
+
+§9 B (hold-out、ES2019 制約あり) は修正前 2 体・修正後 1 体の計 3 体とも観点 9 を ⚠️ 判定 (tsconfig の lib/target=ES2019 と照合し、BigInt も Intl の文字列任意精度入力も型が通らず標準機能で代替不能なことを実在確認)、置換 TODO の実装イメージ有りを確認、自前実装の即時削除を fatal 化せず plan を ❌ 前提で書き換えなかった → 全 [critical] ○。今回の fix は ❌ 修正時の後始末のみを対象とし ⚠️ 経路には触れないため、§9 B に regression なしを確認 (修正後 r3 も正当な自前実装とそのテストを制約下で存置)。`python3 scripts/validate_skills.py` pass。
+
+observed long-tail (今回 fix 対象外・記録のみ): 複数 executor が (1) Quick Start の greenfield 分岐が Q1.1 (Q1=Yes 時のみ) の内側にあり Q1=No の greenfield で all 5 か None ブランチ subset かが一意に定まらない点、(2) 委譲時の Task/Agent ツール名差と "already running as subagent" による dispatch vs in-context fallback 判定の参照間食い違い (spawn 上限 200/200 到達時の partial fallback を含む)、(3) 「⚠️ acceptable・plan 編集なし」時の最終報告 route が problem-free (all ✅) / problem-found (「修正しました」) の 2 テンプレに収まらない点、を指摘した。いずれも §9 とは無関係な既存セクションで、2026-07-07 委譲実行 eval および 2026-07-17 スリム化 eval で既に「発散、追加修正打ち切り」と判定済みの領域。checklist 合否には影響せず (全 executor が anti-pattern-checker を必ず含む有効な subset を選び観点 9 を判定できた)、本ラウンドの修正対象には含めない。
