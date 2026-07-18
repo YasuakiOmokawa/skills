@@ -50,7 +50,7 @@
     {
       "name": "finalize-plan",
       "description": "プランモードで設計が確定した後、実装に移る直前に使用。分析ファイルからAC・MECE結果を読み込み、プランファイルにブランチ・QA手順を追記する。",
-      "version": "2.4.0",
+      "version": "2.5.0",
       "source": "./plugins/finalize-plan",
       "skills": [
         "./skills/finalize-plan"
@@ -62,7 +62,7 @@
     {
       "name": "review-design",
       "description": "新機能の実装開始前、「このコードはどこに置くべきか」と迷った時に使用。",
-      "version": "1.26.0",
+      "version": "1.27.0",
       "source": "./plugins/review-design",
       "skills": [
         "./skills/review-design"
@@ -86,7 +86,7 @@
     {
       "name": "polish-before-commit",
       "description": "コミット前やPR作成前に、プロジェクト規約への準拠・パターン一貫性を確認・修正する。",
-      "version": "0.33.0",
+      "version": "0.34.0",
       "source": "./plugins/polish-before-commit",
       "skills": [
         "./skills/polish-before-commit"

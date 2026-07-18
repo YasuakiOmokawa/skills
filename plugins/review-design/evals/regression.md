@@ -132,3 +132,28 @@ empirical-prompt-tuning でスリム化。SKILL.md 123 行 / 15.3KB → 115 行 
 - 移動先は毎回 1 hop で正しく到達: 委譲 C は両ラウンドとも delegated-execution.md を明示 Read して不在パスを捏造せず完結、委譲 B は同ファイルの fallback 規定を適用 (Round2 で spawn 上限 200/200 に当たり in-context fallback に正しく切替)。territory 判定 (Row 4 表セルに inline 残置) は auth territory → all 5 選定を正しく駆動。
 - 2 ラウンド連続で全 [critical] ○ かつスリムに起因する新規不明点 0 → 収束。両ラウンドで観測された不明点 (プラン不在 + DA fatal 時の feedback loop、spawn 上限の fallback 分類、Step 4 の Edit-on-fatal 境界、Row 3 tier vs None ブランチ行の precedence) はいずれも今回スリムで触れていない既存セクションの long-tail で、2026-07-07 の委譲実行 eval で既に「発散、追加修正打ち切り」と判定済みの領域。挙動変更禁止のため本スリムでは対象外とした。
 - `python3 scripts/validate_skills.py` pass。`git diff HEAD` で SKILL.md からの削除は上記 2 移動のみ (verbatim 退避) と確認、消失ルール 0。
+
+## シナリオ: 標準機能の再発明 (anti-patterns §9 / anti-pattern-checker.md)
+
+収束記録: 2026-07-18 (§9 Reinventing Platform Primitives 追加時)。本シナリオは §9 追加に伴い新規追加した。fresh executor (blank slate, Task dispatch、評価意図秘匿) で初回実行。シナリオ A (環境制約なし) は 1 ラウンドで全 [critical] ○ — anti-pattern-checker が観点 9 を ❌ 判定し、プランを `Intl.NumberFormat` 置換 + 自前実装 `formatThousands` とテスト `formatThousands.test.ts` の両削除へ書き換えた (実装だけ消しテストを残す片手落ちなし)。シナリオ B (環境制約あり) は初回実行で fixture 欠陥を検出: 当初 fixture の tsconfig を lib ES2020 相当としていたが、executor が「ES2020 では `Intl.NumberFormat().format(number|bigint)` が使え、桁あふれは BigInt 変換で吸収可能、regex 自身も小数・負数で破綻し任意精度も提供しない」と TODO の制約主張の不成立を tsconfig と照合して看破し ❌ を適用 → checklist 上は × だが、これは skill 欠陥でなく「制約主張を鵜呑みにせず設定と照合する」望ましい創発。対応として (a) anti-pattern-checker.md §9 判定手順 step 3 / anti-patterns-quickref.md 3 値表 9 行目 ⚠️ 条件 / anti-patterns.md §9 エスケープハッチに「制約は対象リポの設定 (tsconfig の `lib`/`target`、browserslist 等) と照合して実在確認できるものに限る、成立しない制約主張は ❌」を codify、(b) fixture を lib/target ES2019 (BigInt も Intl の文字列任意精度入力も型が通らず、safe range 超の文字列金額を標準機能で整形する経路が実在しない) へ修正し、B checklist に「executor が制約の実在を tsconfig と照合して確認したうえで ⚠️ とする」要件を追加。修正後 B を fresh executor で再実行し全 [critical] ○ — 観点 9 を tsconfig ES2019 と照合して制約実在を確認したうえで ⚠️ 判定し、プランを書き換えず自前実装 + 実装イメージ付き TODO を許容した。A/B 併せて全 [critical] ○ で収束。observed unclear points: なし (両ラウンドとも executor は自己判定で Step 6 まで完遂し、skill 記述の曖昧さに起因する不明点の表明なし。B 再実行では前ラウンドの stale な `plan.design-review.md` を検知して ES2019 前提の正しい内容へ上書きした)。
+
+対象リポジトリは未着手 (greenfield)。JS/TS プロジェクトのプランファイルに「桁区切りフォーマッタ `formatThousands` を正規表現で自前実装し、そのユニットテスト (`formatThousands.test.ts`) を併せて追加する」という項目がある。`review-design` を実行し、Step 3 で `anti-pattern-checker` が判定、Step 4 でプランを書き換えさせる。
+
+### シナリオ A: 環境制約なし (❌ → 標準機能へ置換)
+
+tsconfig の `lib` target は最新 (ES2023 以降相当) で、`Intl.NumberFormat` を制約なく利用できる。
+
+Requirements checklist:
+1. [critical] `anti-pattern-checker` が観点 9 Reinventing Platform Primitives を ❌ と判定する (標準機能 `Intl.NumberFormat` が存在し環境制約も無いのに自前実装している、を根拠に)
+2. [critical] Step 4 でプランが `new Intl.NumberFormat().format(value)` への置換に書き換わり、自前実装 `formatThousands` と そのユニットテスト `formatThousands.test.ts` の両方を削除する方針になっている (実装コードだけ消してテストを残す片手落ちにしない)
+3. grep 反例検索が greenfield で不成立なことを理由に Unknown へ棄権しない (このパターンは知識ベース判定であり、標準機能の存在は知識で確認する)
+4. 他 8 観点の判定も列挙し、greenfield のため ✅ 項目には判定根拠を 1 行付記する
+
+### シナリオ B (hold-out): 環境制約あり (⚠️ → TODO コメント方針で通す)
+
+シナリオ A の変種。tsconfig の `lib`/`target` が古く (ES2019 相当) で、`BigInt` 型が lib に無く `Intl.NumberFormat` の文字列任意精度入力 (ES2023+) も使えないため、safe range を超える文字列金額を標準機能でフォーマットする経路が実在しない (ES2020 相当だと `format(bigint)` で回避できてしまい制約が成立しないため、ES2019 に下げて制約を実在させている)。プランは自前実装 `formatThousands` を残しつつ、「`lib` target を ES2023 以降へ上げたら `new Intl.NumberFormat().format(value)` に置換する (現行 ES2019 では BigInt も文字列入力も型が通らない)」旨を実装イメージ付きの TODO コメントで明記している。
+
+Requirements checklist:
+1. [critical] 観点 9 を ❌ ではなく ⚠️ と判定する。かつその ⚠️ を、制約主張を鵜呑みにせず tsconfig の `lib`/`target` と照合して制約の実在 (ES2019 では BigInt も Intl の文字列任意精度入力も使えず標準機能で代替できない) を確認したうえで下している (実在を確認せずに ❌ へ倒しもしない)
+2. [critical] 自前実装の即時削除を fatal として要求しない (実在確認済みの環境制約による許容ケースと認識し、プランを ❌ 前提で書き換えない)
+3. ⚠️ 判定の条件として、TODO コメントに置換先の実装イメージが含まれていることを確認する (置換先未記載の裸の TODO なら ⚠️ の条件を満たさない旨を認識する)
