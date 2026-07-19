@@ -13,7 +13,7 @@ description: Use when finishing self-review of an implementation, before request
 
 ## レビュー範囲外 (委譲)
 
-命名の軽微改善・簡素化・効率といった readability レベルの指摘は本 skill の対象外。組み込みの `/code-review` (単体実行、または `/polish-before-commit` Step 8 の xhigh 実行) が担当する。命名の深掘り一点変換 (機構名 → 目的表明形) は `/express-intent-in-code`。本 skill は cohesion / coupling / business-impact の設計レベル分析に特化し、全 finding を `/polish-before-commit` へ申し送る。
+命名の軽微改善・簡素化・効率といった readability レベルの指摘は本 skill の対象外。組み込みの `/code-review` (単体実行、または `/polish-before-commit` Step 8 の xhigh 実行) が担当する。**correctness (計算誤り・ロジックバグ・境界条件の欠陥) も本 skill の対象外**で、同じく組み込み `/code-review` が担当する (本 skill は設計構造の分析であり、実行時の正しさ・数値の正否は判定しない — read-only の金額計算バグ等もここに含む)。命名の深掘り一点変換 (機構名 → 目的表明形) は `/express-intent-in-code`。本 skill は cohesion / coupling / business-impact の設計レベル分析に特化し、全 finding を `/polish-before-commit` へ申し送る。
 
 ## Orchestrated モード
 

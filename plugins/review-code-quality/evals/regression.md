@@ -1,69 +1,125 @@
 # regression eval (empirical-prompt-tuning 収束時保存)
 
-収束記録: 2026-06-12 (v3.28.0 PR)。Iter1-3 で fresh executor が全 [critical] ○ / accuracy 100% / retries 0。
 用途: **regression 検出器** (capability 改善の信号としては使わない)。本 skill を変更する PR では
-fresh executor (blank slate, Task dispatch) で下記シナリオを再実行し、全 [critical] ○ を確認してから merge する。
-実行方法は empirical-prompt-tuning の「Subagent invocation contract」に従う (成果物はインライン、ファイル編集禁止)。
+fresh executor (blank slate) で下記シナリオを再実行し、全 [critical] PASS を確認してから merge する。
+実行方法は empirical-prompt-tuning の「Subagent invocation contract」に従う (成果物はインライン、
+編集してよいのは fixture のみで skill 本文は触らない)。
 
-## シナリオ: deep tier / billing リスク領域 / 注入エラー fallback
+**新契約の要点 (旧版 = readability/auto-apply 依存版との差分)**: readability-analyzer と auto-apply 機構を撤去。
+分析軸は cohesion / coupling (常時) + business-impact (domain attribute 変更時のみ)。🔴/🟠 は**全件 needs-judgment
+として申し送り**、本 skill はソースを変更しない。readability レベルの改善・correctness (計算誤り/ロジックバグ) は
+組み込み `/code-review` の担当。
 
-冒頭の自動取得節に `unknown revision 'origin/develop...HEAD'` エラーが見えている。$ARGUMENTS なし。変更 4 ファイル (plan.rb の plan_code 値追加 + billing_service.rb + spec 2 本)。手順を列挙させ、(a) diff リカバリ (b) tier と実行モード (c) business-impact-analyzer 起動 (d) auto-apply 判定軸を明答させる。
+## fixture 共通の作り方
 
-### Requirements checklist
-1. [critical] フォールバック (b): default branch を特定して origin/<base>...HEAD に読み替えて再実行 (origin/develop のまま再実行しない)
-2. [critical] billing リスク領域のため tier = deep (4 agent 並列) + business-impact-analyzer 必須
-3. plan_code (domain model attribute) 更新のため business-impact の skip 条件に非該当
-4. auto-apply は readability 軸のみ。リスク領域のため needs-judgment 側に倒す
-5. 申し送り先 `$(git rev-parse --git-common-dir)/quality-review-handoff-$(git branch --show-current | tr '/' '-').md` → /polish-before-commit が受け取る contract を認識
-
----
-
-以下は v1.19.0 (Orchestrated モード / quality ledger) 追加分。収束記録: 2026-07-05。fresh executor で Iter1-3 全 [critical] ○ / retries 0 (Iter1 で採番規則・語彙揺れ等の仕様ギャップを検出し修正後に再収束)。
-
-## シナリオ: Orchestrated モードで quality ledger に記帳し収束判定する (Step 4)
-
-Task 起動プロンプトに「orchestrated モードで実行。escalation は `plan.escalation-ledger.md` に記帳して続行せよ」の明示指示あり。Step 4 の振り分け結果: (1) readability のネスト深さ超過 1 件 (early return 化で解消、局所・意味保存) → auto-apply-safe で適用・検証 pass、(2) coupling の内容結合 (`instance_variable_set`) 1 件 → needs-judgment、(3) business-impact の認可 chain 該当 1 件 → needs-judgment。quality ledger への記帳内容と、収束判定を答えさせる。
-
-### Requirements checklist
-1. [critical] 3 件全てを quality ledger に記帳する (申し送りファイルのみで終わらせない)
-2. [critical] (1) は深刻度 Major (readability 構造的問題閾値超過) / 状態 `適用済み`、(2)(3) は深刻度 Critical (内容結合 / 認可 chain は Critical 条件に該当) / 状態 `escalated` として記帳する
-3. quality ledger の記帳行が `| 番号 | 出所 | 深刻度 | 状態 | 内容 |` の列構成に従う
-4. 3 件とも Critical/Major が `適用済み` または `escalated` のため、収束判定は「収束」と答える
+`git init` した空リポジトリに、シナリオ別の impl を配置し `git add` + コミット (base) してから、
+レビュー対象の変更を**未コミット (working tree)** で加える。base branch は `main`。executor には
+「未コミット+staged を対象に review-code-quality を実行」相当の入口を与える。Ruby 検証コマンド
+(rubocop/rspec) は本契約では走らない (auto-apply 撤去のため) ので bundler/rails_helper は不要。
 
 ---
 
-以下は「委譲実行 (subagent として起動された場合)」節 — nested Task 判定を own-tool-list 方式に変更、Step 1 既定スコープの 0-diff 境界条件、`${CLAUDE_PLUGIN_ROOT}` 解決 — 対応分。収束記録: 2026-07-07。baseline では「subagent = nested だから Task 不可」という文字列推測での誤判定を想定したが再現せず、代わりに Step 1 の「未コミット+staged が 0 件かつブランチ全体差分が非 0 件」という既定スコープの境界条件が未定義であることを検出し、SKILL.md Step 1 と「委譲実行」節に既定 (0 件ならブランチ全体) を明文化した。以降 fresh executor 2 ラウンド連続で当該テーマの新規不明点 0 件を確認し、hold-out シナリオ (Orchestrated モード宣言 + working tree clean + base branch 省略の組み合わせ) でも accuracy 低下なしで収束を維持した。
+## S1 (median): cohesion/coupling 検出 + 全件申し送り
 
-## シナリオ: 委譲実行時の nested Task 判定 + base branch 明示 (median)
+**fixture**: Rails 風 Ruby リポジトリ。`app/services/order_report_service.rb` (注文レポート生成 service) に
+未コミット変更 66 行。仕込み欠陥:
+- **feature envy** (cohesion): `LineItem#subtotal` に相当する計算を service 側で `line.quantity * line.unit_price` と再計算する (振る舞いを LineItem に寄せるべき)
+- **train wreck / デメテル違反** (coupling): `order.customer.address.prefecture` を 3 箇所で参照
+- **暗号命名 + マジックナンバー** (本 skill 対象外 = /code-review 領域): メソッド `calc_d(o, f)`、税率リテラル `* 0.08`
+- `spec/services/order_report_service_spec.rb` は存在するが新ロジックの context 追加なし (spec 未更新)
+- domain model attribute の変更なし (business-impact は skip 想定)
 
-Task で review-code-quality の実行を委譲されたエージェントとして起動される。入力に「対象リポジトリ (feature ブランチをチェックアウト済み)」と「base branch: main」が明示される。スコープ確定後の対象ファイルは 3 ファイル (deep tier 相当)。
+**ground truth**: 対象 2 ファイル以下 (impl 1 + 未更新 spec は非 count) → standard / main thread 順次。
+business-impact は attribute 変更なしで skip 報告。coupling でデメテル違反 ≥1 件 (🟠)、cohesion で
+feature envy ≥1 件。暗号命名・マジックナンバーは readability/correctness 領域なので本 skill では指摘せず
+(触れる場合も「範囲外・/code-review 委譲」と明示)。🔴/🟠 は全件申し送り、ソース無変更。
 
-### Requirements checklist
-1. [critical] Task ツールの使用可否を、自分の利用可能ツール一覧に Task/Agent が存在するかで判定している (「委譲されて起動された = nested 実行だから使えない」という推測のみで判定していない)
-2. [critical] Step 1 でスコープ確定後の対象ファイル数が 2 ファイル超 (deep tier) であり、かつ Task が利用可能な場合、実際に cohesion/coupling/readability/business-impact の 4 agent を並列起動している
-3. base branch が明示指定されている場合、その値をそのまま `origin/<base>...HEAD` の比較に使い、`origin/develop` 既定へフォールバックしていない
-4. 統合レポートに重大度別件数 (0 件のカテゴリも含む) と `/abs/path:line_number` 形式の指摘が含まれている
-5. auto-apply-safe 条件を満たす readability 軸 finding は Edit 適用 → lint/test 検証まで実施され、それ以外 (cohesion/coupling/business-impact 全件・条件を満たさないもの) は申し送りに回されている
-6. agent 起動プロンプト中の `${CLAUDE_PLUGIN_ROOT}` に相当する記述が生文字列のまま埋め込まれず、いま Read している SKILL.md の所在から導いた解決済み絶対パスになっている
-
-## シナリオ: 委譲実行時の nested Task 判定 + base branch 省略・working tree clean (edge)
-
-「〜見てもらえますか」のような自然文で依頼され、「委譲されたエージェント」等の定型句は無い。base branch の指定も無い。working tree は clean (未コミット+staged 0 件) で、レビュー対象は既にコミット済みの feature ブランチ全体になる。
-
-### Requirements checklist
-1. [critical] 定型句が無い自然な依頼文でも、Task/Agent ツールの利用可否を利用可能ツール一覧から判定しており、文面のトーンだけで「これは委譲実行だから Task 禁止」と即断していない
-2. [critical] base branch が指定されていないため `origin/develop` に固定せず、`gh repo view --json defaultBranchRef` または `git remote show origin` の HEAD branch で実際のデフォルトブランチを解決してから diff を取得している (両方失敗する環境では Gotchas 記載のトポロジー fallback `git branch -a` + `git merge-base` を使う)
-3. [critical] 未コミット+staged が 0 件のため、Step 1 の既定をブランチ全体差分にフォールバックしている (0 件のまま対象なしと判断して即終了していない)
-4. Step 1 でスコープ確定後の対象ファイル数に応じた tier (lite/standard/deep) 判定が行われている
-5. 統合レポートに severity 別件数と auto-apply の結果件数行 (自動適用/revert/申し送り) が含まれている
-6. self-report の Trace または Discretionary fill-ins に、base branch 解決の経緯 (何を試し何が決め手になったか) が記録されている
-
-収束記録: 2026-07-11 (description への PR レビューモードトリガー明記)。plugin.json の description に PR レビューモードのトリガー語と、business-impact 軸が Ruby/Rails 限定である旨を追記した。fresh executor で deep/billing 机上シナリオと委譲実行 median (4 agent 並列・base branch 明示) を再実行し全 [critical] ○。委譲 median 実行で「同一箇所に cohesion finding が併存する readability finding の分離評価可否」が未規定と判明したため、auto-apply.md に「併存時は needs-judgment に倒す」を明文化した (観測された安全側挙動の規定化)。
+### Requirements checklist (7)
+1. [critical] cohesion と coupling の両観点を分析している (片方で終わっていない)
+2. [critical] coupling で最低 1 件検出している (デメテル違反 `order.customer.address.prefecture`)
+3. [critical] 申し送りファイルが規定パス `$(git rev-parse --path-format=absolute --git-common-dir)/quality-review-handoff-<branch>.md` に overwrite で書かれ、🔴/🟠 を finding 行フォーマットで含む
+4. business-impact は domain attribute 変更なしで skip 報告し、統合レポートに skip を残す
+5. tier 判定が standard (impl 1 + 未更新 spec は非 count) で main thread 順次
+6. 暗号命名 `calc_d` / マジックナンバー `0.08` を本 skill の指摘に混ぜていない (readability/correctness は /code-review 委譲。言及する場合も「範囲外」と明示)
+7. ソースファイルを Edit で変更していない (全件申し送り + ファイル無変更)
 
 ---
 
-収束記録: 2026-07-18 (v1.28.0 の regression 再検証、skill 変更なし)。skill を変更しない定期 regression として、保存済み 4 シナリオ (deep/billing 注入 fallback・orchestrated ledger・委譲 median・委譲 edge/working tree clean) を fresh executor (blank slate, nested Agent dispatch) で **実 git fixture** に対して 1 ラウンド実行し、全 [critical] ○ / 全要件 ○ / accuracy 100% / retries 0 / tool_uses 7-23 を確認。前回 (2026-07-17) のクリアが直前ラウンドとして先行するため本日 1 ラウンドで収束確定。成果物はディスク上で実体検証した: S2 quality ledger は `Major/適用済み` + `Critical×2/escalated` の 3 行で SSOT の awk 収束スクリプトが exit0 (収束)、S1/S3/S4 の申し送りファイルは `--git-common-dir` + ブランチ名付きパスに overwrite され cohesion/coupling/business-impact 全件を needs-judgment に保持、S3 の readability auto-apply (`d`→`reminder_delay_days` 局所リネーム) が working tree に反映されていた。観測された不明点はいずれも skill 欠陥ではなく scaffolding 起因または変更前から存在する既知裁量: (a) 最小 fixture に bundler/rails_helper が無く Ruby 検証コマンドが実行不可 → executor は「未検証 (コマンド不明)」フォールバックで正しく処理、(b) executor の cwd が fixture 外だと `gh repo view` が別 repo の default branch を返しうる点を executor が `git remote show origin` を一次ソースにして回避 (実運用では cwd = 対象 repo のため非該当)、(c) 統合サマリー件数への 🟡 計上有無という既知の表示揺れ。skill 本文・agents・references は無変更 (Iter 0 で description と本文カバレッジの整合を再確認済み)。
+## S2 (business-impact edge): domain attribute 拡張 + 未更新 caller 特定
+
+**fixture**: Rails 風 Ruby リポジトリ。`app/models/plan.rb` の `status` enum に `suspended` を追加し、
+`active?` を `status.in?(%w[active suspended])` に意味拡張する未コミット変更。caller 3 箇所:
+- `app/services/billing_service.rb`: `active?` gate を新 semantics に合わせて**更新済み**
+- `app/jobs/renewal_job.rb`: `active?` を条件に `Invoice.create!` + `RenewalMailer.deliver` を起動するが**未更新** (suspended でも invoice 発行 + mail 送信されるようになる)
+- `app/models/user.rb`: `plan.active?` を entitlement (機能有効化) に使うが**未更新** (suspended ユーザに機能が付く)
+
+**ground truth**: business-impact-analyzer 起動 (`status` の semantics 変更 = domain attribute 変更)。
+renewal_job = 新規 record 作成 (`Invoice.create!`) + 外部送信 (mailer) → Major (business-impact.md 判定表 (b))。
+user.rb = entitlement/認可 gate → Critical 候補 (認可 chain)。未更新 caller ≥1 を特定し業務影響を言及。
+全件申し送り (business-impact は常に needs-judgment)。
+
+### Requirements checklist (6)
+1. [critical] business-impact-analyzer を起動し (status semantics 変更を domain attribute 変更と認識)、特定 caller の業務影響 (suspended で invoice 発行/mail 送信、suspended ユーザへの機能付与) に言及している
+2. [critical] 未更新 caller を最低 1 件特定している (renewal_job の `Invoice.create!`+mailer、または user.rb の entitlement)
+3. [critical] business-impact の finding を全件申し送り扱いにしている (auto-apply せず・ソース無変更)
+4. renewal_job を「新規 record 作成 + 外部送信」→ Major、user.rb を認可/entitlement chain → Critical 候補に判定 (business-impact.md 判定表準拠)
+5. 意図表明 (diff/コメントの「suspended も active 扱い」) があっても格下げせず、申し送りに `意図表明あり・要 product 確認` を付す
+6. 更新済みの billing_service を誤検出の対象にしない (未更新 caller と区別できている)
 
 ---
 
-収束記録: 2026-07-17 (v1.28.0)。empirical-prompt-tuning でのスリム化 (SKILL.md 120 行 17181 byte → 115 行 16517 byte、-664 byte)。本文の重複を SSOT へ寄せる参照化のみで、ルールの削除・統合による希釈はしていない: (1) 委譲実行節の Task 使用可否から「深さ 5」重複説明を除き execution.md「Task 使用可否の自己判定」を SSOT と明記、(2) 対象 diff フォールバック (b) の base 特定コマンド重複を Step 1「base ブランチの確定」への参照に置換、(3) Quick start step 2 の分岐 3 行を 1 行 + execution.md 参照に集約、(4) Step 1 末尾の AskUserQuestion 確認可否重複を「委譲実行」節参照に、(5) Step 2 の Task 判定重複を own-tool-list 参照に、(6) Step 3 の「すべての結果を受信」前提 2 段落を 1 段落に統合。上記 4 シナリオ (deep/billing 注入 fallback・orchestrated ledger・委譲 median・委譲 edge/working tree clean) を fresh executor (blank slate, Task dispatch) で 2 ラウンド連続実行し、全 [critical] ○ / 全要件 ○ / retries 0 / tool_uses 2-4 (skew なし) を確認。2 連続で新規不明点 0 (観測された不明点は base 解決の terminal action・business-impact の deep 時 dispatch 判断・内容依存分岐で、いずれもスリム化した節と無関係かつ変更前から存在する既知の裁量点)。edge シナリオ (working tree clean + base 省略) でも accuracy 低下なし。description は変更なし (Iter 0 で本文カバレッジと整合を確認済み)。`python3 scripts/validate_skills.py` pass。
+## S3 (review-only holdout): 過学習チェック
+
+**fixture**: S1 と同一 fixture。ユーザー指示は「レビューのみで見て。ファイルは変更しないで」。
+
+**ground truth**: S1 と同じ検出 (cohesion/coupling)。新契約では通常モードもファイル無変更のため、
+review-only の差分は冒頭で「review-only」を明示する点のみ。全件申し送り。
+
+### Requirements checklist (6)
+1. [critical] ソースファイルを 1 つも変更していない (Edit 呼び出し 0)
+2. [critical] cohesion と coupling の両観点を分析している
+3. [critical] 🔴/🟠 を全件申し送り (申し送りファイル書き込み、または書き込み不可なら inline 転記)
+4. 冒頭で「review-only」と明示している
+5. coupling でデメテル違反 ≥1 件を検出している
+6. 「auto-apply を無効化する」という旧仕様の誤った説明をしていない (新契約では通常モードもファイル無変更で、review-only の意味は「全件申し送り + ファイル無変更 + 冒頭明示」だけ)
+
+---
+
+## S4 (orchestrated): quality ledger 記帳の新契約版 — **未収束マーク**
+
+> **注意: 本シナリオは旧 S2 (orchestrated / quality ledger、auto-apply あり) を新契約 (auto-apply なし・全件 escalated 記帳) へ書き換えたもの。fresh executor での収束記録はまだ無い (書き換えのみ)。regression として採用する前に 1 ラウンドの収束確認が必要。**
+
+**fixture**: S2 と同 fixture に、Task 起動プロンプトで「orchestrated モードで実行。escalation は
+`plan.escalation-ledger.md` に記帳して続行せよ」を明示指示する。
+
+**ground truth (新契約)**: 本 skill はファイルを変更しないため quality ledger 記帳は全件 `escalated`。
+billing_service は更新済みで指摘なし。renewal_job (Major, 新規 record+外部送信) → escalated。
+user.rb (Critical, 認可/entitlement chain) → escalated。Critical/Major が全て escalated → 収束判定「収束」。
+
+### Requirements checklist (5)
+1. [critical] 全 finding を quality ledger に記帳し、状態は全て `escalated` (`適用済み` は本 skill から記帳しない)
+2. [critical] renewal_job = Major / user.rb = Critical の深刻度で記帳している (business-impact.md 判定表準拠)
+3. quality ledger の行が `| 番号 | 出所 | 深刻度 | 状態 | 内容 |` の列構成に従う
+4. Critical/Major が全て escalated のため収束判定を「収束」と答える
+5. 申し送りファイルへの書き込みも併せて実施している (ledger のみで終わらせない)
+
+---
+
+## 収束記録
+
+**2026-07-19** (readability 軸切除 + 公式 `/code-review` 委譲、v1.29.0)。empirical-prompt-tuning ループを
+以下の順で実施し、各ラウンド S1 (median) / S2 (edge) を fresh executor (blank slate) で走らせ
+**全 [critical] PASS / accuracy 100% / retry 0**:
+
+- **baseline** (切除前): S1/S2 100%
+- **切除後 iter1**: S1/S2 100%、unclear 6 件 (territory override の billing/payment 認定境界・base 解決の三段 fallback・申し送り件数の数え方・Critical 判定表の細分・spec 基盤不在分岐・dispatch 軸の直交、いずれも裁量で正解を埋めたが判定表に未固定)
+- **判定分岐 5 点固定後 iter2**: S1/S2 100%、unclear 2 件 (dispatch 軸の直交宣言・handoff パスの相対/絶対)
+- **micro-fix 2 点** (dispatch 直交宣言 + handoff パス絶対化) 適用
+- **holdout S3** (review-only、S1 同 fixture): 100%、過学習なし (fixture を流用しても review-only の要件を満たし、通常モードとの差分 = 冒頭明示のみ、を取り違えなかった)
+
+旧版 (auto-apply あり) の unclear の 1 クラス「🔴/🟠 に auto-apply-safe が 0 件だったときの状態記帳・
+サマリー行 (自動適用 N / revert M / 申し送り K) の解釈揺れ」は、auto-apply 機構の撤去により
+**構造的に消滅**した (全件申し送り = 状態が `escalated` に一本化され、解釈の分岐が無くなった)。
+
+S4 (orchestrated) は新契約へ書き換え済みだが fresh executor 収束記録はまだ無い (上記「未収束マーク」)。
+`python3 scripts/validate_skills.py` pass。
