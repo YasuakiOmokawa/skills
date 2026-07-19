@@ -7,7 +7,7 @@
 set -euo pipefail
 
 if [ $# -ne 3 ]; then
-  echo "usage: $(basename "$0") <docID> <tabID> <output-path>" >&2
+  echo "usage: $(basename "$0") <docID> <t.tabID> <output-path>" >&2
   exit 2
 fi
 
