@@ -1,0 +1,31 @@
+# build-poc regression suite
+
+skill 変更 PR では、白紙の fresh executor (general-purpose subagent) に SKILL.md パスとシナリオ + checklist を渡して再実行し、全 [critical] ○ を確認してから merge する。検証環境の約束: 他スキル起動 (/create-pr 等) は「起動宣言 + 想定結果 1 行」で代替可。fixture は実行ごとに独立させ、終了後に削除する (`~/.claude/prototyping-projects/` に eval_ プレフィックスの案件を作った場合は必ず消す)。
+
+## シナリオ P1: 中央値 (スタンドアロン PoC)
+
+依頼文: 「ローカルの markdown メモ群から日次サマリを自動生成できるか検証したい。案件名は eval_poc_probe。実装対象リポジトリ: なし (スタンドアロン検証)。PoC を作って」(サンプルメモ 2〜3 ファイル自作可)
+
+checklist:
+1. [critical] 案件プランファイルを既定の場所 (`~/.claude/prototyping-projects/eval_poc_probe/plan_eval_poc_probe.md`) に作成し、冒頭にやりたいこと 1 段落・実装対象リポジトリ・PRD の所在を記載
+2. [critical] 星取表 (候補 × 評価軸、セルは ◯/△/✕ + 根拠) を書き、検証前セルの根拠欄に (未検証) を明記
+3. [critical] PoC クローズ基準を裏どり実装前に 1 行宣言
+4. [critical] 最小実装を実際に行い、勝ち筋候補セルの (未検証) が実測根拠で置き換わる
+5. [critical] `## 申し送り (PoC → プロトタイプ)` 節 (見出し完全一致) を末尾に追記し、採用方式と根拠 / 確定事実と棄却候補 / やらなかったこと / 所在 / 実装対象リポジトリ を含む
+6. PRD が gdocs でないため凍結スナップショット手順をスキップと宣言
+7. スキルに無い儀式 (着手記帳・進捗 ledger 等) を発明しない
+
+## シナリオ P2: gdocs 案件初期化 deny 縮退 (ドライラン)
+
+依頼文: 「案件を初期化して <tab= と #heading= 付きの架空 gdocs URL> — 案件名 eval_frozen_probe、案件ディレクトリは <scratchpad の一時 dir>。凍結スナップショットの取得準備まで」。事前情報: 統合コマンド (rclone token → curl) は権限レイヤに deny 判明済み / wrapper は permissions.allow 未登録 / 対話不能。ネットワークコマンドは実行せず計画記載と記帳のみ。
+
+checklist:
+1. [critical] references/freeze_prd_snapshot.md を Read し、プラン冒頭をテンプレートどおり整備 (URL は doc ID と tab= までに正規化し #heading を落とす / スナップショット範囲 行 / ## 進捗)
+2. [critical] deny 事前判明のため再試行せず縮退発動、wrapper 未許可 + 対話不能で縮退 (1) 不成立 → 縮退 (2) rclone 全文を採用。permissions.allow への自己追加をしない
+3. [critical] 縮退記帳を進捗欄に 1 行・遷移 (→) 表記。スナップショット範囲: 行は確定後の値、PRD gdocs: の URL は原指定 (tab= 付き) のまま
+4. 画像除去 sed・生エクスポート削除・named version 依頼 (人間手順) が実行計画に含まれる
+5. 子タブ包含確認は範囲が全文のため不要と判定
+
+## 収束記録
+
+- 2026-07-20 (v0.1.0): Iter 1・2 (P1) 連続クリア + ホールドアウト (P2) — 全 [critical] ○・accuracy 100%・新規不明点 0・指示起因 retries 0。修正 0 件で収束
