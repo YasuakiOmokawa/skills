@@ -1,0 +1,17 @@
+{
+  "name": "build-poc",
+  "description": "やりたいこと (brief / PRD / gdocs URL) から技術調査で星取表を作り、最小実装でセルを裏どりして PoC を完成させる。gdocs PRD の凍結スナップショット取得 (権限 deny 時の縮退手順・タブ単体エクスポート wrapper 同梱) を含む。完了時に案件プランファイルへ /build-prototype 向けの申し送り節を追記する。",
+  "version": "0.1.0",
+  "author": {
+    "name": "Yasuaki Omokawa",
+    "url": "https://github.com/YasuakiOmokawa"
+  },
+  "homepage": "https://github.com/YasuakiOmokawa/skills",
+  "repository": "https://github.com/YasuakiOmokawa/skills",
+  "license": "MIT",
+  "keywords": [
+    "poc",
+    "feasibility",
+    "prototype-driven"
+  ]
+}

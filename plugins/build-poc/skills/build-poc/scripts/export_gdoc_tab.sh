@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# gdocs タブ単体 markdown エクスポート (ai-prototype-flow 案件初期化・縮退(1) 用 wrapper)。
+# gdocs タブ単体 markdown エクスポート (build-poc PRD 凍結スナップショット・縮退(1) 用 wrapper)。
 # tab= は非公開パラメータ — 壊れたら正本の規定どおり全文エクスポートへ切替える。
 # token は rclone の OAuth access_token をコマンド置換で curl ヘッダへ直接渡し、
 # 表示・保存しない (secret 衛生)。
