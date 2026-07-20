@@ -18,6 +18,14 @@ omokawa-skills は **monorepo + N plugins** 構造。各 skill / command は `pl
 
 両者の役割分離は `define-acceptance-criteria` と `mece-plan-review` の前提。
 
+## プロトタイプ駆動 3 スキル (build-poc / build-prototype / create-design-doc)
+
+- **案件** — 1 つのやりたいこと (機能・改善) を PoC → プロトタイプ → DD へ進める単位
+- **案件ディレクトリ** — 案件プランファイル・凍結スナップショットの置き場。既定は `~/.claude/prototyping-projects/<案件名>/`
+- **案件プランファイル** — `plan_<案件名>.md`。案件のメタ情報・星取表・申し送り節を 1 ファイルに集約する (進捗管理と再入は人力。プランモードの「プランファイル」と同一ファイルになることもある)
+- **星取表** — 実現方式の候補 × 評価軸の表。セルは ◯/△/✕ + 根拠。最小実装の裏どりで (未検証) を実測根拠に置き換える
+- **申し送り節** — スキル間の受け渡し契約。`## 申し送り (PoC → プロトタイプ)` / `## 申し送り (プロトタイプ → DD)` の見出し文字列は固定、本文は自由形式
+
 ## AC（受け入れ条件）
 
 **AC** = Acceptance Criteria。プランファイル内の `## 受け入れ条件` セクション。`define-acceptance-criteria` スキルで「正常系/異常系/エッジケース/非影響確認」の4カテゴリ × 観点列のマトリクス形式で定義する。
@@ -43,7 +51,7 @@ omokawa-skills は **monorepo + N plugins** 構造。各 skill / command は `pl
 - `jira.md` — Jira Cloud ID, プロジェクトキー, MCP プレフィックス
 - `release-labels.md` — Productivity / AI Contribution / Release Level ラベル定義
 - `environments.md` — integration 環境名（rollback 対象）
-- `ai-prototype-flow/` — ai-prototype-flow が参照する DD テンプレート・実例（組織の内部文書のためリポジトリには置かない。setup.sh が手元のファイルをコピーして配置）
+- `create-design-doc/` — create-design-doc が参照する DD テンプレート・実例（組織の内部文書のためリポジトリには置かない。setup.sh が手元のファイルをコピーして配置）
 
 スキル本文では「このファイルを Read で取得」と書き、ハードコードしない。
 
