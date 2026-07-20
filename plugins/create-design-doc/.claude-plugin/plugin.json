@@ -1,0 +1,17 @@
+{
+  "name": "create-design-doc",
+  "description": "プロトタイプと案件プランファイルの申し送りから DD (Design Doc) を作成する。組織固有の DD テンプレート・実例は同梱しない — セットアップスクリプト (scripts/setup.sh) が ~/.claude/skills-config/create-design-doc/ に配置したものを参照し、未配置ならテンプレートなしで作成する。",
+  "version": "0.1.0",
+  "author": {
+    "name": "Yasuaki Omokawa",
+    "url": "https://github.com/YasuakiOmokawa"
+  },
+  "homepage": "https://github.com/YasuakiOmokawa/skills",
+  "repository": "https://github.com/YasuakiOmokawa/skills",
+  "license": "MIT",
+  "keywords": [
+    "design-doc",
+    "documentation",
+    "prototype-driven"
+  ]
+}

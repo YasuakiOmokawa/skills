@@ -1,0 +1,17 @@
+{
+  "name": "build-prototype",
+  "description": "PoC と案件プランファイルの申し送りを受け取り、既存コードベースの慣習に合わせて DD (Design Doc) を起こせる水準のプロトタイプを実装する。完了時にプランファイルへ /create-design-doc 向けの申し送り節を追記する。",
+  "version": "0.1.0",
+  "author": {
+    "name": "Yasuaki Omokawa",
+    "url": "https://github.com/YasuakiOmokawa"
+  },
+  "homepage": "https://github.com/YasuakiOmokawa/skills",
+  "repository": "https://github.com/YasuakiOmokawa/skills",
+  "license": "MIT",
+  "keywords": [
+    "prototype",
+    "design",
+    "prototype-driven"
+  ]
+}

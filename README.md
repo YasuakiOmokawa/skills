@@ -23,9 +23,11 @@ bash scripts/setup.sh
 
 これで `~/.claude/skills-config/jira.md` などが生成される。**全プロジェクト横断で参照されるグローバル設定**で、プロジェクトを切り替えても同じ設定が効く。
 
-`ai-prototype-flow` を使う場合は、自組織の DD テンプレート・実例 (組織固有情報のためリポジトリに同梱していない) も、このスクリプトが手元のファイルから `~/.claude/skills-config/ai-prototype-flow/` にコピーして配置する。
+`create-design-doc` を使う場合は、自組織の DD テンプレート・実例 (組織固有情報のためリポジトリに同梱していない) も、このスクリプトが手元のファイルから `~/.claude/skills-config/create-design-doc/` にコピーして配置する。
 
-## Plugins (20)
+> 旧 `ai-prototype-flow` は v3.82.0 で `build-poc` / `build-prototype` / `create-design-doc` に分割された。npx skills add は旧スキルを自動削除しないため、更新後に `rm -r ~/.claude/skills/ai-prototype-flow` を実行すること。gdocs エクスポート wrapper の許可ルール (`settings.json` の `permissions.allow`) は `~/.claude/skills/build-poc/scripts/export_gdoc_tab.sh` のパスに書き換える。
+
+## Plugins (22)
 
 ### プラン駆動 7-skill セット (engineering / プロジェクト非依存)
 
@@ -65,7 +67,9 @@ bash scripts/setup.sh
 | [`dry-ssot-text`](./plugins/dry-ssot-text/skills/dry-ssot-text/SKILL.md) | AI-generated document を SSOT に統合 |
 | [`purge-private-vocab`](./plugins/purge-private-vocab/skills/purge-private-vocab/SKILL.md) | plan 由来の固有語を対外文書から除染 |
 | [`review-plan-diff`](./plugins/review-plan-diff/skills/review-plan-diff/SKILL.md) | 確定プランと実装後の diff を突き合わせ実装漏れ・仕様逸脱を検出 |
-| [`ai-prototype-flow`](./plugins/ai-prototype-flow/skills/ai-prototype-flow/SKILL.md) | AI プロトタイプ駆動開発フロー (PoC → 設計確定 → DD 作成 → 出荷実装) を 1 フェーズずつ実行する dispatcher |
+| [`build-poc`](./plugins/build-poc/skills/build-poc/SKILL.md) | やりたいことを技術調査 → 星取表 → 最小実装で裏どりして PoC 化。gdocs PRD の凍結スナップショット取得を含む |
+| [`build-prototype`](./plugins/build-prototype/skills/build-prototype/SKILL.md) | PoC を既存コードベース慣習に合わせ DD を起こせる水準のプロトタイプへ実装 |
+| [`create-design-doc`](./plugins/create-design-doc/skills/create-design-doc/SKILL.md) | プロトタイプと申し送りから DD (Design Doc) を作成 |
 
 ## 設定値の保管 (グローバル)
 
@@ -75,7 +79,7 @@ bash scripts/setup.sh
 - [`examples/skills-config/release-labels.example.md`](./examples/skills-config/release-labels.example.md)
 - [`examples/skills-config/environments.example.md`](./examples/skills-config/environments.example.md)
 
-`bash scripts/setup.sh` で対話生成するのが推奨。手動なら `*.example.md` を `~/.claude/skills-config/*.md` にコピーして編集。`ai-prototype-flow` の DD 文書 (テンプレート・実例) は組織固有のため example を同梱しない — setup.sh が手元のファイルを `~/.claude/skills-config/ai-prototype-flow/` にコピーする。詳細は [`CONTEXT.md`](./CONTEXT.md) を参照。
+`bash scripts/setup.sh` で対話生成するのが推奨。手動なら `*.example.md` を `~/.claude/skills-config/*.md` にコピーして編集。`create-design-doc` の DD 文書 (テンプレート・実例) は組織固有のため example を同梱しない — setup.sh が手元のファイルを `~/.claude/skills-config/create-design-doc/` にコピーする。詳細は [`CONTEXT.md`](./CONTEXT.md) を参照。
 
 ## 開発ワークフローの推奨例
 
