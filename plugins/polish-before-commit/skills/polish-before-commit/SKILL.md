@@ -1,6 +1,6 @@
 ---
 name: polish-before-commit
-description: Auto-fixes convention and pattern-consistency issues, runs lint, and aggregates remaining judgment calls before stopping for the user (or, when explicitly delegated in orchestrated mode, escalating to a ledger and returning instead of waiting). Runs the built-in `/code-review` skill at xhigh effort as the final review step (no plugin dependency). Use when finalizing a branch, just before `git commit` or `/create-pr`, when reviewing someone else's PR without editing files (review-only mode), or whenever the user says "仕上げて" / "polish" / "コミット前チェック" / "レビューのみで見て".
+description: Auto-fixes convention and pattern-consistency issues, runs lint, and aggregates remaining judgment calls before stopping for the user (or, when explicitly delegated in orchestrated mode, escalating to a ledger and returning instead of waiting). Ingests leftover findings from the built-in `/code-review` skill run by the user just before this skill (this skill never invokes `/code-review` itself — its disable-model-invocation setting rejects Skill-tool launches). Use when finalizing a branch, just before `git commit` or `/create-pr`, when reviewing someone else's PR without editing files (review-only mode), or whenever the user says "仕上げて" / "polish" / "コミット前チェック" / "レビューのみで見て".
 ---
 
 # polish-before-commit
@@ -9,7 +9,7 @@ description: Auto-fixes convention and pattern-consistency issues, runs lint, an
 
 **特殊モードの読み替え**: review-only (ファイル変更不可) / 他者 PR 点検 / subagent 委譲 (`Task` 起動) 時の検出・報告・Step 9 の読み替えは [references/execution-modes.md](references/execution-modes.md) を参照する (通常フロー = 単独起動・自ブランチ・ファイル編集可 では読み込み不要)。user が「ファイル変更はしない」「レビューのみ」「他者の PR」を指示した場合、または利用可能ツール一覧が subagent 委譲を示す場合に適用する。
 
-**フロー最終段の役割**: この skill はフローの最後に置かれることを想定する。代表的な前段列 (可変) は `/simplify` → `/vercel-react-best-practices` → `/review-code-quality` → 本 skill だが、実運用ではこの間に `/vercel-composition-patterns`・`/express-intent-in-code`、文章チェーン (`/dry-ssot-text` → `/purge-private-vocab`) 等が挟まる場合がある。Step 9 で `/review-code-quality` からの申し送り (`.git/quality-review-handoff-<branch>.md`) と本 skill の Manual Review Items を集約し、**末尾でユーザー判断が必要な項目を一覧提示してから止まる** (連続スキル実行で個別レポートが transcript に埋もれ握りつぶされるのを防ぐため)。
+**フロー最終段の役割**: この skill はフローの最後に置かれることを想定する。代表的な前段列 (可変) は `/simplify` → `/vercel-react-best-practices` → `/review-code-quality` → 組み込み `/code-review` → 本 skill だが、実運用ではこの間に `/vercel-composition-patterns`・`/express-intent-in-code`、文章チェーン (`/dry-ssot-text` → `/purge-private-vocab`) 等が挟まる場合がある。Step 9 で `/review-code-quality` からの申し送り (`.git/quality-review-handoff-<branch>.md`) と本 skill の Manual Review Items を集約し、**末尾でユーザー判断が必要な項目を一覧提示してから止まる** (連続スキル実行で個別レポートが transcript に埋もれ握りつぶされるのを防ぐため)。
 
 **Orchestrated モード**: ファイル存在からの推測では判定しない。呼び出し側（将来のオーケストレータ）が Task 起動プロンプトで「orchestrated モードで実行。escalation は `<path>` に記帳して続行せよ」のように明示指示した場合のみ発動する。指示が無い単独起動では現行動作（判断項目 1 件以上で停止しユーザーの明示指示を待つ）のまま進む。差分は Manual Review Items #4 (dead mock 部分削除) と Step 9 のみで、詳細は [references/orchestrated-mode.md](references/orchestrated-mode.md) を参照。
 
@@ -37,7 +37,7 @@ description: Auto-fixes convention and pattern-consistency issues, runs lint, an
 2. 影響範囲調査: メソッド名・引数・戻り値の変更
 3. ビジネスロジック: バリデーション追加 / 認可変更
 4. Dead mock の**部分削除** (`receive_messages(a:, b:)` のうち一部 identifier だけ削除): 書換え候補を併記してユーザー承認後に編集 (Orchestrated モード時は削除せず、書換え候補を escalation ledger に保留として記帳する。[references/orchestrated-mode.md](references/orchestrated-mode.md) 参照)
-5. **Reference-free dead file (Ruby 以外)**: 直近ブランチで追加された `__mocks__/**` や `spike*` / `scratch*` prefix の TS/JS/Python ファイルで、外部参照が grep で 0 件 (`import` / `require` / test loader での参照無し) のもの。Step 6 の dead-mock 削除は Ruby/RSpec 限定のため、他言語の spike 残骸は自動削除せず Manual Review に集約して user 判断を仰ぐ (誤検出時に削除するとテスト setup が壊れうるため)。判定は Step 8 の `/code-review` が拾った「dead file」指摘を優先し、独自 grep で追加検出する範囲はこの 3 prefix に限定する。
+5. **Reference-free dead file (Ruby 以外)**: 直近ブランチで追加された `__mocks__/**` や `spike*` / `scratch*` prefix の TS/JS/Python ファイルで、外部参照が grep で 0 件 (`import` / `require` / test loader での参照無し) のもの。Step 6 の dead-mock 削除は Ruby/RSpec 限定のため、他言語の spike 残骸は自動削除せず Manual Review に集約して user 判断を仰ぐ (誤検出時に削除するとテスト setup が壊れうるため)。判定は本 skill 直前に実行済みの `/code-review` が拾い Step 8 で取り込んだ「dead file」指摘を優先し、独自 grep で追加検出する範囲はこの 3 prefix に限定する。
 
 ## 現在の対象 (skill 読み込み時に自動取得)
 
@@ -153,19 +153,14 @@ Step 1 で収集した規約テキストに「コメント」「comment」キー
 
 ### 8. 最終レビュー
 
-組み込みの `/code-review` skill を effort `xhigh` で実行する (検出エージェントと検証エージェントを分離した多段構成のため、単発レビュアーより取りこぼしと誤検知の両方に強い):
+組み込み `/code-review` skill は**本 skill からは起動しない** (組み込み `/code-review` には `disable-model-invocation` が設定されており、`Skill` ツール経由の起動が失敗して別 skill への意図しないフォールバックを誘発した実測があるため)。ユーザーが本 skill の直前に `/code-review` を起動しておき (検出エージェントと検証エージェントを分離した多段構成のため effort `xhigh` を推奨)、Step 8 ではその実行結果を取り込む:
 
-```
-Skill(skill="code-review", args="xhigh")
-```
+1. 会話内に直前の `/code-review` 実行結果があれば、その指摘を auto-fix 済み / 未対応に分類し、未対応分を Step 9 の集約へ渡す。
+2. 実行結果が会話内に見つからない場合は、main thread で同等のレビュー (変更 diff のバグ・規約違反確認) を直接行い、`[最終レビュー: ... (fallback)]` と明示する (silent skip 禁止。自発的に `/code-review` を起動して補完しない — 起動タイミングはユーザーが制御する)。
 
-直前に `/review-code-quality` と `/express-intent-in-code` が完了済みであれば、その旨と申し送りファイル (`quality-review-handoff-<branch>.md`) の既知 finding 概要を args に追記し、未発見のバグ・規約違反へ焦点を促す (同種分析の重複を避けるため)。**「完了済み」の観測可能な signal は「申し送りファイル `quality-review-handoff-<branch>.md` が存在すること」で判定する** (会話履歴の推測に頼らない — handoff は存在するのが完了済み、無ければ未実行または Manual Review 0 件の完了として追記なしで進む)。
+diff が URL の生成・リダイレクト・route helper (`url_for` 系)・パス断片の受け渡しに触れる場合、フレームワークの暗黙のリクエスト文脈自動付与 (Rails の `default_url_options` 等) によるクエリ混入で「クエリなしパス」前提の結合契約が壊れていないかを、取り込み時の追加観点として自前で点検する (事前 `/code-review` が拾っていない場合の補完。静的レビューでの早期発見の一助であり、実行検証の代替にはならない — Gotchas 参照)。
 
-diff が URL の生成・リダイレクト・route helper (`url_for` 系)・パス断片の受け渡しに触れる場合、フレームワークの暗黙のリクエスト文脈自動付与 (Rails の `default_url_options` 等) によるクエリ混入で「クエリなしパス」前提の結合契約が壊れていないかを観点として args に含める (静的レビューでの早期発見の一助であり、実行検証の代替にはならない — Gotchas 参照)。
-
-`Skill` ツールが利用可能ツール一覧に無い場合のみ、main thread で同等のレビュー (変更 diff のバグ・規約違反確認) を直接行い、`[最終レビュー: ... (fallback)]` と明示する (silent skip 禁止)。
-
-**review-only で他者の PR を点検する場合**: PR head を展開した worktree (`gh pr checkout` または `git worktree add`) 上で `/code-review` を実行し、base 読み替え後の diff を対象にする。現在の worktree が PR head と一致しないまま実行した場合は、指摘の根拠行を PR head 側で再確認してから採用する (stale なローカル worktree の値を根拠にした誤指摘の実績があるため。`/review-code-quality` の「PR レビューモード」と同じ規則)。
+**review-only で他者の PR を点検する場合**: 事前の `/code-review` も PR head を展開した worktree (`gh pr checkout` または `git worktree add`) 上で実行しておく。指摘の根拠行が PR head と一致しない worktree に由来する場合は、PR head 側で再確認してから採用する (stale なローカル worktree の値を根拠にした誤指摘の実績があるため。`/review-code-quality` の「PR レビューモード」と同じ規則)。
 
 **Step 8 レポート文言** (2 バリアント、いずれかを必ず出力):
 
@@ -222,4 +217,5 @@ diff が URL の生成・リダイレクト・route helper (`url_for` 系)・パ
 ## 併用推奨 skill
 
 - `/review-code-quality` — 設計レベルの品質課題を検出し、自動適用しない needs-judgment を本 skill へ申し送る (Step 9 で集約)
+- 組み込み /code-review — 本 skill の直前にユーザーが起動する最終レビュー (Step 8 が結果を取り込む。本 skill からは起動しない)
 - `/create-pr` — Step 9 のユーザー判断が片付いた後にカレントブランチから PR を作成

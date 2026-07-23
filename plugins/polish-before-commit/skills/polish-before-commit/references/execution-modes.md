@@ -16,4 +16,4 @@ SKILL.md の通常フロー (単独起動・自ブランチ・ファイル編集
 
 - **Orchestrated モード**: 発動条件・記帳先・記帳規則は SKILL.md の「Orchestrated モード」段落と [orchestrated-mode.md](orchestrated-mode.md) が正本 (本節では繰り返さない)。
 - **review-only の一次検出**: `AskUserQuestion` が利用可能ツール一覧に無く、かつ実行モードの明示指定 (review-only / orchestrated 等) も起動プロンプトに無い場合に限り、`git log -1 --format='%an'` と `git config user.name` を比較する。不一致なら review-only を既定にする (ユーザーに確認できない状況で他者のブランチを誤って auto-fix する事故を防ぐため)。一致する場合、または `AskUserQuestion` が利用可能な単独起動では、現行どおり明示宣言が無い限り通常モードのまま進む。
-- **Task / Skill 不可時の fallback**: `Task` が利用可能ツール一覧に無い場合のみ、Step 3 (パターン一貫性の並列処理) は並列化せず main thread で順次処理する。`Skill` が利用可能ツール一覧に無い場合のみ、Step 8 (最終レビュー) は同 Step 記載の fallback 手順に切り替える。
+- **Task / Skill 不可時の fallback**: `Task` が利用可能ツール一覧に無い場合のみ、Step 3 (パターン一貫性の並列処理) は並列化せず main thread で順次処理する。Step 8 (最終レビュー) は事前実行済み `/code-review` の結果取り込みのため `Skill` ツールの可用性に依存しない (事前実行結果が無い場合の fallback は同 Step 記載)。
