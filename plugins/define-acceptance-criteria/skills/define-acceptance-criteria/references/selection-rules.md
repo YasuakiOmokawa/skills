@@ -2,8 +2,8 @@
 
 ## 観点数の規則
 
-- **下限 3 / 上限 5** (3 未満ではマトリクスが痩せすぎ、5 超では管理負荷が爆発)
-- **複数種別該当時**: 各種別の controlled label から重複を除き 3-5 個に絞る (例: api_change + db_change で `permission` (両方該当) + `req_form` + `data_volume` + `data_compat` の 4 軸)
+- **軸数は SKILL.md の Quantitative scaffolding 表 (canonical) に従う** (lite 1 軸 / standard 3 軸 / deep 5 軸)。standard 以上で 3 未満はマトリクスが痩せすぎ、5 超では管理負荷が爆発する
+- **複数種別該当時**: 各種別の controlled label から重複を除いたうえで tier 軸数まで絞る (例: api_change + db_change なら `permission` (両方該当) / `req_form` / `data_volume` / `data_compat` … の候補プールから tier 軸数だけ採る。手順は下の「複数主種別・主軸超過時の主軸確定」)
 
 ## 主種別 + 副作用軸の追加 (裁量判断)
 
@@ -19,7 +19,7 @@
 
 ## 主軸採用と副作用軸の併用可否
 
-「主軸採用」と「副作用軸 1 つ追加」は**併用可能** (3-5 個の上限内なら)。
+「主軸採用」と「副作用軸 1 つ追加」は**併用可能** (tier 軸数の上限内なら)。
 
 例: 主軸 `permission` + 副作用軸 `observability` で 5 軸構成。`### 検討観点` に「主軸 permission + 副作用軸 observability (理由: ...)」と分けて明記。
 
@@ -29,7 +29,7 @@
 
 ## observability 軸の特例
 
-全変更種別で**追加候補**として考慮可能。Critical 検出力を上げるための共通軸 (mece-plan-review の Red Team が `observability` お見合いで Critical 検出することがあるため、define-AC 段階で取り込むと精度↑)。observability は上限 5 にカウントしない (追加候補)。
+全変更種別で**追加候補**として考慮可能。Critical 検出力を上げるための共通軸 (mece-plan-review の Red Team が `observability` お見合いで Critical 検出することがあるため、define-AC 段階で取り込むと精度↑)。observability は tier 軸数 (主軸数) にカウントしない (追加候補)。
 
 ## 複数主種別・主軸超過時の主軸確定 (Step 2 詳細)
 
@@ -47,4 +47,4 @@ inline 表で完結できるのは Step 1.5 の機械抽出が単一主種別の
 
 **Cross-cutting behaviors の label**: retry / timeout / circuit-breaker などの cross-cutting 挙動が複数 change-type で出現する場合、変更種別表の特定行に閉じ込めず Step B 汎用候補軸として扱う (例: api_change の同期エンドポイントで「リトライ 3 回」なら `idempotency` を Step B 汎用候補軸として副作用軸採用)。
 
-observability を含める場合の実効上限は **6 軸** (主軸 5 + observability 1)。主種別が 3 種類以上の場合は **副作用軸を 1 つに絞る** (合計が上限を超えるのを避けるため)。
+observability を含める場合の実効上限は SKILL.md の Quantitative scaffolding 表 (canonical) を参照。主種別が 3 種類以上の場合は **副作用軸を 1 つに絞る** (合計が上限を超えるのを避けるため)。

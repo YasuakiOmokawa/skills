@@ -1,4 +1,5 @@
 # regression eval (empirical-prompt-tuning 収束時保存)
+再実行記録: 2026-07-26 (v0.10.0 PR / Claude 5 世代ガイドライン適合)。SKILL.md↔output-templates.md の契約重複 (TSV 列セマンティクス・区切り記法・プレフィックス禁止・充足チェック・Tracer Bullet 再掲) を単一正本+ポインタ化し、Step 1 の並列 Task(Explore) に最大 4 並列 + スキップ条件を追加。保存済み委譲シナリオ + 凍結 M×2 + 凍結 U を fresh executor (checklist 非開示の blind 条件) で再実行し全 [critical] ○。TSV 計 34 行でプレフィックス混入 0・／区切り正常。M 実行 1 で 9 列未満の行が 2 行発生 (同一シナリオ再実行では 9 行全て 9 列で非再現の単発スリップ) — 列数を検査する仕掛けが skill 側にない点を次回変更時の候補として申し送り。
 
 収束記録: 2026-07-07（「## 委譲実行」節新設 PR）。fresh executor（Task dispatch）で median 2 回・edge 2 回・hold-out 1 回の計 5 実行が全 [critical] ○ / accuracy 100%。baseline（Iter1）の時点で両シナリオとも critical 項目は全 ○ だった。理由: 「委譲実行」節が入力解決の優先順位と、対話確認手段（AskUserQuestion）が無い実行文脈での Step 5 / Step 7 の既定動作を明文化済みだったため。hold-out シナリオ（起動プロンプト本文に入力ソースが一切含まれない委譲実行）でも accuracy 低下なし（過学習兆候なし）。
 用途: **regression 検出器**（capability 改善の信号としては使わない）。本 skill を変更する PR では

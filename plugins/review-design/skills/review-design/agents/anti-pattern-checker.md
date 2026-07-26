@@ -15,8 +15,9 @@ tools:
 
 ## 参照ドキュメント
 
-**起動時に必ず読み込む (早見表のみ)**:
-- `${CLAUDE_PLUGIN_ROOT}/skills/review-design/references/anti-patterns-quickref.md`
+**起動時に必ず読み込む (2 ファイルとも。読む前に判定を始めない)**:
+- `${CLAUDE_PLUGIN_ROOT}/skills/review-design/references/reviewer-judgment-rules.md` (全 reviewer 共通の判定規律 — criticism-first / Unknown 棄権 / 出力粒度)
+- `${CLAUDE_PLUGIN_ROOT}/skills/review-design/references/anti-patterns-quickref.md` (9 観点の判定基準 早見表)
 
 **判定で迷ったときのみ追加 Read**:
 - `${CLAUDE_PLUGIN_ROOT}/skills/review-design/references/anti-patterns.md` (詳細な改善コード例 / Rails 固有パターン例外)
@@ -25,14 +26,9 @@ tools:
 
 ## 判定の原則
 
-**デフォルトは「問題あり（⚠️）」。問題がないことを証明できた場合のみ✅とせよ。**
+判定態度 (criticism-first)・棄権 (Unknown)・出力粒度は起動時に Read した `references/reviewer-judgment-rules.md` が SSOT。3 規律をそのまま本 reviewer の 9 観点に適用する。
 
-各チェック項目について、以下の2段階で検証する:
-
-1. **反例検索（まず問題を探す）**: 該当するアンチパターンの兆候をコードベースから `Grep` / `Glob` で検索
-2. **判定**: 反例が見つからなかった場合のみ✅。1つでも見つかれば⚠️ or ❌
-
-**証拠が取得できない項目は Unknown で棄権せよ**: ✅/⚠️/❌ をでっち上げず「Unknown (判定不能)」とし、「問題なしの項目」と同列に `<観点>: Unknown (理由)` の 1 行で出力して親エージェントに委ねる (例: `Shotgun Surgery: Unknown (対象概念名が plan から特定できず)`)。判別: 反例検索 (greenfield では forward-looking 判定) を実行できて反例ゼロ → ✅ / 反例あり → ⚠️ or ❌ / 検索・判定そのものが成立しない (対象コード・対象概念を特定できない) → Unknown。greenfield (コード不在) では提案された構造への forward-looking な制約として判定できる項目を Unknown にしない — Unknown は提案構造からも判定材料が得られない場合に限る。また greenfield では ✅ 項目にも判定根拠を 1 行付記する (反例 Grep ログが存在しないため、根拠の提示先が出力本文しかない)。
+**反例検索の対象** (規律 1 の 2 段階手順で何を探すか): 該当するアンチパターンの兆候 — 各観点の「反例検索」ブロックの `Grep` / `Glob` パターン。
 
 ## チェック観点と判定基準
 
@@ -208,7 +204,7 @@ Grep: `対象オブジェクト\.` in 対象ファイル → 同一メソッド�
 
 ## 出力フォーマット
 
-**問題が検出された項目のみ詳細を記載する。✅の項目は1行で済ませる。**
+粒度は共通規律 3 (`references/reviewer-judgment-rules.md`) に従う。
 
 ```markdown
 ## Anti-Pattern チェック結果

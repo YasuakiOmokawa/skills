@@ -55,7 +55,7 @@ tier 判定のファイル数は **Step 1 でスコープ確定した後の対�
 
 1. `$ARGUMENTS` 指定があればそのファイル、なければ冒頭の自動取得結果 (または `git diff --name-only origin/develop...HEAD`) で対象を確定。0 件なら終了
 2. 処理方式を選ぶ — ファイル ≤ 2 は main thread 順次、> 2 かつ Task 使用可は 3 agent 並列 (同一メッセージ内に Task 3 つ)、> 2 かつ Task 使用不可は main thread fallback + 理由明示。分岐表と Task 可否判定は [references/execution.md](references/execution.md)
-3. 3 agent **すべての結果を受信してから**統合分析を開始 (部分結果先行禁止)
+3. 3 agent **すべての結果を受信してから**統合分析を開始
 4. 統合レポートを出力 (詳細: [references/integration-output.md](references/integration-output.md))
 5. 🔴/🟠 を全件 needs-judgment として申し送りファイルへ書き込む (詳細: Step 4)
 
@@ -84,9 +84,9 @@ tier 判定のファイル数は **Step 1 でスコープ確定した後の対�
 
 ### Step 3: 統合分析
 
-3 agent (並列モード) の**すべての結果を受信してから**開始する (部分結果での先行実行は禁止、root cause 集約の前提が崩れるため)。main thread 代替実行では 3 観点を順次完了してから進む。business-impact-analyzer の **skip 報告も統合レポートに残す**。
+3 agent の**すべての結果を受信してから**開始する (部分結果での先行実行は禁止)。
 
-手順 (根本原因の特定 → 優先度判定 → レポート出力)、重大度表、出力ルール (アイコンは該当時のみ / サマリーは 0 件含めて全表示 / 指摘は `/abs/path:line_number` 形式) とレポートテンプレは [references/integration-output.md](references/integration-output.md) を参照。
+この前提の理由と main thread 代替実行時の扱い、business-impact-analyzer の skip 報告の扱い、手順 (根本原因の特定 → 優先度判定 → レポート出力)、重大度表、出力ルール (アイコンは該当時のみ / サマリーは 0 件含めて全表示 / 指摘は `/abs/path:line_number` 形式) とレポートテンプレは [references/integration-output.md](references/integration-output.md) を参照。
 
 ### Step 4: 申し送り (全件 needs-judgment)
 
