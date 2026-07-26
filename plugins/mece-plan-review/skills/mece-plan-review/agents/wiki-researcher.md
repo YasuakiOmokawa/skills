@@ -27,7 +27,7 @@ dispatch 時に以下が渡される:
 
 > main agent の preflight で未収録が確定し dispatch に `[Devin未使用]` 指定が渡された場合は、**Devin を一切叩かず即座に空の `[Devin未使用]` 結果を返す** (二重 probe しない)。
 
-1. `ToolSearch("+fdev-devin")` で devin ツールを取得。失敗時は即フォールバックへ
+1. `ToolSearch("+devin")` で devin ツールを取得。失敗時は即フォールバックへ
 2. **収録判定 probe (軽量・1 回だけ)**: `read_wiki_structure(repoName=<カレントリポ>)` を 1 度だけ呼ぶ
    - wiki 構造が返る → 手順 3 へ
    - "Repository not found" / error / 空構造 → **即フォールバック (リトライ・別ツール再確認をしない)**
@@ -47,7 +47,7 @@ dispatch 時に以下が渡される:
 
 以下のいずれかで**即座に** `[Devin未使用]` を返し、追加の Devin 呼び出しをしない:
 - dispatch 入力に `[Devin未使用]` 指定あり (main agent preflight で未収録確定) → Devin を一切叩かず即返す
-- `ToolSearch("+fdev-devin")` が失敗 (Devin MCP なし)
+- `ToolSearch("+devin")` が失敗 (Devin MCP なし)
 - カレントリポの `read_wiki_structure` が "Repository not found" / error / 空 (Devin はあるがリポ未収録)
 
 出力: `[Devin未使用]` タグ + 「Devin MCP 利用不可 / カレントリポ未収録のため wiki 調査をスキップ」を 1 文明記して即返す。

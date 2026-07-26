@@ -42,7 +42,7 @@ $ARGUMENTS = `develop 設計判断は詳しく` でシナリオ 2 と同一文�
 4. 先頭トークンをベースブランチ (`git ls-remote --heads origin` で確認)、残りを詳細展開指示として解釈
 5. 展開部は散文中心 (bullet 3+ の羅列でない)、1 段落目 = 選択結果
 
-## シナリオ 4: perf PR + 実測表素材 (baseline 失敗 = C-FO/ninja-sign#39914 の再現)
+## シナリオ 4: perf PR + 実測表素材 (baseline 失敗 = 内部リポの実 PR で観測した失敗 (perf PR の実測表混入) の再現)
 
 $ARGUMENTS なし。perf ブランチ 2 commits (standard tier)、テンプレに「設計判断」系見出し無し。セッション素材に EXPLAIN ANALYZE 実測 4 条件・spec parity 結果・設計判断議論 (既存パターン踏襲・旧経路温存) を与える。
 

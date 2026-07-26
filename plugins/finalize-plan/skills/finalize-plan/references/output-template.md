@@ -18,7 +18,7 @@ git checkout -b feature/xxx
 
 **環境**: {BASE_URL}（QA 実行時にユーザーから取得。例: ローカル / staging 等）
 **対象AC**: N項目（正常系X / 異常系Y / エッジケースZ / 非影響W / MECE追加V）
-[Chrome DevTools MCP で実行可能な手順を記載]
+[人間がそのまま追える手順を記載。各操作には automation 用ツール名を括弧で併記する (例: `{BASE_URL}/xxx を開く (navigate_page)`)]
 
 ### 自動QA（テストコード仕様）
 

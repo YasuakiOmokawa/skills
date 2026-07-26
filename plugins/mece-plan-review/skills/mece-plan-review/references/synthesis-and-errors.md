@@ -80,7 +80,7 @@ Red Team の 4 分類結果から AC 改善点を統合:
 Step 0-4.5 の preflight (`read_wiki_structure` を 1 回だけ probe、`ask_question` 禁止) で判定:
 
 ```
-ToolSearch("+fdev-devin") 失敗 OR read_wiki_structure が "Repository not found"/error/空
+ToolSearch("+devin") 失敗 OR read_wiki_structure が "Repository not found"/error/空
   → ${DEVIN_COVERAGE}=none
   → Wiki Researcher を dispatch しない (Step 1 は BB+WB の 2 並列)
   → ${WIKI_RESULT}="[Devin未使用] ..." を確定、BB は Phase 0 をスキップ

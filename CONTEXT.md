@@ -4,7 +4,7 @@
 
 ## リポジトリ構造
 
-omokawa-skills は **monorepo + N plugins** 構造。各 skill / command は `plugins/<name>/` 配下の独立 plugin として配置される。`marketplace.json` が全 plugins (現在 16) を列挙する。詳細は CLAUDE.md 参照。
+omokawa-skills は **monorepo + N plugins** 構造。各 skill / command は `plugins/<name>/` 配下の独立 plugin として配置される。`marketplace.json` が全 plugins (現在 22) を列挙する。詳細は CLAUDE.md 参照。
 
 ## プラン駆動開発
 
@@ -28,21 +28,23 @@ omokawa-skills は **monorepo + N plugins** 構造。各 skill / command は `pl
 
 ## AC（受け入れ条件）
 
-**AC** = Acceptance Criteria。プランファイル内の `## 受け入れ条件` セクション。`define-acceptance-criteria` スキルで「正常系/異常系/エッジケース/非影響確認」の4カテゴリ × 観点列のマトリクス形式で定義する。
+**AC** = Acceptance Criteria。分析ファイル (`<plan>.analysis.md`) 内の `## 受け入れ条件` セクション。`define-acceptance-criteria` スキルで「正常系/異常系/エッジケース」の必須 3 カテゴリ (+ 推奨カテゴリ「非影響確認」) × 観点列のマトリクス形式で定義する。プランファイル末尾の `## 品質検証` には 1 行サマリーだけが追記される。
 
 `mece-plan-review` の検証ターゲット、`finalize-plan` の QA 計画の入力になる。
 
 ## MECE 検証
 
-**MECE** = Mutually Exclusive, Collectively Exhaustive。AC の網羅性を3視点（QA / Tech / Red Team）で検証する。`mece-plan-review` の主目的。
+**MECE** = Mutually Exclusive, Collectively Exhaustive。AC の網羅性を 4 視点（BB Analyst=仕様 / WB Analyst=コード / Wiki Researcher=Devin / Fresh Red Team）で検証する。前 3 者を並列起動し Fresh Red Team が統合判定する 2 phase 構成 (Devin 不可用時は BB + WB の 2 並列)。`mece-plan-review` の主目的。
 
 ## サブエージェント / 並列起動
 
 メインエージェントが複数の **specialist エージェント** を `Task` ツールで並列起動して結果を統合する設計パターン。
-- `review-design`: 5 reviewer 並列（Clean Architecture / Hexagonal / DDD / Deep-Module / Anti-pattern）
+- `review-design`: anti-pattern 必須 + DDD / Hexagonal / Clean / Deep-Module から Q1-Q3 matrix で選ばれた subset を並列起動 (unhealthy・新規 module・greenfield では all 5) → 必須 Devil's Advocate critique
 - `review-code-quality`: 3 analyzer 並列（Cohesion / Coupling / Business-Impact — Business-Impact は domain attribute 変更時のみ）
 - `finalize-plan`: 2 段階（Branch 単独 → Manual-QA / Auto-QA の 2 並列）
-- `model-data`: パイプライン式（Requirements → Conceptual → Logical → DBML）
+- `mece-plan-review`: 2 phase（BB / WB / Wiki Researcher の最大 3 並列 → Fresh Red Team の統合判定。Wiki Researcher は Devin 可用時のみ）
+- `model-data`: パイプライン式（Requirements → Conceptual → Conceptual-Review (FAIL 時 Conceptual へ差し戻し、最大 3 回) → Logical → DBML）
+- `qa-ui`: automation モード時のみ ui-evaluator を独立コンテキストで起動
 
 ## ~/.claude/skills-config/*.md
 
@@ -52,6 +54,8 @@ omokawa-skills は **monorepo + N plugins** 構造。各 skill / command は `pl
 - `release-labels.md` — Productivity / AI Contribution / Release Level ラベル定義
 - `environments.md` — integration 環境名（rollback 対象）
 - `create-design-doc/` — create-design-doc が参照する DD テンプレート・実例（組織の内部文書のためリポジトリには置かない。setup.sh が手元のファイルをコピーして配置）
+- `vision.md` — translate-to-vision-story が照合するビジョン要素 (テンプレートは plugin 内 references/vision-config-template.md)
+- `mece-plan-review.md` — Wiki Researcher の関連リポ探索に使う github_org (未設定なら git remote から推定)
 
 スキル本文では「このファイルを Read で取得」と書き、ハードコードしない。
 
@@ -75,4 +79,4 @@ Atlassian MCP / Jira MCP のツール名は環境によってプレフィック�
 
 ## Generator-Evaluator 分離
 
-`qa-ui` / `mece-plan-review` で採用するパターン：**実装したエージェント自身では評価しない**。別コンテキストの evaluator エージェントが画面/プランを見て判定する。バイアスを避けるため。
+`qa-ui` / `mece-plan-review` で採用するパターン：**実装したエージェント自身では評価しない**。別コンテキストの evaluator エージェントが画面/プランを見て判定する。バイアスを避けるため。(ただし qa-ui の既定は人間委譲で、evaluator エージェントによる判定は automation モード時のみ。人間委譲でも「実装者自身が判定しない」原則は同じ)

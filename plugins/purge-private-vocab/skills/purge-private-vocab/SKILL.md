@@ -26,7 +26,7 @@ description: Detects local-plan coinages, abbreviations, and number labels in re
 
 | 分類 | 例 | アクション |
 |---|---|---|
-| **持ち込み可** | Flipper flag (`fy26q3_ebis_client`)、class/file 名、Jira ID (`XPROJ-663`)、Issue 番号 (`#34074`) | **維持** |
+| **持ち込み可** | Flipper flag (`fy26q3_billing_client`)、class/file 名、Jira ID (`XPROJ-663`)、Issue 番号 (`#1234`) | **維持** |
 | **要 in-line 定義** | 2+ 回登場する有用な短縮形 (`Single Switch`, `Provider 内吸収型`) | **初出箇所で `用語 (= 短い説明)` を補う** |
 | **要言い換えまたは削除** | 1 回しか出ない造語、番号 (`Critical-A`, `α 層`, `AC-12`)、section anchor (`§設計詳細`) | **平易な日本語に書き換え、または文ごと削除** |
 
@@ -67,7 +67,7 @@ grep -oE '案[[:space:]]*[A-Z0-9]+' <target>
 
 ```
 Q1. codebase identifier / 公開規格名 / 公知の Jira/Issue ID か?
-  YES → 【持ち込み可】 (例: Freee::Client, fy26q3_ebis_client, JWT, RFC 7519, XPROJ-663)
+  YES → 【持ち込み可】 (例: Billing::Client, fy26q3_billing_client, JWT, RFC 7519, XPROJ-663)
   NO  → Q2
 
 Q2. target 自身の中で**直近に定義/展開**されているか?
@@ -110,7 +110,7 @@ Q4. 番号/層ラベルか? (`Critical-A`, `α/β/γ 層`, `AC-12`, 方式候補
 ## 語彙チェック提案レポート
 
 ### 持ち込み可 (維持) — Q1 / Q2 該当
-- (Q1) `fy26q3_ebis_client` (Flipper flag 名、codebase 検索可)
+- (Q1) `fy26q3_billing_client` (Flipper flag 名、codebase 検索可)
 - (Q1) `XPROJ-663` (Jira ID)
 - (Q2) `PR4-a/b/c/d` (target L12-L20 で全 PR が展開済)
 
