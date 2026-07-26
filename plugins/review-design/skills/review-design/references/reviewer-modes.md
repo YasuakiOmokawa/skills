@@ -8,13 +8,13 @@ This reference fills in the three execution modes, the inline / subagent DA prom
 |---|---|---|
 | **inline default** (normal) | main agent runs DA itself | default; few critical candidates, low self-bias risk |
 | **subagent dispatch** (escalated) | `Task` tool spawns a fresh subagent for DA | complex critical signals; fresh viewpoint required |
-| **in-context fallback** (env-constraint) | `Task` tool unusable, main agent substitutes | Task deferred / no dispatch permission |
+| **in-context fallback** (env-constraint) | `Task` dispatch permanently unusable, main agent substitutes | tool absent / no dispatch permission / spawn budget exhausted |
 
 `inline default` and `in-context fallback` are **different concepts**. The final report tag `(in-context fallback mode: …)` is ONLY for the latter.
 
 ## Parallel Review fallback (Step 3)
 
-If `Task` is unavailable (already running as subagent / tool deferred / no dispatch perm):
+If `Task` dispatch is **permanently** unavailable (classification: escalation-rules.md "Permanent vs temporary dispatch failure" — a temporary concurrency/rate limit is retried, not fallen back):
 
 1. Read each selected `agents/*.md` directly.
 2. The main agent applies the reviewer's criteria itself and feeds the per-reviewer verdicts into DA **as internal state** (do not emit intermediate output).

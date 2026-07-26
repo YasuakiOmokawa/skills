@@ -48,7 +48,7 @@ Requirements checklist:
 
 ## シナリオ: 委譲実行 (subagent として起動された場合)
 
-収束記録: 2026-07-07。baseline (Iter1) で委譲実行時の入力解決順位不明・Step3再実行時のstep番号ズレ・プラン不在時のStep4/6分岐未規定・`${CLAUDE_PLUGIN_ROOT}`解決規則不在を観測し、SKILL.md に `## 委譲実行` 節を新設して解消。Iter2・Iter3・hold-out (計5 fresh executor) で checklist 全 [critical] ○ / accuracy 100% を維持。tool_uses/duration はラウンドにより ±10%/±15% を外れる回があったが (Scenario B の duration が Iter3 で +27%)、機能面 (checklist 合否) には影響なし。3 イテレーション連続で新規不明点 0 には至らず (テーマは毎回異なる軽微なドキュメント精度指摘のロングテール) 発散と判定し、追加の構造修正は打ち切った。詳細は本 skill の Gotchas を参照。
+収束記録: 2026-07-07。baseline (Iter1) で委譲実行時の入力解決順位不明・Step3再実行時のstep番号ズレ・プラン不在時のStep4/6分岐未規定・`${CLAUDE_PLUGIN_ROOT}`解決規則不在を観測し、SKILL.md に `## 委譲実行` 節を新設して解消。Iter2・Iter3・hold-out (計5 fresh executor) で checklist 全 [critical] ○ / accuracy 100% を維持。tool_uses/duration はラウンドにより ±10%/±15% を外れる回があったが (Scenario B の duration が Iter3 で +27%)、機能面 (checklist 合否) には影響なし。3 イテレーション連続で新規不明点 0 には至らず (テーマは毎回異なる軽微なドキュメント精度指摘のロングテール) 発散と判定し、追加の構造修正は打ち切った。詳細は本節の記述を参照 (Gotchas への転記は未実施 — 判定規則側に inline 反映済みのため)。
 
 ### シナリオ A: プランファイルあり (Task 経由の委譲)
 
@@ -167,3 +167,94 @@ Requirements checklist:
 §9 B (hold-out、ES2019 制約あり) は修正前 2 体・修正後 1 体の計 3 体とも観点 9 を ⚠️ 判定 (tsconfig の lib/target=ES2019 と照合し、BigInt も Intl の文字列任意精度入力も型が通らず標準機能で代替不能なことを実在確認)、置換 TODO の実装イメージ有りを確認、自前実装の即時削除を fatal 化せず plan を ❌ 前提で書き換えなかった → 全 [critical] ○。今回の fix は ❌ 修正時の後始末のみを対象とし ⚠️ 経路には触れないため、§9 B に regression なしを確認 (修正後 r3 も正当な自前実装とそのテストを制約下で存置)。`python3 scripts/validate_skills.py` pass。
 
 observed long-tail (今回 fix 対象外・記録のみ): 複数 executor が (1) Quick Start の greenfield 分岐が Q1.1 (Q1=Yes 時のみ) の内側にあり Q1=No の greenfield で all 5 か None ブランチ subset かが一意に定まらない点、(2) 委譲時の Task/Agent ツール名差と "already running as subagent" による dispatch vs in-context fallback 判定の参照間食い違い (spawn 上限 200/200 到達時の partial fallback を含む)、(3) 「⚠️ acceptable・plan 編集なし」時の最終報告 route が problem-free (all ✅) / problem-found (「修正しました」) の 2 テンプレに収まらない点、を指摘した。いずれも §9 とは無関係な既存セクションで、2026-07-07 委譲実行 eval および 2026-07-17 スリム化 eval で既に「発散、追加修正打ち切り」と判定済みの領域。checklist 合否には影響せず (全 executor が anti-pattern-checker を必ず含む有効な subset を選び観点 9 を判定できた)、本ラウンドの修正対象には含めない。
+
+## シナリオ: 配置レビュー (median) と territory precedence (edge) — Opus 5 / Fable 5 向けチューニング (2026-07-25)
+
+**収束していない**。dispatch 枯渇 (session の subagent spawn 上限 200/200) により Round 1 のみ実行、
+Round 2 と hold-out は未実行。下記 3 シナリオはチェックリストを凍結済みで、次に本 skill を変更する PR で
+fresh executor により再実行すること (特に「未検証の修正」として記した 2 件の効果確認)。
+
+### fixture 仕様 (再作成用)
+
+- **scenA (brownfield Rails, median)**: `app/models/document.rb` (`after_commit :notify_slack_on_share` が `SlackClient` を同期呼び出し)、`app/services/document_share_service.rb` (public method 13 / 責務 4 = 共有・監査ログ・CSV エクスポート・メール送信)、`app/controllers/documents_controller.rb`、`spec/services/document_share_service_spec.rb`。プラン `plan_expiry_reminder.md` = 有効期限リマインダー新設で、(a) 新規 controller に集計クエリ + Slack 送信 + `update!` を直書き、(b) `Document` に `after_commit` を追加して `SlackClient` を直接呼ぶ、(c) `DocumentShareService` に 1 行委譲の 4 メソッド追加、(d) 「配置は自明」と自己申告。
+- **scenB (auth/permission territory, edge)**: `application_controller.rb` (`require_login!` / `current_user`)、`exports_controller.rb`、`user.rb` (`enum role` + 手書き `admin?`)。プラン `plan_admin_only_export.md` = `require_admin!` を `ApplicationController` に private method 追加 + `ExportsController` に `before_action` 1 行 (2 ファイル / 計 8 行)。プラン本文が「配置は自明・設計レビューは不要と考えている」と Row 1 skip を誘導する。
+- **holdout (greenfield + PoC ledger)**: コード不在。プラン `plan_notification_gateway.md` = `NotificationGateway` の 3 public method すべてが mailer / Slack / WebPush クライアントへの 1:1 委譲 (内部に分岐なし)、`channel_opt_out` フィールドを無視。同ディレクトリの `poc_ledger.md` に H3「経路ごとの opt-out 判定」= **killed** (実測: モバイル側に正本テーブルなし) + 対応先 `PROJ-451` を記録。
+
+### シナリオ A (median) requirements checklist
+
+1. [critical] reviewer subset を Q1-Q3 と matrix の該当行 (または Task tier Row) を明示して選定し、`anti-pattern-checker` を含めている
+2. [critical] `Document` の `after_commit` から `SlackClient` を直接呼ぶ設計 (外部 IO in callback / DB tx 境界) を指摘し、プランファイルを直接 Edit して設計本文を修正している (分析要約の貼り付けでない)
+3. controller に集計クエリ + 通知送信を直書きする配置 (Fat Controller / レイヤー混在) を指摘し、配置を修正している
+4. `DocumentShareService` への 4 メソッド追加 (God Object 化 / 責務混入 または薄い pass-through) を指摘している
+5. Devil's Advocate が Step 3 の reviewer 指摘と異なる角度 (運用 / スケール / 他チーム interface / rollback) の critique を出し、各件を fatal / acceptable でラベル付けしている
+6. `plan_expiry_reminder.design-review.md` を Write し、`## Fatal 残存` / `## Acceptable 残存リスク` / `## Hidden assumption` の 3 節を含む
+
+### シナリオ B (edge) requirements checklist
+
+1. [critical] Row 1 (小規模・配置自明) で skip せず実行し、auth / permission territory (Row 4) 該当を根拠として明示している
+2. [critical] 新規ガード (`before_action :require_admin!` の追加) が Row 4 強制実行の根拠であることを示し、read-only predicate の Row 1 skip 例外と区別している
+3. Row 4 に従い Devil's Advocate を subagent dispatch で実行している (inline default で済ませていない)。dispatch が恒久的に不能な環境なら最終報告末尾に in-context fallback タグを付けている
+4. reviewer subset を matrix から選び `anti-pattern-checker` を含めている
+5. `plan_admin_only_export.design-review.md` を Write し 3 節を含む
+
+### シナリオ C (hold-out) requirements checklist
+
+1. [critical] `NotificationGateway` を deep ✅ 一辺倒と判定せず、pass-through の浅さ (shallow ❌ または一部浅い ⚠️) を具体的に指摘している
+2. [critical] `channel_opt_out` 無視を fatal (contract breach) と断定せず、`poc_ledger.md` の killed 記録 / 対応先 (PROJ-451) を根拠に acceptable と扱っている
+3. [critical] `poc_ledger.md` を実際に Read している (self-report / 引用で確認できる)
+4. greenfield で判定可能な観点を Unknown に倒さず、✅ 項目にも判定根拠を 1 行付している
+5. `plan_notification_gateway.design-review.md` を Write し 3 節を含む
+
+### Round 1 結果 (評価意図秘匿 = checklist を渡さない blind 実行)
+
+| シナリオ | 成否 | accuracy | steps | duration | retries |
+|---|---|---|---|---|---|
+| A (median) | ○ | 100% (6/6) | 27 | 1055s | 2 (いずれも環境起因) |
+| B (edge) | ○ | 100% (5/5) | 27 | 1206s | 3 (いずれも環境起因) |
+
+両 executor とも all 5 reviewers を nested dispatch し、プランを直接 Edit、3 節込みで保存、DA を実行。
+設計判断そのもののやり直しは両者 0。B は Row 1 skip の誘導を却下し Row 4 precedence の例示 (`before_action :require_admin!`) を根拠に実行した。
+
+### 検証済みの変更 (Round 1 で挙動確認)
+
+- 冒頭要約に Deep-Module を追記 (description は 5 reviewer を列挙していたが本文要約は 4 つしか挙げていなかった) — 両 executor が deep-module-reviewer を含む all 5 を選定
+- SKILL.md 末尾の escalation-rules.md への重複ポインタ 1 行を削除 (Advanced 節に同一説明が残る) — 両 executor が escalation-rules.md に到達し mode 表と fatal closed set を適用
+
+### 未検証の修正 (Round 2 未実行。次 PR で効果確認が必要)
+
+Round 1 で **2/2 の executor が独立に同じ不明点を報告**したため修正したが、修正後の fresh executor 実行はできていない。
+
+1. **Q1.1 の検証不能項目**: 「検証不能 → not satisfied」が greenfield 節の中だけに書かれており、コードはあるがテスト基盤が無い brownfield に適用してよいか読めなかった (2/2 が指摘、両者とも自力で not satisfied に倒して結果は正しかった)。→ 5 項目リストの共通前提として項目単位の規則に格上げ。
+2. **dispatch 失敗の permanent / temporary 分類**: 一時的失敗 (同時実行上限) と恒久的失敗 (ツール不在 / 権限なし / spawn budget 枯渇) が fallback 条件として区別されておらず、かつ escalation 条件を満たした Step 5 DA が dispatch 不能な場合の mode とタグが Step 5 本文から辿れなかった (2/2 が指摘、各 1 回のやり直しを発生させた)。→ escalation-rules.md に permanent / temporary の分類節を新設し、reviewer-modes.md の fallback 条件をそこへ委譲、SKILL.md Step 5 に 1 行の導線を追加。あわせて reviewer-modes.md の fallback 条件から「already running as subagent」を削除 (Round 1 の両 executor は subagent として nested dispatch に成功しており、この条件は実測で反証された)。
+3. **Q1 = No の greenfield**: Q1.1 が Q1=Yes 限定のため Q1=No の greenfield で subset が一意に定まらない点 (2026-07-18 eval で複数 executor が指摘済みの long-tail) を明文化。Round 1 は両シナリオが brownfield のため未通過 — hold-out (シナリオ C) が検証経路。
+
+### 今回も修正対象外とした long-tail (記録のみ)
+
+- Row 4 territory 表の `migration` に core path / 非該当の例が無い (task-tier-boundaries.md の例 3 件は auth / billing / permission のみ)
+- Row 3 の「複数 file 跨り」が程度語で、2 ファイル 8 行の既存クラス編集にも文字通り該当してしまう
+- 「1 issue = 1 line」に行数上限がなく、修正 10 行がチャット表示の一覧性と衝突する
+
+いずれも 2026-07-07 / 2026-07-17 / 2026-07-18 の eval で既に「発散、追加修正打ち切り」と判定済みの領域と同じ long-tail。
+
+### Round 2 結果 (2026-07-26, blind 実行・成果物直読みで採点 — 未検証だった修正 2 点 + hold-out C の検証完了)
+
+| シナリオ | 成否 | accuracy | tool_uses | duration | retries |
+|---|---|---|---|---|---|
+| A (median) | ○ | 100% (6/6) | 49 | 3514s | 2 (いずれも環境起因の dispatch hang → 文書化済み fallback で脱出) |
+| B (edge) | ○ | 100% (5/5) | 22 | 831s | 1 (API 切断 → temporary 分類で再送) |
+| C (hold-out) | ○ | 90% (4.5/5) | 32 | 2124s | 0 |
+
+全 [critical] ○ (A 2/2・B 2/2・C 3/3)。C の減点は項目 4 (✅ への根拠 1 行付与) が保存成果物から確認しきれず partial としたもの。hold-out C は直近平均から 15 点以上の低下なし → 過学習なし。
+
+**Round 1 の「未検証の修正」2 点 + 「Q1=No greenfield」の 3 点すべて実地検証済み**:
+1. Q1.1 検証不能→違反の項目単位規則: B で発火 (テスト基盤ゼロのリポで停滞なく unhealthy 判定) ✓
+2. permanent/temporary 分類: B で発火 (anti-pattern-checker の API 切断を temporary 分類→再送、tag なし)。A では逆に「dispatch 成功後の無期限 hang」が分類表に無いことが露呈 (55 分待機の実測) → 下記修正 ✓
+3. Q1=No greenfield の subset 規則: C で発火 (all 5 へ正しく到達) ✓
+
+適用した修正 (1 テーマ「escalation-rules.md = canonical 分類表に欠けていた分岐の転記」、いずれも executor の実挙動の成文化):
+- Hung 行の新設: dispatch 成功後の無応答は有界待機 (~15 分 + re-ping 1 回) で permanent 扱い → in-context fallback + tail tag (A の 55 分実測より)
+- DA escalation 条件 4 として Row 4 territory を転記 (B の指摘: SKILL.md 側にのみ存在し機械判定リストから欠落していた SSOT 分裂)
+
+記録のみの残差 (各 1 件、executor は自力で正解): Step 4 の Edit/Write をツールでなく意図で規定 / 再 Review の契約 (クローズ確認 + 修正起因の新規指摘検出 — C executor が自発的に実施し 4 件の新規 ❌ を検出した価値ある挙動) / ❌ 件数の測定点 (直前 Step 3 出力) / reviewer 間矛盾の tie-break / 1 issue = 1 line の集約キー (原因か処方か) / 修正済み ⚠️ の記載先。次回 PR では「再 Review の契約」の成文化を筆頭候補とする。
+
+収束判定: Round 1 (A/B 100%) + Round 2 (A/B 100%・hold-out C 90% 全 critical ○) で 2 連続クリア相当。本ラウンドの修正 2 点は分類表への転記のみで実行経路を変えない (executor が既に同じ挙動を実施済み) ため、fresh 再検証は次回スキル変更 PR の regression 実行に委ねる。

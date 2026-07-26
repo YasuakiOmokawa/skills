@@ -5,7 +5,7 @@ description: Reviews code placement and pattern choices before implementation us
 
 # review-design
 
-実装前の配置・パターン判定を Q1-Q3 で選択された reviewer subset (anti-pattern 必須 + DDD / Hexagonal / Clean Arch 選択) で並列レビュー → 必須 Devil's Advocate critique → 致命指摘があれば plan ファイルを直接書き換える。
+実装前の配置・パターン判定を Q1-Q3 で選択された reviewer subset (anti-pattern 必須 + DDD / Hexagonal / Clean Arch / Deep-Module 選択) で並列レビュー → 必須 Devil's Advocate critique → 致命指摘があれば plan ファイルを直接書き換える。
 
 ## Task complexity tier (skip / scope decision)
 
@@ -33,7 +33,7 @@ description: Reviews code placement and pattern choices before implementation us
 
 #### Q1.1: 既存類似機能の健全性チェック (Yes 時のみ)
 
-以下の **5 項目すべて** (AND) を満たす場合のみ **healthy**。1 項目でも違反すれば **unhealthy**:
+以下の **5 項目すべて** (AND) を満たす場合のみ **healthy**。1 項目でも違反すれば **unhealthy**。**証拠が取れず検証できない項目は not satisfied (違反) 扱い**とする — 項目単位で適用し、理由 (コード不在 / テスト基盤不在 / 情報不足) を問わない (criticism-first default を保つため):
 
 1. tests が通過している
 2. single responsibility (責務が一句で言える)
@@ -41,7 +41,7 @@ description: Reviews code placement and pattern choices before implementation us
 4. public method ≤10 / callback chain <3
 5. **after_commit / after_create 内で external API / 外部 IO を呼んでいない** (escape hatch 条件と一致)
 
-**Greenfield (コード不在) の扱い**: 項目 1 / 3 / 4 (tests 通過 / 行数 ≤200 / public method 数) は実コードがないと検証できない。検証不能な項目は **not satisfied (違反) 扱い**とし、結果 unhealthy → all 5 reviewers に倒す (criticism-first default を保つため。greenfield は本 skill の主用途なのでこの分岐を必ず通る)。
+**Greenfield (対象リポにコードが存在しない) の扱い**: 項目 1 / 3 / 4 (tests 通過 / 行数 ≤200 / public method 数) は実コードがないと検証できないため上の共通規則で違反となり、unhealthy → all 5 reviewers。**Q1 = No の greenfield も同じ扱い** (健全性を判定する既存コードが無いため all 5)。既存コードはあるが類似機能だけが無い場合 (brownfield かつ Q1 = No) は Q1.1 を通らず、下の matrix の None ブランチ行で決める。
 
 **Escape hatch**: 1-4 を満たし healthy 寄りでも、項目 5 (after_commit 内 external IO) を含む場合は healthy を撤回 = unhealthy 扱い → all 5 reviewers。
 
@@ -84,11 +84,9 @@ Pick the first matching row, top-down:
    3. **Label each critique `fatal` or `acceptable`** (fatal = `anti-pattern-checker` ❌ OR any single-trigger escalator [DB tx boundary / concurrency / security / contract breach]; subjective preference = acceptable). The fatal criteria are a closed set — a problem outside the checker's table and the four escalators stays `acceptable` + recommendation, however severe it looks.
    4. Surface 1-2 hidden assumptions (保存先は [references/final-report-format.md](references/final-report-format.md) の Hidden assumption 節)。
 
-   Escalate inline→**subagent dispatch** when **reviewers' ❌ ≥ 2, OR any single-trigger escalator hit (DB tx boundary / concurrency / security / contract breach), OR `--strict-da`** (full table = SSOT in [references/escalation-rules.md](references/escalation-rules.md)); full DA prompts in [references/reviewer-modes.md](references/reviewer-modes.md).
+   Escalate inline→**subagent dispatch** when **reviewers' ❌ ≥ 2, OR any single-trigger escalator hit (DB tx boundary / concurrency / security / contract breach), OR `--strict-da`** (full table = SSOT in [references/escalation-rules.md](references/escalation-rules.md)); full DA prompts in [references/reviewer-modes.md](references/reviewer-modes.md). escalation 条件を満たしても dispatch が恒久的に不能なら inline で実行し、報告末尾に in-context fallback タグを付ける (一時的な同時実行上限は再試行 — permanent / temporary の分類は escalation-rules.md)。
 5. **Feedback loop**: If DA flags any "fatal" finding → Edit plan → re-run Step 3-4 → re-evaluate DA escalation. Repeat until all DA findings are "acceptable".
 6. **Step 6 — Final report**: One-line-per-issue でチャットに表示する。加えて `Write` で `<plan>.design-review.md` (プランファイルパスの拡張子直前に `.design-review` を挿入したパス) へ同内容を保存する。保存内容・パス規則・プラン不在時の扱いは [references/final-report-format.md](references/final-report-format.md) を参照。
-
-Three execution modes / DA escalation conditions / Fatal vs single-trigger 全表は [references/escalation-rules.md](references/escalation-rules.md) を参照。
 
 ## 委譲実行 (subagent として起動された場合)
 

@@ -6,6 +6,8 @@
 
 > **並列数 SSOT**: 2 並列か 3 並列かの判定点は SKILL.md 0-4.5 の `${DEVIN_COVERAGE}` ただ 1 箇所。本テンプレはその判定結果を埋める器であり、並列条件を再定義しない。新ゲート (preflight 等) を追加するときも条件は 0-4.5 にだけ書き、ここには複製しない (片側だけ古くなる drift を防ぐ)。
 
+> **全 dispatch 共通 (Core rule 1 の防波堤)**: 本ファイルの全テンプレート (Step 1 の 3 つ + Step 2) の prompt 末尾に「**分析ファイル・プランファイルを含む一切のファイルを書き換えないこと。結果は最終メッセージで返す (記録は main agent が行う)**」を必ず付ける。general-purpose subagent は frontmatter `tools` が harness レベルで強制されないため、この 1 行が並列書き込み衝突を防ぐ唯一の手段。
+
 Task ツールを **同一メッセージ内に並べて** 起動する (並列化のため単一メッセージ必須)。`${DEVIN_COVERAGE}=covered` なら BB / WB / Wiki Researcher の 3 つ、`none` なら BB / WB の 2 つ (Wiki Researcher は起動せず、0-4.5 で確定した `${WIKI_RESULT}` = `[Devin未使用]` を後段で使う)。
 
 ### BB Analyst
@@ -37,6 +39,7 @@ Task(subagent_type="general-purpose", prompt="""
 ${CLAUDE_PLUGIN_ROOT}/skills/mece-plan-review/agents/wb-analyst.md
 
 リポジトリ: ${REPO_NAME}
+コード探索の起点 (絶対パス、この配下だけを読む): ${CODE_ROOT}
 プランファイル:
 ${PLAN_CONTENT}
 受け入れ条件 (AC-ID 付き、検証ターゲット):

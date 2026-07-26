@@ -22,10 +22,10 @@ main agent は BB / WB / Red Team の **JSONLines 出力** をパースし、本
 
 ### 分析サマリー
 - 分析日時: YYYY-MM-DD
-- 対象リポジトリ: ${REPO_LIST}
+- 対象リポジトリ: ${REPO_NAME} (関連リポ: ${RELATED_REPOS})
 - ACカバレッジ: N/M項目充足
 - 漏れ件数: X (お見合い検出された件数 = 両 Analyst が言及ゼロで Red Team が独自検出)
-- 重複件数: Y (BB ↔ WB が同じ問題を別角度で言及した「真の合意」件数)
+- 重複件数: Y (BB ↔ WB が同じ問題を言及した「真の合意」+「補強し合う合意」の合計。プランファイル 1 行サマリーの `重複 [Z]件` と同じ定義 = [synthesis-and-errors.md](synthesis-and-errors.md) の「サマリー値の定義 (SSOT)」)
 - 判定: MECE OK / 要修正（Critical N件）
 
 ### 4分類クロスリファレンス (area タグで機械集約)
@@ -120,7 +120,7 @@ ${WIKI_RESULT}
 
 ### 分析サマリー
 - 分析日時: YYYY-MM-DD
-- 対象リポジトリ: ${REPO_LIST}
+- 対象リポジトリ: ${REPO_NAME} (関連リポ: ${RELATED_REPOS})
 - ACカバレッジ: N/M項目充足
 - 漏れ件数: X
 - 重複件数: Y
