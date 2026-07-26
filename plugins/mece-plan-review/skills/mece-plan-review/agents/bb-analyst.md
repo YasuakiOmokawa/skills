@@ -63,7 +63,7 @@ WB Analyst と独立に動くため互いの分析結果は参照しない。責
 
 > dispatch に `[Devin未使用]` 指定が渡された場合 (main agent の preflight で未収録確定)、**本 Phase 0 を丸ごとスキップ**し `[Devin未使用]` で AC + プラン本文 + 一般仕様知識のみで進める (Devin を叩かない)。
 
-`ToolSearch("+fdev-devin")` で devin ツールを取得し、**カレントリポ (`${REPO_NAME}`) の wiki のみ**読む。関連リポ wiki は読まない (Wiki Researcher 専属)。
+`ToolSearch("+devin")` で devin ツールを取得し、**カレントリポ (`${REPO_NAME}`) の wiki のみ**読む。関連リポ wiki は読まない (Wiki Researcher 専属)。
 
 1. **収録判定 probe (1 回だけ)**: `read_wiki_structure(repoName=${REPO_NAME})` を 1 度だけ呼ぶ。not found / error / 空 → 即フォールバック (手順 4、リトライ・`ask_question` での再確認をしない)
 2. 構造が返ったプラン関連ページを `read_wiki_contents(repoName=${REPO_NAME}, path)` で読む

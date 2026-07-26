@@ -93,7 +93,7 @@ MECEは「何に対して漏れがないか」を検証するプロセスです�
 **0-4.5 Devin 収録 preflight (Wiki Researcher 起動可否)**: Wiki Researcher を起動する前に main agent が **軽量 probe を 1 回だけ** 実行し `${DEVIN_COVERAGE}` を確定する。probe は規模・価値判断で省略しない (遅延源は `ask_question` のみで、下記 2 呼び出しは軽量):
 
 0. `${REPO_NAME}` が対象リポジトリで解決できない (non-git 等で `unknown-repo`) → probe を打たず `${DEVIN_COVERAGE}=none` を即確定する (probe 必須規則は価値判断による省略を禁じるもので、引数となる repoName が構成不能な場合は前提不成立としてこの分岐が正)
-1. `ToolSearch("+fdev-devin")` 失敗 → `${DEVIN_COVERAGE}=none`
+1. `ToolSearch("+devin")` 失敗 → `${DEVIN_COVERAGE}=none`
 2. 成功時は `read_wiki_structure(repoName=${REPO_NAME})` を **1 回だけ** 叩く。`ask_question` は preflight に使わない (Devin 調査セッション起動で分単位の遅延を招く)
    - wiki 構造が返る → `${DEVIN_COVERAGE}=covered`
    - "Repository not found" / error / 空 → `${DEVIN_COVERAGE}=none` (リトライ・別ツール再確認をしない)
@@ -154,4 +154,7 @@ Agents:
 - [agents/wiki-researcher.md](agents/wiki-researcher.md) — Devin wiki 事実収集 (判定なし)
 - [agents/fresh-red-team.md](agents/fresh-red-team.md) — Red Team (BB/WB/Wiki 出力のみで統合判定、plan/AC を持たない)
 
-併用推奨: `/define-acceptance-criteria` (前段で AC 定義) → `/finalize-plan` (MECE 結果反映で実装フェーズへ)
+## 併用推奨 skill
+
+- `/define-acceptance-criteria` — 前段で AC を定義
+- `/finalize-plan` — MECE 結果を反映して実装準備へ

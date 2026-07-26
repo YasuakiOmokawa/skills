@@ -39,7 +39,7 @@ grep -oE '案[[:space:]]*[A-Z0-9]+' <target>
 
 ### ❌ 持ち込み可な codebase 固有名詞まで言い換えてしまう
 
-**症状**: `Freee::Client` を「ライセンスクライアント」に言い換え。読者が grep できなくなり混乱が増す。
+**症状**: `Billing::Client` を「ライセンスクライアント」に言い換え。読者が grep できなくなり混乱が増す。
 
 **修正**: class/file/Flipper flag 名は維持。読者は codebase で確認できる前提。
 

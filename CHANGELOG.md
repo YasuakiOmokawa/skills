@@ -42,7 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - 同一 PR 内で同名 method が `+` で再追加されている場合は除外する exclusion ロジック。
   - 編集後は触った spec 全件を `bundle exec rspec <file1> <file2> ...` で検証し 0 failures を確認。
   - 非 Ruby プロジェクト (`*.rb` 変更なし or `spec/` 不在) では `[dead mock: スキップ (Ruby/RSpec 対象外)]` を最終レポートに明記してスキップ。
-- `empirical-prompt-tuning` skill で 3 iteration 検証: median / partial-removal / non-Ruby-skip の 3 シナリオで Accuracy 100%、iter 3 で plateau。出典: `~/.claude/plans/ebis/plan.md` §B-1 (yamoto r3231525409 指摘)。
+- `empirical-prompt-tuning` skill で 3 iteration 検証: median / partial-removal / non-Ruby-skip の 3 シナリオで Accuracy 100%、iter 3 で plateau。出典: 社内プランのレビュー指摘。
 
 ## [0.7.0] - 2026-05-14
 

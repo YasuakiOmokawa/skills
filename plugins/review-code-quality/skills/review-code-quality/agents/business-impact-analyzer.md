@@ -56,7 +56,7 @@ diff に domain model attribute の更新変更が含まれないため skip。�
 ### 副作用 chain (🔴 Critical)
 
 以下の特徴を持つ caller を検出:
-- 対象 attribute を `read` し、その値を引数 / 条件にして **別の persisted state を上書きする** (例: `Plan#sync_freee_billing_status` で `MasterPlan.find_by(plan_code:).attributes_for_sync_plan` を `Plan#assign_attributes` + `save!`)
+- 対象 attribute を `read` し、その値を引数 / 条件にして **別の persisted state を上書きする** (例: `Plan#sync_billing_status` で `PlanTemplate.find_by(plan_code:).attributes_for_sync_plan` を `Plan#assign_attributes` + `save!`)
 - update / save / sync / persist / refresh / apply 系の method 経由で 2 段階目の永続化が走る
 - 1 段階目 (本 PR で変更した attribute の値) と 2 段階目 (機能フラグ / 上限値 / 権限フラグ) の意味が乖離する可能性がある (= 「失効ユーザに有料機能フラグが付き続ける」型のバグ)
 
@@ -115,23 +115,23 @@ skip 判定で「該当あり」なら以下を **明示順序で** 実行:
 ### [業務副作用] 検出結果
 
 #### 対象 attribute
-- `plan_code` (FreeeCompany)
+- `plan_code` (BillingAccount)
 
 #### caller 分類 (grep 結果)
-- policy: `app/policies/team_paper_uploadable_policy.rb:9` (`uploadable?`)
-- form: `app/forms/bulk_create_document/reservation_form.rb:42` (`max_csv_export_count` 上限)
-- sync job: `app/jobs/sync_freee_license_job.rb:28` (`Plan#sync_freee_billing_status` 経由)
-- UI component: `app/components/teams/documents/dashboard_component.rb:42` (paper_upload 表示)
+- policy: `app/policies/team_export_policy.rb:9` (`exportable?`)
+- form: `app/forms/bulk_create_report/reservation_form.rb:42` (`max_csv_export_count` 上限)
+- sync job: `app/jobs/sync_license_job.rb:28` (`Plan#sync_billing_status` 経由)
+- UI component: `app/components/teams/reports/dashboard_component.rb:42` (export 表示)
 - (caller 計 N 件、レイヤ別内訳)
 
 #### 🔴 Critical: app/models/plan.rb:110-122 (副作用 chain)
-- **chain**: `freee_company.plan_code` → `MasterPlan.find_by(plan_code:).attributes_for_sync_plan` → `Plan#assign_attributes + save!`
-- **影響**: 本 PR で `plan_code='starter'` が維持されると、`MasterPlan#starter` の機能フラグ全部 (paper_upload=true / esign=true / chat_support=true / max_csv_export_count=1000) が毎回上書き永続化される
-- **想定外挙動**: freee 側で課金停止したユーザが、サインの有料機能を使い続けられる
+- **chain**: `billing_account.plan_code` → `PlanTemplate.find_by(plan_code:).attributes_for_sync_plan` → `Plan#assign_attributes + save!`
+- **影響**: 本 PR で `plan_code='starter'` が維持されると、`PlanTemplate#starter` の機能フラグ全部 (export=true / esign=true など) が毎回上書き永続化される
+- **想定外挙動**: 課金基盤側で課金停止したユーザが、自プロダクトの有料機能を使い続けられる
 - **改善案**: attribute 値の semantics 変更前に、本 chain で desired な挙動になるかを明示し、必要なら sentinel object / Null Object で attribute 値を区別する
 
 #### 🔴 Critical: app/controllers/teams/plans_controller.rb:37 (認可 bypass)
-- **gate**: `before_action :require_not_subscribed_yet` で `freee_company.unlicensed?` (= `plan_code.in?([nil, UNLICENSED])`)
+- **gate**: `before_action :require_not_subscribed_yet` で `billing_account.unlicensed?` (= `plan_code.in?([nil, UNLICENSED])`)
 - **影響**: `plan_code='starter'` 維持で `unlicensed? = false` → 失効ユーザがプラン変更画面に入れるようになる
 - **改善案**: 上記 chain と同根。attribute 値の semantics を区別する設計
 

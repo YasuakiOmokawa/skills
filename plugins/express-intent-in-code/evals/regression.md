@@ -9,9 +9,9 @@
   - Iter4: hold-out L (Ruby/Money・経路B 型抽出) + M (Python/Redis・根拠ある据え置き) 全 ○。skill 欠陥由来の新規 unclear ゼロ (clear 2)。→ 2 連続 clear で収束。
   - 過学習チェック: fresh hold-out 4 種 (J/K/L/M、4 言語 5 ドメイン) が全 100%。全 3 経路 (A snap / B 型抽出 / 根拠ある据え置き) を実証。
   - 既知の軽微未着手 (収束下では threshold 未満・据え置き): (i) 省略語の段0/段1 判定は「展開して what が読めるか」で切るルールの明文化。fresh executor が明文ルール無しで正しく自己解決済み。
-- 2026-06-19 (v3.32.0 / 実 PR #39624 適用が露呈させた gap を修正)。実 ninja-sign repo に `draft`(73 hits)と `document_item`(100+)が**両方**実在し、正しい grounding は `document_item`(この概念を指す語)だった。現ゲートは homonym 確認 (Step E) を持つが「複数の実在ドメイン語がある時、頻度でなく概念一致で選ぶ」明示規則が弱く、naive な executor は高頻度の別概念語 (`draft`) へ snap しうる gap があった。domain-abstraction.md のゲートに「複数の実在ドメイン語がある時の選定 (頻度でなく概念一致・use site 近接)」節を追加。シナリオ N (draft vs document_item) を追加し fresh executor で検証: N + bbox 回帰再実行が全 [critical] ○ / 100% / 新規 unclear ゼロ。executor は `draft`(73 hits)でなく `document_item` を概念一致で選択し新節を明示引用、frequency-vs-concept-match の罠を回避した。
+- 2026-06-19 (v3.32.0 / 実プロジェクトの実 PR 適用が露呈させた gap を修正)。実プロジェクトの repo に `draft`(73 hits)と `document_item`(100+)が**両方**実在し、正しい grounding は `document_item`(この概念を指す語)だった。現ゲートは homonym 確認 (Step E) を持つが「複数の実在ドメイン語がある時、頻度でなく概念一致で選ぶ」明示規則が弱く、naive な executor は高頻度の別概念語 (`draft`) へ snap しうる gap があった。domain-abstraction.md のゲートに「複数の実在ドメイン語がある時の選定 (頻度でなく概念一致・use site 近接)」節を追加。シナリオ N (draft vs document_item) を追加し fresh executor で検証: N + bbox 回帰再実行が全 [critical] ○ / 100% / 新規 unclear ゼロ。executor は `draft`(73 hits)でなく `document_item` を概念一致で選択し新節を明示引用、frequency-vs-concept-match の罠を回避した。
 
-- 2026-07-04 (v0.8.0 / 生成時経路 (経路2) を追加)。ninja-sign 実 PR (split-signer-view, +8,782行) で opus4.8 生成コードのコメント過多 (Ruby 密度18%、制約弁明の呼び出し側露出・同一 why の9箇所重複) が露呈させた「スキルが生成時に効かない」gap を修正。generation-recipe.md (3つの瞬間 + セルフチェック) を新設し、Step 0 入口を二経路化、T12 制約吸収ラッパーを追加。文言は RED-GREEN-REFACTOR で検証:
+- 2026-07-04 (v0.8.0 / 生成時経路 (経路2) を追加)。実プロジェクトの実 PR (+8,782行) で opus4.8 生成コードのコメント過多 (Ruby 密度18%、制約弁明の呼び出し側露出・同一 why の9箇所重複) が露呈させた「スキルが生成時に効かない」gap を修正。generation-recipe.md (3つの瞬間 + セルフチェック) を新設し、Step 0 入口を二経路化、T12 制約吸収ラッパーを追加。文言は RED-GREEN-REFACTOR で検証:
   - RED: 統制群 (利用側コメント規約のみ・opus・シナリオ生成P ×5) で「制約弁明の公開本体露出」4/5・「目的名ラップ」1/5 を確認。禁止形アーム (×5) は正当 why の全消しが4/5 発生し、4基準フルパス 0/5 — 禁止形はレシピ形より有害という writing-skills の知見を自ケースで実測。
   - GREEN/REFACTOR: レシピ v1 (フルパス3/5、E消失+ラップなしの崩壊2/5) → v2 (「0件」偏重のセルフチェックに E 保全の必須項目を追加、別ドメイン実例で出力形を固定。P 4/5) → v3 (why の置き場所を「名前付き定義の直上」に限定、公開本体の判断は先に述語抽出。Q 2/3) → v4 (ガード節の許容を明記し T8/T10 と整合、呼び出し側に同 why を書かない)。v4 最終: **P 3/3・Q 2/3 フルパス、コメント問題 (言い換え/露出/重複/E消失) は全 6 ファイルで 0 に収束**。
   - 既知の弱点: (i) Q 系で「裸の複合条件ガードを公開関数に残す」構造の癖が 1/3 残存 (コメント問題ではない)。対応としてセルフチェック項目6 を追記 — この項目は v4 で検証済みの瞬間2 の文の checklist への転記だが、項目単体の確認ラウンドは未実施 (次回 regression で要観測)。(ii) クリーンルーム検証中、実リポジトリを参照して汚染された実行体が 2/35 発生 (P-v5, P-x1 は除外し代替を生成)。
@@ -47,7 +47,7 @@
 
 ## シナリオ median: bbox_xhtml (機構名) → 段4 への昇格 + コメント keep/promote
 
-working code として以下が与えられる (Ruby, ninja-sign の実ケースを単純化):
+working code として以下が与えられる (Ruby, 実プロジェクトの実ケースを単純化):
 
 ```ruby
 class SignatureLayout
@@ -193,7 +193,7 @@ function useSplitViewForm(documentId: string) {
 
 ## シナリオ N: 複数の実在ドメイン語がある時の選定 (頻度でなく概念一致)
 
-実 PR #39624 (ninja-sign) 適用が露呈させたケース。working code (TypeScript):
+実プロジェクトの実 PR 適用が露呈させたケース。working code (TypeScript):
 
 ```typescript
 // 反映項目(document_item)の編集について、保存ステータス(saving/saved/error)を field 単位で追跡する

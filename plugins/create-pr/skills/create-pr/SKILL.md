@@ -109,6 +109,8 @@ PR URL を表示して完了。
 
 **draft / ready の判定**: 既定は `--draft`。呼び出し側が「ready for review」「出荷用」等を明示指定した場合のみ `--draft` を付けずに作成する。
 
+下記コマンド例の `--label` は 3 種のプレースホルダで、実値は Step 7-8 で Read した `~/.claude/skills-config/release-labels.md` の該当リストから選んだラベル名に置き換える。
+
 `--body-file` を統一採用 (`--body "$(cat ...)"` 経路は使わない)。`$PR_BODY_FILE` は **`mktemp` でユニークパス生成 + コマンド完了後に削除** ([references/post-create-edit.md](references/post-create-edit.md) の「固定パス禁止」参照)。固定パス `/tmp/pr-body.md` は過去セッション残骸混入事故源で禁止。
 
 ```bash
@@ -117,7 +119,7 @@ PR_BODY_FILE="$(mktemp -t pr-body-XXXXXX.md)"
 gh pr create --draft \
   --title "feat(order): 注文確定後の通知機能を追加" \
   --body-file "$PR_BODY_FILE" \
-  --label "1.Feature development,ai-contribution-level:2,ReleaseLevel-2" \
+  --label "<productivity-label>,<ai-contribution-label>,<release-level-label>" \
   --milestone "Untracked" \
   --base develop
 rm -f "$PR_BODY_FILE"

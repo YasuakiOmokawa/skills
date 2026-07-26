@@ -109,7 +109,7 @@ PoC / 使い捨て検証中であれば本来 finalize-plan は不要 — /itera
 
 ### Step 3: プランファイルに `## 実装準備` 追記
 
-Step 2A/2B の結果を統合し、プランファイル末尾に `## 実装準備` を追記する。3 サブセクション: **ブランチ戦略** (単一の作業ブランチ・命名理由・既存ブランチ確認) / **手動QA手順** (環境 `{BASE_URL}` は QA 実行時にユーザーから取得、`**対象AC**: N項目（正常系X / 異常系Y / エッジケースZ / 非影響W / MECE追加V）`、Chrome DevTools MCP で実行可能な手順) / **自動QA（テストコード仕様）** (RSpec / Vitest 仕様)。カテゴリ名・0 件表記は output-template.md SSOT 準拠。
+Step 2A/2B の結果を統合し、プランファイル末尾に `## 実装準備` を追記する。3 サブセクション: **ブランチ戦略** (単一の作業ブランチ・命名理由・既存ブランチ確認) / **手動QA手順** (環境 `{BASE_URL}` は QA 実行時にユーザーから取得、`**対象AC**: N項目（正常系X / 異常系Y / エッジケースZ / 非影響W / MECE追加V）`、人間がそのまま追える手順 + 各操作に automation 用ツール名を括弧で併記) / **自動QA（テストコード仕様）** (RSpec / Vitest 仕様)。カテゴリ名・0 件表記は output-template.md SSOT 準拠。
 
 完全なテンプレ全文・0 件カテゴリ表記ルール・in-context fallback 時の備考挿入位置は [references/output-template.md](references/output-template.md) 参照。
 
@@ -167,7 +167,7 @@ comm -23 /tmp/all_qa_ids.txt /tmp/assigned.txt > /tmp/assign_na.txt             
 
 ## Quality standards
 
-- **実行可能性**: Chrome DevTools MCP で実行可能な手動 QA 手順
+- **実行可能性**: 人間がそのまま追える粒度の手動 QA 手順 (各操作に automation 用ツール名を括弧で併記)
 - **QA-ID トレーサビリティ**: QA-H/E/D/R/M 全項目が手動 QA または自動 QA のいずれかでカバーされている。Step 3.5 の機械 ID 差分結果 (`skip` / `差分 0 件` / `補完 N 件`) を成果物に残す (目視確認ではなく機械判定の結果を残す。skip 時もその理由を残す)
 - **0 件カテゴリ可視化**: 対象 AC 行は 0 件カテゴリも件数を明示 (例 `非影響0`、省略禁止)。書式・canonical カテゴリ名・禁止理由は output-template.md を SSOT とする
 

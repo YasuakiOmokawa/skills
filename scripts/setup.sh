@@ -14,9 +14,14 @@ cat <<'BANNER'
 このスクリプトは ~/.claude/skills-config/ 配下に設定ファイルを生成します。
 Claude には値を渡しません。すべての入力は bash 内で完結し、ファイルに直接書き込まれます。
 
-4 セクション（Jira / Release labels / Environments / create-design-doc の DD 文書）を
-順番に質問します。
-各セクション冒頭で「使う/使わない」を聞き、使わなければスキップします。
+対話で生成するのは 4 セクション（Jira / Release labels / Environments / create-design-doc の
+DD 文書）です。順番に質問し、各セクション冒頭で「使う/使わない」を聞き、使わなければ
+スキップします。
+
+translate-to-vision-story を使う場合は ~/.claude/skills-config/vision.md も必要です
+(plugin 内の references/vision-config-template.md をコピーして編集)。
+mece-plan-review の Wiki Researcher 用に ~/.claude/skills-config/mece-plan-review.md
+(github_org) も任意で作成できます。
 
 BANNER
 
@@ -57,7 +62,7 @@ if prompt_yes_no "Jira を使いますか？"; then
     cat > "$CONFIG_DIR/jira.md" <<EOF
 # Jira 設定
 
-omokawa-skills の create-jira-issues / set-jira-story-points / map-user-stories が参照する設定値。
+omokawa-skills の create-jira-issues / set-jira-story-points が参照する設定値。
 
 ## 設定値
 

@@ -4,26 +4,26 @@
 
 cohesion / coupling の 2 analyzer は **コード自体の品質** を評価する。一方、本 reference が対象とする「業務副作用 chain」は:
 
-- attribute を read してさらに別の attribute を上書き永続化する **2 段階副作用** (例: `Plan#sync_freee_billing_status` 経由の機能フラグ復活)
+- attribute を read してさらに別の attribute を上書き永続化する **2 段階副作用** (例: `Plan#sync_billing_status` 経由の機能フラグ復活)
 - attribute 値を gate にする policy / before_action での **認可 bypass**
 
 これらは spec が「変更ファイル直近」までしか保証しないため、spec green でも検出されない。コード品質 3 analyzer でも検出されない (caller 側の業務分岐は当該ファイルの責務ではないため)。
 
-過去事例: 2026-05-20 PR#39551 で `base_license=nil` の意味多重化により失効ユーザの `plan_code='starter'` が維持され、`Plan#sync_freee_billing_status` が starter 機能フラグを毎回上書き永続化 → 有料機能フラグ復活の Critical バグを生んだ。この時、`/simplify` (3 agent) と `/review-code-quality` のコード品質 analyzer (cohesion / coupling) を通過していた (business-impact-analyzer 追加前)。
+過去事例: あるライセンス同期 PR で `base_license=nil` の意味多重化により失効ユーザの `plan_code='starter'` が維持され、`Plan#sync_billing_status` が starter 機能フラグを毎回上書き永続化 → 有料機能フラグ復活の Critical バグを生んだ。この時、`/simplify` (3 agent) と `/review-code-quality` のコード品質 analyzer (cohesion / coupling) を通過していた (business-impact-analyzer 追加前)。
 
 ## 副作用 chain の典型パターン
 
-### Pattern A: attribute → MasterPlan / Master* 系の find_by → 機能フラグ全上書き
+### Pattern A: attribute → PlanTemplate / Master* 系の find_by → 機能フラグ全上書き
 
 ```ruby
 # 1 段階目: plan_code を read
-freee_company.plan_code  # → 'starter'
+billing_account.plan_code  # → 'starter'
 
-# 2 段階目: MasterPlan を find_by して全 attributes 上書き
-master_plan = MasterPlan.find_by(plan_code: freee_company.plan_code)
-plan.assign_attributes(master_plan.attributes_for_sync_plan)
+# 2 段階目: PlanTemplate を find_by して全 attributes 上書き
+plan_template = PlanTemplate.find_by(plan_code: billing_account.plan_code)
+plan.assign_attributes(plan_template.attributes_for_sync_plan)
 plan.save!
-# → paper_upload, esign, chat_support, max_csv_export_count などが master の値で上書き
+# → export, esign, chat_support などの機能フラグが master の値で上書き
 ```
 
 ### Pattern B: attribute → policy gate
@@ -33,7 +33,7 @@ plan.save!
 before_action :require_not_subscribed_yet
 
 def require_not_subscribed_yet
-  raise BadRequestResponseError if @team.freee_company.unlicensed?
+  raise BadRequestResponseError if @team.billing_account.unlicensed?
   # = plan_code.in?([nil, UNLICENSED]) を gate に使う
 end
 ```
@@ -44,7 +44,7 @@ attribute 値の semantics が変わると、これまで gate されていた�
 
 ```ruby
 # 定期 job の起動条件
-if freee_company.unlicensed?
+if billing_account.unlicensed?
   return  # 失効ユーザはスキップ
 end
 ExternalApi.notify(...)
@@ -95,11 +95,11 @@ domain model attribute を更新する change を見つけたら、以下の順�
 attribute の `nil` / `false` / `[]` 等の「不在 sentinel」に **複数の semantics** (同期不可 vs 失効 vs 正常 0 件) を統合してしまうと、2 段階目の chain で意味が壊れる。Null Object pattern で型レベルで区別:
 
 ```ruby
-class Freee::License::Base
+class Billing::License::Base
   # ... 通常 license
 end
 
-class Freee::License::Base::Unsyncable < Freee::License::Base
+class Billing::License::Base::Unsyncable < Billing::License::Base
   # 「同期不可」を表現する Null Object (失効=nil とは別型)
 end
 

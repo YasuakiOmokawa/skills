@@ -19,13 +19,13 @@ OK 例（spec 追加 PR）:
 ### このPRでやること
 
 以下 2 点を request 層で固定する spec を追加する。
-1. **enqueue 条件**: PR4-b で変えた `SyncFreeeLicenseJob` の enqueue 条件が caller-site で正しく動くこと
-2. **team 隔離 (PSIRT)**: 別チームの id を URL に入れても `Ebis::Client.new` にログインチーム外の freee_company_id が渡されないこと
+1. **enqueue 条件**: 先行 PR で変えた `SyncLicenseJob` の enqueue 条件が caller-site で正しく動くこと
+2. **team 隔離 (セキュリティ指摘)**: 別チームの id を URL に入れても `ExternalApi::Client.new` にログインチーム外の tenant_id が渡されないこと
 ```
 
 NG（plan 由来 internal 語彙の持ち込み）:
 ```
-PSIRT 4 層担保 (γ. CustomCop / β. DB schema / α. request spec / 構造) のうち α 層を新規追加し、PR4-b でマージ済の caller 挙動を request 経路から固定する。
+セキュリティ指摘の 4 層担保 (γ. CustomCop / β. DB schema / α. request spec / 構造) のうち α 層を新規追加し、先行 PR でマージ済の caller 挙動を request 経路から固定する。
 ```
 - 「4 層担保」「α 層」「caller 挙動」のような plan の internal 番号体系・抽象動詞で本質を覆い隠している
 - 改善: 上記 OK 例のように **「何が caller-site で固定されるか」を読者目線の具体 fact 2 点に分解** して列挙する
@@ -83,7 +83,7 @@ OK（bullet 列挙せず 1 行で意図のみ）:
 
 - やったこと: `Team#concludable_docs_count の除外サブクエリを NOT IN から相関 NOT EXISTS に変え、Flipper で段階切替できるようにした。`
 - 設計判断: `相関サブクエリは既存 Documents::Filter の arel.exists を踏襲し、旧 NOT IN 経路は段階ロールアウト用に温存した。`
-- 動作確認結果: `spec 7 例で Flipper on/off の件数一致を検証、oboro 実測で 42,636ms が 7,181ms に短縮（部分インデックス #39913 併用時）。`
+- 動作確認結果: `spec 7 例で Flipper on/off の件数一致を検証、検証環境の実測で 42,636ms が 7,181ms に短縮（部分インデックス PR 併用時）。`
 
 ## セクション分量対比表
 

@@ -125,7 +125,6 @@ branch: <git branch --show-current の値>
 
 ## Gotchas（観測済みの罠 — 実測で判明したものを 1 件 1 行で追記）
 
-- base branch 解決の三段 fallback (gh → remote HEAD → トポロジー) は Step 1「base ブランチの確定」を参照
 - business-impact-analyzer の無条件 skip 条件は `.rb`/`.rake` ファイルの有無で判定しており、Node.js 等の非 Ruby プロジェクトでは domain attribute 相当の変更があっても常に skip される (Ruby/Rails 前提の判定であることに留意する)
 
 ## 併用推奨 skill

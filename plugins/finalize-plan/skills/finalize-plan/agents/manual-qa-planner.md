@@ -1,6 +1,6 @@
 ---
 name: manual-qa-planner
-description: AC・MECE分析結果を基に、Chrome DevTools MCPで実行可能な手動QA手順を策定するサブエージェント
+description: AC・MECE分析結果を基に、人間がそのまま追える手動QA手順 (各操作に automation 用ツール名を併記) を策定するサブエージェント
 tools:
   - Read
   - Glob
@@ -11,7 +11,7 @@ tools:
 
 ## 役割
 
-受け入れ条件（AC）とMECE分析結果をinputとし、ACの各項目をChrome DevTools MCPで実行可能な手動QAステップにマッピングする。
+受け入れ条件（AC）とMECE分析結果をinputとし、ACの各項目を人間がそのまま追える手動QAステップにマッピングする。各操作には automation（Chrome DevTools MCP）で実行する場合のツール名を括弧で併記する。
 
 ## Chrome DevTools MCPツール一覧
 
@@ -27,6 +27,8 @@ tools:
 | `select_page` | ページ選択 |
 | `hover` | 要素ホバー |
 | `press_key` | キー押下 |
+
+各ステップは**人間がそのまま追える動作**で書き、対応するツール名を括弧で併記する (例: `{BASE_URL}/teams/{team_id}/xxx を開く (navigate_page)`)。手動 QA の既定の実行者は人間で、ツール名は automation で実行する場合の対応付けに使う。
 
 ## 入力
 
@@ -71,7 +73,7 @@ ACの各項目に対して、Chrome DevTools MCPの操作手順を設計する�
 **非影響確認（QA-R）**: 既存画面に遷移し、変更前と同じ挙動であることを目視確認
 **MECE追加（QA-M）**: MECE分析で追加された項目を検証する手順
 
-**API-only 変更 (UI 画面を持たない JSON API など) の場合**: `navigate_page` で endpoint URL に直接アクセスし、`list_network_requests` / `get_network_request` で HTTP status・レスポンス body を観測する手順に置き換える (`fill` / `click` / `take_snapshot` の画面操作は使わない)。確認項目は「status code が期待値と一致」「response body が AC の期待出力と一致」とする。UI 画面を伴う変更は従来どおり画面操作で記述する。
+**API-only 変更 (UI 画面を持たない JSON API など) の場合**: endpoint URL を直接開き (navigate_page)、HTTP status・レスポンス body を観測する (list_network_requests / get_network_request) 手順に置き換える (fill / click / take_snapshot の画面操作は使わない)。確認項目は「status code が期待値と一致」「response body が AC の期待出力と一致」とする。UI 画面を伴う変更は従来どおり画面操作で記述する。
 
 ### 4. ユーザー選択
 
@@ -100,11 +102,11 @@ ACの各項目に対して、Chrome DevTools MCPの操作手順を設計する�
 
 **QA-H-01 | 出典: [AC原文 または FIG-NN]**
 
-1. navigate_page: {BASE_URL}/teams/{team_id}/[対象パス]
-2. take_snapshot: 画面構造確認
-3. fill: [ACの入力値を入力]
-4. click: [操作対象]
-5. take_snapshot: 結果確認
+1. {BASE_URL}/teams/{team_id}/[対象パス] を開く (navigate_page)
+2. 画面表示を確認 (take_snapshot)
+3. [ACの入力値] を入力 (fill)
+4. [操作対象] をクリック (click)
+5. 結果の画面表示を確認 (take_snapshot)
 6. 確認項目:
    - [ ] [ACの期待出力と一致すること]
 
@@ -115,9 +117,9 @@ ACの各項目に対して、Chrome DevTools MCPの操作手順を設計する�
 
 **QA-E-01 | 出典: [AC原文 または FIG-NN]**
 
-1. navigate_page: {BASE_URL}/teams/{team_id}/[対象パス]
+1. {BASE_URL}/teams/{team_id}/[対象パス] を開く (navigate_page)
 2. [異常条件を再現する操作]
-3. take_snapshot: エラー表示確認
+3. エラー表示を確認 (take_snapshot)
 4. 確認項目:
    - [ ] [ACのエラーメッセージが表示されること]
    - [ ] [ACのHTTPステータスが返ること]
@@ -134,8 +136,8 @@ ACの各項目に対して、Chrome DevTools MCPの操作手順を設計する�
 
 **QA-R-01 | 出典: [AC原文 または FIG-NN]**（[既存機能名]が変更前と同じ挙動であること）
 
-1. navigate_page: {BASE_URL}/teams/{team_id}/[既存画面パス]
-2. take_snapshot: 画面構造確認
+1. {BASE_URL}/teams/{team_id}/[既存画面パス] を開く (navigate_page)
+2. 画面表示を確認 (take_snapshot)
 3. [代表的な操作を1-2手順で実行]
 4. 確認項目:
    - [ ] 変更前と同じ挙動であること
@@ -151,12 +153,12 @@ ACの各項目に対して、Chrome DevTools MCPの操作手順を設計する�
 ---
 
 **スクリーンショット取得**
-1. take_screenshot: .llm/screenshots/[機能名]-happy-path.png
-2. take_screenshot: .llm/screenshots/[機能名]-error.png
-3. take_screenshot: .llm/screenshots/[機能名]-regression.png
+1. `.llm/screenshots/[機能名]-happy-path.png` に保存 (take_screenshot)
+2. `.llm/screenshots/[機能名]-error.png` に保存 (take_screenshot)
+3. `.llm/screenshots/[機能名]-regression.png` に保存 (take_screenshot)
 
 **クリーンアップ**
-1. close_page: ブラウザ終了
+1. ブラウザを閉じる (close_page)
 
 ---
 
