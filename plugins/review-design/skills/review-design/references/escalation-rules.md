@@ -8,9 +8,16 @@ SKILL.md "Workflow" の本文と相互参照する canonical 定義集。SKILL.m
 |---|---|---|
 | **inline default** | DA escalation conditions NOT met (normal path) | none |
 | **subagent dispatch** | DA escalation condition met | none |
-| **in-context fallback** | Task tool unavailable (deferred / no dispatch perm) for reviewers OR DA | `(in-context fallback mode: <agent name>)` at report tail |
+| **in-context fallback** | Task dispatch **permanently** unavailable for reviewers OR DA | `(in-context fallback mode: <agent name>)` at report tail |
 
 `inline default` ≠ `in-context fallback`. The tail tag is **only** for the environment-constraint fallback, never for normal inline DA.
+
+**Permanent vs temporary dispatch failure** (decides whether fallback applies at all):
+
+- **Permanent** → in-context fallback + tail tag: `Task` absent from the available-tools list, dispatch permission denied, spawn budget exhausted (e.g. `spawn limit reached (200 of 200)`).
+- **Temporary** → retry the failed dispatches, no fallback and no tag: concurrent-subagent limit, rate limit. Running as a subagent is not a failure at all — nested `Task` dispatch from a subagent works.
+- **Hung** (dispatch succeeded but no result within a bounded wait) → treat as permanent: wait at most ~15 minutes with 1 re-ping, then run in-context fallback + tail tag. Do not poll indefinitely — without this bound the taxonomy has a non-terminating state (実測: reviewer 5 体が spawn 成功のまま 55 分無応答).
+- A DA whose escalation condition is met but whose dispatch is permanently unavailable runs inline **and** carries the tail tag (escalation met + fallback are independent facts).
 
 ## DA escalation conditions (machine-checkable)
 
@@ -23,6 +30,7 @@ Switch from `inline default` to `subagent dispatch` if **any** of:
    - Security vulnerability (auth bypass / SQLi / XSS / CSRF / plaintext PII / IDOR / open redirect)
    - Existing contract breach (public API breaking change / SDK major version up)
 3. `$ARGUMENTS` contains `--strict-da`
+4. Row 4 territory (auth / billing / payment / migration / security) に該当 — SKILL.md の tier 表・task-tier-boundaries.md と同一規則の転記 (本リストが機械判定の canonical であるため、reviewer 全 ✅ でも Row 4 単独で dispatch する)
 
 ## Fatal vs single-trigger (separate concepts)
 

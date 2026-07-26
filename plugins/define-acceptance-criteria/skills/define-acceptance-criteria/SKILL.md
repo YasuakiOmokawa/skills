@@ -1,11 +1,11 @@
 ---
 name: define-acceptance-criteria
-description: Fills a matrix of 3 required categories (normal, error, edge) by controlled-vocabulary perspectives to enumerate acceptance criteria into the analysis file. Use when in plan mode before /mece-plan-review, when the user asks to write AC for a plan ("受け入れ条件を定義して" / "AC を書いて"), when an AC matrix is needed as MECE input, or when delegated to a subagent (Task tool) for the same purpose. Not typically invoked during PoC / throwaway-validation phases (the assumption ledger substitutes there).
+description: Fills a matrix of 3 required categories (normal, error, edge) by controlled-vocabulary perspectives to enumerate acceptance criteria and technical risks into the analysis file, then appends a one-line summary to the plan file. Use when in plan mode before /mece-plan-review, when the user asks to write AC for a plan ("受け入れ条件を定義して" / "AC を書いて"), when an AC matrix is needed as MECE input, or when delegated to a subagent (Task tool) for the same purpose. Not typically invoked during PoC / throwaway-validation phases (the assumption ledger substitutes there).
 ---
 
 # define-acceptance-criteria
 
-3 必須カテゴリ × controlled vocabulary 観点 (軸数は tier 表: lite 1 / standard 3 / deep 5) のマトリクスを埋めて AC を書き出す。詳細は `<plan>.analysis.md` に、サマリーのみプランファイル末尾に追記する。
+3 必須カテゴリ × controlled vocabulary 観点 (軸数は tier で決まる) のマトリクスを埋めて AC を書き出す。詳細は `<plan>.analysis.md` に、サマリーのみプランファイル末尾に追記する。
 
 ```
               │ 観点A    │ 観点B    │ 観点C
@@ -17,19 +17,19 @@ description: Fills a matrix of 3 required categories (normal, error, edge) by co
 ```
 
 - 必須 3 カテゴリの全セル ≥1 項目 (空セル = 検討不足)
-- AC 行頭は controlled label ([references/perspectives.md](references/perspectives.md)) — 自由形式禁止。**ただし非影響確認カテゴリは例外**で、隣接する既存機能名で記述し controlled label 接頭辞は不要 (label 必須は正常系 / 異常系 / エッジケースの 3 必須カテゴリのみ)
-- プラン本文に欠落する仕様を AC で仮置きする場合は末尾に `(仕様確定要)`
+- AC 行頭は controlled label ([references/perspectives.md](references/perspectives.md)) — 自由形式禁止 (非影響確認カテゴリのみ例外。下表参照)
+- プラン本文に欠落する仕様を AC で仮置きする場合は末尾に `(仕様確定要)` (リテラルのまま置く。理由を添えるなら直前に別の括弧で: `... (目標値未定義のため仮値) (仕様確定要)`)
 
 ## 上流/下流 contract (変更禁止)
 
 | 項目 | 値 |
 |---|---|
-| 分析ファイルパス | プランファイル拡張子前に `.analysis` 挿入 |
+| 分析ファイルパス | プランファイル拡張子前に `.analysis` 挿入 (`feature-xxx.md` → `feature-xxx.analysis.md`) |
 | 必須セクション | `## 受け入れ条件` / `### 正常系` / `### 異常系` / `### エッジケース` / `### 非影響確認` |
 | AC 行頭 | 正常系 / 異常系 / エッジケースは `- [ ] <controlled label>: ...` ([references/perspectives.md](references/perspectives.md))。非影響確認は `- [ ] [既存機能名]が...` で label 不要 |
 | プラン末尾 | `## 品質検証` 1 行サマリー |
 
-`/mece-plan-review` が AC を `- [ ]` 単位で enumerate するため必須。(この contract は最重要の厳守ルールのため本文前方に置く — 長時間セッションの auto-compaction では各 skill の先頭 5,000 トークンのみ再添付されるので、末尾配置だと黙って失われる)
+`/mece-plan-review` が AC を `- [ ]` 単位で enumerate するため必須。(auto-compaction では各 skill の先頭 5,000 トークンのみ再添付されるため、この節は本文前方から動かさない)
 
 ## Task complexity tier
 
@@ -43,13 +43,9 @@ description: Fills a matrix of 3 required categories (normal, error, edge) by co
 
 各 tier の観点軸数 / 必須セル数 / 技術リスク件数は下の **Quantitative scaffolding 表 (SSOT)** を参照。
 
-**リスク領域** (auth / billing / payment / DB migration / security config) は LoC によらず強制的に **deep**。判定不能なら **standard**。`<plan>.analysis.md` 冒頭の `### Tier` 見出しの直下の行に判定結果と理由を 1 行記録 (見出し行に結合しない。例: `### Tier` の次行に `Tier: standard (3 files, single domain)`)。
+**リスク領域** (auth / billing / payment / DB migration / security config) は LoC によらず強制的に **deep** — lite 条件と同時に該当する場合も deep を選ぶ (例: 1 ファイル <50 LoC の pure UI copy 変更でも auth 領域なら deep)。判定不能なら **standard**。推測に基づく変更ファイル一覧 (Step 1 のフォールバック 3 段目の自然言語類推。プラン本文の「変更ファイル予定」記述は推測ではない) は tier を引き上げる根拠にしない — **standard** 固定とし、再判定条件を Tier 行に併記する。`<plan>.analysis.md` 冒頭に `### Tier` 見出しを置き、判定結果と理由を独立した 1 行として記録する (見出し行に結合しない。見出し直後の空行は可。例: `Tier: standard (推定 3 files / index 追加が入るなら deep へ再判定)`)。
 
 **DB migration の範囲**: 既存本番テーブルの schema 変更 (column 追加・型変更・NOT NULL 制約追加・index 追加・rename 等) と data migration が対象。新規テーブル作成のみで既存テーブルへの schema 影響が無く、かつ他機能への副作用も無い場合は **standard で可** (schema 影響が新規テーブル内に閉じる。ただし新規テーブルが既存 domain の canonical テーブルを置き換える migration を伴う場合は既存 schema 変更に準じて **deep**)。
-
-この基準 (リスク領域による強制 deep 判定) は、上流工程で「フル装備 (AC→MECE→finalize) を適用するか軽量 fast path とするか」を判断する材料にも流用できる。
-
-**lite と deep が同時に該当する場合の優先規則**: deep 条件に 1 つでも該当すれば deep を選ぶ (安全側)。例: 1 ファイル <50 LoC の pure UI copy 変更でも auth 領域なら deep。
 
 ## Quantitative scaffolding (SSOT)
 
@@ -60,28 +56,28 @@ description: Fills a matrix of 3 required categories (normal, error, edge) by co
 | 技術リスク件数 | 0-1 件 | 3 件固定 | 3-5 件 |
 | 全 tier 共通 | controlled label (`permission` / `observability` / `data_compat` / `req_form` 等) を使用。完全新規 label は 12 文字以内・名詞のみ。`(仕様確定要)` も項目としてカウント可 |
 
-この表は他 references の数量定義に対する canonical。**deep = 5 主軸 + observability 1 軸まで (計 6 軸まで)**、**必須セル数 = 主軸数 × 3** (deep は 15、observability セルは加算・任意)。observability 軸は standard/deep の主軸上限にカウントしない。
+この表は他 references の数量定義に対する canonical。**必須セル数 = 主軸数 × 3**。observability 軸は主軸数・必須セル数にカウントせず、セルを充填する場合は任意加算 (deep の実効上限は主軸 5 + observability 1 = 6 軸)。Step 6 の M 算出で使う N は別カウント — 必須 3 カテゴリのセルを充填した軸は observability でも N に数える。
 
 ## Quick start
 
-シナリオ: 「users API に role 更新を追加」
+シナリオ: 「users API に表示名 (display_name) の更新を追加」。変更ファイル予定は `app/controllers/api/users_controller.rb` / `app/controllers/api/base_controller.rb` / `spec/requests/api/users_spec.rb`。
 
-1. プランファイル読込 → 変更ファイル抽出 ([references/perspectives.md](references/perspectives.md) Step A で `api_change` + `db_change` 判定、テスト/docs/メタは除外)
-2. 観点 4 軸選定: `permission` (主軸、auth 文脈) / `req_form` / `data_compat` / `observability`
-3. 必須 3 カテゴリ × 4 軸 = 12 セル充填:
+1. プランファイル読込 → 変更ファイル抽出 ([references/perspectives.md](references/perspectives.md) Step A で `api_change` 単一主種別と判定、テスト/docs/メタは除外) → tier standard (2 ファイル・単一 domain)
+2. 観点 3 軸選定: inline 表 api_change 行から `req_form` / `permission` / `compat`、追加候補で `observability`
+3. 必須 3 カテゴリ × 主軸 3 = 9 セル充填 (observability のセルは任意加算):
    ```markdown
-   - [ ] permission: 本人が PATCH /api/users/123 (自分の ID) → 200 OK
+   - [ ] req_form: PATCH /api/users/123 に {"display_name": "山田"} → 200 OK + 更新後の値を返す
    - [ ] req_form: PATCH /api/users/:id without body → 400 Bad Request
    - [ ] permission [境界値: 未ログイン]: PATCH /api/users/:id → 401 Unauthorized
    ```
-4. 技術リスク 3 件を 3 点セットで記述
+4. 技術リスクを tier 表の件数 (standard = 3 件) だけ 3 点セットで記述
 5. 分析ファイル (`<plan>.analysis.md`) に詳細出力 → プランファイル末尾に 1 行サマリー
 
 ## Workflow
 
 ### Step 1: 初期化 + プランファイル読込
 
-[references/init-common.md](references/init-common.md) に従って初期化 (プランファイル特定 / 分析ファイルパス導出 / リポジトリ名取得)。加えて変更概要・変更ファイル一覧・既存設計内容を抽出。変更ファイル抽出のフォールバック順: プラン本文記述 → `git diff --name-only $(git merge-base HEAD main)..HEAD` → 自然言語類推 → AskUserQuestion。
+[references/init-common.md](references/init-common.md) に従って初期化 (プランファイル特定 / 分析ファイルパス導出。同ファイルのリポジトリ名取得は `/mece-plan-review` 専用の手順で本 skill に消費先が無いため省略可)。加えて変更概要・変更ファイル一覧・既存設計内容を抽出。変更ファイル抽出のフォールバック順: プラン本文記述 → `git diff --name-only $(git merge-base HEAD main)..HEAD` → 自然言語類推 → AskUserQuestion。
 
 ### Step 1.5: 変更種別の機械判定
 
@@ -89,7 +85,7 @@ description: Fills a matrix of 3 required categories (normal, error, edge) by co
 
 ### Step 2: 観点の選択 (tier 表の軸数)
 
-[references/perspectives.md](references/perspectives.md) の「変更種別 → デフォルト観点軸」表から **tier 表の軸数だけ**選ぶ (lite 1 / standard 3 / deep 5。Quantitative scaffolding が canonical)。よく使う種別は以下を inline で採用でき、references を開かず median path を完結できる (下表に無い種別・副作用軸・Step B は perspectives.md 参照):
+[references/perspectives.md](references/perspectives.md) の「変更種別 → デフォルト観点軸」表から **tier 表の軸数だけ**選ぶ。よく使う種別は以下を inline で採用でき、references を開かず median path を完結できる (下表に無い種別・副作用軸・Step B は perspectives.md 参照):
 
 | 変更種別 | 既定 controlled label (上から優先) |
 |---|---|
@@ -98,32 +94,34 @@ description: Fills a matrix of 3 required categories (normal, error, edge) by co
 | auth_change | `permission` / `auth_state` / `user_type` |
 | ui_change | `device` / `a11y` / `browser` |
 | batch_change | `idempotency` / `data_volume` / `runtime` |
-| 全種別 追加候補 | `observability` (主軸数にカウントしない) |
+| 全種別 追加候補 | `observability` (主軸数にカウントしない。採否は下記テスト) |
 
-**状況条件付き label は inline 表の優先順より先に判定する**: URL の生成・結合・リダイレクトに触れる変更は `req_context`、既存レコードの部分更新で参照実装からキーを間引く変更は `unsent_keys` を、該当行の既定 label より優先して主軸に含める (適用条件の詳細は perspectives.md。inline 表は状況条件の無い median path 用のため、これらを含まない)。
+**observability の採否テスト**: plan に監査ログ / メトリクス / 構造化ログ / 障害時の追跡可能性のいずれかが論点として現れるとき、または非機能 (性能・可用性) が主題で計測手段が無いと AC の合否判定が閉じないときに採る。それ以外は見送り、見送った理由を `### 検討観点` に 1 文。
 
-**inline 表で完結できるのは Step 1.5 の機械抽出が単一主種別のときのみ。** 複数主種別が抽出された場合 (例: controller + service の直列実装で api_change + service_change)、または主軸候補が tier 軸数を超える場合は、inline 表の 1 行をそのまま使わず [references/selection-rules.md](references/selection-rules.md) の deterministic classifier・ドロップ規則・cross-cutting/observability 上限に従って主軸を確定する。既存認可など**存在するが不変の横断機能**を主軸からドロップした場合は非影響確認に regression 1 行を残す (詳細は selection-rules.md)。複数主種別での主軸採用 / 副作用軸 1 つ追加 (併用可) / observability 特例 / 表に無い場合の汎用候補軸 (Step B) の運用詳細も同ファイル。選定理由を分析ファイル `### 検討観点` に 1 文ずつ明記。
+**状況条件付き label は inline 表の優先順より先に判定する**: URL の生成・結合・リダイレクトに触れる変更は `req_context`、既存レコードの部分更新で参照実装からキーを間引く変更は `unsent_keys` を、該当行の既定 label より優先して主軸に含める (適用条件の詳細は perspectives.md)。
+
+**inline 表で完結できるのは Step 1.5 の機械抽出が単一主種別のときのみ。** 複数主種別が抽出された場合 (例: controller + service の直列実装で api_change + service_change)、または主軸候補が tier 軸数を超える場合は、inline 表の 1 行をそのまま使わず [references/selection-rules.md](references/selection-rules.md) の deterministic classifier・ドロップ規則・cross-cutting/observability 上限に従って主軸を確定する。既存認可など**存在するが不変の横断機能**を主軸からドロップした場合は非影響確認に regression 1 行を残す。複数主種別での主軸採用 / 副作用軸 1 つ追加 (併用可) / observability 特例 / 表に無い場合の汎用候補軸 (Step B) の運用詳細も同ファイル。選定理由を分析ファイル `### 検討観点` に 1 文ずつ明記。
 
 ### Step 3: 受け入れ条件の生成
 
-必須 3 カテゴリ × 選択観点で全セル充填。**充填確認は (カテゴリ × 各軸) の N×3 セルを 1 つずつ列挙し、各セルが ≥1 項目かを書き出し前に確認する**。執筆は軸を内側ループ (セル起点) で回すと特定軸への偏りを防げる — カテゴリ単位で書くと一部セルが空のまま「総数」だけ満たす漏れが起きる:
+必須 3 カテゴリ × 選択観点で全セル充填。執筆は軸を内側ループ (セル起点) で回す — カテゴリ単位で書くと一部セルが空のまま「総数」だけ満たす漏れが起きる:
 
 - **正常系**: `- [ ] <label>: <入力> → <期待出力>` (「正しく動作する」禁止)
-- **異常系**: `- [ ] <label>: <条件> → <HTTP status or エラー文言>`。既存挙動の踏襲を期待値にする場合は `既存どおり <status> (実装時に実値確認) (仕様確定要)` の定型で書く
+- **異常系**: `- [ ] <label>: <条件> → <HTTP status or エラー文言>`。既存挙動の踏襲を期待値にする場合は `既存どおり <status> (実装時に実値確認) (仕様確定要)` の定型で書く (この定型は既存踏襲のときだけ。新規挙動で仕様未確定なら期待値を自分で置き末尾 `(仕様確定要)` のみ付ける)
 - **エッジケース**: `- [ ] <label> [境界値: <カテゴリ>]: <条件>` (境界値カテゴリは [references/edge-case-checklist.md](references/edge-case-checklist.md))
-- **非影響確認 (推奨)**: `git status --short` 出力で機械判定 — `M` 含む → (a) 手動列挙 or (b) `git diff` 隣接列挙 / `A` のみ → (c) 省略可 / `D` 含む → (a) 必須。詳細は [references/non-impact-rules.md](references/non-impact-rules.md)。**git 実行不能 (plan mode で未着手 / walk-through / dry-run)** の場合は plan 本文の「変更ファイル予定」リストから推測し、判定根拠に `(推定)` を付与する
+- **非影響確認 (推奨)**: `git status --short` 出力で機械判定 — `M` 含む → (a) 手動列挙 or (b) `git diff` 隣接列挙 / `A` のみ → (c) 省略可 / `D` 含む → (a) 必須。詳細は [references/non-impact-rules.md](references/non-impact-rules.md)。**git 実行不能 (plan mode で未着手 / walk-through / dry-run)** の場合は Step 1 で確定した変更ファイル一覧 (プラン本文の「変更ファイル予定」、それが無ければ類推した推測リスト) から推測し、`### 検討観点` に書く判定根拠の 1 文に `(推定)` を付与する
 - **振る舞いを変えないリファクタ等**では、各カテゴリを「変更前と同じ入出力を維持すること」を検証する回帰確認として書く (例: `- [ ] <label>: <既存入力> → <変更前と同じ出力 (リファクタ後も維持)>`)
 
 ### Step 4: 技術リスクの生成
 
-リスク 3 件を 3 点セットで記述 (各項目 1 文 = 句点 1 つに収める。理由: 1 項目に複数文を詰めると検証単位が曖昧になり、後続でリスク単位の追跡ができなくなる):
+リスクを tier 表の件数だけ、3 点セットで記述する (各項目の散文は 1 文 = 句点 1 つに収める。複数文を詰めると検証単位が曖昧になり、後続でリスク単位の追跡ができない。コマンドは文数に数えず code block で複数行可):
 - **何がわからないか**: 主語+述語の 1 文
 - **最悪何が起きるか**: 誰に+何が
 - **どうやって検証するか**: 実行可能コマンド (`code block`) または手順
 
 ### Step 5: 分析ファイルへの書き出し
 
-分析ファイルパス: プランファイルの拡張子前に `.analysis` 挿入 (例: `feature-xxx.md` → `feature-xxx.analysis.md`)。既存なら末尾追記。フォーマット (`/mece-plan-review` との contract、変更禁止) は [references/output-template.md](references/output-template.md) を参照。
+分析ファイル (パスは上の contract 表) へ書き出す。既存なら末尾追記。フォーマット (`/mece-plan-review` との contract、変更禁止) は [references/output-template.md](references/output-template.md) を参照。
 
 ### Step 6: プランファイル末尾サマリー
 
@@ -135,12 +133,16 @@ description: Fills a matrix of 3 required categories (normal, error, edge) by co
 ## 品質検証
 
 - AC: <N>観点×必須3カテゴリ + 非影響確認 <K>件 = <M>項目定義済み → <分析ファイル名>
-- 技術リスク: <N>件特定済み → <分析ファイル名>
+- 技術リスク: <R>件特定済み → <分析ファイル名>
 ```
 
-**M 算出**: 簡略式 (各セル 1 項目固定) は `M = N × 3 + K`。各セルに複数項目を含む場合は実数表記に分岐 (`AC: M項目定義済み (内訳: 必須X件 + 非影響確認K件)`)。判定: `M == N × 3 + K` なら簡略式、不一致なら実数表記。
+**M 算出**: 各セル 1 項目固定で `M == N × 3 + K` が成立するなら上の簡略式のまま。不一致なら AC 行だけを次の完成形に差し替える (技術リスク行は変えない):
 
-**N / X / K の定義**: N = マトリクスの必須 3 カテゴリのセルを充填した観点軸の数 (裁量判断で追加した副作用軸も、セルを充填したなら N に数える)。matrix 外で別表記する追加軸 (observability 等、セルを充填しないもの) のみ N に含めず `+ observability` のように併記する。X = 正常系 + 異常系 + エッジケースの**実 AC 行数**、K = 非影響確認の**実 AC 行数** (いずれも理論値 N×3 ではなく実カウント)。
+```markdown
+- AC: <M>項目定義済み (内訳: 必須<X>件 + 非影響確認<K>件) → <分析ファイル名>
+```
+
+**N / X / K / R の定義**: R = 技術リスクの件数 (軸数 N とは別物)。N = マトリクスの必須 3 カテゴリのセルを充填した観点軸の数 (裁量判断で追加した副作用軸も、セルを充填したなら N に数える)。matrix 外で別表記する追加軸 (observability 等、セルを充填しないもの) のみ N に含めず `+ observability` のように併記する。X = 正常系 + 異常系 + エッジケースの**実 AC 行数**、K = 非影響確認の**実 AC 行数** (いずれも理論値 N×3 ではなく実カウント)。
 
 ## 委譲実行 (subagent として起動された場合)
 

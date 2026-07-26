@@ -11,7 +11,7 @@
 
 ## 複数主種別 + プラン文脈軸の主軸採用
 
-主種別が複数該当 (例: api_change + service_change + db_change) し、かつプラン本文に明示的な文脈軸 (auth / authz / billing / privacy 等) がある場合、その文脈軸を**副作用軸ではなく主軸**として採用してよい。
+主種別が複数該当 (例: api_change + service_change + db_change) し、かつプラン本文に明示的な文脈軸がある場合、その文脈軸を**副作用軸ではなく主軸**として採用してよい。対象となる文脈軸は 2 種類 — **統制関心** (auth / authz / billing / privacy 等) と**非機能関心** (性能 / 可用性 / コスト 等。例: 「遅い」が主題のプランでは `runtime` を主軸に採る)。
 
 例: プラン本文に「管理者のみ」「本人不可」等の auth 記述があるなら `permission` を主軸として 4 軸の先頭に置く。
 
@@ -33,11 +33,17 @@
 
 ## 複数主種別・主軸超過時の主軸確定 (Step 2 詳細)
 
-inline 表で完結できるのは Step 1.5 の機械抽出が単一主種別のときのみ。複数主種別が抽出された場合 (例: controller + service の直列実装で api_change + service_change) や主軸候補が tier 軸数を超える場合は、inline 表の 1 行をそのまま使わず、以下の deterministic classifier とドロップ規則で主軸を確定する。選定理由を分析ファイル `### 検討観点` に 1 文ずつ明記する。
+inline 表で完結できるのは Step 1.5 の機械抽出が単一主種別のときのみ。複数主種別が抽出された場合 (例: controller + service の直列実装で api_change + service_change) や主軸候補の数が tier 軸数と一致しない場合は、inline 表の 1 行をそのまま使わず以下の手順で主軸を確定する。各軸の選定理由を分析ファイル `### 検討観点` に 1 文ずつ明記する。
 
-**主軸 / 副作用軸の deterministic classifier**: 変更種別 → デフォルト観点軸表の該当 type 行に現れた controlled label は **主軸**、Step B 汎用候補軸 (`flag_removal` / `non_invasive` / `dep_loc` / `layer` / `contract` 等) と `observability` は **副作用軸**。複数主種別共存時は各 type の最も中心的な 1 label を 1 主軸として採用 (= 副軸格上げ禁止)。
+**主軸 / 副作用軸の区別**: 変更種別 → デフォルト観点軸表の該当 type 行に現れた controlled label は **主軸**、Step B 汎用候補軸 (`flag_removal` / `non_invasive` / `dep_loc` / `layer` / `contract` 等) と `observability` は **副作用軸**。副軸を主軸に格上げしない (概念的に cross-cutting に見える table-listed label — 例: `compat` — も主軸のまま)。
 
-**主軸候補が tier 軸数を超える場合の deterministic ドロップ**: (1) plan の不変条件からセルが空 / 自明になる軸を先にドロップ (例: 「auth 不変・誰でも閲覧可」と明示 → `permission` をドロップ)。**存在するが不変の横断機能** (既存認可など) をドロップした場合は、非影響確認に regression 1 行を必ず残す、(2) plan 本文で明示された関心 (後方互換 / データ量等) に対応する軸は優先的に残す、(3) なお超過するなら表の行順 (上位種別優先) で決める。**tie-break で主軸をドロップした場合も、規則 (1) と同様にドロップされた関心 (401/404 の権限判定等) を非影響確認に regression 1 行として補完する** (規則 (1) は「plan の不変条件で空セル化」、規則 (3) は「主軸数超過」を根拠にする違いはあるが、いずれも主軸から外した cross-cutting な関心を非影響確認で拾う扱いは共通)。table-listed label は概念的に cross-cutting に見えても主軸 (例: `compat`) であり副軸格上げ禁止。
+**主軸の確定手順** — 軸を増やす方向・減らす方向のどちらも同じ優先度列を使う:
+
+1. **候補プールを作る**: 該当する全 type の表行に現れた label。状況条件付き label (`req_context` / `unsent_keys`) は適用条件を満たすものだけ入れる
+2. **除外する**: plan の不変条件でセルが空 / 自明になる軸 (例: 「auth 不変・誰でも閲覧可」と明示 → `permission`)。**振る舞い不変のリファクタでは全軸が「不変」になるため本手順は適用せず**、plan の変更対象レイヤーが触れない横断機能だけを除外する
+3. **優先度列に並べる**: (a) 各 type から 1 本ずつ — その type の label のうち plan 本文が明示した関心 (後方互換 / データ量 / 性能等) に対応するものを優先し、無ければ表の行順で最上位、(b) 残った候補を「plan 明示関心 → 表の行順」で続ける (type をまたぐ比較も perspectives.md の表の行順で決める)
+4. **上から tier 軸数だけ採る**: 不足なら (b) の続きから補充し、超過なら列の下から落とす (type ごとに均等配分する必要はない)
+5. **外した関心を拾う**: 手順 2 または 4 で主軸から外した「存在するが不変の横断機能」(既存認可・401/404 の権限判定等) は、非影響確認に regression 1 行を残す
 
 **Cross-cutting behaviors の label**: retry / timeout / circuit-breaker などの cross-cutting 挙動が複数 change-type で出現する場合、変更種別表の特定行に閉じ込めず Step B 汎用候補軸として扱う (例: api_change の同期エンドポイントで「リトライ 3 回」なら `idempotency` を Step B 汎用候補軸として副作用軸採用)。
 

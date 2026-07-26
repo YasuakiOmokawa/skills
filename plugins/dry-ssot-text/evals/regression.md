@@ -63,4 +63,34 @@ structural review mode + trigger 判定: (a) 55 行・重複 3 箇所 → 重複
 
 ---
 
+収束記録: 2026-07-25 (Opus 5 / Fable 5 向け最適化)。以下の 3 シナリオ (S5 median / S6 edge / S3 委譲不足入力を hold-out として再利用) を fresh executor (Task dispatch, blank slate) で 9 ラウンド・計 23 実行し、**全ラウンドで全 [critical] ○ / accuracy 100% / 最終ラウンドは両シナリオ retries 0**。hold-out は 4 実行すべて 100% (過学習兆候なし)。Iter 0 で description と本文のカバレッジ乖離なしを確認 (description 無変更)。
+
+最適化の内容: 重複記述の削除 (grep 到達性の規則が 3 箇所にあったのを §3 に一本化、Quick Reference 節が tier 表と §2 を再掲していたので削除し `grep -nE` の recipe だけ §1 へ移設) と、旧 `## Gotchas` の 3 件 (§3 remedy の型名 vs 行数閾値の tie-break / express-intent-in-code「前段」の解釈 / skip 時の完了報告) を本文の規則へ昇格。以降のラウンドで surface した曖昧点のうち outcome に影響するものを規則化した: tier 行数下限の一般化、全文包含なら削除・独自事実ありならアンカー参照 (判定は段落単位)、ADR / RFC のテンプレート必須節は見出しを残して 1 行参照 (見出しごと削除は自由記述の章のみ)、md 側候補が複数なら根拠側を canonical、正本へ識別子を書き足して到達性を作らない、検証フレーズは参照 1 文に残らない差別化句から選ぶ、Core Pattern に「同一事実の役割違い提示」行を追加 (逐語一致なら例外不可)。executor 自己申告は orchestrator 側で独立検証済み (canonical フレーズ `grep -c` 7→1 / アンカー全件疎通 / TOC・進捗表・AC 維持 / `ruby -c` Syntax OK / 非コメント行 diff 0 / ADR 必須節 5 見出し保持)。残存曖昧点 3 件は SKILL.md `## Gotchas` に記載。`python3 scripts/validate_skills.py` pass。
+
+## シナリオ S5 (median): 重複過多の設計書を委譲実行で SSOT 集約する
+
+82 行の設計書 (目次 + PR 進捗表 + 受け入れ条件 checklist を含む) に、同一の設計判断の説明が 7 箇所ある。対話承認者不在の委譲実行。tier は行数 (skip 帯) と重複箇所数 (standard 帯) が競合し、remedy は文書型 (design doc) と行数閾値 (~150 行以下) が競合する。
+
+### Requirements checklist
+1. [critical] 同一概念の反復説明が 1 箇所 (SSOT) に集約され、残りがクロスリファレンスまたは縮約に置き換わっている (適用後その説明の本文が 1 箇所だけ)
+2. [critical] navigation 目的の重複 (目次 / PR 進捗表 / AC checklist) が維持され、誤って削除・統合されていない
+3. [critical] tier 判定を明示し、行数と重複箇所数が別 tier を指す競合を規定どおり解決している (根拠の行数と重複箇所数を報告)。判定 tier が要求する dry-run の扱いも規定どおり
+4. remedy の 3 分岐のどれを選んだか明示し、分岐規定 (tie-break 含む) に整合している
+5. 各 PR 章が参照リンクだけの章になっておらず、章のスコープ説明が残っている
+6. 最終メッセージに「何箇所 → 1 箇所」の要約と対象文書の絶対パスが含まれている
+
+## シナリオ S6 (edge): 変更差分全体 (コードコメント + ADR) を SSOT 集約する
+
+git repo の未コミット差分 3 ファイル (Ruby 2 ファイル + ADR 1 ファイル、合計 104 行) に同一の why 説明が 6 箇所。ADR 内では §背景 と §根拠 が逐語一致し、§影響 は同じ数値を役割違いで持つ。2 クラスに `with_backoff` / `backoff_interval` のコード構造重複があり、これは対象外。
+
+### Requirements checklist
+1. [critical] dry-run レポートが変更セット全体で 1 通に統合されている (ファイルごとに分割していない)
+2. [critical] tier 判定を明示し、判定単位が変更セット全体 (対象ファイル合計行数・重複箇所数) になっている (単一ファイルの行数だけで判定していない)
+3. [critical] コード構造 (重複メソッド定義・ロジック) は無改変で、コメント文面の重複だけが集約対象 (`ruby -c` Syntax OK)
+4. 対象範囲の確定に `git diff --name-only` 等の変更ファイル一覧を使っている
+5. canonical の置き場所と非正本の扱い (削除 / 短い参照 / 見出し保持) が規定どおり
+6. 最終メッセージに「何箇所 → 1 箇所」の要約と対象ファイルの絶対パスが含まれている
+
+---
+
 収束記録: 2026-07-18 (regression 再実行 / skill 無変更で収束確認)。上記 4 シナリオ (S1 tier 競合 40 行3重複 / S2 委譲パス明示 94 行3重複 / S3 委譲不足入力 / S4 差分全体 6 重複 standard 強制) を fresh executor (Task dispatch, blank slate) で各 1 本ずつ実行し、全 16 [critical] ○ (4 シナリオ × 4 checklist) / accuracy 100% / retries 0。Iter 0 で description と本文のカバレッジ乖離なしを確認 (2026-07-17 と同じ、description 無変更)。executor 自己申告を orchestrator 側で独立検証: S2 は canonical フレーズ `grep -c` 3→1・アンカー参照 4 箇所・TOC/進捗表/AC 維持、S4 は Why occurrence 6→1 (canonical=md 専用セクション)・`with_backoff`/`backoff_interval` 両ファイル温存 (コード構造無改変)・両 Ruby に md への grep 到達可能な 1 行参照残置・`ruby -c` Syntax OK、S1 は review-only で fixture 無改変、いずれも real skill 本体 (`git status` clean) 無改変。surface した不明点はいずれも新規の skill 欠陥ではない: S1/S2 は既知 catalogued Gotcha (§3 remedy の型名 vs 行数閾値 tie-break, SKILL.md L119)、S4-(a) 混在 canonical (md) 時の削除 vs 1 行参照は cross-reference-mechanics.md L30「コード側コメントは全て短い参照に統一する」が既に規定済みで executor は正しく参照側を選択 (一般則「削除可」との perceived tension だが specific rule が支配)、S4-(b)「箇所=ファイル数か occurrence 数か」は eval checklist の文言 (「コードコメント 2 箇所」=2 ファイルの意) 起因の scaffolding 語彙差で skill 欠陥ではない。新規 skill 欠陥不明点 0。skill 本文・references 無変更 (2026-07-17 収束を直前クリアとして本日 1 ラウンドで確定)。`python3 scripts/validate_skills.py` pass。

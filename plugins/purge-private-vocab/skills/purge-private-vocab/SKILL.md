@@ -15,10 +15,10 @@ description: Detects local-plan coinages, abbreviations, and number labels in re
 
 | Tier | 判定 | アクション |
 |---|---|---|
-| **lite (skip)** | target = plan そのもの / 読者全員が plan 共有済のチーム内資料 / API ref (codebase 直 map) | **skip** |
-| **lite** | target ≤300 字 or plan-only 語ヒット ≤2 | 1-pass 直接修正 (dry-run レポート省略、Step 4 飛ばして Step 5 のみ) |
+| **lite (skip)** | target = plan そのもの (下記の例外あり) / 読者全員が plan 共有済のチーム内資料 / API ref (codebase 直 map) | **skip** |
+| **lite** | target ≤300 字 or Step 2 の候補語ヒット (異なり語数) ≤2 | 1-pass 直接修正 (dry-run レポート省略、Step 4 飛ばして Step 5 のみ) |
 | **standard** (default) | 中規模 doc (PR description / Jira description 等、300-2000 字) | Step 1-5 全実行、dry-run レポート提示 → 承認後 Edit |
-| **deep** | design doc / RFC / 公開資料 / 2000+ 字 | dry-run + 適用後の再読検証必須 + heuristics-and-pitfalls.md 全件チェック + [references/execution-contexts.md](references/execution-contexts.md) の **deep 必須前置** (target 文構造の直読み / ID の 1:1 索引 / layer label の実コンポーネント名解決) を Step 1 で実施 |
+| **deep** | design doc / RFC / 公開資料 / 2000+ 字 | dry-run + heuristics-and-pitfalls.md 全件チェック + [references/execution-contexts.md](references/execution-contexts.md) の **deep 必須前置** (target 文構造の直読み / ID の 1:1 索引 / layer label の実コンポーネント名解決) を Step 1 で実施 |
 
 **plan そのものが target になる場合 (lite(skip) の例外)**: plan の読者 (チームメンバー / 将来の別エージェント) が持たない上流文書 (分析ファイル・MECE 結果等) 由来の語彙 — `BB-N` / `WB-N` / `IM-N` 等の finding ID — が plan に混入している場合は、plan 自体を target として検査する (skip しない)。このとき source = 分析ファイル、target = plan の多段連鎖として扱う (「分析ファイル → plan → 読者」で、plan は中間文書でも読者にとっては対外文書)。
 
@@ -36,7 +36,7 @@ description: Detects local-plan coinages, abbreviations, and number labels in re
 
 - **target**: 検査対象 (PR body、Jira description、design doc、レビュー済みコードのコメント 等)。ファイルパス or インラインテキスト
 - **source plan**: target の生成元 (`~/.claude/plans/<topic>/plan.md` 等)
-- **target が変更差分全体の場合**: コードコメント + 変更/新規 md ファイルをまとめて検査する用例では、対象ファイル一覧を確定したうえで出現回数 (Q4) を差分全体で通算してから判定する (ファイル単位に分割して数えると過小カウントする)。提案レポートは変更セット全体で 1 通に統合する。Task complexity tier の字数・ヒット数もこの集合 (変更後ファイルの該当箇所全体) で判定し、diff の追加行のみに限定しない (Q2 の self-contained 判定と同じ範囲で数える)。
+- **target が複数ファイルにまたがる場合** (変更差分全体、同一 plan から派生した複数文書 等): コードコメント + 変更/新規 md ファイルをまとめて検査する用例では、対象ファイル一覧を確定したうえで出現回数 (Q4) を差分全体で通算してから判定する (ファイル単位に分割して数えると過小カウントする)。提案レポートは変更セット全体で 1 通に統合する。Task complexity tier の字数・ヒット数もこの集合 (変更後ファイルの該当箇所全体) で判定し、diff の追加行のみに限定しない (Q2 の self-contained 判定と同じ範囲で数える)。出現回数の集計はセット全体で通算する一方、**回数に依存する修正を置く単位 (in-line 定義の付与・初出のフル展開・2 回目以降の短縮) は独立に読まれる成果物ごと**とする (同一 PR の diff 全体なら 1 箇所でよい。PR 説明と Jira チケットのように読者が別々に読む成果物が複数あるなら、各成果物の初出をそれぞれ「初出」として扱う)。
 
 コメントを書くか・名前/型へ移すかの判断は `/express-intent-in-code`、文面の原則は code-comments 系規約 (7原則) が担い、本 skill は plan 造語の除染のみを担う。
 
@@ -53,6 +53,8 @@ grep -oE '[ァ-ヴー一-龥a-zA-Z]+(型|主義|原則|論|系)' <target>
 grep -oE '§[^ ,。、）]+' <target>
 # アルファベット + 番号ラベル (Critical-A, AC-12 等。suffix は大文字も拾う)
 grep -oE '[A-Z][A-Za-z]*-[0-9A-Za-z]+' <target>
+# 方式候補ラベル (案 A / 案 D 等)
+grep -oE '案[[:space:]]*[A-Z0-9]+' <target>
 ```
 
 加えて目視で拾う: 強調フレーズ (`**...**` / 「...」)、大文字始まりの英語複合語 (`Single Switch` / `Dual Write` 等、強調の有無を問わない)、ギリシャ文字+層 (`α/β/γ 層`)、フェーズ用語 (`rollout enabler` 等)、数字+象限/層 (各要素が文中未説明のもの)。
@@ -77,20 +79,24 @@ Q3. source plan にしか定義がなく、target の読者は外部リソース
   YES → Q4 (要対応)
   NO  → 【持ち込み可】 (公知用語)
 
-Q4. 番号/層ラベルか? (`Critical-A`, `α/β/γ 層`, `AC-12`, PR チェーン番号、分析ファイル由来 finding ID (`BB-N`/`WB-N`/`IM-N`) 等)
-  YES → 【要言い換えまたは削除】 出現回数に関わらず実値へ言い換え (in-line 定義ルートには載せない。Core Pattern 3 分類表と整合)。**ただし target 自身の表・一覧で定義済みの `AC-N` / `QA-N` は Q2 (self-contained) で維持** (例: QA 手順表に全 QA-ID が展開されている plan)。**層ラベルで source plan が無く実コンポーネント名を解決できない場合**は target 文脈から導ける関係性ベースの一般表現 (例: 「後段の処理層」) に言い換え、具体名を捏造しない (tier 非依存で適用)
+Q4. 番号/層ラベルか? (`Critical-A`, `α/β/γ 層`, `AC-12`, 方式候補ラベル (`案 D` 等)、PR チェーン番号、分析ファイル由来 finding ID (`BB-N`/`WB-N`/`IM-N`) 等。例示は外延ではなく、source plan 側の表・箇条でしか本文が定義されていない短い英数字 ID は形状で YES に倒す)
+  YES → 【要言い換えまたは削除】 出現回数に関わらず実値へ言い換え (in-line 定義ルートには載せない。Core Pattern 3 分類表と整合)。2+ 回出る語は初出 (出現順で最初。単位は Step 1 の「回数に依存する修正を置く単位」) をフル展開し、2 回目以降は展開文の語を使った短縮表現でよい (全出現のフル展開で冗長化させない。短縮形には初出を特定できる名詞句を 1 つ以上残し、除染対象のラベル自体は短縮形に使わない)。**ただし target 自身の表・一覧で定義済みの `AC-N` / `QA-N` は Q2 (self-contained) で維持** (例: QA 手順表に全 QA-ID が展開されている plan)。**層ラベルで source plan が無く実コンポーネント名を解決できない場合**は target 文脈から導ける関係性ベースの一般表現 (例: 「後段の処理層」) に言い換え、具体名を捏造しない (tier 非依存で適用)
   NO  → 出現回数で分岐:
     2+ 回 → 【要 in-line 定義】 (初出箇所で `用語 (= 短い説明)` を補う)。**ただし初出が見出し / title の場合**は in-line 定義が不自然なため、Label vs Body の label 書換 (平易化) ルートに倒す
     1 回   → 【要言い換えまたは削除】 (平易な日本語に書き換え、または文ごと削除)
 ```
 
-**Q1 判定**: codebase identifier = `git grep <語>` が 1+ ヒット、公開規格 = RFC/W3C/ISO/IETF 等、公知 Issue/Jira = 公開 tracker でアクセス可。Figma node-id (`1:2` / `123:456` 等) も Q1 維持 (Figma ツールで解決可能な識別子)。**非 repo / 未マージ flag で `git grep` 不能時**は、backtick 付き snake_case で文中に `Flipper flag` / `class` / `file path` と明示されている、または source plan にファイルパス/flag 記述がある語を codebase identifier とみなす。加えて `Provider` / `Adapter` / `Gateway` のような**一般的なソフトウェア構成概念**は、平易な言い換えがかえって曖昧化する場合、持ち込み可に倒してよい (読者が文脈で解せる一般語のため)。
+**Q1 判定**: codebase identifier = `git grep <語>` が 1+ ヒット、公開規格 = RFC/W3C/ISO/IETF 等、公知 Issue/Jira = 公開 tracker でアクセス可。Figma node-id (`1:2` / `123:456` 等) も Q1 維持 (Figma ツールで解決可能な識別子)。**非 repo / 未マージ flag で `git grep` 不能時**は、backtick 付き snake_case で文中に `Flipper flag` / `class` / `file path` と明示されている、または source plan にファイルパス/flag 記述がある語を codebase identifier とみなす。加えて `Provider` / `Adapter` / `Gateway` のような**一般的なソフトウェア構成概念**は、平易な言い換えがかえって曖昧化する場合、持ち込み可に倒してよい (読者が文脈で解せる一般語のため)。ただしこの緩和は**単独トークンに限る** — `Provider 内吸収型` のように plan 由来の語を含む複合語は 1 語として Q2 以降で判定する。
 
 **Q2 判定**: 見出し+直後本文に平易な説明があれば self-contained。ただし説明に plan 内造語がさらに混入していれば NO。定義が初出より**後**に置かれている (用語使用 → 後置説明の順) 場合は、**Q3 以降へ進まずこの時点で【要 in-line 定義】で確定**する (定義を初出へ `用語 (= 短い説明)` として移し、後置説明文は定義に吸収・削除。Q3 の「source plan にしか定義がない」判定に流すと target 内に後置定義があるせいで素通しになるため、木の分岐でなくここで短絡させる)。迷ったら「plan 未読の同僚が target だけ読み下せるか」を音読で確認。
 
 **Q4 出現回数判定**: 表記ゆれ候補 (同一概念の異表記) を個別に数えると過小カウントし、2+ 回相当が 1 回判定に落ちて誤って【要言い換えまたは削除】に分類されうる。`grep -oE 'パタンA|パタンB'` のようにパターンを OR 結合してから合計を数える。
 
-**Q4 で source plan (分析ファイル) が未提供の場合**: finding ID の原文を参照できないときは、target 文脈から復元できる範囲の展開案に「適用前に原文と照合」の注記を付けて提示し、実値を捏造しない (deep 必須前置の 1:1 索引と同じ原則を standard でも守る)。この照合注記付き修正を 1 件でも含む場合、**tier に関わらず Step 4 の提案レポート提示を省略しない** (lite の直接適用に乗せると、照合されないまま復元文が plan に書き込まれる)。
+**同一概念に複数ラベルが併存する場合** (`案 D` と `Provider 内吸収型` のように plan が同義の 2 ラベルを持つ): Q4 非該当側 (造語) を代表語に選び、Q4 該当ラベルは代表語へ吸収して同義の説明を 2 度書かない。
+
+**ID 展開は原文の復元であって決定の追加ではない**: 上流が未決の選択肢を並べている箇所は「未決の選択肢」として引用し、target が決めていない属性 (TTL 値・期限・担当等) を決定事項へ昇格させない。引用は選択肢を識別できる最小情報に留める (例: 「Redis か DB カラム追加の二択」まで書き、TTL 値は落とす)。
+
+**Q4 で source plan (分析ファイル) が未提供の場合**: finding ID の原文を参照できないときは、target 文脈から復元できる範囲の展開案に「適用前に原文と照合」の注記を付けて提示し、実値を捏造しない (deep 必須前置の 1:1 索引と同じ原則を standard でも守る)。この照合注記付き修正を 1 件でも含む場合、**tier に関わらず Step 4 の提案レポート提示を省略しない** (lite の直接適用に乗せると、照合されないまま復元文が plan に書き込まれる)。層ラベル規則と finding ID 規則のどちらにも当たらないラベル (汎用の英数字ラベル・略称) で source plan が無い場合は、持ち込み可・削除のいずれにも断定せず「source plan 未確認のため要確認」と明記して原文のまま残す。
 
 **Label vs Body 分離** (Q2 の partial 抜けに使う既定ルート): 構造が `**plan-only ラベル**: 平易な説明文…` の場合、ラベルは Q4 で「要言い換えまたは削除」、本文は維持。例: `**Single Switch**: Flipper の参照を 1 箇所に集約` → ラベルを `**Flipper 参照の 1 箇所集約**` に置換、本文は維持。
 
@@ -108,28 +114,24 @@ Q4. 番号/層ラベルか? (`Critical-A`, `α/β/γ 層`, `AC-12`, PR チェー
 - (Q1) `XPROJ-663` (Jira ID)
 - (Q2) `PR4-a/b/c/d` (target L12-L20 で全 PR が展開済)
 
-### 要 in-line 定義 (2+ 回出現) — Q4 該当
+### 要 in-line 定義 (Q4=NO かつ 2+ 回出現)
 1. **Single Switch** (3 箇所: L14, L42, L58)
    - 提案: 初出 L14 を `Single Switch (= Flipper 参照を 1 箇所に閉じ込める設計)` に変更
 
-### 要言い換えまたは削除 (1 回出現または番号ラベル) — Q4 該当
+### 要言い換えまたは削除 (Q4=YES、または Q4=NO かつ 1 回出現)
 1. `rollout enabler` (L18) → 「Flipper による本番経路切替を可能にする土台」に言い換え
 2. `§設計詳細` (L33) → target に該当セクションなし、文ごと削除
 ```
 
 「持ち込み可」セクションは reviewer 誤検出疑念回避のため、heuristic ヒットして Q1/Q2 で抜けた語と、heuristic 未ヒットだが疑われそうな公開語 (JWT, RFC, Express 等) を明示する。
 
-**standard / deep tier ではこの提案レポートを完全提示してから適用に進む** (省略・即時 self-approve 禁止)。対話承認者の有無の判定基準と self-approve の可否は「[委譲実行 (subagent として起動された場合)](#委譲実行-subagent-として起動された場合)」節を参照。chain 実行 (`/dry-ssot-text` → 本 skill → `/polish-before-commit`) の「流れを止めない」圧力でレポート提示ごと省略するのが観測された失点なので、tier に関わらず提示は必ず行う。提示自体を省けるのは lite のみ。
+**standard / deep tier ではこの提案レポートを完全提示してから適用に進む**。chain 実行 (`/dry-ssot-text` → 本 skill → `/polish-before-commit`) の「流れを止めない」圧力でレポート提示ごと省略するのが観測された失点なので、提示を省けるのは lite のみ。対話承認者の有無の判定基準と self-approve の可否は [references/execution-contexts.md](references/execution-contexts.md) の「委譲実行」節を参照。
 
 ### 5. 適用
 
-承認後 (lite は Step 4 の dry-run を省略するため承認不要 — 直接適用してよい)、Edit で target に修正を適用。検証: 初出箇所のみ定義があるか / 削除した語の周辺文が文として成立しているか (主述破綻していないか) / 言い換え箇所が plan 未読でも読み下せるか **再読**。
+承認後 (lite は Step 4 の dry-run を省略するため承認不要 — 直接適用してよい)、Edit で target に修正を適用。適用箇所を再読して確認する: 初出箇所のみ定義があるか / 削除した語の周辺文が文として成立しているか (主述破綻していないか) / 言い換え箇所が plan 未読でも読み下せるか。
 
-適用後の最終メッセージには、適用した修正の一覧 (対象語 + 変更後の文言、行番号があれば併記) と対象ファイルの絶対パスを含める。縮退動作 (下記) に入った場合は、その旨と「要確認」に残した候補語の一覧も含める。
-
-## 委譲実行 (subagent として起動された場合)
-
-subagent 委譲で起動された場合の追加規則 — **入力解決順位** (Step 1: ①起動プロンプト明示 → ②セッション文脈 → ③ファイル探索、①の具体パスが外れたら埋め合わせ探索しない)、**source plan 欠落時の縮退動作** (Q1/Q2 のみ機械判定、判定不能語は「source plan 未確認のため要確認」と明記、target 不在なら「不足入力: target」で即終了)、**対話承認者の判定基準** (Step 4: AskUserQuestion が無ければ提示自体を監査痕跡として self-approve し Step 5 まで完了) — は [references/execution-contexts.md](references/execution-contexts.md) の「委譲実行」節に verbatim で置く。委譲起動時は Workflow に入る前に必ず Read すること。
+適用後の最終メッセージには、適用した修正の一覧 (対象語 + 変更後の文言、行番号があれば併記) と対象ファイルの絶対パスを含める。縮退動作 (source plan 欠落時。[references/execution-contexts.md](references/execution-contexts.md) の「委譲実行」節) に入った場合は、その旨と「要確認」に残した候補語の一覧も含める。
 
 ## Quick Reference
 

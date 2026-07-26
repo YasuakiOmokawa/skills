@@ -12,7 +12,7 @@ description: Verifies acceptance criteria for MECE coverage with parallel spec/c
 1. Arguments: `$ARGUMENTS` (プランファイルパス)。無ければシステムプロンプトの `Plan File Info:` から取得
 2. 上流は `/define-acceptance-criteria`。分析ファイルに `## 受け入れ条件` が無ければ**即中断** (検証ターゲット不在)
 3. 出力先: 分析ファイル (全結果) + プランファイル (`## 品質検証` に 1 行)
-4. TodoWrite で Step 0 / 1 / 2 / 3-1〜3-4 を進捗管理する
+4. TodoWrite で Step 0 / 1 / 2 / 3-1〜3-4 を進捗管理する (TodoWrite が利用可能ツール一覧に無い委譲実行では進捗管理を省略する。セッション共有の `TaskCreate` / `TaskUpdate` で代替しない — 呼び出し元の task list を汚染するため)
 
 ## Task complexity tier
 
@@ -20,23 +20,26 @@ description: Verifies acceptance criteria for MECE coverage with parallel spec/c
 
 | Tier | AC 件数 | Analyst | Fresh Red Team |
 |---|---|---|---|
-| **lite** | ≤5 件 | main agent 内で BB+WB を統合 inline 実行 (Wiki Researcher 省略可) | skip (Critical 候補 0 で確定) |
+| **lite** | ≤5 件 | main agent 内で BB+WB を統合 inline 実行 (Wiki Researcher は非起動) | skip (Critical 候補 0 で確定) |
 | **standard** (default) | 6-15 件 | 3 並列 Analyst (BB / WB / Wiki Researcher) | Critical 候補 ≥1 なら起動 |
 | **deep** | >15 件 / auth / billing / payment / migration | 3 並列 Analyst | 必須起動 |
 
-`<plan>.analysis.md` 冒頭の `### Tier` (define-AC が記録) を継承。リスク領域は AC 件数によらず強制的に **deep**。
+`<plan>.analysis.md` 冒頭の `### Tier` (define-AC が記録) を継承。リスク領域は AC 件数によらず強制的に **deep** — 上流の `### Tier` 記録 (lite / standard) と食い違う場合もリスク領域強制が優先し、上書きした旨と根拠を分析サマリーに記録する。リスク領域該当は**変更が書き換える対象**で判定する (例: billing = 請求金額を算出・永続化するコードパスに触れる変更。請求ドメインの表示のみの変更は非該当)。
 
-> **ゲートの優先順位 (Wiki Researcher 起動可否)**: tier 表の Analyst 列「3 並列」は **Devin 収録時の上限**を表すに過ぎない。Wiki Researcher を起動するかは tier ではなく Step 0-4.5 の `${DEVIN_COVERAGE}` が決める (**可用性ゲート > 規模ゲート**)。`${DEVIN_COVERAGE}=none` なら **deep でも Wiki Researcher は非起動** (BB + WB の 2 並列)。tier が規定するのは Fresh Red Team の起動条件 (Step 2) であり、Wiki Researcher の起動条件ではない。
+> **ゲートの優先順位**: Wiki Researcher の起動可否は tier ではなく Step 0-4.5 の `${DEVIN_COVERAGE}` が決める (可用性ゲート > 規模ゲート)。`none` なら deep でも非起動 (BB + WB の 2 並列)。tier 表が規定するのは Fresh Red Team の起動条件 (Step 2) だけ。
 
 **lite-mode inline 実行手順** (Step 1 / Step 2 の代替):
-1. main agent が `${ENUMERATED_AC}` を inline review し、以下 2 視点を統合した analysis を産出:
-   - **BB 視点**: 仕様 / カレントリポ wiki / 一般知識 から欠落 use case を 1-3 件抽出 (コード参照禁止)
-   - **WB 視点**: 変更ファイル diff を Read し技術ギャップを 1-3 件抽出 (仕様参照禁止)。**コードが未実装 / 不可読 (greenfield・plan mode) の場合**は AC 判定を `言及なし` 既定とし、plan からコード構造ギャップが積極的に導ける AC のみ `不十分` とする。低充足率は AC 不備でなくコード不可読が原因と明記し、機械合成 (一方充足 + 他方言及なし → 充足) に委ねる
-2. Wiki Researcher / Fresh Red Team は skip (Critical 候補 0 で確定する設計)
-3. 出力は標準と同じ Step 3 形式 (分析ファイル末尾セクション + プラン 1 行サマリー) を採用
-4. lite 報告では `Critical: 0` を確定値として 1 行サマリーに記載する。**inline BB/WB で Critical 候補が 1 件でも出たら lite 確定を破棄し格上げする**: tier=standard として Step 1 (BB/WB 並列 + 該当時 Wiki Researcher) と Step 2 Fresh Red Team を改めて実行し、lite サマリーは残さず standard 出力で上書きする (lite は Red Team を skip するため、Critical 候補を inline のまま確定させると MECE判定 の信頼性が崩れる)。格上げ先は原則 standard で足りる (リスク領域は tier 表で最初から強制 deep のため、lite だった時点で非リスク領域が確定しており、standard でも Critical 候補 ≥1 なら Red Team が起動する)。**ただし finding が lite 分類時に見落とした auth / billing / payment / migration の関与を露呈した場合は standard でなく deep へ格上げする** (リスク領域強制 deep が standard 格上げに優先)
+1. main agent が `${ENUMERATED_AC}` を inline review し、情報源を分けた 2 視点を統合した analysis を産出 (件数縛りは standard と同じくなし = Core rule 5)。inline 実行でも先に `agents/bb-analyst.md` / `agents/wb-analyst.md` を Read し、Critical 閾値と出力契約 (JSONL・AC 判定行) をそのまま適用する — dispatch を省くのは起動だけで、agent 定義が運ぶ契約は省かない。手順 4 の「Critical 候補」も閾値 4 類型に**現に該当**するもののみ (直感で昇格しない):
+   - **BB 視点**: 仕様 / カレントリポ wiki / 一般知識 から欠落 use case を抽出 (コード参照禁止)
+   - **WB 視点**: 変更ファイル diff を Read し技術ギャップを抽出 (仕様参照禁止)。**コードが未実装 / 不可読 (greenfield・plan mode) の場合**は AC 判定を `言及なし` 既定とし、plan からコード構造ギャップが積極的に導ける AC のみ `不十分` とする。低充足率は AC 不備でなくコード不可読が原因と明記し、機械合成 (一方充足 + 他方言及なし → 充足) に委ねる
+2. Wiki Researcher / Fresh Red Team は skip。出力は標準と同じ Step 3 形式 (分析ファイル末尾セクション + プラン 1 行サマリー)
+   - **0-4 (関連リポ取得) は skip** し `${RELATED_REPOS}="なし"` とする (Wiki Researcher が非起動で参照先が無いため)
+   - **0-4.5 preflight は lite でも実行する**。lite で決めるのは Wiki Researcher の起動可否ではなく、inline BB がカレントリポ wiki を読めるか / 結果に `[Devin未使用]` タグを付けるかである
+   - `${DEVIN_COVERAGE}` がどちらの値でも `${WIKI_RESULT}="[Wiki Researcher 非起動 (lite)]"` を確定値として保持する (Step 3-3 の `<details>` が未定義変数にならないようにする)
+3. Critical 候補 0 なら `Critical: 0` を確定値として 1 行サマリーに記載する
+4. **inline BB/WB で Critical 候補が 1 件でも出たら lite 確定を破棄し格上げする**: tier=standard として Step 1 (BB/WB 並列 + 該当時 Wiki Researcher) と Step 2 Fresh Red Team を改めて実行し、lite サマリーは残さず standard 出力で上書きする (lite は Red Team を skip するため、Critical 候補を inline のまま確定させると MECE判定 の信頼性が崩れる)。格上げ先は standard とし、**finding が lite 分類時に見落とした auth / billing / payment / migration の関与を露呈した場合のみ deep へ格上げする** (リスク領域強制 deep が standard 格上げに優先)
 
-## Core rules (絶対に守る = 守らないと検証設計が崩れる不変条件)
+## Core rules (守らないと検証設計が崩れる不変条件)
 
 1. **分析ファイルへの記録は main agent のみ** (subagent は書かない — 並列 subagent が同一ファイルに書くと記録の競合・重複が起き、main agent の機械合成 (Step 3-1) の入力が壊れるため)
 2. **情報源の完全分離**: BB は仕様 (カレントリポ wiki + Web + 一般知識) のみ・コード参照禁止 / WB はコードのみ・仕様 / wiki 参照禁止 / Wiki Researcher は判定なし / Red Team は plan/AC 本文を持たない
@@ -64,6 +67,8 @@ Task で委譲起動された場合の読み替え。単独起動 (メイン会�
 
 **0-1 共通初期化**: [references/init-common.md](references/init-common.md) に従い、プランファイル特定 / Read / 分析ファイルパス導出 (拡張子前に `.analysis` 挿入) / `${REPO_NAME}` 取得。
 
+`${REPO_NAME}` と、WB がコードを探す起点 `${CODE_ROOT}` (絶対パス) は、**レビュー対象コードを含むリポジトリ**で解決する。skill を起動した cwd がそれと別リポの場合、cwd のリポジトリ名を使わない (無関係リポが Devin 収録済みだと preflight が誤って `covered` になり、BB に別プロジェクトの wiki を渡してしまう)。対象コードが cwd から辿れない場合は `${CODE_ROOT}="(対象コード不在)"` とし、WB 判定を `言及なし` 既定にする。
+
 **0-2 AC 抽出 (必須)**: 分析ファイルから `## 受け入れ条件` セクションを抽出。
 
 - AC あり → 0-3 へ
@@ -85,10 +90,11 @@ MECEは「何に対して漏れがないか」を検証するプロセスです�
 
 **0-4 関連リポ取得** (オプション、Wiki Researcher 用): [references/related-repos.md](references/related-repos.md) に従い `${RELATED_REPOS}` を確定。3 状態 (改行区切り / `"なし"` / `"なし (org 未解決のため関連リポ調査スキップ)"`) の意味区別を必ず保つ。
 
-**0-4.5 Devin 収録 preflight (Wiki Researcher 起動可否、遅延防止の要)**: Wiki Researcher を起動する前に main agent が **軽量 probe を 1 回だけ** 実行し `${DEVIN_COVERAGE}` を確定する。probe は規模・価値判断で省略しない (ToolSearch + `read_wiki_structure` 1 回は軽量で、遅延源は `ask_question` のみ。「この差分に wiki の価値は低い」型の判断で probe を飛ばすと skip が恣意化する):
+**0-4.5 Devin 収録 preflight (Wiki Researcher 起動可否)**: Wiki Researcher を起動する前に main agent が **軽量 probe を 1 回だけ** 実行し `${DEVIN_COVERAGE}` を確定する。probe は規模・価値判断で省略しない (遅延源は `ask_question` のみで、下記 2 呼び出しは軽量):
 
+0. `${REPO_NAME}` が対象リポジトリで解決できない (non-git 等で `unknown-repo`) → probe を打たず `${DEVIN_COVERAGE}=none` を即確定する (probe 必須規則は価値判断による省略を禁じるもので、引数となる repoName が構成不能な場合は前提不成立としてこの分岐が正)
 1. `ToolSearch("+fdev-devin")` 失敗 → `${DEVIN_COVERAGE}=none`
-2. 成功時は `read_wiki_structure(repoName=${REPO_NAME})` を **1 回だけ** 叩く。`ask_question` は preflight に使わない (Devin 調査セッション起動で分単位の遅延を招くため厳禁)
+2. 成功時は `read_wiki_structure(repoName=${REPO_NAME})` を **1 回だけ** 叩く。`ask_question` は preflight に使わない (Devin 調査セッション起動で分単位の遅延を招く)
    - wiki 構造が返る → `${DEVIN_COVERAGE}=covered`
    - "Repository not found" / error / 空 → `${DEVIN_COVERAGE}=none` (リトライ・別ツール再確認をしない)
 
@@ -98,7 +104,7 @@ MECEは「何に対して漏れがないか」を検証するプロセスです�
 - BB dispatch prompt に「Devin 未収録のため Phase 0 (wiki 調査) をスキップし `[Devin未使用]` で進める」と明記し、BB の重複 probe を防ぐ
 
 **0-5 Step 0 保持変数** (Step 1 以降の dispatch prompt にそのまま埋め込む):
-`${PLAN_CONTENT}` / `${ANALYSIS_PATH}` / `${ENUMERATED_AC}` / `${REPO_NAME}` / `${RELATED_REPOS}` / `${GITHUB_ORG}` / `${DEVIN_COVERAGE}`
+`${PLAN_CONTENT}` / `${ANALYSIS_PATH}` / `${ENUMERATED_AC}` / `${REPO_NAME}` / `${CODE_ROOT}` / `${RELATED_REPOS}` / `${GITHUB_ORG}` / `${DEVIN_COVERAGE}`
 
 ### Step 1: 並列 Analyst 起動
 
@@ -112,7 +118,10 @@ MECEは「何に対して漏れがないか」を検証するプロセスです�
 
 ### Step 2: Fresh Red Team 起動
 
-**⚠️ Red Team の入力に plan 本文 / AC 本文を含めない** (真の freshness 確保)。main agent は dispatch 前に `${BB_RESULT}` / `${WB_RESULT}` から findings + AC 判定の JSONL ブロックのみを抽出して `${BB_JSONL}` / `${WB_JSONL}` を生成し (`${WIKI_RESULT}` は Markdown のまま渡す)、Red Team を dispatch する。**抽出の正規表現・2 ブロック連結手順・抽出失敗時のリカバリ・dispatch prompt template は [references/dispatch-prompts.md](references/dispatch-prompts.md)** の Step 2 節 (SSOT)。**二重用途**: BB / WB の元 Markdown 全文は main agent 側で別途保持 (Step 3-3 で `<details>` 埋め込み用)。**2-2 結果受信**: `${RED_TEAM_RESULT}`。**Task ツールが利用不可な場合**: Red Team subagent を dispatch できないため [references/synthesis-and-errors.md](references/synthesis-and-errors.md) の「Red Team subagent 失敗」節のフォールバックに従う。
+- **⚠️ Red Team の入力に plan 本文 / AC 本文を含めない** (真の freshness 確保)
+- main agent は dispatch 前に `${BB_RESULT}` / `${WB_RESULT}` から findings + AC 判定の JSONL ブロックのみを抽出して `${BB_JSONL}` / `${WB_JSONL}` を生成する (`${WIKI_RESULT}` は Markdown のまま渡す)。抽出の正規表現・2 ブロック連結手順・抽出失敗時のリカバリ・dispatch prompt template は [references/dispatch-prompts.md](references/dispatch-prompts.md) の Step 2 節 (SSOT)
+- **二重用途**: BB / WB の元 Markdown 全文は main agent 側で別途保持する (Step 3-3 で `<details>` 埋め込み用)
+- **2-2 結果受信**: `${RED_TEAM_RESULT}`。**Task ツールが利用不可な場合**は Red Team subagent を dispatch できないため [references/synthesis-and-errors.md](references/synthesis-and-errors.md) の「Red Team subagent 失敗」節のフォールバックに従う
 
 ### Step 3: 出力
 
@@ -122,9 +131,9 @@ MECEは「何に対して漏れがないか」を検証するプロセスです�
 - **3-2** AC ブラッシュアップ (`[MECE追加]` / `[MECE追加 変更]` タグ、補足は無タグ)
 - **3-3** MECE 分析結果セクションを分析ファイル末尾に追記 ([references/output-format.md](references/output-format.md))
 - **3-4** プランファイル `## 品質検証` に 1 行追記:
-  `- MECE判定: [OK or 要修正（Critical N件）] / ACカバレッジ [N]/[M] (うち[MECE追加] [X]件) / 漏れ [Y]件 / 重複 [Z]件 → [分析ファイル名]`
+  `- MECE判定: [OK (Critical: 0) or 要修正（Critical N件）] / ACカバレッジ [N]/[M] (うち[MECE追加] [X]件) / 漏れ [Y]件 / 重複 [Z]件 → [分析ファイル名]`
 
-Red Team 出力の Markdown 部に「判定不能 (Unknown)」がある場合: 3-3 の MECE 分析結果セクションに理由ごと転記し、3-4 の 1 行サマリー末尾に ` / 判定不能 [U]件` を付ける (受け皿が無いと棄権項目が黙って落ち、誤った「MECE OK」になるため。0 件なら転記・付記とも省略)。
+Red Team 出力の Markdown 部に「判定不能 (Unknown)」がある場合: 3-3 の MECE 分析結果セクションに理由ごと転記し、3-4 の 1 行サマリーの `→ [分析ファイル名]` の直前に ` / 判定不能 [U]件` を挿入する (受け皿が無いと棄権項目が黙って落ち、誤った「MECE OK」になるため。0 件なら転記・付記とも省略)。
 
 各 step の合成ロジック・タグ判定・「補足」と「書き換え」の境界は [references/synthesis-and-errors.md](references/synthesis-and-errors.md)。
 

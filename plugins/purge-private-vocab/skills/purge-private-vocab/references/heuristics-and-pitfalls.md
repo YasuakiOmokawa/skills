@@ -12,6 +12,7 @@ target 文書から以下のパターンを候補としてリストアップ:
 | 強調された (`**...**` / 「...」) 専門フレーズ | `**Single Switch**`, `「Provider 内吸収型」` | 強調された codebase 識別子、見出し用の強調 |
 | アルファベットラベル + 数字: `[A-Z]+-[0-9a-z]+` | `Critical-A`, `AC-12`, `α 層` 番号 | `XPROJ-663` (Jira ID)、`AUTH-203` (Jira ID)、`PR4-a` 等 (target 内で全展開済なら OK) |
 | ギリシャ文字 + 「層/相」: `[α-ω]\s*層` | `α 層`, `β 層`, `γ 層` | 数学/物理文脈の正当な α/β 層 |
+| 方式候補ラベル: `案[[:space:]]*[A-Z0-9]+` | `案 D`, `案 A-2` | (基本 false positive なし) |
 | section anchor: `§...` | `§設計詳細`, `§Single Switch` | (基本 false positive なし、target 内に該当 section があれば OK) |
 | フェーズ分類用語 | `rollout enabler`, `enabler` | `kill switch` (英語圏で確立済)、`feature flag` 等 |
 | 数字 + 「象限/層」 | `4 象限`, `3 層` (文中で各要素が説明されていない場合) | OSI 7 層など公知の分類 |
@@ -29,6 +30,9 @@ grep -oE '§[^ ,。、）]+' <target>
 
 # アルファベット + 番号ラベル (suffix は大文字も拾う: Critical-A / Critical-D 等)
 grep -oE '[A-Z][A-Za-z]*-[0-9A-Za-z]+' <target>
+
+# 方式候補ラベル (案 A / 案 D 等)
+grep -oE '案[[:space:]]*[A-Z0-9]+' <target>
 ```
 
 ## Common Mistakes
@@ -49,7 +53,7 @@ grep -oE '[A-Z][A-Za-z]*-[0-9A-Za-z]+' <target>
 
 **症状**: `§設計詳細` を機械削除。直前の「§設計詳細 を参照」が「を参照」だけ残り文として壊れる。
 
-**修正**: 番号ラベル / anchor を削除する場合は**文単位で再構成**する。参照元が target に無いなら、参照先の要点を 1 文でインライン化するか、文ごと削除。
+**修正**: 番号ラベル / anchor を削除する場合は**文単位で再構成**する。参照先が target に無いなら、その要点が target 内の他箇所で既に担保されていれば文ごと削除、担保されていなければ要点を 1 文でインライン化する。
 
 ### ❌ source plan を未収集のまま target だけ点検
 

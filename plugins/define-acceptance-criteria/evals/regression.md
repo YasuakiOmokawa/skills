@@ -7,15 +7,16 @@ fresh executor (blank slate, Task dispatch) で下記シナリオを再実行し
 
 ## シナリオ: standard tier / 複数主種別 (api_change + service_change)
 
-plan mode (git 未着手) の plan: CSV エクスポート API (GET /api/exports/users.csv) に列 1 つ追加、変更ファイル予定 = controller + service + spec、「認可は既存のまま変更しない」。分析ファイル全文と `## 品質検証` サマリーをインラインで出させる。
+plan mode (git 実行不能) の委譲実行。事前準備: run dir に `plan-csv-export.md` を作成する — CSV エクスポート API (`GET /api/exports/users.csv`) に列 1 つ追加、変更ファイル予定 = controller + service + spec を明記し、本文に「認可は既存のまま変更しない (管理者のみ閲覧可の既存 policy を流用)」と書く。分析ファイルとプラン末尾サマリーは run dir に実ファイルとして書かせ、conductor が実ファイルで突き合わせる (self-report だけで採点しない)。
 
 ### Requirements checklist
-1. [critical] 必須セクション構成 (## 受け入れ条件 / ### 正常系 / 異常系 / エッジケース / 非影響確認) と AC 行頭 `- [ ] <controlled label>:` を遵守
+1. [critical] 分析ファイルが作成され、必須セクション (`## 受け入れ条件` / `### 正常系` / `### 異常系` / `### エッジケース` / `### 非影響確認`) が揃い、必須 3 カテゴリの AC 行がすべて `- [ ] <controlled label>: ...` 形式 (非影響確認は label 不要)
 2. [critical] tier = standard、主軸 3 軸 × 必須 3 カテゴリ = 9 セル全充填
-3. 複数主種別のため deterministic classifier + ドロップ規則を使い根拠を `### 検討観点` に明記。既存認可 (存在するが不変) のドロップ時は非影響確認に regression 1 行
-4. 技術リスク 3 件 (3 点セット、各 1 文、検証はコマンド入り)
-5. `## 品質検証` の M 算出が実カウントと一致
-6. `### Tier` 行を分析ファイル冒頭に記録
+3. 複数主種別のため主軸確定手順 (候補プール → 除外 → 優先度列 → 採用) を適用し、根拠を `### 検討観点` に明記
+4. 既存認可 (存在するが不変) を主軸から外した場合、非影響確認に認可の regression 1 行が残る
+5. 技術リスク 3 件 (3 点セット、散文は各 1 文、検証はコマンド入り)
+6. `### Tier` 見出しの次行に判定結果と理由が独立 1 行 (見出し行に結合しない)
+7. `## 品質検証` の M 算出が実 AC 行数と一致
 
 ## シナリオ: 委譲実行 A (プランファイル明示、分析ファイル無しからの AC 定義委譲)
 
@@ -103,4 +104,57 @@ Task dispatch で以下の委譲プロンプトを与える (`$RUN` は毎回新
 
 **申し送り (本 slim の対象外・既存の capability 課題)**: Iter2 のリファクタ executor が「deterministic classifier の『各 type 最も中心的な 1 label』を厳守すると 2 主種別で 2 軸しか出ず、standard = 3 軸に 1 本足りない。3 本目の補充規則が明示されていない」と指摘。これは退避前から存在する記述上のギャップ (selection-rules.md の「複数種別該当時は union を 3-5 に絞る」で実質補えるが、classifier の 1-per-type 表現と併読しないと解消しない) で、slim が新たに生んだものではなく、[critical] 不合格にもつながっていない。閉じるには補充規則の新設 = 挙動変更が必要なため本スリム化 PR の対象外とし、capability 改善として別途検討する。
 
+収束記録: 2026-07-25 (Opus 5 / Fable 5 向け最適化)。上記シナリオ 1 (CSV エクスポート) / シナリオ 3 (薄いプラン) を median + edge として round 1-5 を fresh executor で実行し、**全 11 executor 走行で全 [critical] ○ / accuracy 100% / 成果物を実ファイルで突き合わせ済み**。hold-out (リファクタ、シナリオ 4) は round 4 で accuracy 100% (過学習なし)。steps 11-14 / duration 252-308s で rounds 3-5 は閾値内。Iter 0 で description が技術リスクとプラン末尾サマリーを謳っていない gap、Quick start の「auth 文脈の role 更新を 3 主軸」= 強制 deep 規則との矛盾、Step 4 の「リスク 3 件固定」= tier 表 (lite 0-1 / deep 3-5) との矛盾を修正。iter 2-4 で観測された不明点 (observability の N カウント / `### Tier` 直後の空行可否 / `(仕様確定要)` のリテラル性 / 推定入力時の tier 規則 / M 実数表記の分岐後の完成形 / 異常系定型の適用範囲) を明示化し、**output-template.md の例示見出し `### エッジケース (境界値チェックリストより)` を bare 見出しへ修正** (mece-plan-review の契約表は完全一致を要求し、suffix 付きは `カテゴリ:不明` へ劣化する経路が実在。round 1-2 の executor は実際に suffix 付きで書き出していた)。iter 5 では新規不明点が「規則同士の衝突」に集中したためパッチを止め、selection-rules.md の主軸確定を **候補プール → 除外 → 優先度列 → 採用 → 外した関心の regression** の 1 手順へ構造統合 (増やす方向と減らす方向で同じ優先度列を使う形にし、リファクタ文脈で「不変」根拠が全軸を消す衝突も閉じた)。
+
+**申し送り (未クローズ・capability 改善として別扱い)**:
+- 「そのカテゴリに実観測点が構造的に存在しないセル」(read-only エンドポイントの `compat` / `caller` 軸の異常系など) の代替書式が未定義。round 2 / 3 / 5 の executor が同じ趣旨を指摘し、いずれも framework 例外を発明して埋めた ([critical] 不合格には至っていない)。閉じるには「セル単位の代替書式」= 挙動追加が必要なため本 PR の対象外。
+- 「0 新規不明点 2 ラウンド連続」は最後まで成立しなかった (新規不明点は 7 → 9 → 6 → 8 → 6 と減らず、内容は毎回異なる周辺境界ケース)。accuracy は全ラウンド 100% で飽和し steps / duration も閾値内のため、方法論の resource cutoff で打ち切った。Opus 5 / Fable 5 は規則の穴を必ず 1 つは見つけて報告するため、この残差は defect ではなく密度の高い規則系の性質として扱う。
+- selection-rules.md 手順 3(b) の「type をまたぐ比較も表の行順」の 1 句は **最終ラウンド後に追加**したため fresh executor 未検証 (round 5 の executor 2 名が独立に同じ解決 = ファイル全体の行順を選んだのを成文化したもの)。次回 regression 実行時に確認する。
+
+収束記録: 2026-07-25 (残作業検証 / 修正 diff 0 / **収束確定**)。上記 2026-07-25 申し送りの残作業 1・2 を hold-out C (振る舞い不変リファクタ) の fresh executor 1 走行で検証し、checklist 5 項目すべて ○ / accuracy 100% (tool_uses 11 / duration 278s / retry 0 = rounds 3-5 の閾値内)。成果物は実ファイル 2 件 (分析ファイル + プラン末尾サマリー) を conductor が Read で突き合わせた。**残作業 1 (iter 5 の主軸確定 1 手順化を C で再走)**: リファクタ文脈でも主軸は全滅せず、手順 2 の除外範囲 (「変更対象レイヤーが触れない横断機能だけ」) が意図どおり効いて `permission` のみドロップ → 手順 5 の regression 1 行が非影響確認に残った。主軸 3 軸 (`req_form` / `caller` / `compat`) は維持。**残作業 2 (手順 3(b) の type をまたぐ行順)**: (a) で api_change から `req_form`・service_change から `caller` を採った後、残候補 `compat` (api_change 行) と `error_prop` (service_change 行) を **type をまたいで表の行順で比較**し `compat` を採用、`error_prop` を枠外ドロップして異常系 caller セルで代替回収。停止・確認待ちなし。rounds 4・5 の全 [critical] ○ + 本走行をもって収束確定とする (「新規不明点 0 が 2 連続」は成立せず = 申し送りどおり resource cutoff を踏襲。本走行の新規不明点 5 件も周辺境界ケースで、うち最有力は「1 つの type 内で複数 label がいずれも plan 明示関心のときのタイブレーク未定義」— executor は 3(b) と同じ解決 (表の行順) を自力で選び [critical] に影響なし。**追加ではなく統合で応じる**方針のため本走行の修正 diff は 0)。
+
 収束記録: 2026-07-18 (regression 再検証 / 修正 diff 0)。上記 4 シナリオを fresh executor (blank slate, Task dispatch) で 1 ラウンド再実行し、全シナリオで全 [critical] ○ / accuracy ~100% (○ のみ、partial/× なし)。tool_uses 7-11 / duration 256-315s。書き出された分析ファイル 3 件 (委譲 A / B / リファクタ) を実ファイル Read で突き合わせ、self-report と一致することを確認 (必須セクション構成・controlled label 行頭・全セル充填・Tier 冒頭記録・M 算出一致をすべて実検証)。過去の収束記録が直前ラウンドのクリアとして先行するため 2 連続クリアが成立し収束確定。新規不明点 0 — executor が挙げた不明点は (a) eval scaffolding 由来 (シナリオ 1 の plan パス未提示)、(b) 意図どおりの domain-thin 処理 (薄いプランの変更ファイル推定・データ取得経路不明を技術リスク + `(仕様確定要)` へ正しくルーティング)、(c) 上記 2026-07-17 申し送りの既知 gap (複数主種別で classifier が tier 軸数未満の主軸しか出さない件) のいずれかに分類され、いずれも新規ではない。(c) はシナリオ 2 (委譲 A) と 4 (リファクタ) で再度表面化したが、両 executor とも Gotcha「type ごと均等配分不要」を根拠に api_change の 2 本目 label (`compat`) を採って正しく 3 軸を確定し、[critical] 不合格には至っていない。既知 gap の解消は挙動変更を要するため引き続き capability 改善として別扱いとし、本ラウンドの skill 修正 diff は 0。
+
+---
+
+# tuning 進行状態 (2026-07-25 / Opus 5・Fable 5 向け最適化)
+
+セッションの subagent spawn 上限 (200) 到達で打ち切ったため、再開に必要な状態をここに残す。**skill 側の修正は完了・全ラウンド合格済み**で、残っているのは下記「残作業」の検証のみ。
+
+## このラウンドで使った凍結シナリオ (fixture は session scratchpad にあり消滅するため内容を記録)
+
+いずれも **委譲実行** (Task dispatch)。run dir は git 管理外に毎回新規作成し、executor には run dir 配下のみ書き込みを許可、リポジトリは Read のみ、`gh` / 外部 MCP / push を禁止する。成果物は self-report ではなく **conductor が実ファイルを Read / grep して採点**する。
+
+- **A (median)** = 上記「standard tier / 複数主種別」シナリオ。fixture `plan-csv-export.md`: ユーザー CSV エクスポート API (`GET /api/exports/users.csv`) の出力に `last_signed_in_at` 列を末尾追加。列順は既存 6 列を動かさない (既存取り込みスクリプト保護)、値は既存 `created_at` と同じ JST 書式、**「認可は既存のまま変更しない (管理者のみ閲覧可の既存 policy を流用)」を明記**。変更ファイル予定 = `app/controllers/api/exports_controller.rb` / `app/services/exports/user_csv_builder.rb` / `spec/requests/api/exports_spec.rb`。未確定事項として nil 時の出力 (空文字 or `-`) を残す。対象コードベースは環境に不在 = git 抽出不能。checklist は同シナリオの 7 項目 ([critical] は 1, 2)。
+- **B (edge)** = 上記「委譲実行 B」シナリオ。fixture `plan-thin.md`: 「検索のもっさり感を改善する」— 背景は「検索が重い」の社内声のみ、やることは「検索まわりの動作を良くする」「待たされないように」、メモに「まだどこを直すかは決めていない」。**変更ファイルへの言及ゼロ**。checklist は同シナリオの 5 項目に次の 1 項目を加えた 6 項目で運用した: 「プランファイル末尾 `## 品質検証` に 1 行サマリー追記」「最終メッセージに分析ファイル絶対パス・Tier・M 値」([critical] は 1, 2)。
+- **C (hold-out)** = 上記「振る舞い不変のリファクタ」シナリオ。fixture `plan-ranking-refactor.md`: `GET /api/search/ranking` のランキング算出ロジック (controller のプライベートメソッド 4 つ・約 120 行) を `app/services/search/ranking_calculator.rb` へ抽出。**入出力仕様・並び順・HTTP status・エラー挙動 (不正 `period` は 400 / 未ログインは 401) をすべて維持**、spec は期待値変更なし。同点タイブレークが id 昇順だが意図か不明とメモ。checklist は同シナリオの 5 項目 ([critical] は 1, 2)。
+
+## ラウンド別結果 (fresh executor / 全走行で全 [critical] ○ / accuracy 100%)
+
+| Round | 適用した修正テーマ | A steps/dur/retry | B steps/dur/retry | C steps/dur/retry | 新規不明点 |
+|---|---|---|---|---|---|
+| 1 | baseline (Iter 0 + 最適化パス後) | 12 / 260s / 1 | 18 / 300s / 1 | — | 7 |
+| 2 | 数量・マーカー contract の一意化 (5 件) | 11 / 308s / 0 | 12 / 297s / 1 | — | 9 |
+| 3 | 分岐・例外経路を完成形で閉じる (6 件) | 11 / 260s / 2 | 12 / 253s / 1 | — | 6 |
+| 4 | 規則の適用範囲・両面・入力参照を閉じる (5 件) | 14 / 261s / 1 | 13 / 274s / 1 | **12 / 270s / 1 (100%)** | 8 |
+| 5 | selection-rules.md の主軸確定を 1 手順へ構造統合 | 11 / 253s / 2 | 12 / 253s / 1 | dispatch 不可 (上限到達) | 6 |
+| 6 | 修正なし (残作業 1・2 の検証のみ) | — | — | **11 / 278s / 0 (100%)** | 5 |
+
+weak phase は全 11 走行で `Trace: all OK` (Understanding / Planning / Execution / Formatting のいずれも stuck なし)。
+
+## 失敗パターン台帳 (最終状態)
+
+| パターン | 代表 Issue | General Fix Rule | Seen in | 状態 |
+|---|---|---|---|---|
+| undefined-boundary-case delegation | classifier の 1-per-type で 2 主種別 → 2 軸、standard 3 軸に 1 足りず補充規則がない | 数量制約と構造制約を併記する指示では、衝突時の優先順・不足時の埋め方・過剰時の削り方を対で書く | iter 1-5 (表層は毎回異なる) | 個別事例は都度クローズ。クラスとしては残存 |
+| branch-output-partial-form | M 実数表記に切り替えたとき簡略式の他要素 (`<N>観点×...`) の去就が不明 | 出力形式に分岐があるときは各分岐の完成した 1 行を並記する | iter 2 | **closed** (iter 3 修正 → round 4/5 で再発なし) |
+| one-directional-selection-rule | ドロップ規則が「残す」側だけを規定し、補充規則は行順だけで plan 明示関心が効かない | 軸集合を決める規則は増やす方向・減らす方向で同一の優先度列を参照させる | iter 3, 4 | **closed** (iter 5 で構造統合)。type 次元の tie-break のみ未検証 |
+| structurally-absent-cell | read-only GET の `compat` / `caller` 軸の異常系に置くエラー条件がなく framework 例外を発明して埋めた | セル単位の代替書式を 1 つ定義する (軸単位のドロップ規則では拾えない) | iter 2, 3, 5 (**3 回以上**) | **未クローズ** — 挙動追加を要するため申し送り |
+| template-example-vs-canonical-divergence | output-template.md 本文の例示が `### エッジケース (境界値チェックリストより)`、規約リストと contract 表は bare | 下流が文字列一致で拾う見出しは規約リスト側を canonical とし、例示はそこから転記する | iter 2 | **closed** (iter 3 修正 → round 4/5 の成果物が bare であることを実ファイル確認) |
+| shared-file-unconsumed-step | init-common.md のリポジトリ名取得は mece-plan-review 用でこの skill に消費先がない | 共有初期化ファイルの各手順は消費先を明記し、消費先のない skill では省略可と宣言する | iter 1 | **closed** (SKILL.md 側に「省略可」明記。cross-plugin sync 義務のため共有ファイルは不変) |
+
+## 残作業 (2026-07-25 の round 6 で全件クローズ済み — 収束確定)
+
+1. ~~**hold-out C を iter 5 後の SKILL.md で 1 回再走**する~~ → **完了** (round 6 / accuracy 100%)。リファクタ文脈で主軸は全滅せず、除外は `permission` の 1 軸のみ + 非影響確認に regression 1 行。
+2. ~~**selection-rules.md 手順 3(b) の「type をまたぐ比較も perspectives.md の表の行順で決める」1 句は fresh executor 未検証**~~ → **完了** (round 6)。`compat` (api_change 行) と `error_prop` (service_change 行) の type をまたぐ比較を行順で解決し停止なし。
+3. rounds 4・5 の全 [critical] ○ + round 6 の hold-out 100% をもって**収束確定**。**「新規不明点 0 が 2 連続」は本ラウンドでは成立しておらず** (7→9→6→8→6)、内容は毎回異なる周辺境界ケース・品質面の失敗ゼロ・accuracy 100% 飽和・steps/duration 閾値内であることを根拠に方法論の resource cutoff で打ち切った判断を踏襲する。次回も 0 を狙って規則を足し続けると iter 2-4 で観測したとおり「足した規則同士の衝突」が次の不明点を生むため、**追加ではなく統合で応じる**こと。

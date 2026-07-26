@@ -123,3 +123,5 @@ user.rb (Critical, 認可/entitlement chain) → escalated。Critical/Major が�
 
 S4 (orchestrated) は新契約へ書き換え済みだが fresh executor 収束記録はまだ無い (上記「未収束マーク」)。
 `python3 scripts/validate_skills.py` pass。
+
+記録: 2026-07-25 (opus5/fable5 静的最適化パス)。Iter 0 (description/body 整合) gap なし。ルーブリック走査の結果、無変更と判定: finder 段 (analyzer agents) は検出専任で重大度フィルタは統合段のみ (coverage-first 構造準拠)、重複は SSOT ポインタ方式で解消済み、強調は契約行のみ、自己検証足場なし。「最低 3 件」の件数ルール (references/execution.md) は強モデルでは指摘の水増し圧になりうる懸念があるが、escape hatch が既存であり empirical 検証なしの変更は見送り (次回 tuning の検証候補として申し送り)。empirical 検証は session の subagent dispatch 上限到達のためスキップ (利用者承認済みの縮小完了)。
