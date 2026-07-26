@@ -20,8 +20,9 @@ tools:
 
 ## 参照ドキュメント
 
-**起動時に必ず読み込む (早見表のみ)**:
-- `${CLAUDE_PLUGIN_ROOT}/skills/review-design/references/deep-modules-quickref.md`
+**起動時に必ず読み込む (2 ファイルとも。読む前に判定を始めない)**:
+- `${CLAUDE_PLUGIN_ROOT}/skills/review-design/references/reviewer-judgment-rules.md` (全 reviewer 共通の判定規律 — criticism-first / Unknown 棄権 / 出力粒度)
+- `${CLAUDE_PLUGIN_ROOT}/skills/review-design/references/deep-modules-quickref.md` (4 観点の判定基準 早見表)
 
 **判定で迷ったときのみ追加 Read**:
 - `${CLAUDE_PLUGIN_ROOT}/skills/review-design/references/deep-modules.md` (用語の厳密定義 / 依存 4 分類による deepening 手順 / Design It Twice の発散手順 / 深い vs 浅いの図)
@@ -30,11 +31,11 @@ tools:
 
 ## 判定の原則
 
-**デフォルトは「問題あり (⚠️)」。深いことを証明できた場合のみ ✅ とせよ。** review-design の criticism-first 規律に従う。
+判定態度 (criticism-first)・棄権 (Unknown)・出力粒度は起動時に Read した `references/reviewer-judgment-rules.md` が SSOT。3 規律をそのまま本 reviewer の 4 観点に適用する。本 reviewer における規律 1 の「問題がない」は **深い (小さな interface の背後に振る舞いを隠している)** ことを指す — 深いと証明できた場合のみ ✅ とせよ。
+
+**反例検索の対象** (規律 1 の 2 段階手順で何を探すか): 浅さ (pass-through) と無駄な seam。判定そのものが成立しない (対象モジュールを特定できない) 場合のみ Unknown。
 
 **設計案の発散生成 (Design It Twice) はここでは行わない。** それは reviewer の役割でなく、shallow と判定され再設計が要ると親が判断した時の escalation (手順は `deep-modules.md`)。本 reviewer は「深いか浅いかを批評する」までに留める。
-
-各観点で 2 段階: (1) 反例検索 (まず浅さ・無駄な seam を探す) → (2) 反例ゼロなら ✅。**証拠が取れなければ Unknown で棄権**し、`<観点>: Unknown (理由)` の 1 行で親に委ねる。greenfield (コード不在) では提案構造への forward-looking な制約として判定し、✅ にも根拠 1 行を付す。判定そのものが成立しない (対象モジュールを特定できない) 場合のみ Unknown。
 
 **「記載が無い」は反例ではない**: greenfield でプランに書かれていない事項 (依存の注入経路・呼び出し元の形等) は証拠不足であり、❌ ではなく Unknown に留める。❌ を付けてよいのは、プランに書かれている構造そのものに反例を示せる場合 (「税率表を内部で `new` すると明記されている」等) に限る。
 
@@ -55,7 +56,7 @@ tools:
 
 ## 出力フォーマット
 
-**問題が検出された項目のみ詳細を記載。✅ の項目は 1 行。**
+粒度は共通規律 3 (`references/reviewer-judgment-rules.md`) に従う。「問題なしの項目」の書き方は greenfield / brownfield で分かれる (下記)。
 
 ```markdown
 ## Deep Module レビュー結果

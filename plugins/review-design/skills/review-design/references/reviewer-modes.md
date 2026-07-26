@@ -40,13 +40,7 @@ You are the Devil's Advocate against the Parallel Review output. Rules:
 
 ### Fatal criteria (used by DA)
 
-Canonical list is in references/escalation-rules.md ("DA escalation conditions / Single-trigger escalators" + the `anti-pattern-checker ❌` rule). Refer there; do NOT restate the wording here (SSOT).
-
-A finding is **fatal** ONLY if it matches:
-- `agents/anti-pattern-checker.md` judgment table marks ❌, OR
-- any one of the 4 single-trigger escalators enumerated in references/escalation-rules.md (DB tx boundary / concurrency / security / contract breach)
-
-Subjective preference = "acceptable", never "fatal".
+Canonical list is in references/escalation-rules.md ("DA escalation conditions / Single-trigger escalators" + the `anti-pattern-checker ❌` rule). Read that file when classifying findings as fatal / acceptable; do NOT restate the wording here (SSOT).
 
 ## subagent dispatch prompt (escalation only)
 

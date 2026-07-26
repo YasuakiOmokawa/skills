@@ -1,4 +1,5 @@
 # regression eval (empirical-prompt-tuning 収束時保存)
+再実行記録: 2026-07-26 (v1.25.0 PR / Claude 5 世代ガイドライン適合)。automation モードのラウンド 2 以降を「検証対象 QA-ID」入力による差分絞り込みへ統一 (ui-evaluator の「毎回全項目検証」規定と SKILL.md Step 4 絞り込みの矛盾を解消、automation-mode.md テンプレートに入力欄を配線)。Step 6 exit-1 の正準見出し「## UI QA 部分完了 (人間確認事項あり) または未完了」の転記を SKILL.md に明文化 (bash echo のみだった SSOT ギャップ)。全 12 シナリオを fresh executor で再実行、Step 6 編集を通る S4/S5/S7 は修正後ツリーで再実行し全 [critical] ○ (S5 は見出し明文化前 ×2/2 → 後 ○2/2)。絞り込みにより PASS 済み項目のリグレッション検出が evaluator の計画外差異報告頼みになるトレードオフを記録 — 実測で問題が出たら automation のみ全項目再検証へ戻す選択肢あり。
 
 収束記録: 2026-06-12 (v3.28.0 PR)。Iter1-3 で fresh executor が全 [critical] ○ / accuracy 100% / retries 0。
 用途: **regression 検出器** (capability 改善の信号としては使わない)。本 skill を変更する PR では

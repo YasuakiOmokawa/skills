@@ -1,4 +1,5 @@
 # regression eval (empirical-prompt-tuning 収束時保存)
+再実行記録: 2026-07-26 (v1.31.0 PR / Claude 5 世代ガイドライン適合)。agents↔references の検出基準重複を references 側へ SSOT 統合し、references の汎用 ❌/✅ 例・ASCII 図を検出基準文へ畳み込み (net -229 行)。S1/S2/S3 を fresh executor で再実行し全 [critical] ○。references にのみ残る基準 (スタンプ結合の同一クラス除外・デメテルの AR クエリビルダー除外・手順的凝集等) の適用を 3 シナリオで直接確認、見落とし 0。S2 で renewal_job を判定表の括弧書き (課金ミューテーション→Critical) 準拠で Major→Critical 昇格する解釈揺れを観測 — 深刻度規定の一本化を次回 tuning 候補として申し送り。
 
 用途: **regression 検出器** (capability 改善の信号としては使わない)。本 skill を変更する PR では
 fresh executor (blank slate) で下記シナリオを再実行し、全 [critical] PASS を確認してから merge する。

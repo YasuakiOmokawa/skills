@@ -1,4 +1,5 @@
 # regression eval (empirical-prompt-tuning 収束時保存)
+再実行記録: 2026-07-26 (v0.29.0 PR / Claude 5 世代ガイドライン適合)。selection-rules.md の flat 規定「下限 3 / 上限 5」(lite=1 軸と矛盾) を SKILL.md の Quantitative scaffolding 表 (canonical) への委譲に修正し、6 軸実効上限・「3-5 個」表現も tier 語彙へ統一。merge-gate 4 シナリオ + lite/deep 追加 probe を fresh executor で再実行し全 [critical] ○ (lite 1 軸 / standard 3 軸 / deep 5 軸+obs の 3 点すべてで canonical 表への解決を実証、旧 flat 規則を引いた executor 0)。
 
 収束記録: 2026-06-12 (v3.28.0 PR)。Iter1-3 で fresh executor が全 [critical] ○ / accuracy 100% / retries 0。
 用途: **regression 検出器** (capability 改善の信号としては使わない)。本 skill を変更する PR では

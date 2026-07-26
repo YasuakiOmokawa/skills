@@ -1,4 +1,5 @@
 # regression eval (empirical-prompt-tuning 収束時保存)
+再実行記録: 2026-07-26 (v1.30.0 PR / Claude 5 世代ガイドライン適合)。5 reviewer に逐語複製されていた判定規律 3 件 (criticism-first / Unknown 棄権 / 出力粒度) を references/reviewer-judgment-rules.md へ集約し、reviewer-modes.md の fatal 再掲リストを削除 (escalation-rules.md の SSOT ポインタのみ残置)。greenfield / deep-module a・b・c / matrix routing / PoC 経由 grounding A を fresh executor で再実行し [critical] 15/15 ○。新共有ファイルの Read を 6/6 で確認、2026-07-06 の「記載なし事項の ❌ 断定」regression 再発なし。§9 の ❌ 経路は未再実行 (差分が判定規律と fatal 分類に閉じるため S5/S6 の全実行で代替被覆と判断)。
 
 収束記録: 2026-06-12 (v3.28.0 PR)。Iter1-3 で fresh executor が全 [critical] ○ / accuracy 100% / retries 0。
 再実行記録: 2026-07-06 (v1.20.0 PR)。deep-module サブケース b が「記載なし事項の ❌ 断定 → 総合降格」で × となり、deep-module-reviewer.md へ総合ラベルの集約規則と「記載が無いは反例ではない (Unknown 行き)」を明文化して修正。修正後 deep-module a/b/c + matrix routing (Step 6 保存の checklist 4 込み) 4/4 全 [critical] ○。
