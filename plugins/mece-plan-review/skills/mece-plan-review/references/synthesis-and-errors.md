@@ -49,17 +49,19 @@ Red Team の 4 分類結果から AC 改善点を統合:
 
 `references/output-format.md` のフォーマットに従い、**分析ファイル**末尾に追記。
 
-各ロール分析詳細セクションには 3 つの `<details>` ブロックを置き、`${BB_RESULT}` / `${WB_RESULT}` / `${WIKI_RESULT}` の元 Markdown 全文をそのまま埋め込む。
+「各ロール出力 (JSONL)」セクションには `${BB_JSONL}` / `${WB_JSONL}` のみを `<details>` で格納する。元 Markdown 全文 (Self-report 等) は転記しない (v1.34.0 で廃止 — 分析ファイル肥大とコンテキスト保持コストの主因だったため。詳細は output-format.md)。
 
 ## Step 3-4: プランファイルに 1 行サマリー追記
 
 プランファイルの `## 品質検証` セクションに以下を追記する (セクション無ければ作成):
 
 ```markdown
-- MECE判定: [OK (Critical: 0) or 要修正（Critical N件）] / ACカバレッジ [N]/[M] (うち[MECE追加] [X]件) / 漏れ [Y]件 / 重複 [Z]件 → [分析ファイル名]
+- MECE判定: [OK (Critical: 0) or 要修正（Critical N件）] / Important [I]件 (うちAC反映 [R]件) / ACカバレッジ [N]/[M] (うち[MECE追加] [X]件) / 漏れ [Y]件 / 重複 [Z]件 → [分析ファイル名]
 ```
 
 サマリー値の定義 (SSOT):
+- `I` (Important): 統合 Important 指摘の件数。Red Team 起動時は統合後の件数、standard で Red Team を skip した場合は inline BB/WB の important findings に main agent が Core rule 4 (Critical 決定規則) を適用して確定した件数
+- `R` (AC反映): `I` のうち、Step 3-2 の AC ブラッシュアップで `[MECE追加]` / `[MECE追加 変更]` 操作の起点になった件数 (機械集計: Step 3-2 で操作した AC 行の根拠 finding を数える)。Critical 0 でも AC/プラン修正に至った実価値をサマリーに露出させる列で、体感検出率と実検出の乖離を防ぐ
 - `N`: 充足判定の AC 数 (分子)。`[MECE追加]` 行は BB/WB 判定を経ていないため AC カバレッジ表では **BB / WB / 総合の 3 列すべて「未判定」** と表記し、分子 N には含めない
 - `M`: 元 AC 数 + `[MECE追加]` 件数 (分母)。`[MECE追加]` は分母には入るが追加直後は未判定なので分子 N にはカウントしない
 - `X`: `[MECE追加]` 件数 (M に含まれる内訳)
@@ -77,12 +79,12 @@ Red Team の 4 分類結果から AC 改善点を統合:
 
 ### Devin MCP 利用不可 / カレントリポ未収録 (即時 cutoff)
 
-Step 0-4.5 の preflight (`read_wiki_structure` を 1 回だけ probe、`ask_question` 禁止) で判定:
+Wiki Researcher は opt-in 無しでは元々起動しないため、本 cutoff が効くのは BB の Phase 0 (wiki 読み) と opt-in 時の Wiki Researcher 起動可否。Step 0-4.5 の preflight (`read_wiki_structure` を 1 回だけ probe、`ask_question` 禁止) で判定:
 
 ```
 ToolSearch("+devin") 失敗 OR read_wiki_structure が "Repository not found"/error/空
   → ${DEVIN_COVERAGE}=none
-  → Wiki Researcher を dispatch しない (Step 1 は BB+WB の 2 並列)
+  → Wiki Researcher を dispatch しない (opt-in があっても)
   → ${WIKI_RESULT}="[Devin未使用] ..." を確定、BB は Phase 0 をスキップ
   → BB はローカル仕様 + 一般知識でフォールバック、結果に [Devin未使用] タグ
 ```

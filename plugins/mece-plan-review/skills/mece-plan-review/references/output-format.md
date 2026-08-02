@@ -23,6 +23,7 @@ main agent は BB / WB / Red Team の **JSONLines 出力** をパースし、本
 ### 分析サマリー
 - 分析日時: YYYY-MM-DD
 - 対象リポジトリ: ${REPO_NAME} (関連リポ: ${RELATED_REPOS})
+- 実行メタ: tier=[standard/deep] / dispatch [D]体 / 経過 [T]分 (D = 起動した subagent 数、T = `date +%s` 現在値と `${T_START}` の差を分単位切り上げ。今後の検出率・コスト実測の基礎データ)
 - ACカバレッジ: N/M項目充足
 - 漏れ件数: X (お見合い検出された件数 = 両 Analyst が言及ゼロで Red Team が独自検出)
 - 重複件数: Y (BB ↔ WB が同じ問題を言及した「真の合意」+「補強し合う合意」の合計。プランファイル 1 行サマリーの `重複 [Z]件` と同じ定義 = [synthesis-and-errors.md](synthesis-and-errors.md) の「サマリー値の定義 (SSOT)」)
@@ -88,30 +89,18 @@ main agent は BB / WB / Red Team の **JSONLines 出力** をパースし、本
 | # | 観点 (セキュリティ/パフォーマンス/依存) | 発見事項 | Severity |
 |---|------|---------|---------|
 
-### Red Teamレビューサマリー
+### 各ロール出力 (JSONL)
 <details>
-<summary>Red Team 統合評価レポート全文</summary>
+<summary>BB / WB findings + AC 判定 (JSONL)</summary>
 
-${RED_TEAM_RESULT}
+${BB_JSONL}
 
-</details>
+${WB_JSONL}
 
-### 各ロール分析詳細
-<details>
-<summary>BB Analyst 分析結果</summary>
-${BB_RESULT}
-</details>
-
-<details>
-<summary>WB Analyst 分析結果</summary>
-${WB_RESULT}
-</details>
-
-<details>
-<summary>Wiki Researcher 参考情報</summary>
-${WIKI_RESULT}
 </details>
 ```
+
+**元 Markdown 全文は転記しない (v1.34.0 で廃止)**: BB / WB / Red Team の Markdown 部 (Self-report 等) の `<details>` 全文転記は、分析ファイル肥大と main agent のコンテキスト保持コストの主因だったため廃止した。Red Team の JSONL は上の 4分類クロスリファレンス表・お見合い表・純技術リスク表・Critical/Important 表へ合成済みのため転記せず、Markdown 部から転記するのは「判定不能 (Unknown)」のみ (SKILL.md Step 3)。Wiki Researcher opt-in 時はその箇条書き (事実情報のみで元々短い) を `<details>` で「各ロール出力」に併置してよい。
 
 ## Critical=0の場合（MECE OK）
 
@@ -121,8 +110,9 @@ ${WIKI_RESULT}
 ### 分析サマリー
 - 分析日時: YYYY-MM-DD
 - 対象リポジトリ: ${REPO_NAME} (関連リポ: ${RELATED_REPOS})
+- 実行メタ: tier=[standard/deep] / dispatch [D]体 / 経過 [T]分
 - ACカバレッジ: N/M項目充足
-- 漏れ件数: X
+- 漏れ件数: X (standard で Red Team を skip した場合は `0件 (Red Team skip のため未検出)` と表記)
 - 重複件数: Y
 - 判定: MECE OK
 
@@ -143,8 +133,8 @@ ${WIKI_RESULT}
 
 （Important / Nice-to-have が 0 件の場合はこのテーブル自体を省略してよい）
 
-### 各ロール分析詳細
-（省略可 — 指摘が Important 以下のみの場合、details タグ内に格納）
+### 各ロール出力 (JSONL)
+（`<details>` に BB / WB の findings + AC 判定 JSONL のみ格納。元 Markdown 全文は転記しない）
 ```
 
 ## プランファイルへのサマリー追記
@@ -152,8 +142,10 @@ ${WIKI_RESULT}
 プランファイルの `## 品質検証` セクションに **1 行だけ** 追記する（セクションがなければ作成）:
 
 ```markdown
-- MECE判定: [OK or 要修正（Critical N件）] / ACカバレッジ [N]/[M] (うち[MECE追加] [X]件) / 漏れ [Y]件 / 重複 [Z]件 → [分析ファイル名]
+- MECE判定: [OK or 要修正（Critical N件）] / Important [I]件 (うちAC反映 [R]件) / ACカバレッジ [N]/[M] (うち[MECE追加] [X]件) / 漏れ [Y]件 / 重複 [Z]件 → [分析ファイル名]
 ```
+
+`I` / `R` の定義は [synthesis-and-errors.md](synthesis-and-errors.md) の「サマリー値の定義 (SSOT)」。
 
 ## AC ブラッシュアップの運用ルール
 

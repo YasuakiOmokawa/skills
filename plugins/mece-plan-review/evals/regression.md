@@ -42,9 +42,9 @@ Task 起動プロンプトに「orchestrated モードで実行。escalation は
 
 Task で委譲起動。プランファイル・分析ファイル (AC 定義済み) の両方を渡し、MECE 検証の実行を指示する。
 
-### Requirements checklist
+### Requirements checklist (2026-08-02 v1.34.0 改訂: standard は inline 実行になったため item 2 を読み替え)
 1. [critical] 分析ファイル末尾に MECE 分析結果セクション (Critical/Important/Nice-to-have 分類を含む) が追記されている
-2. [critical] Step 1/Step 2 の nested Task 起動で `${CLAUDE_PLUGIN_ROOT}` が生文字列のまま埋め込まれて Read 失敗が起きた形跡がなく、各 subagent が対応する `agents/*.md` を参照できている
+2. [critical] Step 1 は standard inline で実行し nested Task を dispatch していない。Fresh Red Team を起動した場合のみ、その nested Task で `${CLAUDE_PLUGIN_ROOT}` が生文字列のまま埋め込まれて Read 失敗が起きた形跡がないこと
 3. プランファイルの `## 品質検証` に規定フォーマットの1行が追記されている
 4. プラン本文が書き換えられておらず、finding ID がプラン本文に持ち込まれていない
 5. 最終メッセージに分析ファイルの絶対パスと MECE判定 (OK/要修正) および Critical 件数が含まれている
@@ -76,7 +76,7 @@ Task で委譲起動。プラン内容が認証 (auth) 領域を含むため tie
 
 ---
 
-## シナリオ: lite-mode inline 実行 (AC ≤5 件・非リスク) — 将来検証用、未実行
+## シナリオ: lite-mode inline 実行 (AC ≤5 件・非リスク) — ⚠️ v1.34.0 で失効 (lite tier は standard に統合)。現行版は本ファイル末尾「2026-08-02 v1.34.0 改訂」のシナリオ A を使うこと
 
 lite-mode inline 実行経路 (退避案は見送り、現在は SKILL.md inline 記載のまま) を fresh executor で検証する目的のシナリオ。既存 5 シナリオはいずれも lite 経路を通らないため、この経路は本セッションの検証で未カバーだった。将来 lite-mode 周りを変更する際、または退避案を再提案する際に初回 PASS を確認すること。Task で委譲起動、AC 4 件・非リスク領域 (フロント変更のみ) のプラン + 分析ファイル (`### Tier` = lite) を渡す。
 
@@ -101,7 +101,7 @@ lite-mode inline 実行経路 (退避案は見送り、現在は SKILL.md inline
 
 ---
 
-## シナリオ: lite 判定 (median) / lite→deep 格上げ (hold-out) / auth 強制 deep (edge) — Opus 5 / Fable 5 向けチューニング (2026-07-25)
+## シナリオ: lite 判定 (median) / lite→deep 格上げ (hold-out) / auth 強制 deep (edge) — Opus 5 / Fable 5 向けチューニング (2026-07-25) — ⚠️ チェックリストは v1.34.0 で改訂済み。現行版は本ファイル末尾「2026-08-02 v1.34.0 改訂」を使うこと (fixture 仕様は下記を継続使用)
 
 保存済み 6 シナリオのうち lite 経路と deep 経路を、今回の変更箇所 (lite-mode inline 手順・tier 表 lite 行・0-4.5 preflight・Step 2) に狙って当てるよう作り直した 3 シナリオ。
 チェックリストは凍結済み。**実行は評価意図秘匿 (blind) — executor にチェックリストを渡さない。**
@@ -174,3 +174,44 @@ lite-mode inline 実行経路 (退避案は見送り、現在は SKILL.md inline
 A: ○ 100% (7/7)、tool_uses 16 (Round1 の 19 から改善) / 326s / retries 0。3 修正すべてが実行過程に顕在: (1) agent 定義の事前 Read + Critical 閾値の inline 適用を自己報告で明示 (2) `${REPO_NAME}` 解決不能→probe 省略で外部 MCP 呼び出し 0 (3) lite 維持 + Red Team skip + プラン本文無改変。収束: Round1 A/B/C 全 100% + 修正後 A 再走 100% で実質収束 (修正は全て観測済み正解挙動の成文化であり、B/C 経路の該当修正 (tier 優先順位) も B/C executor の実挙動と同型)。
 
 次回 PR の筆頭修正候補 (lite 経路 2/2 で再発、出力正しさへの影響なし): 「漏れ [Y]件」は lite で構造的に 0 になるため `0件 (Red Team skip のため未検出)` 表記を規定する。他の新規残差 (REPO_NAME の解決不能状態の命名 / enumerate 部分欠落の契約行 / Critical=0 テンプレの見出し DRY / findings 0 件時の空 JSONL 形) は各 1 件・記録のみ。
+
+---
+
+## 2026-08-02 v1.34.0 改訂 — P1-P5 (inline 既定化 / Wiki opt-in / 全文転記廃止 / サマリー強化 / doctor 繰越) 後の現行シナリオ
+
+v1.34.0 の変更: (P1) lite/standard を standard に統合し既定を main agent の inline BB+WB 実行に変更、並列 dispatch は deep のみ。(P2) Wiki Researcher を明示 opt-in 化 (既定非起動)。(P3) 分析ファイルへの元 Markdown 全文 `<details>` 転記を廃止 (JSONL + 合成表のみ)。(P4) 1 行サマリーに `Important [I]件 (うちAC反映 [R]件)` を追加、分析サマリーに実行メタ行を追加。(P5) AC マージ検証節の出力先規定 + M 行 severity 必須フィールド明記。
+
+fixture は 2026-07-25 節の「fixture 仕様 (再作成用)」をそのまま使う (scenA=tooltip / scenB=invoice / scenC=session_reauth)。実行時の必須注意 (checkout 内 SKILL.md を絶対パス指定で Read させる / `~/.claude/skills/` の旧コピーを読ませない) も同節に従う。**実行は評価意図秘匿 (blind) — executor にチェックリストを渡さない。**
+
+### シナリオ A (median, standard inline) requirements checklist
+
+1. [critical] 上流 `### Tier`=lite を standard として読み替え、Step 1 / Step 2 の nested Task を 1 件も dispatch せず BB / WB 2 視点を main agent が inline 実行している (agents/bb・wb-analyst.md を Read し Critical 閾値・出力契約を適用)
+2. [critical] Wiki Researcher と Fresh Red Team を起動せず、Critical 候補 0 のとき「MECE OK / Critical 0」を確定し、漏れ件数を `0件 (Red Team skip のため未検出)` と表記している
+3. [critical] 分析ファイル末尾に MECE 分析結果セクションを追記し、プラン `## 品質検証` に `Important [I]件 (うちAC反映 [R]件)` 列を含む新フォーマット 1 行を追記している
+4. 分析サマリーに実行メタ行 (tier / dispatch 体数 / 経過分) がある
+5. 分析ファイルに BB / WB の元 Markdown 全文 (Self-report 等) の `<details>` 転記が無い (JSONL のみ)
+6. コードが fixture に無いことを AC 不備と混同せず、WB 判定を `言及なし` 既定にして低充足率の理由をコード不可読と明記している
+7. プラン本文が書き換えられておらず、finding ID がプラン本文に持ち込まれていない
+8. 最終メッセージに分析ファイルの絶対パスと MECE判定・Critical 件数が含まれている
+
+### シナリオ B (hold-out, standard→deep 格上げ) requirements checklist
+
+1. [critical] inline BB / WB で Critical 候補 (確定済み明細税額と PDF 側再計算・再丸めの二重丸めによる金額不一致) を検出している
+2. [critical] finding が billing の関与を露呈したため standard 確定を破棄して deep へ格上げし、inline サマリーを残さず格上げ後の出力で上書きしている
+3. [critical] 格上げ後に Step 1 の BB / WB 並列 dispatch と Step 2 Fresh Red Team を実際に実行している (Red Team を skip していない)。Wiki Researcher は opt-in が無いため dispatch していない
+4. 上流分析ファイルの `### Tier`=lite の記録を、自身の格上げ判定より優先させていない
+5. プラン本文が書き換えられておらず、finding ID がプラン本文に持ち込まれていない
+6. プラン 1 行サマリーが新フォーマット (`Important [I]件 (うちAC反映 [R]件)` 列を含む)
+7. 最終メッセージに分析ファイルの絶対パスと MECE判定・Critical 件数が含まれている
+
+### シナリオ C (edge, auth 強制 deep + opt-in なし) requirements checklist
+
+1. [critical] 分析ファイルの `### Tier`=standard の記録より auth 領域を優先して tier=deep と判定し、BB / WB を並列 dispatch し Fresh Red Team を必ず起動している
+2. [critical] Wiki Researcher はユーザー opt-in が無いため (preflight 結果によらず) dispatch せず、BB + WB の 2 並列にしている
+3. [critical] Red Team の dispatch 入力に plan 本文 / AC 本文を含めず、BB / WB の JSONL + `${WIKI_RESULT}` のみを渡している
+4. [critical] nested Task 起動時に `${CLAUDE_PLUGIN_ROOT}` が生文字列のまま埋め込まれて Read 失敗した形跡がなく、各 subagent が対応する `agents/*.md` を参照できている
+5. preflight に `ask_question` を使っていない
+6. hardening 不足のみの指摘を Critical へ昇格させず、「それ単独で害が成立するか」で severity を決めている
+7. 分析ファイルに元 Markdown 全文の `<details>` 転記が無く (JSONL のみ)、分析サマリーに実行メタ行がある
+8. プラン本文無改変 / finding ID 混入なし。プラン 1 行サマリーが新フォーマット
+9. 最終メッセージに分析ファイルの絶対パスと MECE判定・Critical 件数が含まれている
