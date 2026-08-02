@@ -26,7 +26,7 @@ Red Team の統合 Critical / Important / Nice-to-have を **分析ファイル*
 
 Red Team の 4 分類結果から AC 改善点を統合:
 
-- **実装漏れ** (BB ✓ WB —) → 該当 AC を強調 + Critical 指摘。ただし red-team-checklist が「BB が**仕様自体の欠落**を指摘した」ケースを機械分類上 `実装漏れ` に寄せた行 (content にその旨の注記あり) は、強調対象の AC が存在しないため **AC 追加 (`[MECE追加]`) 側で扱う**
+- **実装漏れ** (BB ✓ WB —) → 該当 AC を強調 + Critical 指摘。ただし red-team-checklist が「BB が**仕様自体の欠落**を指摘した」ケースを機械分類上 `実装漏れ` に寄せた行 (content にその旨の注記あり) は、強調対象の AC が存在しないため **AC 追加 (`[MECE追加]`) 側で扱う**。**severity が Critical 未満の実装漏れ**は指摘表 (Important / Nice-to-have) への記録に加え、必要に応じて既存 AC の補足 (無タグ) または `[MECE追加 変更]` で消化する (Critical 指摘・プラン修正推奨の対象にはしない)
 - **仕様漏れ** (BB — WB ✓) → AC 追加 (`[MECE追加]` タグ)
 - **お見合い** (両者言及なし、Red Team 検出) → AC 追加 (`[MECE追加]` タグ)
 
@@ -61,7 +61,7 @@ Red Team の 4 分類結果から AC 改善点を統合:
 
 サマリー値の定義 (SSOT):
 - `I` (Important): 統合 Important 指摘の件数。Red Team 起動時は統合後の件数、standard で Red Team を skip した場合は inline BB/WB の important findings に main agent が Core rule 4 (Critical 決定規則) を適用して確定した件数
-- `R` (AC反映): `I` のうち、Step 3-2 の AC ブラッシュアップで `[MECE追加]` / `[MECE追加 変更]` 操作の起点になった件数 (機械集計: Step 3-2 で操作した AC 行の根拠 finding を数える)。Critical 0 でも AC/プラン修正に至った実価値をサマリーに露出させる列で、体感検出率と実検出の乖離を防ぐ
+- `R` (AC反映): `I` のうち、Step 3-2 の AC ブラッシュアップで `[MECE追加]` / `[MECE追加 変更]` 操作の起点になった件数 (機械集計: Step 3-2 で操作した AC 行の根拠 finding を数える)。無タグ補足のみで消化した finding は R に数えない。Critical 0 でも AC/プラン修正に至った実価値をサマリーに露出させる列で、体感検出率と実検出の乖離を防ぐ
 - `N`: 充足判定の AC 数 (分子)。`[MECE追加]` 行は BB/WB 判定を経ていないため AC カバレッジ表では **BB / WB / 総合の 3 列すべて「未判定」** と表記し、分子 N には含めない
 - `M`: 元 AC 数 + `[MECE追加]` 件数 (分母)。`[MECE追加]` は分母には入るが追加直後は未判定なので分子 N にはカウントしない
 - `X`: `[MECE追加]` 件数 (M に含まれる内訳)。**配置カテゴリ (`### その他（[MECE追加]）` 含む) を問わず全 `[MECE追加]` を数える**。`[MECE追加 変更]` と無タグ補足は既存 AC の書き換え / 補足であり **X に数えない** (M でも元 AC として 1 回のみ)。カバレッジ表では `[MECE追加 変更]` 行は元の総合判定を維持し、変更後スコープが未検証である旨を行内注記する

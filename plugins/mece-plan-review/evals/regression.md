@@ -210,9 +210,11 @@ fixture は 2026-07-25 節の「fixture 仕様 (再作成用)」をそのまま�
 
 **fixture 仕様 (再作成用) — scenB2**: `plan_usage_mail_footer.md` = 月次利用レポートメールのフッターに「今月のご利用合計」を追加表示。値は画面と同じ `StatementSummary.total_for(user)` を**参照**する、メール表示のみで DB 変更なし、と本文に明記 (自己申告としては真正 — 書き手はヘルパーの副作用を知らない想定)。`app/services/statement_summary.rb` は `total_for` 内で利用実績を再集計し `statement_cache` を `update!(total: 再計算値, confirmed: false)` で**上書き**する実装 + 「confirmed: true は請求書発行済みを意味する。上書きすると送付済み請求書と金額がズレる」のコメント付き。`app/mailers/usage_report_mailer.rb` は既存 monthly_report のみ。`analysis.md` の `### Tier` は lite (メールテンプレート 1 ファイル / 表示のみ)、AC 4 件。git repo 外。
 
-1. [critical] Step 0 の tier 判定では standard と判定している (プラン文面はメールフッター表示のみで、金額を算出・永続化する変更をプラン自身は記述しないため。`### Tier`=lite は standard へ読み替え)
-2. [critical] inline WB で Critical 候補 — `StatementSummary.total_for` が表示経路から請求確定キャッシュを再計算値で上書きし confirmed を解除する (送付済み請求書と金額がズレる) — を検出している
-3. [critical] finding が billing の関与を露呈したため standard 確定を破棄して deep へ格上げし、Step 1 の BB / WB 並列 dispatch と Step 2 Fresh Red Team を実際に実行している (inline サマリーを残さず deep 出力で上書き)
+> **2026-08-02 改訂 (経路非依存化)**: 当初の checklist は「Step 0 では standard と判定 → inline WB で検出 → 格上げ」という機構を [critical] で固定していたが、Round 2 の実行で executor は tier 節の「振る舞いで検算する」規則に従い **Step 0 で参照先サービスのコードまで確認して billing 該当を検出し、直接 deep に入った** (Round 1 の scenB でも同型)。2 fixture × 2 executor が一貫して Step 0 で先行検出しており、コードから見えるリスクは inline 格上げ経路 (standard 手順 4) より Step 0 検算が構造的に先に発火する。手順 4 は「Step 0 が見落とした場合」の defense-in-depth として本文に残すが、fixture で決定的に到達させることはできない (Step 0 検算と inline WB の読み手が同一 main agent のため)。機構前提の checklist はより安全な正しい挙動を罰する regression になるため、以下の**経路非依存版**へ改訂した。
+
+1. [critical] 上流 `### Tier`=lite の記録を最終判定に優先させず、実行が deep (BB / WB 並列 dispatch + Fresh Red Team 起動) で完結している。deep への到達経路は「Step 0 の振る舞い検算」「standard inline からの格上げ (手順 4)」のどちらでもよいが、billing 関与の根拠が分析サマリーに記録されている
+2. [critical] 仕込みの billing 欠陥 (`StatementSummary.total_for` が表示経路から請求確定キャッシュを再計算値で上書きし confirmed を解除する — 送付済み請求書と金額がズレる) を Critical として検出している
+3. [critical] Red Team の dispatch 入力に plan 本文 / AC 本文を含めていない
 4. Wiki Researcher は opt-in が無いため dispatch していない
 5. プラン本文が書き換えられておらず、finding ID がプラン本文に持ち込まれていない。プラン 1 行サマリーが新フォーマット (`Important [I]件 (うちAC反映 [R]件)` 列を含む)
 6. 最終メッセージに分析ファイルの絶対パスと MECE判定・Critical 件数が含まれている
@@ -228,3 +230,31 @@ fixture は 2026-07-25 節の「fixture 仕様 (再作成用)」をそのまま�
 7. 分析ファイルに元 Markdown 全文の `<details>` 転記が無く (JSONL のみ)、分析サマリーに実行メタ行がある
 8. プラン本文無改変 / finding ID 混入なし。プラン 1 行サマリーが新フォーマット
 9. 最終メッセージに分析ファイルの絶対パスと MECE判定・Critical 件数が含まれている
+
+### 実行記録 (2026-08-02, blind・成果物直読み + self-report 採点)
+
+**Round 1** (v1.34.0 実装直後):
+
+| シナリオ | 成否 | accuracy | retries | 実行メタ | 備考 |
+|---|---|---|---|---|---|
+| A (standard inline) | ○ | 100% (8/8) | 1 | dispatch 0体 / 4分 | 全 [critical] ○。retries は WB 判定を greenfield 既定へ自己修正した 1 回 |
+| B (invoice, 旧機構 checklist) | × (形式) | criticals 実質○ | 0 | dispatch 3体 / 16分 | Step 0 の振る舞い検算で直接 deep 入り。仕込み欠陥は Critical 1 で検出 (Red Team important → main agent がロールバック不能=外部成果物で格上げ、監査記録付き)。機構前提 checklist 項 1 のみ未通過 |
+| C (auth 強制 deep) | ○ | 100% (9/9) | 0 | dispatch 3体 / 19分 | Critical 0 維持の閾値運用・Unknown 棄権 2 件・freshness (plan/AC 不送信) すべて適合 |
+
+Round 1 適用修正 (1 テーマ「縮退経路・集計契約の SSOT 穴の成文化」、全件 executor の実挙動の成文化): WIKI_RESULT 確定規則の 0-4.5 一元化 / Red Team skip 時の Step 3 供給規則 / リスク領域の振る舞い検算 / Y=M*+T* の SSOT 化 / [MECE追加 変更]・その他配置の X/M 規則 / Unknown 独立軸 / ロールバック不能の外部成果物条項 (checklist+BB/WB) / area タグはヒント / [MECE追加] 連番採番 / 付随ラベル温存。
+
+**Round 2** (Round 1 修正適用後、pristine fixture):
+
+| シナリオ | 成否 | accuracy | retries | 実行メタ | 備考 |
+|---|---|---|---|---|---|
+| A2 (standard inline) | ○ | 100% (8/8) | 0 | dispatch 0体 / 3分 | Round 1 修正が実挙動に顕在 (実行メタに振る舞い検算根拠・skip 時 4 分類付与) |
+| B2 (mail footer, 経路非依存 checklist) | ○ | 100% (6/6) | 0 | dispatch 3体 / 17分 | Step 0 検算が参照先コードまで確認し billing 検出 → deep。仕込み CR1 + fixture 内在の実バグ 2 件 (全期間合計と当月明細の不一致 / 対象月引数欠落) も Critical 検出。要修正 (Critical 3) で正判定 |
+
+Round 2 適用修正 (同一テーマの続き、全件 1 行の成文化): 境界値欠落時の `不明` 補完 / Critical 未満の実装漏れの操作先 / R と無タグ補足 / 既存欠陥の Critical スコープ (新設出力面での顕在化) / Critical=0 テンプレの列構成 SSOT 宣言 / [MECE追加] 書き戻しは上流の元形式 / X/M 指標の母数下限。
+
+**収束判定**: 全実行シナリオで [critical] 全 ○ (A 系は 2 ラウンド連続 100%)。残 unclear はすべて文書規定の穴で executor が同一解決に自力到達済み → 各 1 行で成文化済み。deep 系の追加ラウンドは 1 回 ~17-20 分で、機構到達不能が確定した格上げ経路の再挑戦に価値が無いため resource cutoff で終了 (ship at 全-critical-pass)。
+
+**failure pattern ledger 追記**:
+- **bypass/縮退経路への契約明示漏れ** (初出 2026-07-26): Round 1 で再出現 (WIKI_RESULT 交差 / Red Team skip 時の class 付与者 / 漏れ表記)。dispatch 経路が運んでいた契約を inline / skip 経路が引き継ぐ規定を、経路を新設した同じ PR で書くこと
+- **集計定義の対象集合が複数文書に分散して片側更新** (新規): Y の M*/T* 帰属が 3 文書で食い違い。集計値の定義は synthesis-and-errors の SSOT 節 1 箇所に置き他は参照のみ
+- **機構前提の regression checklist が正しい挙動の進化で失効** (新規): 「どの経路を通ったか」を [critical] にすると、より安全な early-detection への改善を罰する。checklist は観測可能な結果 (検出・記録・無改変) で書き、経路は備考に落とす
