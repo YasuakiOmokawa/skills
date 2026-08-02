@@ -34,7 +34,7 @@ omokawa-skills は **monorepo + N plugins** 構造。各 skill / command は `pl
 
 ## MECE 検証
 
-**MECE** = Mutually Exclusive, Collectively Exhaustive。AC の網羅性を 4 視点（BB Analyst=仕様 / WB Analyst=コード / Wiki Researcher=Devin / Fresh Red Team）で検証する。前 3 者を並列起動し Fresh Red Team が統合判定する 2 phase 構成 (Devin 不可用時は BB + WB の 2 並列)。`mece-plan-review` の主目的。
+**MECE** = Mutually Exclusive, Collectively Exhaustive。AC の網羅性を BB (仕様) / WB (コード) の 2 視点 + Fresh Red Team で検証する。既定 (standard tier) は main agent が BB+WB を inline 実行し、Critical 候補が出たときだけ Fresh Red Team を dispatch。リスク領域・AC >15 件 (deep tier) は BB / WB を並列 subagent 起動し Red Team 必須。Wiki Researcher (Devin) はユーザー明示 opt-in 時のみ参加する。`mece-plan-review` の主目的。
 
 ## サブエージェント / 並列起動
 
@@ -42,7 +42,7 @@ omokawa-skills は **monorepo + N plugins** 構造。各 skill / command は `pl
 - `review-design`: anti-pattern 必須 + DDD / Hexagonal / Clean / Deep-Module から Q1-Q3 matrix で選ばれた subset を並列起動 (unhealthy・新規 module・greenfield では all 5) → 必須 Devil's Advocate critique
 - `review-code-quality`: 3 analyzer 並列（Cohesion / Coupling / Business-Impact — Business-Impact は domain attribute 変更時のみ）
 - `finalize-plan`: 2 段階（Branch 単独 → Manual-QA / Auto-QA の 2 並列）
-- `mece-plan-review`: 2 phase（BB / WB / Wiki Researcher の最大 3 並列 → Fresh Red Team の統合判定。Wiki Researcher は Devin 可用時のみ）
+- `mece-plan-review`: 既定 (standard) は subagent 0 で main agent が inline 実行。deep のみ BB / WB 2 並列 (Wiki Researcher opt-in 時 3 並列) → Fresh Red Team の統合判定
 - `model-data`: パイプライン式（Requirements → Conceptual → Conceptual-Review (FAIL 時 Conceptual へ差し戻し、最大 3 回) → Logical → DBML）
 - `qa-ui`: automation モード時のみ ui-evaluator を独立コンテキストで起動
 

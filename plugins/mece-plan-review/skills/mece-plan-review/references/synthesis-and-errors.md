@@ -26,7 +26,7 @@ Red Team の統合 Critical / Important / Nice-to-have を **分析ファイル*
 
 Red Team の 4 分類結果から AC 改善点を統合:
 
-- **実装漏れ** (BB ✓ WB —) → 該当 AC を強調 + Critical 指摘。ただし red-team-checklist が「BB が**仕様自体の欠落**を指摘した」ケースを機械分類上 `実装漏れ` に寄せた行 (content にその旨の注記あり) は、強調対象の AC が存在しないため **AC 追加 (`[MECE追加]`) 側で扱う**
+- **実装漏れ** (BB ✓ WB —) → 該当 AC を強調 + Critical 指摘。ただし red-team-checklist が「BB が**仕様自体の欠落**を指摘した」ケースを機械分類上 `実装漏れ` に寄せた行 (content にその旨の注記あり) は、強調対象の AC が存在しないため **AC 追加 (`[MECE追加]`) 側で扱う**。**severity が Critical 未満の実装漏れ**は指摘表 (Important / Nice-to-have) への記録に加え、必要に応じて既存 AC の補足 (無タグ) または `[MECE追加 変更]` で消化する (Critical 指摘・プラン修正推奨の対象にはしない)
 - **仕様漏れ** (BB — WB ✓) → AC 追加 (`[MECE追加]` タグ)
 - **お見合い** (両者言及なし、Red Team 検出) → AC 追加 (`[MECE追加]` タグ)
 
@@ -49,21 +49,23 @@ Red Team の 4 分類結果から AC 改善点を統合:
 
 `references/output-format.md` のフォーマットに従い、**分析ファイル**末尾に追記。
 
-各ロール分析詳細セクションには 3 つの `<details>` ブロックを置き、`${BB_RESULT}` / `${WB_RESULT}` / `${WIKI_RESULT}` の元 Markdown 全文をそのまま埋め込む。
+「各ロール出力 (JSONL)」セクションには `${BB_JSONL}` / `${WB_JSONL}` のみを `<details>` で格納する。元 Markdown 全文 (Self-report 等) は転記しない (v1.34.0 で廃止 — 分析ファイル肥大とコンテキスト保持コストの主因だったため。詳細は output-format.md)。
 
 ## Step 3-4: プランファイルに 1 行サマリー追記
 
 プランファイルの `## 品質検証` セクションに以下を追記する (セクション無ければ作成):
 
 ```markdown
-- MECE判定: [OK (Critical: 0) or 要修正（Critical N件）] / ACカバレッジ [N]/[M] (うち[MECE追加] [X]件) / 漏れ [Y]件 / 重複 [Z]件 → [分析ファイル名]
+- MECE判定: [OK (Critical: 0) or 要修正（Critical N件）] / Important [I]件 (うちAC反映 [R]件) / ACカバレッジ [N]/[M] (うち[MECE追加] [X]件) / 漏れ [Y]件 / 重複 [Z]件 → [分析ファイル名]
 ```
 
 サマリー値の定義 (SSOT):
+- `I` (Important): 統合 Important 指摘の件数。Red Team 起動時は統合後の件数、standard で Red Team を skip した場合は inline BB/WB の important findings に main agent が Core rule 4 (Critical 決定規則) を適用して確定した件数
+- `R` (AC反映): `I` のうち、Step 3-2 の AC ブラッシュアップで `[MECE追加]` / `[MECE追加 変更]` 操作の起点になった件数 (機械集計: Step 3-2 で操作した AC 行の根拠 finding を数える)。無タグ補足のみで消化した finding は R に数えない。Critical 0 でも AC/プラン修正に至った実価値をサマリーに露出させる列で、体感検出率と実検出の乖離を防ぐ
 - `N`: 充足判定の AC 数 (分子)。`[MECE追加]` 行は BB/WB 判定を経ていないため AC カバレッジ表では **BB / WB / 総合の 3 列すべて「未判定」** と表記し、分子 N には含めない
 - `M`: 元 AC 数 + `[MECE追加]` 件数 (分母)。`[MECE追加]` は分母には入るが追加直後は未判定なので分子 N にはカウントしない
-- `X`: `[MECE追加]` 件数 (M に含まれる内訳)
-- `Y` (漏れ): Red Team が独自検出した `お見合い` の件数。**severity 問わず全件、ただし 1 件のお見合いを Critical に昇格させても M* で 1 件のみカウント (Y 内では二重計上禁止)**
+- `X`: `[MECE追加]` 件数 (M に含まれる内訳)。**配置カテゴリ (`### その他（[MECE追加]）` 含む) を問わず全 `[MECE追加]` を数える**。`[MECE追加 変更]` と無タグ補足は既存 AC の書き換え / 補足であり **X に数えない** (M でも元 AC として 1 回のみ)。カバレッジ表では `[MECE追加 変更]` 行は元の総合判定を維持し、変更後スコープが未検証である旨を行内注記する
+- `Y` (漏れ): Red Team が独自検出した `お見合い` の件数 = **`M*` と `T*` の合計** (checklist は M / T を対象領域で排他に振り分けるため単純合算。この行が唯一の定義箇所で、output-format / red-team-checklist は参照のみ)。**severity 問わず全件、ただし 1 件のお見合いを Critical に昇格させても M* で 1 件のみカウント (Y 内では二重計上禁止)**。standard で Red Team を skip した場合は `0件 (Red Team skip のため未検出)` と注記付きで表記する (数値スロットへの括弧注記は許容)
 - `Z` (重複): 4 分類クロスリファレンス表で **「真の合意」+「補強し合う合意」の合計件数**
 - `Critical N件`: 統合 Critical 指摘の件数 (severity Critical のみ)。**Y と Critical 件数は独立に集計** (Critical 昇格お見合いは Y に 1 件 + Critical に 1 件カウントするが、両者は別軸の集計なので二重計上違反にはならない)
 
@@ -77,12 +79,12 @@ Red Team の 4 分類結果から AC 改善点を統合:
 
 ### Devin MCP 利用不可 / カレントリポ未収録 (即時 cutoff)
 
-Step 0-4.5 の preflight (`read_wiki_structure` を 1 回だけ probe、`ask_question` 禁止) で判定:
+Wiki Researcher は opt-in 無しでは元々起動しないため、本 cutoff が効くのは BB の Phase 0 (wiki 読み) と opt-in 時の Wiki Researcher 起動可否。Step 0-4.5 の preflight (`read_wiki_structure` を 1 回だけ probe、`ask_question` 禁止) で判定:
 
 ```
 ToolSearch("+devin") 失敗 OR read_wiki_structure が "Repository not found"/error/空
   → ${DEVIN_COVERAGE}=none
-  → Wiki Researcher を dispatch しない (Step 1 は BB+WB の 2 並列)
+  → Wiki Researcher を dispatch しない (opt-in があっても)
   → ${WIKI_RESULT}="[Devin未使用] ..." を確定、BB は Phase 0 をスキップ
   → BB はローカル仕様 + 一般知識でフォールバック、結果に [Devin未使用] タグ
 ```

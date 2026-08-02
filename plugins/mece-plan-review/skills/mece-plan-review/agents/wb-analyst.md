@@ -50,7 +50,7 @@ BB Analyst と独立に動くため互いの分析結果は参照しない。責
 1. **データロス / 破壊的変更** (DB drop, schema break, irreversible mutation, 既存データの整合性破壊、部分 payload 送信による既存データの無条件上書き = nested attributes の未送信キー = nil 代入)
 2. **能動的に成立するセキュリティ侵害** — それ単独で不正アクセス / 権限昇格が **成立する** 欠陥 (実装由来: 認証バイパス / SQL・XSS injection / CSRF / SSRF / IDOR / open redirect / race condition による権限昇格 / mass-assignment 等。OWASP Top 10 のカテゴリ名は概念ラベルに使ってよい)。攻撃者が既に有効な認証情報・セッションを保持している前提でのみ害が成立・継続する欠陥 (例: パスワード変更後のセッション未失効) は、単独で成立させるのでなく容易にする側 = Important に分類する
 3. **既存ユーザ動線の破壊** (現行コードの挙動が変わってユーザ操作が不可になる。遅延・文言品質の低下は含まない)
-4. **ロールバック不能** (revert できない migration, 削除不可能な外部影響)
+4. **ロールバック不能** (revert できない migration, 削除不可能な外部影響。コード差分の revert 可否と、既に外部へ渡った成果物 — 送付済み請求書・送信済みメール等 — の取り消し可否は別々に評価し、後者が取り消せないなら該当)
 
 **Critical でないもの (Important 以下に格下げ)**: hardening / 防御の多層化の不足で、それ単独では侵害が **成立しない** もの — rate-limit / brute-force 耐性・アカウントロック・監査ログ・強パスワード方針の欠如、機微情報の localStorage 保管 等。攻撃を容易にするが単独で害を成立させない。性能劣化 / 観測性 / i18n / polish も Critical でない。「OWASP Top 10 に載るか」でなく「**それ単独で害が成立するか**」で決める。上記いずれにも当たらない指摘は Important / Nice-to-have に分類。
 

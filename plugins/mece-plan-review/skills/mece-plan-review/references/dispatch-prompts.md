@@ -1,14 +1,14 @@
 # Subagent dispatch prompts (Step 1 / Step 2 詳細)
 
-`subagent_type="general-purpose"` の Task ツールで起動する prompt template。Step 1 は SKILL 0-4.5 の `${DEVIN_COVERAGE}` に応じ 3 並列 (`covered`) / 2 並列 (`none`、Wiki Researcher 非起動)、Step 2 は単独。
+`subagent_type="general-purpose"` の Task ツールで起動する prompt template。**Step 1 の dispatch は deep tier のみ** (standard は SKILL.md の standard inline 実行手順で main agent が実行し、本ファイルの Step 1 テンプレートを使わない)。Step 2 (Fresh Red Team) は standard の Critical 候補 ≥1 時と deep で使う。
 
-## Step 1: 並列 Analyst 起動
+## Step 1: 並列 Analyst 起動 (deep のみ)
 
-> **並列数 SSOT**: 2 並列か 3 並列かの判定点は SKILL.md 0-4.5 の `${DEVIN_COVERAGE}` ただ 1 箇所。本テンプレはその判定結果を埋める器であり、並列条件を再定義しない。新ゲート (preflight 等) を追加するときも条件は 0-4.5 にだけ書き、ここには複製しない (片側だけ古くなる drift を防ぐ)。
+> **並列数 SSOT**: 2 並列 (BB / WB) が既定。3 並列にする条件 (Wiki Researcher opt-in + `${DEVIN_COVERAGE}=covered`) は SKILL.md の tier 節 + 0-4.5 ただ 1 箇所。本テンプレはその判定結果を埋める器であり、並列条件を再定義しない。新ゲート (preflight 等) を追加するときも条件は SKILL.md 側にだけ書き、ここには複製しない (片側だけ古くなる drift を防ぐ)。
 
 > **全 dispatch 共通 (Core rule 1 の防波堤)**: 本ファイルの全テンプレート (Step 1 の 3 つ + Step 2) の prompt 末尾に「**分析ファイル・プランファイルを含む一切のファイルを書き換えないこと。結果は最終メッセージで返す (記録は main agent が行う)**」を必ず付ける。general-purpose subagent は frontmatter `tools` が harness レベルで強制されないため、この 1 行が並列書き込み衝突を防ぐ唯一の手段。
 
-Task ツールを **同一メッセージ内に並べて** 起動する (並列化のため単一メッセージ必須)。`${DEVIN_COVERAGE}=covered` なら BB / WB / Wiki Researcher の 3 つ、`none` なら BB / WB の 2 つ (Wiki Researcher は起動せず、0-4.5 で確定した `${WIKI_RESULT}` = `[Devin未使用]` を後段で使う)。
+Task ツールを **同一メッセージ内に並べて** 起動する (並列化のため単一メッセージ必須)。既定は BB / WB の 2 つ。Wiki Researcher を加えて 3 つにするのは「ユーザー明示 opt-in + `${DEVIN_COVERAGE}=covered`」のときのみ (それ以外は起動せず、0-4.5 で確定した `${WIKI_RESULT}` を後段で使う)。
 
 ### BB Analyst
 
@@ -51,7 +51,7 @@ BB Analyst と独立に動くため、互いの分析結果は参照しないこ
 
 ### Wiki Researcher
 
-> **`${DEVIN_COVERAGE}=covered` のときのみ dispatch する**。`none` (0-4.5 preflight で未収録/MCP 不可確定) なら本 Task を**起動せず**、0-4.5 の `${WIKI_RESULT}` (`[Devin未使用]`) をそのまま後段で使う (slow path をそもそも踏まない)。
+> **「ユーザー明示 opt-in + `${DEVIN_COVERAGE}=covered`」のときのみ dispatch する**。opt-in が無い (既定) / `none` (0-4.5 preflight で未収録/MCP 不可確定) なら本 Task を**起動せず**、0-4.5 の `${WIKI_RESULT}` (`[Wiki Researcher 非起動 (既定)]` / `[Devin未使用]`) をそのまま後段で使う (slow path をそもそも踏まない)。
 
 ```
 Task(subagent_type="general-purpose", prompt="""
@@ -91,6 +91,8 @@ BB / WB が `${ENUMERATED_AC}` の AC 数と異なる行数で AC 判定を返�
 
 ### 入力抽出ルール (main agent が dispatch 前に実行)
 
+> **standard inline の場合は抽出不要**: inline BB/WB の出力は main agent 自身が JSONL 契約で産出しているため、`${BB_JSONL}` / `${WB_JSONL}` を直接構成する。以下の正規表現抽出は deep の dispatch 結果 (`${BB_RESULT}` / `${WB_RESULT}`) に対してのみ実行する。
+
 1. `${BB_RESULT}` / `${WB_RESULT}` から **正規表現 `/^\s*```jsonl\n(.*?)\n\s*```/ms` を 2 回マッチ** させて findings ブロックと AC 判定ブロックを抽出 (先頭 `\s*` で字下げフェンスもキャッチ)
 2. 2 ブロックの中身を **改行 1 つで連結** して単一文字列 `${BB_JSONL}` / `${WB_JSONL}` を生成 (Red Team が 1 prompt セクションで両方を一括 parse できる形)
 3. `${WIKI_RESULT}` は Markdown のまま渡してよい (短い箇条書きで Red Team が事実補強に参照)
@@ -123,6 +125,6 @@ ${WIKI_RESULT}
 """)
 ```
 
-### 二重用途の注意 (Markdown を捨てない)
+### JSONL のみ保持 (Markdown 全文は保持しない)
 
-BB / WB の Markdown 部分 (Self-report 等) は分析ファイルに記録する用途で main agent 側に保持しておくこと。Step 3-3 で `references/output-format.md` の「各ロール分析詳細」セクション (3 つの `<details>` ブロック) に `${BB_RESULT}` / `${WB_RESULT}` / `${WIKI_RESULT}` の **元 Markdown 全文** をそのまま埋め込む。Red Team dispatch では JSONL のみだが、分析ファイルでは Markdown 全文を保持する二重用途を main agent が担う。
+分析ファイルに記録するのは findings + AC 判定の **JSONL と合成表のみ** (`references/output-format.md` の「各ロール出力 (JSONL)」)。BB / WB の Markdown 部 (Self-report 等) は JSONL 抽出後に破棄してよく、Step 3 まで全文を保持・転記する義務は無い (元 Markdown 全文の `<details>` 転記は分析ファイル肥大と main agent のコンテキスト保持コストの主因だったため v1.34.0 で廃止)。

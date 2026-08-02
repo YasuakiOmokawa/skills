@@ -23,6 +23,7 @@ main agent は BB / WB / Red Team の **JSONLines 出力** をパースし、本
 ### 分析サマリー
 - 分析日時: YYYY-MM-DD
 - 対象リポジトリ: ${REPO_NAME} (関連リポ: ${RELATED_REPOS})
+- 実行メタ: tier=[standard/deep] / dispatch [D]体 / 経過 [T]分 (D = 起動した subagent 数、T = `date +%s` 現在値と `${T_START}` の差を分単位切り上げ。今後の検出率・コスト実測の基礎データ。tier を上流記録から上書きした場合は `tier=deep (上流 standard を auth 強制で上書き)` のように根拠を括弧内に併記する — SKILL.md tier 節の上書き記録義務の記録先はこの行)
 - ACカバレッジ: N/M項目充足
 - 漏れ件数: X (お見合い検出された件数 = 両 Analyst が言及ゼロで Red Team が独自検出)
 - 重複件数: Y (BB ↔ WB が同じ問題を言及した「真の合意」+「補強し合う合意」の合計。プランファイル 1 行サマリーの `重複 [Z]件` と同じ定義 = [synthesis-and-errors.md](synthesis-and-errors.md) の「サマリー値の定義 (SSOT)」)
@@ -45,6 +46,7 @@ main agent は BB / WB / Red Team の **JSONLines 出力** をパースし、本
 
 1. Red Team 出力 `M*` JSONLines を読む (`id`, `area`, `perspective`, `content`, `severity`)
 2. 各 `M*` を 4分類クロスリファレンス表に新規行として追加: `BB 指摘 ID = null`, `WB 指摘 ID = null`, `分類 = お見合い`, `統合 Severity = M*.severity`, `統合内容 = M*.content (perspective: M*.perspective)`
+3. `T*` (純技術リスク補完) は「純技術リスク補完」表にのみ載せ、4分類クロスリファレンス表へは転記しない。ただし漏れ件数 `Y` には `M*` と合算で算入する ([synthesis-and-errors.md](synthesis-and-errors.md) の `Y` 定義が SSOT)
 
 ### ACカバレッジ検証結果 (main agent が BB / WB の AC 判定から機械合成)
 
@@ -58,13 +60,14 @@ main agent は BB / WB / Red Team の **JSONLines 出力** をパースし、本
 3. synthesis-and-errors.md Step 3-1 のマージルール (SSOT) に従って総合判定列を算出
 4. 元 AC 文の「カテゴリ」(正常系/異常系/エッジ/非影響) を分析ファイルの AC セクションから引いて補完
 
-**ACカバレッジ N/M の定義**: M = **全 AC 項目数 (`[MECE追加]` を含む)**、N = M のうち総合判定が「充足」となった項目数。
+**ACカバレッジ N/M の定義**: M = **全 AC 項目数 (`[MECE追加]` を含む)**、N = M のうち総合判定が「充足」となった項目数。`[MECE追加]` 行の AC-ID は元 AC の最大番号の続きで採番する (例: 元 AC-1〜4 → 追加分は AC-5, AC-6, ...)。
 
 **`[MECE追加]` 比率 X/M (品質指標)**: 全 AC のうち MECE 検証で追加された項目数 X の比率:
 
 - `X/M ≤ 10%`: 元 AC が十分網羅的
 - `X/M = 10〜30%`: 一定の漏れあり
 - `X/M > 30%`: 観点選択が大きく外れていた可能性
+- **M < 10 の小規模 AC では比率でなく件数で読む** (母数が小さいと数件の追加で 30% を超え、指標が実態と釣り合わない)
 
 #### MECE分析によるAC追加提案
 - [ ] `[MECE追加]` [追加すべきAC項目の説明]
@@ -88,32 +91,22 @@ main agent は BB / WB / Red Team の **JSONLines 出力** をパースし、本
 | # | 観点 (セキュリティ/パフォーマンス/依存) | 発見事項 | Severity |
 |---|------|---------|---------|
 
-### Red Teamレビューサマリー
+### 各ロール出力 (JSONL)
 <details>
-<summary>Red Team 統合評価レポート全文</summary>
+<summary>BB / WB findings + AC 判定 (JSONL)</summary>
 
-${RED_TEAM_RESULT}
+${BB_JSONL}
 
-</details>
+${WB_JSONL}
 
-### 各ロール分析詳細
-<details>
-<summary>BB Analyst 分析結果</summary>
-${BB_RESULT}
-</details>
-
-<details>
-<summary>WB Analyst 分析結果</summary>
-${WB_RESULT}
-</details>
-
-<details>
-<summary>Wiki Researcher 参考情報</summary>
-${WIKI_RESULT}
 </details>
 ```
 
+**元 Markdown 全文は転記しない (v1.34.0 で廃止)**: BB / WB / Red Team の Markdown 部 (Self-report 等) の `<details>` 全文転記は、分析ファイル肥大と main agent のコンテキスト保持コストの主因だったため廃止した。Red Team の JSONL は上の 4分類クロスリファレンス表・お見合い表・純技術リスク表・Critical/Important 表へ合成済みのため転記せず、Markdown 部から転記するのは「判定不能 (Unknown)」のみ (SKILL.md Step 3)。Wiki Researcher opt-in 時はその箇条書き (事実情報のみで元々短い) を `<details>` で「各ロール出力」に併置してよい。
+
 ## Critical=0の場合（MECE OK）
+
+この節は**省略可否の差分のみ**を示す — 表の列構成は上部の標準テンプレートが SSOT であり、Critical=0 でも `Area` 列・`AC-ID` 列は削らない。
 
 ```markdown
 ## MECE分析結果
@@ -121,8 +114,9 @@ ${WIKI_RESULT}
 ### 分析サマリー
 - 分析日時: YYYY-MM-DD
 - 対象リポジトリ: ${REPO_NAME} (関連リポ: ${RELATED_REPOS})
+- 実行メタ: tier=[standard/deep] / dispatch [D]体 / 経過 [T]分
 - ACカバレッジ: N/M項目充足
-- 漏れ件数: X
+- 漏れ件数: X (standard で Red Team を skip した場合は `0件 (Red Team skip のため未検出)` と表記)
 - 重複件数: Y
 - 判定: MECE OK
 
@@ -143,8 +137,8 @@ ${WIKI_RESULT}
 
 （Important / Nice-to-have が 0 件の場合はこのテーブル自体を省略してよい）
 
-### 各ロール分析詳細
-（省略可 — 指摘が Important 以下のみの場合、details タグ内に格納）
+### 各ロール出力 (JSONL)
+（`<details>` に BB / WB の findings + AC 判定 JSONL のみ格納。元 Markdown 全文は転記しない）
 ```
 
 ## プランファイルへのサマリー追記
@@ -152,8 +146,10 @@ ${WIKI_RESULT}
 プランファイルの `## 品質検証` セクションに **1 行だけ** 追記する（セクションがなければ作成）:
 
 ```markdown
-- MECE判定: [OK or 要修正（Critical N件）] / ACカバレッジ [N]/[M] (うち[MECE追加] [X]件) / 漏れ [Y]件 / 重複 [Z]件 → [分析ファイル名]
+- MECE判定: [OK or 要修正（Critical N件）] / Important [I]件 (うちAC反映 [R]件) / ACカバレッジ [N]/[M] (うち[MECE追加] [X]件) / 漏れ [Y]件 / 重複 [Z]件 → [分析ファイル名]
 ```
+
+`I` / `R` の定義は [synthesis-and-errors.md](synthesis-and-errors.md) の「サマリー値の定義 (SSOT)」。
 
 ## AC ブラッシュアップの運用ルール
 
@@ -161,7 +157,7 @@ ${WIKI_RESULT}
 
 | ケース | タグ | 書き方 |
 |---|---|---|
-| 新規 AC 項目を追加 (仕様漏れ・お見合いから) | `[MECE追加]` | 新しい行頭に `[MECE追加]` を付け、対応するカテゴリ（正常系 / 異常系 / エッジ / 非影響）の **既存セクション内** に追記 |
+| 新規 AC 項目を追加 (仕様漏れ・お見合いから) | `[MECE追加]` | 新しい行頭に `[MECE追加]` を付け、対応するカテゴリ（正常系 / 異常系 / エッジ / 非影響）の **既存セクション内** に追記。行の書式は上流 skill が書いた元形式 (例: `- [ ] (ラベル, 観点: X) 本文`) に合わせる — enumerate の正規化形式 (`- AC-N (...)`) は main agent の内部表現であり AC セクションへは書き戻さない |
 | 既存 AC を具体化（補足を加えるだけ） | タグ不要 | 元 AC 行の末尾にカッコ書きで補足 |
 | 既存 AC を修正（書き換える） | `[MECE追加 変更]` | 修正後の行頭に `[MECE追加 変更]` タグを付け、修正理由を併記 |
 
