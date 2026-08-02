@@ -23,7 +23,7 @@ description: Verifies acceptance criteria for MECE coverage with spec (BB) and c
 | **standard** (default) | AC ≤15 件 かつ 非リスク領域 | main agent 内で BB+WB を統合 inline 実行 (subagent dispatch なし) | Critical 候補 ≥1 なら起動 / 0 なら skip |
 | **deep** | AC >15 件 / auth / billing / payment / migration | BB / WB の 2 並列 dispatch (Wiki Researcher opt-in 時のみ 3 並列) | 必須起動 |
 
-`<plan>.analysis.md` 冒頭の `### Tier` (define-AC が記録) を継承。**`### Tier`=lite は standard として読み替える** (本 skill の lite tier は standard に統合済み。define-AC 側の lite は AC マトリクス規模を決める tier で現役のまま — 本 skill の実行形態 tier とは役割が別)。リスク領域は AC 件数によらず強制的に **deep** — 上流の `### Tier` 記録 (lite / standard) と食い違う場合もリスク領域強制が優先し、上書きした旨と根拠を分析サマリーに記録する。リスク領域該当は**変更が書き換える対象**で判定する (例: billing = 請求金額を算出・永続化するコードパスに触れる変更。請求ドメインの表示のみの変更は非該当)。
+`<plan>.analysis.md` 冒頭の `### Tier` (define-AC が記録) を継承。**`### Tier`=lite は standard として読み替える** (本 skill の lite tier は standard に統合済み。define-AC 側の lite は AC マトリクス規模を決める tier で現役のまま — 本 skill の実行形態 tier とは役割が別)。リスク領域は AC 件数によらず強制的に **deep** — 上流の `### Tier` 記録 (lite / standard) と食い違う場合もリスク領域強制が優先し、上書きした旨と根拠を分析サマリーに記録する。リスク領域該当は**変更が書き換える対象**で判定する (例: billing = 請求金額を算出・永続化するコードパスに触れる変更。請求ドメインの表示のみの変更は非該当)。「表示のみ」はプランの自己申告ではなく振る舞いで検算する — 確定済みの値をそのまま描画するだけなら非該当、金額・認証状態等を算出/生成する式や検査を新設するなら該当。
 
 > **Wiki Researcher の起動ゲート (opt-in + 可用性)**: tier ではなく「ユーザーがプロンプトで関連リポ調査 / Wiki Researcher 使用を**明示指示**した」opt-in と、Step 0-4.5 の `${DEVIN_COVERAGE}=covered` の**両方**が揃ったときのみ dispatch する。opt-in が無ければ deep でも非起動 (実運用記録で Wiki Researcher 由来の finding が確認されず、Devin セッション起動の分単位遅延だけが観測されたため既定 off)。tier 表が規定するのは Analyst の実行形態と Fresh Red Team の起動条件だけ。
 
@@ -31,8 +31,8 @@ description: Verifies acceptance criteria for MECE coverage with spec (BB) and c
 1. main agent が `${ENUMERATED_AC}` を inline review し、情報源を分けた 2 視点を統合した analysis を産出 (件数縛りなし = Core rule 5)。inline 実行でも先に `agents/bb-analyst.md` / `agents/wb-analyst.md` を Read し、Critical 閾値と出力契約 (JSONL・AC 判定行) をそのまま適用する — dispatch を省くのは起動だけで、agent 定義が運ぶ契約は省かない。手順 3 の「Critical 候補」も閾値 4 類型に**現に該当**するもののみ (直感で昇格しない):
    - **BB 視点**: 仕様 / カレントリポ wiki / 一般知識 から欠落 use case を抽出 (コード参照禁止)
    - **WB 視点**: 変更ファイル diff を Read し技術ギャップを抽出 (仕様参照禁止)。**コードが未実装 / 不可読 (greenfield・plan mode) の場合**は AC 判定を `言及なし` 既定とし、plan からコード構造ギャップが積極的に導ける AC のみ `不十分` とする。低充足率は AC 不備でなくコード不可読が原因と明記し、機械合成 (一方充足 + 他方言及なし → 充足) に委ねる
-2. Wiki Researcher は起動しない。**0-4 (関連リポ取得) は skip** し `${RELATED_REPOS}="なし"`、**0-4.5 preflight は standard でも実行する** (決めるのは inline BB がカレントリポ wiki を読めるか / 結果に `[Devin未使用]` タグを付けるか)。`${DEVIN_COVERAGE}` がどちらの値でも `${WIKI_RESULT}="[Wiki Researcher 非起動 (既定)]"` を確定値として保持する (Step 3-3 が未定義変数にならないようにする)
-3. **Critical 候補 0** → Fresh Red Team は skip。`Critical: 0` を確定値として 1 行サマリーに記載し、漏れ件数は `0件 (Red Team skip のため未検出)` と表記する (構造的 0 を「検証済み 0」と誤読させない)。出力は標準と同じ Step 3 形式 (分析ファイル末尾セクション + プラン 1 行サマリー)
+2. Wiki Researcher は起動しない。**0-4 (関連リポ取得) は skip** し `${RELATED_REPOS}="なし"`、**0-4.5 preflight は standard でも実行する** (決めるのは inline BB がカレントリポ wiki を読めるか / 結果に `[Devin未使用]` タグを付けるか)。`${WIKI_RESULT}` は 0-4.5 の確定値をそのまま保持する — `none` なら `[Devin未使用] (…)`、`covered` なら `[Wiki Researcher 非起動 (既定)]` (確定規則は 0-4.5 の 1 箇所のみ。Step 3-3 が未定義変数にならないようにする)
+3. **Critical 候補 0** → Fresh Red Team は skip。`Critical: 0` を確定値として 1 行サマリーに記載し、漏れ件数は `0件 (Red Team skip のため未検出)` と表記する (構造的 0 を「検証済み 0」と誤読させない)。出力は標準と同じ Step 3 形式 (分析ファイル末尾セクション + プラン 1 行サマリー)。Red Team が不在のため、Red Team が供給するはずだった Step 3 入力は main agent が代替する — 4 分類クロスリファレンス表の `分類` は red-team-checklist の 4 分類定義を main agent が適用して付与し、お見合い表・純技術リスク表は空のまま「Red Team skip のため未検出」と明記する
 4. **Critical 候補 ≥1** → inline BB/WB 出力 (JSONL 契約は dispatch と同一) から `${BB_JSONL}` / `${WB_JSONL}` を構成し、Step 2 の Fresh Red Team を dispatch して統合判定させる (inline のまま Critical を確定しない — Red Team の閾値再適用が MECE判定 の信頼性を担保する)。ただし **finding が standard 分類時に見落とした auth / billing / payment / migration の関与を露呈した場合は standard 確定を破棄して deep へ格上げ**: Step 1 の BB/WB 並列 dispatch と Step 2 必須 Red Team を改めて実行し、inline サマリーは残さず deep 出力で上書きする (リスク領域の Critical 候補を inline 分析のまま確定させると情報源分離の強制が効かず MECE判定 の信頼性が崩れる)
 
 ## Core rules (守らないと検証設計が崩れる不変条件)
@@ -132,7 +132,7 @@ deep の dispatch は `subagent_type="general-purpose"`、prompt 内で agent �
   `- MECE判定: [OK (Critical: 0) or 要修正（Critical N件）] / Important [I]件 (うちAC反映 [R]件) / ACカバレッジ [N]/[M] (うち[MECE追加] [X]件) / 漏れ [Y]件 / 重複 [Z]件 → [分析ファイル名]`
   (`I` / `R` の定義は [references/synthesis-and-errors.md](references/synthesis-and-errors.md) の「サマリー値の定義 (SSOT)」。Critical 0 でも Important が実価値を持つ運用実態をサマリーに露出させるための列)
 
-Red Team 出力の Markdown 部に「判定不能 (Unknown)」がある場合: 3-3 の MECE 分析結果セクションに理由ごと転記し、3-4 の 1 行サマリーの `→ [分析ファイル名]` の直前に ` / 判定不能 [U]件` を挿入する (受け皿が無いと棄権項目が黙って落ち、誤った「MECE OK」になるため。0 件なら転記・付記とも省略)。
+Red Team 出力の Markdown 部に「判定不能 (Unknown)」がある場合: 3-3 の MECE 分析結果セクションに理由ごと転記し、3-4 の 1 行サマリーの `→ [分析ファイル名]` の直前に ` / 判定不能 [U]件` を挿入する (受け皿が無いと棄権項目が黙って落ち、誤った「MECE OK」になるため。0 件なら転記・付記とも省略)。`[U]` は漏れ `[Y]`・Critical のいずれにも計上しない独立軸。
 
 各 step の合成ロジック・タグ判定・「補足」と「書き換え」の境界は [references/synthesis-and-errors.md](references/synthesis-and-errors.md)。
 

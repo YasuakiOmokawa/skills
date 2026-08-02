@@ -204,6 +204,19 @@ fixture は 2026-07-25 節の「fixture 仕様 (再作成用)」をそのまま�
 6. プラン 1 行サマリーが新フォーマット (`Important [I]件 (うちAC反映 [R]件)` 列を含む)
 7. 最終メッセージに分析ファイルの絶対パスと MECE判定・Critical 件数が含まれている
 
+### シナリオ B2 (hold-out, standard inline → deep 格上げ — コードを読んで初めてリスク領域が露呈する形) requirements checklist
+
+シナリオ B の fixture はプラン文面に「`amount * tax_rate` で再計算」と書かれており、Step 0 の tier 判定 (リスク領域の振る舞い検算) が正しく働くと inline を経由せず直接 deep に入る (Round 1 で観測)。inline → 格上げ経路そのものを検証するには、**プラン文面は非リスクに見え、コードを読んで初めて billing 関与が露呈する** fixture が要る。
+
+**fixture 仕様 (再作成用) — scenB2**: `plan_usage_mail_footer.md` = 月次利用レポートメールのフッターに「今月のご利用合計」を追加表示。値は画面と同じ `StatementSummary.total_for(user)` を**参照**する、メール表示のみで DB 変更なし、と本文に明記 (自己申告としては真正 — 書き手はヘルパーの副作用を知らない想定)。`app/services/statement_summary.rb` は `total_for` 内で利用実績を再集計し `statement_cache` を `update!(total: 再計算値, confirmed: false)` で**上書き**する実装 + 「confirmed: true は請求書発行済みを意味する。上書きすると送付済み請求書と金額がズレる」のコメント付き。`app/mailers/usage_report_mailer.rb` は既存 monthly_report のみ。`analysis.md` の `### Tier` は lite (メールテンプレート 1 ファイル / 表示のみ)、AC 4 件。git repo 外。
+
+1. [critical] Step 0 の tier 判定では standard と判定している (プラン文面はメールフッター表示のみで、金額を算出・永続化する変更をプラン自身は記述しないため。`### Tier`=lite は standard へ読み替え)
+2. [critical] inline WB で Critical 候補 — `StatementSummary.total_for` が表示経路から請求確定キャッシュを再計算値で上書きし confirmed を解除する (送付済み請求書と金額がズレる) — を検出している
+3. [critical] finding が billing の関与を露呈したため standard 確定を破棄して deep へ格上げし、Step 1 の BB / WB 並列 dispatch と Step 2 Fresh Red Team を実際に実行している (inline サマリーを残さず deep 出力で上書き)
+4. Wiki Researcher は opt-in が無いため dispatch していない
+5. プラン本文が書き換えられておらず、finding ID がプラン本文に持ち込まれていない。プラン 1 行サマリーが新フォーマット (`Important [I]件 (うちAC反映 [R]件)` 列を含む)
+6. 最終メッセージに分析ファイルの絶対パスと MECE判定・Critical 件数が含まれている
+
 ### シナリオ C (edge, auth 強制 deep + opt-in なし) requirements checklist
 
 1. [critical] 分析ファイルの `### Tier`=standard の記録より auth 領域を優先して tier=deep と判定し、BB / WB を並列 dispatch し Fresh Red Team を必ず起動している

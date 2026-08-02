@@ -23,7 +23,7 @@ main agent は BB / WB / Red Team の **JSONLines 出力** をパースし、本
 ### 分析サマリー
 - 分析日時: YYYY-MM-DD
 - 対象リポジトリ: ${REPO_NAME} (関連リポ: ${RELATED_REPOS})
-- 実行メタ: tier=[standard/deep] / dispatch [D]体 / 経過 [T]分 (D = 起動した subagent 数、T = `date +%s` 現在値と `${T_START}` の差を分単位切り上げ。今後の検出率・コスト実測の基礎データ)
+- 実行メタ: tier=[standard/deep] / dispatch [D]体 / 経過 [T]分 (D = 起動した subagent 数、T = `date +%s` 現在値と `${T_START}` の差を分単位切り上げ。今後の検出率・コスト実測の基礎データ。tier を上流記録から上書きした場合は `tier=deep (上流 standard を auth 強制で上書き)` のように根拠を括弧内に併記する — SKILL.md tier 節の上書き記録義務の記録先はこの行)
 - ACカバレッジ: N/M項目充足
 - 漏れ件数: X (お見合い検出された件数 = 両 Analyst が言及ゼロで Red Team が独自検出)
 - 重複件数: Y (BB ↔ WB が同じ問題を言及した「真の合意」+「補強し合う合意」の合計。プランファイル 1 行サマリーの `重複 [Z]件` と同じ定義 = [synthesis-and-errors.md](synthesis-and-errors.md) の「サマリー値の定義 (SSOT)」)
@@ -46,6 +46,7 @@ main agent は BB / WB / Red Team の **JSONLines 出力** をパースし、本
 
 1. Red Team 出力 `M*` JSONLines を読む (`id`, `area`, `perspective`, `content`, `severity`)
 2. 各 `M*` を 4分類クロスリファレンス表に新規行として追加: `BB 指摘 ID = null`, `WB 指摘 ID = null`, `分類 = お見合い`, `統合 Severity = M*.severity`, `統合内容 = M*.content (perspective: M*.perspective)`
+3. `T*` (純技術リスク補完) は「純技術リスク補完」表にのみ載せ、4分類クロスリファレンス表へは転記しない。ただし漏れ件数 `Y` には `M*` と合算で算入する ([synthesis-and-errors.md](synthesis-and-errors.md) の `Y` 定義が SSOT)
 
 ### ACカバレッジ検証結果 (main agent が BB / WB の AC 判定から機械合成)
 
@@ -59,7 +60,7 @@ main agent は BB / WB / Red Team の **JSONLines 出力** をパースし、本
 3. synthesis-and-errors.md Step 3-1 のマージルール (SSOT) に従って総合判定列を算出
 4. 元 AC 文の「カテゴリ」(正常系/異常系/エッジ/非影響) を分析ファイルの AC セクションから引いて補完
 
-**ACカバレッジ N/M の定義**: M = **全 AC 項目数 (`[MECE追加]` を含む)**、N = M のうち総合判定が「充足」となった項目数。
+**ACカバレッジ N/M の定義**: M = **全 AC 項目数 (`[MECE追加]` を含む)**、N = M のうち総合判定が「充足」となった項目数。`[MECE追加]` 行の AC-ID は元 AC の最大番号の続きで採番する (例: 元 AC-1〜4 → 追加分は AC-5, AC-6, ...)。
 
 **`[MECE追加]` 比率 X/M (品質指標)**: 全 AC のうち MECE 検証で追加された項目数 X の比率:
 
