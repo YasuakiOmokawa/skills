@@ -19,7 +19,7 @@ structural review mode + trigger 判定: (a) lite tier で auto-qa-planner を s
 3. lite では tier 表に従い auto-qa-planner skip、manual-qa は main agent inline と読み取れる
 4. 0 件カテゴリの件数表記 (省略禁止) が維持されている
 
-再検証記録 (hold-out): 2026-07-07。Step 1.5 例外節の単独起動/委譲実行共通化、preflight.md のプレースホルダ扱い明文化の 2 改修後、fresh executor で本シナリオ (AC/MECE 両方充足の通常プランでの lite tier フルパイプライン) を hold-out として実行し全 [critical] ○、上記 2 改修由来の退行なし。一方 tier 表の branch-planner 列「✓ (簡略)」の意味・`agents/manual-qa-planner.md` の URL 推定ルールが teams 非依存パスを網羅しない点・lite tier での自動QA見出しの残し方の 3 点が新たな不明点として残った (本シナリオの合否には影響せず、今回は未修正)。
+再検証記録 (hold-out): 2026-07-07。Step 1.5 例外節の単独起動/委譲実行共通化、preflight.md のプレースホルダ扱い明文化の 2 改修後、fresh executor で本シナリオ (AC/MECE 両方充足の通常プランでの lite tier フルパイプライン) を hold-out として実行し全 [critical] ○、上記 2 改修由来の退行なし。一方 tier 表の branch-planner 列「✓ (簡略)」の意味・`agents/manual-qa-planner.md` の URL 推定ルールが teams 非依存パスを網羅しない点・lite tier での自動QA見出しの残し方の 3 点が新たな不明点として残った (本シナリオの合否には影響せず、今回は未修正)。**うち 1 点目 (tier 表の branch-planner 列) は 2026-08-02 の branch-planner インライン化で列ごと消滅し moot。**
 
 ## シナリオ: 正本カバレッジ・ゲート + QA 実行台帳初期化 (v3.1 QA-ID 台帳ゲート方式)
 
@@ -38,10 +38,10 @@ PR 分割廃止 (利用者決定 2026-07-06) に伴い撤去。実装漏れの�
 
 収束記録: 2026-07-05 (v1.20.0 PR)。Iter1-3 で fresh executor が全 [critical] ○ / retries 0。
 
-Step 4 完了直後を所与として Step 5 を机上実行させる。所与: branch-planner は起点ブランチ develop を確定済み。手動QA手順には「環境: http://localhost:3000」、テストデータ準備コマンド `bin/rails db:seed:qa_fixture`、権限アカウント要件「管理者権限 (権限分岐 AC の検証用)」の記載がある。ログイン手段とサーバ・DB 起動コマンドはプラン・README のどこにも記載がない。`<プラン名>.preflight.md` は未存在。生成する preflight の内容とユーザー確認の回数・内容を答えさせる。
+Step 4 完了直後を所与として Step 5 を机上実行させる。所与: Step 2A で起点ブランチ develop を確定済み。手動QA手順には「環境: http://localhost:3000」、テストデータ準備コマンド `bin/rails db:seed:qa_fixture`、権限アカウント要件「管理者権限 (権限分岐 AC の検証用)」の記載がある。ログイン手段とサーバ・DB 起動コマンドはプラン・README のどこにも記載がない。`<プラン名>.preflight.md` は未存在。生成する preflight の内容とユーザー確認の回数・内容を答えさせる。
 
 ### Requirements checklist
-1. [critical] preflight に 6 項目が全て載り、ベース URL / テストデータ準備 / 権限アカウント (用途付き) / 起点ブランチがプラン記載・branch-planner 結果から転記される
+1. [critical] preflight に 6 項目が全て載り、ベース URL / テストデータ準備 / 権限アカウント (用途付き) / 起点ブランチがプラン記載・Step 2A の結果から転記される
 2. [critical] ログイン手段とサーバ・DB 起動コマンドは `未定` とし、AskUserQuestion 1 回にまとめて確認する (項目ごとに個別停止しない)
 3. パスワード等の秘密情報を書かない (権限アカウントは権限名と用途のみ)
 4. ログイン手段を推測で埋めない (自動ログインを前提とする記載をしない)
@@ -72,7 +72,7 @@ fresh executor に Step 1.5 (例外節含む) を渡し、次の 3 パターン�
 
 本 skill が Task 委譲で subagent として起動されたときの入力解決・質問分岐・Task 起動可否・`${CLAUDE_PLUGIN_ROOT}` 解決・完了報告の各読み替え (SKILL.md「## 委譲実行」節) を検証する。fresh executor に以下 2 パターンを実行させる (成果物は実 run dir へ Write、fixture は `plan-search-final.md` + `.analysis.md`)。
 
-**パターン A (median)**: 委譲プロンプトにプランファイルの絶対パスを明示して渡す。Step 1〜5 まで完走させ、branch-planner/manual-qa-planner/auto-qa-planner の 3 agent 起動を含むフルパイプラインを実行させる。
+**パターン A (median)**: 委譲プロンプトにプランファイルの絶対パスを明示して渡す。Step 1〜5 まで完走させ、Step 2A のインライン実行 (ブランチ戦略。agent 起動なし) + Step 2B の manual-qa-planner / auto-qa-planner 2 agent 並列起動を含むフルパイプラインを実行させる。
 
 **パターン B (edge)**: 委譲プロンプトにプランファイルのパスを一切含めない (「さっきのプランを finalize してください」のみ)。会話コンテキストの `Plan File Info:` も存在しない状態で実行させる。
 

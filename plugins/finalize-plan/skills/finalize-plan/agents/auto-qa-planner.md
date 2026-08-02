@@ -18,7 +18,7 @@ tools:
 ## 入力
 
 - プランファイルの機能説明・変更対象ファイル一覧
-- **Enumerated AC**: main agent が事前に QA-ID (QA-H-01 / QA-E-01 / QA-D-01 / QA-R-01 / QA-M-01) を付与した状態で渡される。本 agent は再分類しない (main agent の分類結果を信頼)
+- **Enumerated AC**: main agent が事前に QA-ID (QA-H-01 / QA-E-01 / QA-D-01 / QA-I-01 / QA-R-01 / QA-M-01) を付与した状態で渡される。本 agent は再分類しない (main agent の分類結果を信頼)
 - **MECE分析結果**: ACカバレッジ検証結果 / `[MECE追加]` タグ付きAC追加提案 / Critical指摘
 
 ## ワークフロー
@@ -59,11 +59,14 @@ main agent が事前に QA-ID を付与済みのため、本 agent は再分類�
 | QA-H | 正常系 | `context "正常系" do ... end` | `describe("正常系", () => { ... })` |
 | QA-E | 異常系 | `context "異常系" do ... end` | `describe("異常系", () => { ... })` |
 | QA-D | エッジケース | `context "エッジケース" do ... end` | `describe("エッジケース", () => { ... })` |
+| QA-I | 不変条件 | `context "不変条件" do ... end` | `describe("不変条件", () => { ... })` |
 | QA-R | 非影響確認 | 新規テスト不要（既存テスト実行確認のみ） | 同左 |
 | QA-M | [MECE追加] | 該当カテゴリに追加 | 該当カテゴリに追加 |
 | QA-X | カテゴリ不明 | 推測したカテゴリの `context` に追加、`it` 説明文末尾に `[QA-X 推測適用]` 付与、Self-report にも明示 | 同左 |
 
 QA-R (非影響確認) も他カテゴリと同様、後述の「QA-ID カバレッジマトリクス」に表の 1 行として載せる (箇条書きにしない)。
+
+**QA-I (不変条件) のテスト仕様は 2 状態の突合として書く。** AC 本文の `(検証: ...)` に書かれた観測方法をそのまま `# 検証:` コメントに写し、「変更前後」「期 N と期 N+1」「1 回実行時と N 回実行時」のように**比較する 2 つの状態を明示する**。単一の期待値を assert する形 (`expect(x).to eq 100`) に潰さない — 期待値を実装から取った時点で不変条件ではなくなり、実装追認になる。関係が成り立つことを示すには `expect(前期末).to eq(翌期期首)` のように**両辺とも観測して比較する**。
 
 ### 4. テスト仕様の生成
 
@@ -119,6 +122,15 @@ RSpec.describe Xxx do
         # 検証: [境界値での期待する結果]
       end
     end
+
+    context "不変条件" do
+      it "QA-I-01: [AC項目の内容]" do
+        # セットアップ: [比較する2状態を作る準備。例: 期Nを締めて期N+1を生成]
+        # 観測A: [AC の (検証: ...) に書かれた観測方法で1つ目の状態を取る]
+        # 観測B: [同じ観測方法で2つ目の状態を取る]
+        # 検証: expect(観測A).to eq(観測B)  ← 両辺とも観測値。実装由来の期待値をハードコードしない
+      end
+    end
   end
 end
 ```
@@ -165,6 +177,7 @@ describe("Xxx", () => {
 | QA-H-01 | [AC原文 または FIG-NN] | 正常系 | spec/xxx_spec.rb | it "QA-H-01: ..." | `bundle exec rspec spec/xxx_spec.rb -e "QA-H-01"` |
 | QA-E-01 | [AC原文 または FIG-NN] | 異常系 | spec/xxx_spec.rb | it "QA-E-01: ..." | `bundle exec rspec spec/xxx_spec.rb -e "QA-E-01"` |
 | QA-D-01 | [AC原文 または FIG-NN] | エッジケース | front/__tests__/xxx.test.ts | it "QA-D-01: ..." | `yarn vitest run front/__tests__/xxx.test.ts -t "QA-D-01"` |
+| QA-I-01 | [AC原文 または FIG-NN] | 不変条件 | spec/xxx_spec.rb | it "QA-I-01: ..." | `bundle exec rspec spec/xxx_spec.rb -e "QA-I-01"` |
 | QA-R-01 | [既存機能名] | 非影響確認 | spec/yyy_spec.rb | (既存、新規追加なし) | `bundle exec rspec spec/yyy_spec.rb` |
 | QA-M-01 | [AC原文 または FIG-NN] | MECE追加 | spec/xxx_spec.rb | it "QA-M-01: ..." | `bundle exec rspec spec/xxx_spec.rb -e "QA-M-01"` |
 ```

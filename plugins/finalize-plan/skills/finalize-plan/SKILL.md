@@ -15,15 +15,15 @@ description: Turns AC and MECE results from the analysis file into a branch stra
 
 `<plan>.analysis.md` 冒頭の `### Tier` を継承し、agent の起動範囲を変える:
 
-| Tier | AC 件数 | branch-planner | manual-qa-planner | auto-qa-planner |
-|---|---|---|---|---|
-| **lite** | ≤5 | ✓ (簡略) | inline (1 セクション統合) | skip |
-| **standard** (default) | 6-15 | ✓ | ✓ | ✓ |
-| **deep** | >15 / auth / billing / payment / migration | ✓ (詳細) | ✓ | ✓ |
+| Tier | AC 件数 | manual-qa-planner | auto-qa-planner |
+|---|---|---|---|
+| **lite** | ≤5 | inline (1 セクション統合) | skip |
+| **standard** (default) | 6-15 | ✓ | ✓ |
+| **deep** | >15 / auth / billing / payment / migration | ✓ | ✓ |
 
-リスク領域は AC 件数によらず **deep**。lite では Step 1.7 の QA-ID enumerate を簡略形 (`QA-N-01`, `QA-N-02`... の通し番号) に縮約してよい。
+リスク領域は AC 件数によらず **deep**。lite では Step 1.7 の QA-ID enumerate を簡略形 (`QA-N-01`, `QA-N-02`... の通し番号) に縮約してよい。ブランチ戦略 (Step 2A) は tier によらず main agent がインラインで行う (agent 起動なし)。
 
-**PR 分割は行わない**: 実装単位の事前梱包 (PR を何本に切るか) は欠陥検出に寄与しない — 実案件 2 回の実測で、欠陥検出の実体は QA-ID カバレッジマトリクス・実装後の diff 突き合わせ・qa-ledger 審判再実行の 3 層であり、PR 分割固有の検出は 0 件だった一方、帳簿ずれのノイズ指摘と割当漏れ事故の発生源になっていた。PR 梱包の判断は出荷時に `/create-pr` が行う (利用者決定 2026-07-06)。ブランチ戦略は起点ブランチから単一の作業ブランチ 1 本に簡素化し、branch-planner は起点確認とブランチ命名のみを担う。
+**PR 分割は行わない**: 実装単位の事前梱包 (PR を何本に切るか) は欠陥検出に寄与しない — 実案件 2 回の実測で、欠陥検出の実体は QA-ID カバレッジマトリクス・実装後の diff 突き合わせ・qa-ledger 審判再実行の 3 層であり、PR 分割固有の検出は 0 件だった一方、帳簿ずれのノイズ指摘と割当漏れ事故の発生源になっていた。PR 梱包の判断は出荷時に `/create-pr` が行う (利用者決定 2026-07-06)。ブランチ戦略は起点ブランチから単一の作業ブランチ 1 本に簡素化した結果「起点確認と命名」だけになったため、専用 agent (branch-planner) を廃し Step 2A へインライン化した (2026-08-02)。
 
 **agent 省略が sanctioned なのは lite tier の skip 列のみ** — deep tier で「文脈が十分だから直接書ける」という判断での省略はしない (planner agent を通さない直接策定は QA-ID トレーサビリティの独立検証を欠く)。
 
@@ -32,12 +32,12 @@ description: Turns AC and MECE results from the analysis file into a branch stra
 1. **Step 1**: プランファイルパスを特定
 2. **Step 1.5**: 分析ファイルから `## 受け入れ条件` と `## MECE分析結果` を抽出 (両方必須、片方欠落で中断)。`## 正本抽出結果` があれば追加入力として読む
 3. **Step 1.7**: main agent が AC を QA-ID 形式で 1 回だけ enumerate (`${ENUMERATED_QA_AC}`)
-4. **Step 2A**: branch-planner でブランチ戦略 (起点ブランチ・単一の作業ブランチ名) を策定
+4. **Step 2A**: main agent がインラインでブランチ戦略 (起点ブランチ・単一の作業ブランチ名) を策定
 5. **Step 2B** (並列、同一メッセージ): manual-qa-planner + auto-qa-planner
 6. **Step 3**: 結果を統合してプランファイルに `## 実装準備` を追記
 7. **Step 3.5**: 正本カバレッジ・ゲート (Step 3 の Write 後、プランファイル自体を対象に実行)
 8. **Step 4**: QA 実行台帳 `<plan>.qa-ledger.md` を初期化
-9. **Step 5**: プラン内容と branch-planner (Step 2A) の結果から `<プラン名>.preflight.md` を生成 (既存なら不足項目のみ補完、`未定` は AskUserQuestion 1 回にまとめて確認)
+9. **Step 5**: プラン内容と Step 2A の結果から `<プラン名>.preflight.md` を生成 (既存なら不足項目のみ補完、`未定` は AskUserQuestion 1 回にまとめて確認)
 
 ## 委譲実行 (subagent として起動された場合)
 
@@ -49,7 +49,7 @@ description: Turns AC and MECE results from the analysis file into a branch stra
 
 ### 質問分岐の読み替え
 
-AskUserQuestion が利用可能ツールに無い実行文脈 (= subagent) では、Step 5 の未定項目確認・Step 1.7 fallback の AC 分類不能確認・branch-planner §0 の起点ブランチ確認のいずれも、質問を試みず該当項目を最終メッセージに列挙して終了する。判定基準は AskUserQuestion が利用可能ツール一覧にあるかどうかであり、subagent かどうかでは判定しない。
+AskUserQuestion が利用可能ツールに無い実行文脈 (= subagent) では、Step 5 の未定項目確認・Step 1.7 fallback の AC 分類不能確認・Step 2A の起点ブランチ確認のいずれも、質問を試みず該当項目を最終メッセージに列挙して終了する。判定基準は AskUserQuestion が利用可能ツール一覧にあるかどうかであり、subagent かどうかでは判定しない。
 
 ### Task 起動可否
 
@@ -91,25 +91,44 @@ PoC / 使い捨て検証中であれば本来 finalize-plan は不要 — /itera
 正常系       → QA-H-01, QA-H-02, ...  (Happy)
 異常系       → QA-E-01, QA-E-02, ...  (Error)
 エッジケース → QA-D-01, QA-D-02, ...  (eDge)
+不変条件     → QA-I-01, QA-I-02, ...  (Invariant)
 非影響確認   → QA-R-01, QA-R-02, ...  (Regression)
 [MECE追加]   → QA-M-01, QA-M-02, ...  (Mece)
 ```
 
 **0 件カテゴリは ID を発行しない** が Step 3 の対象 AC 行では `0/0` 件数表記を必ず残す (詳細・生成例・fallback は [references/qa-id-enumeration.md](references/qa-id-enumeration.md))。
 
-**[MECE追加] のカウント**: `[MECE追加]` / `[MECE追加 変更]` タグ付き AC は base 4 カテゴリ (正常系 / 異常系 / エッジケース / 非影響確認) **とは別に** QA-M-NN を採番し、`対象AC` 件数の総数に**加算**して扱う。**タグ優先**: AC 本文が `### 正常系` 等のセクション内にインライン配置されていても、`[MECE追加]` タグが section 見出しより優先し QA-M を採番する。例: base 8 件 (3/2/2/1) + MECE追加 1 件 → 対象AC `9項目 (正常系3 / 異常系2 / エッジケース2 / 非影響1 / MECE追加1)`。
+**[MECE追加] のカウント**: `[MECE追加]` / `[MECE追加 変更]` タグ付き AC は base 5 カテゴリ (正常系 / 異常系 / エッジケース / 不変条件 / 非影響確認) **とは別に** QA-M-NN を採番し、`対象AC` 件数の総数に**加算**して扱う。**タグ優先**: AC 本文が `### 正常系` 等のセクション内にインライン配置されていても、`[MECE追加]` タグが section 見出しより優先し QA-M を採番する。例: base 9 件 (3/2/2/1/1) + MECE追加 1 件 → 対象AC `10項目 (正常系3 / 異常系2 / エッジケース2 / 不変条件1 / 非影響1 / MECE追加1)`。
 
-### Step 2A → 2B: Agent 実行 (1 単独 + 2 並列)
+### Step 2A: ブランチ戦略 (main agent がインラインで実行)
 
-- **Step 2A**: `branch-planner` を起動しブランチ戦略 (起点ブランチ・単一の作業ブランチ名) を策定
-- **Step 2B 並列**: `manual-qa-planner` + `auto-qa-planner` を**同一メッセージ内**で並列起動。両 planner は再分類せず `${ENUMERATED_QA_AC}` の QA-ID を信頼する
+agent を起動せず main agent が直接行う。決めるのは**起点ブランチ 1 つと作業ブランチ名 1 つ**だけで、派生ブランチは作らない (PR 分割を行わないため)。
+
+**① 起点ブランチの確定** — `<プラン名>.preflight.md` が存在し起点ブランチ欄が `未定` 以外で埋まっていればそれを採用し、以下の判定を省略する。無ければ `git branch --show-current` とプランの前提から確定する:
+
+- プランが「カレントブランチの続き」を前提 (既存の作業ブランチ上で実装継続) → **カレントブランチ起点**
+- 独立した新機能で親が明示されている → その親 (develop / main 等)
+- 既にカレントブランチが目的の作業ブランチとして作成済み → 新規に切らず現ブランチを前提にする
+- **判断がつかない場合は推測で固定せずユーザーに 1 度確認する** (裸の `develop` 既定で押し切らない。AskUserQuestion が利用可能ツールに無い場合は「## 委譲実行」の読み替えに従い、確定できない旨を最終メッセージに列挙する)
+
+確定した起点名は出力に明示する (**develop ハードコード禁止**)。
+
+**② ブランチ名の生成** — プレフィックスは `feature/` (新機能) / `fix/` (バグ修正) / `refactor/` (リファクタリング) / `docs/` (ドキュメント) / `chore/` (設定変更等) から選ぶ。kebab-case・2-4 単語・日本語不可。例: リース査定レビュー機能 → `feature/lease-assessment-review`、ログインバグ修正 → `fix/login-bug`。
+
+**③ 重複チェック** — `git branch -a` と突き合わせ、既存と重複するなら連番を付与する (`feature/user-notification` → `feature/user-notification-2`)。
+
+出力は Step 3 の `### ブランチ戦略` サブセクションにそのまま入る。新規に切る場合とカレント継続の場合で書式が異なる (2 形式の完成形は [references/output-template.md](references/output-template.md) 参照)。
+
+### Step 2B: QA planner 並列実行
+
+- `manual-qa-planner` + `auto-qa-planner` を**同一メッセージ内**で並列起動。両 planner は再分類せず `${ENUMERATED_QA_AC}` の QA-ID を信頼する
 - **lite tier の縮約**: tier 表に従い auto-qa-planner は起動しない (skip)。manual-qa-planner も dispatch せず、main agent 自身が手動 QA 手順を 1 セクションに統合して書く (= 表の「inline」の意味)
 
-3 agent はいずれも `Task(subagent_type="general-purpose")` で起動し、prompt 冒頭で agent 定義ファイルを Read させる (repo 制約上 typed subagent_type は使わない)。各 agent 固有 prompt の全文 (最小レシピ含む)・並列メッセージ構成・Task ツール利用不可時の in-context fallback は [references/agent-orchestration.md](references/agent-orchestration.md) 参照。
+2 agent はいずれも `Task(subagent_type="general-purpose")` で起動し、prompt 冒頭で agent 定義ファイルを Read させる (repo 制約上 typed subagent_type は使わない)。各 agent 固有 prompt の全文 (最小レシピ含む)・並列メッセージ構成・Task ツール利用不可時の in-context fallback は [references/agent-orchestration.md](references/agent-orchestration.md) 参照。
 
 ### Step 3: プランファイルに `## 実装準備` 追記
 
-Step 2A/2B の結果を統合し、プランファイル末尾に `## 実装準備` を追記する。3 サブセクション: **ブランチ戦略** (単一の作業ブランチ・命名理由・既存ブランチ確認) / **手動QA手順** (環境 `{BASE_URL}` は QA 実行時にユーザーから取得、`**対象AC**: N項目（正常系X / 異常系Y / エッジケースZ / 非影響W / MECE追加V）`、人間がそのまま追える手順 + 各操作に automation 用ツール名を括弧で併記) / **自動QA（テストコード仕様）** (RSpec / Vitest 仕様)。カテゴリ名・0 件表記は output-template.md SSOT 準拠。
+Step 2A/2B の結果を統合し、プランファイル末尾に `## 実装準備` を追記する。3 サブセクション: **ブランチ戦略** (単一の作業ブランチ・命名理由・既存ブランチ確認) / **手動QA手順** (環境 `{BASE_URL}` は QA 実行時にユーザーから取得、`**対象AC**: N項目（正常系X / 異常系Y / エッジケースZ / 不変条件U / 非影響W / MECE追加V）`、人間がそのまま追える手順 + 各操作に automation 用ツール名を括弧で併記) / **自動QA（テストコード仕様）** (RSpec / Vitest 仕様)。カテゴリ名・0 件表記は output-template.md SSOT 準拠。
 
 完全なテンプレ全文・0 件カテゴリ表記ルール・in-context fallback 時の備考挿入位置は [references/output-template.md](references/output-template.md) 参照。
 
@@ -157,11 +176,11 @@ comm -23 /tmp/all_qa_ids.txt /tmp/assigned.txt > /tmp/assign_na.txt             
 
 ### Step 5: Preflight 契約の生成
 
-ループ開始前に一括収集する入力 (`<プラン名>.preflight.md`) を、プラン内容 (Step 3 で書いた手動QA手順) と branch-planner (Step 2A) の結果から生成する。置き場・項目表・セキュリティ規則は [references/preflight.md](references/preflight.md) が SSOT。既に存在する場合は不足項目のみ補完する (既存記載は上書きしない)。
+ループ開始前に一括収集する入力 (`<プラン名>.preflight.md`) を、プラン内容 (Step 3 で書いた手動QA手順) と Step 2A の結果から生成する。置き場・項目表・セキュリティ規則は [references/preflight.md](references/preflight.md) が SSOT。既に存在する場合は不足項目のみ補完する (既存記載は上書きしない)。
 
 1. ベース URL・テストデータ準備手順・権限アカウント一覧は Step 3 の手動QA手順に記載があればそこから転記する。埋まらなければ `未定`。
 2. ログイン手段は既定で `未定` とする (自動ログインは行わないため、記載が無い限り推測で埋めない)。
-3. 起点ブランチは Step 2A (branch-planner) が確定した値をそのまま転記する。
+3. 起点ブランチは Step 2A が確定した値をそのまま転記する。
 4. サーバ・DB 起動コマンドはプラン・README 等に既記載があれば転記、なければ `未定`。
 5. 生成・補完後も `未定` が残る項目があれば、それらをまとめて **AskUserQuestion 1 回**でユーザーに確認する (項目ごとに個別に停止しない。AskUserQuestion が利用可能ツールに無い場合の読み替えは「## 委譲実行」参照)。
 
