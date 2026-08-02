@@ -1,6 +1,6 @@
 ---
 name: define-acceptance-criteria
-description: Fills a matrix of 3 required categories (normal, error, edge) by controlled-vocabulary perspectives to enumerate acceptance criteria and technical risks into the analysis file, then appends a one-line summary to the plan file. Use when in plan mode before /mece-plan-review, when the user asks to write AC for a plan ("受け入れ条件を定義して" / "AC を書いて"), when an AC matrix is needed as MECE input, or when delegated to a subagent (Task tool) for the same purpose. Not typically invoked during PoC / throwaway-validation phases (the assumption ledger substitutes there).
+description: Fills a matrix of 3 required categories (normal, error, edge) by controlled-vocabulary perspectives, plus a conditionally-required invariant category derived from the domain, to enumerate acceptance criteria and technical risks into the analysis file, then appends a one-line summary to the plan file. Use when in plan mode before /mece-plan-review, when the user asks to write AC for a plan ("受け入れ条件を定義して" / "AC を書いて"), when an AC matrix is needed as MECE input, or when delegated to a subagent (Task tool) for the same purpose. Not typically invoked during PoC / throwaway-validation phases (the assumption ledger substitutes there).
 ---
 
 # define-acceptance-criteria
@@ -13,11 +13,14 @@ description: Fills a matrix of 3 required categories (normal, error, edge) by co
 正常系        │ 具体I/O  │ 具体I/O  │ 具体I/O    ← 必須 (全セル ≥1 項目)
 異常系        │ Err+HTTP │ Err+HTTP │ Err+HTTP   ← 必須 (全セル ≥1 項目)
 エッジケース  │ 境界値   │ 境界値   │ 境界値     ← 必須 (全セル ≥1 項目)
-非影響確認    │ 既存A    │ 既存B    │ 既存C      ← 推奨 (a/b/c から選択)
+──────────────┴──────────┴──────────┴──────────
+不変条件      │ ドメインが保証する関係 (軸に紐づかない)  ← 条件付き必須 (トリガー該当時)
+非影響確認    │ 既存A / 既存B / 既存C                    ← 推奨 (a/b/c から選択)
 ```
 
 - 必須 3 カテゴリの全セル ≥1 項目 (空セル = 検討不足)
-- AC 行頭は controlled label ([references/perspectives.md](references/perspectives.md)) — 自由形式禁止 (非影響確認カテゴリのみ例外。下表参照)
+- **不変条件と非影響確認は観点軸に紐づかないため、必須セル数にカウントしない** (マトリクスの下段。件数は tier 表で別に決まる)
+- AC 行頭は controlled label ([references/perspectives.md](references/perspectives.md)) — 自由形式禁止 (不変条件・非影響確認カテゴリのみ例外。下表参照)
 - プラン本文に欠落する仕様を AC で仮置きする場合は末尾に `(仕様確定要)` (リテラルのまま置く。理由を添えるなら直前に別の括弧で: `... (目標値未定義のため仮値) (仕様確定要)`)
 
 ## 上流/下流 contract (変更禁止)
@@ -25,8 +28,8 @@ description: Fills a matrix of 3 required categories (normal, error, edge) by co
 | 項目 | 値 |
 |---|---|
 | 分析ファイルパス | プランファイル拡張子前に `.analysis` 挿入 (`feature-xxx.md` → `feature-xxx.analysis.md`) |
-| 必須セクション | `## 受け入れ条件` / `### 正常系` / `### 異常系` / `### エッジケース` / `### 非影響確認` |
-| AC 行頭 | 正常系 / 異常系 / エッジケースは `- [ ] <controlled label>: ...` ([references/perspectives.md](references/perspectives.md))。非影響確認は `- [ ] [既存機能名]が...` で label 不要 |
+| 必須セクション | `## 受け入れ条件` / `### 正常系` / `### 異常系` / `### エッジケース` / `### 不変条件` / `### 非影響確認` |
+| AC 行頭 | 正常系 / 異常系 / エッジケースは `- [ ] <controlled label>: ...` ([references/perspectives.md](references/perspectives.md))。不変条件は `- [ ] [不変条件: <パターン>]: ...`、非影響確認は `- [ ] [既存機能名]が...` で controlled label 不要 |
 | プラン末尾 | `## 品質検証` 1 行サマリー |
 
 `/mece-plan-review` が AC を `- [ ]` 単位で enumerate するため必須。(auto-compaction では各 skill の先頭 5,000 トークンのみ再添付されるため、この節は本文前方から動かさない)
@@ -53,10 +56,13 @@ description: Fills a matrix of 3 required categories (normal, error, edge) by co
 |---|---|---|---|
 | 観点軸数 | 1 軸 | 3 軸 (+ observability 1 軸まで例外) | 5 軸 |
 | 必須セル数 | 3 セル | 9 セル | 15 セル |
+| 不変条件件数 (上限) | 1 件 | 2 件 | 3 件 |
 | 技術リスク件数 | 0-1 件 | 3 件固定 | 3-5 件 |
 | 全 tier 共通 | controlled label (`permission` / `observability` / `data_compat` / `req_form` 等) を使用。完全新規 label は 12 文字以内・名詞のみ。`(仕様確定要)` も項目としてカウント可 |
 
 この表は他 references の数量定義に対する canonical。**必須セル数 = 主軸数 × 3**。observability 軸は主軸数・必須セル数にカウントせず、セルを充填する場合は任意加算 (deep の実効上限は主軸 5 + observability 1 = 6 軸)。Step 6 の M 算出で使う N は別カウント — 必須 3 カテゴリのセルを充填した軸は observability でも N に数える。
+
+**不変条件件数は上限であって下限ではない**。実際の件数は該当トリガー ([references/invariant-checklist.md](references/invariant-checklist.md) の「適用トリガー」表) から導く: 導ける関係が上限より**多い**ならドメインへの影響が大きい順に上限まで、**少ない**なら導けた分だけ書く (上限に届かせるために発明しない)。上限と実件数が食い違う場合はその理由を `### 検討観点` に 1 文残す。トリガーがいずれも観測できなければ 0 件で通し、見送り理由を同じく 1 文残す。リスク領域 (auth / billing / payment / DB migration) はトリガー該当有無によらず最低 1 件。不変条件は観点軸に紐づかないため必須セル数には加算せず、Step 6 の N にも数えない。
 
 ## Quick start
 
@@ -109,6 +115,7 @@ description: Fills a matrix of 3 required categories (normal, error, edge) by co
 - **正常系**: `- [ ] <label>: <入力> → <期待出力>` (「正しく動作する」禁止)
 - **異常系**: `- [ ] <label>: <条件> → <HTTP status or エラー文言>`。既存挙動の踏襲を期待値にする場合は `既存どおり <status> (実装時に実値確認) (仕様確定要)` の定型で書く (この定型は既存踏襲のときだけ。新規挙動で仕様未確定なら期待値を自分で置き末尾 `(仕様確定要)` のみ付ける)
 - **エッジケース**: `- [ ] <label> [境界値: <カテゴリ>]: <条件>` (境界値カテゴリは [references/edge-case-checklist.md](references/edge-case-checklist.md))
+- **不変条件 (条件付き必須)**: `- [ ] [不変条件: <パターン>]: <保たれるべき関係> (検証: <観測方法>)`。[references/invariant-checklist.md](references/invariant-checklist.md) の適用トリガー表を変更ファイル一覧・プラン本文に当てて判定し、該当したトリガーと採用パターンを `### 検討観点` に 1 文ずつ書く。**関係は等式または順序関係で書く** (「〜が正しく保たれる」は検証単位が消えるため禁止)。**期待値をプラン本文・DD・仕様書から引かずに書けるものだけを不変条件とする** — 仕様書が要るものは他 3 カテゴリに置く (切り分け表は同ファイル)。トリガー非該当なら 0 件とし、見送り理由を `### 検討観点` に 1 文
 - **非影響確認 (推奨)**: `git status --short` 出力で機械判定 — `M` 含む → (a) 手動列挙 or (b) `git diff` 隣接列挙 / `A` のみ → (c) 省略可 / `D` 含む → (a) 必須。詳細は [references/non-impact-rules.md](references/non-impact-rules.md)。**git 実行不能 (plan mode で未着手 / walk-through / dry-run)** の場合は Step 1 で確定した変更ファイル一覧 (プラン本文の「変更ファイル予定」、それが無ければ類推した推測リスト) から推測し、`### 検討観点` に書く判定根拠の 1 文に `(推定)` を付与する
 - **振る舞いを変えないリファクタ等**では、各カテゴリを「変更前と同じ入出力を維持すること」を検証する回帰確認として書く (例: `- [ ] <label>: <既存入力> → <変更前と同じ出力 (リファクタ後も維持)>`)
 
@@ -132,17 +139,17 @@ description: Fills a matrix of 3 required categories (normal, error, edge) by co
 
 ## 品質検証
 
-- AC: <N>観点×必須3カテゴリ + 非影響確認 <K>件 = <M>項目定義済み → <分析ファイル名>
+- AC: <N>観点×必須3カテゴリ + 不変条件 <I>件 + 非影響確認 <K>件 = <M>項目定義済み → <分析ファイル名>
 - 技術リスク: <R>件特定済み → <分析ファイル名>
 ```
 
-**M 算出**: 各セル 1 項目固定で `M == N × 3 + K` が成立するなら上の簡略式のまま。不一致なら AC 行だけを次の完成形に差し替える (技術リスク行は変えない):
+**M 算出**: 各セル 1 項目固定で `M == N × 3 + I + K` が成立するなら上の簡略式のまま。不一致なら AC 行だけを次の完成形に差し替える (技術リスク行は変えない):
 
 ```markdown
-- AC: <M>項目定義済み (内訳: 必須<X>件 + 非影響確認<K>件) → <分析ファイル名>
+- AC: <M>項目定義済み (内訳: 必須<X>件 + 不変条件<I>件 + 非影響確認<K>件) → <分析ファイル名>
 ```
 
-**N / X / K / R の定義**: R = 技術リスクの件数 (軸数 N とは別物)。N = マトリクスの必須 3 カテゴリのセルを充填した観点軸の数 (裁量判断で追加した副作用軸も、セルを充填したなら N に数える)。matrix 外で別表記する追加軸 (observability 等、セルを充填しないもの) のみ N に含めず `+ observability` のように併記する。X = 正常系 + 異常系 + エッジケースの**実 AC 行数**、K = 非影響確認の**実 AC 行数** (いずれも理論値 N×3 ではなく実カウント)。
+**N / X / I / K / R の定義**: R = 技術リスクの件数 (軸数 N とは別物)。N = マトリクスの必須 3 カテゴリのセルを充填した観点軸の数 (裁量判断で追加した副作用軸も、セルを充填したなら N に数える)。matrix 外で別表記する追加軸 (observability 等、セルを充填しないもの) のみ N に含めず `+ observability` のように併記する。X = 正常系 + 異常系 + エッジケースの**実 AC 行数**、I = 不変条件の**実 AC 行数**、K = 非影響確認の**実 AC 行数** (いずれも理論値 N×3 ではなく実カウント)。**不変条件は観点軸に紐づかないため N に数えない** (0 件でも `不変条件 0件` と表記する — 省略すると「忘れた」のか「トリガー非該当」のか区別できない)。
 
 ## 委譲実行 (subagent として起動された場合)
 
