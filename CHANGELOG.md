@@ -5,6 +5,13 @@ All notable changes to omokawa-skills will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v3.94.0 - 2026-08-07
+
+### Changed
+
+- **`finalize-plan` skill: Figma 正本の未抽出検知 (能動ゲート) を Step 1.5 に追加 (2.8.0 → 2.9.0)**: プラン/DD 本文に Figma URL があるのに分析ファイルへ `## 正本抽出結果` が無い場合、警告して `/extract-figma-spec` の先行実行を提案する (委譲実行では要人間確認項目に含めて続行)。受動的な併用推奨だけでは実行が飛ばされ、実装後の Figma 照合で 24 atom 中 7 差分・2 ラウンドの手戻りが発生した実測に基づく。あわせて Gotchas に「QA planner への dispatch prompt で列構成を独自指定しない (qa-ui 審判ゲートの 6 列契約が壊れる)」を追記。`empirical-prompt-tuning` で 2 シナリオ (発火系 / 誤発火なし系) を検証し全 [critical] ○、accuracy 100%。
+- **申し送り (今回未修正の既知課題)**: 分析ファイル内 Tier 表記の競合解決規則なし / 正本カバレッジ skip 行文言の SSOT 不一致 (SKILL.md・coverage-gate-bash・output-template) / lite tier と Step 3 テンプレ・Step 4 割当の整合未定義 / dual coverage 規則で manual 行が全消滅するケース / preflight の 未定 vs 該当なし の適用順。empirical 検証の executor 申告から採取。
+
 ## v2.2.0 (BREAKING for map-user-stories consumers) - 2026-05-15
 
 ### Changed
