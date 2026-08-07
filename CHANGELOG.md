@@ -5,6 +5,12 @@ All notable changes to omokawa-skills will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v3.97.0 - 2026-08-08
+
+### Changed
+
+- **`express-intent-in-code` skill: redundancy-guard.sh を skill 配下 `scripts/` へ収容し repo 管理化 (0.21.0 → 0.22.0)**: これまで `~/.claude/hooks/` 置きだった PostToolUse hook スクリプトを `skills/express-intent-in-code/scripts/redundancy-guard.sh` に移し、`skills update` で各マシンの `~/.agents/skills/express-intent-in-code/scripts/` へ配布されるようにした。user settings の hook コマンドは installed パスを `bash` 起動する形へ切替済み (exec bit 不問)。旧 `~/.claude/hooks/redundancy-guard.sh` は削除。マシンローカルに残るのは settings.json の配線 1 ブロックのみ (plain skill インストールは hook 登録を運べないため。新マシン導入 = skills install + settings 追記の 2 ステップ)。切替後の発火は live-fire で確認済み。
+
 ## v3.96.0 - 2026-08-08
 
 ### Changed
