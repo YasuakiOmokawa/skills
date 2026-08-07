@@ -1,7 +1,7 @@
 {
   "name": "express-intent-in-code",
-  "description": "機構名やデータ形状で止まった名前を、命名梯子で段4 ドメイン抽象 (ユビキタス言語) まで上げる変換器。ドメイン語を実証拠から探索して接地 (造語は禁止)、欠落型は抽出し、why コメント依存を減らす。生成時経路 (経路2) では、コメント・機構・データ形状を書く瞬間のレシピで意図をコードへ注入し、コメントは名前付き定義の直上の真の why だけに純化する。",
-  "version": "0.19.0",
+  "description": "意図をコメントでなく名前・型・構造で表明させる判断規範 (薄型)。命名梯子 (機構名→目的名→ドメイン語、造語禁止)・コメントの昇格先マップ・真の why 4類型の残置基準・n=1 再利用 / rule of three の歯止めだけを 1 ファイルに収める。発火は redundancy-guard hook (PostToolUse) が決定論的に担う。",
+  "version": "0.20.0",
   "author": {
     "name": "Yasuaki Omokawa",
     "url": "https://github.com/YasuakiOmokawa"
