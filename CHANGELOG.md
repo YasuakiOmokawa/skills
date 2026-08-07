@@ -5,6 +5,14 @@ All notable changes to omokawa-skills will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v3.95.0 - 2026-08-08
+
+### Changed
+
+- **`express-intent-in-code` skill: 限界薄化 + 発火のハーネス移管 (0.19.0 → 0.20.0, BREAKING)**: SKILL.md を 163 行 → 42 行へ書き直し、references 8 本 (decision-procedure / generation-recipe / technique-catalog 等、計 ~760 行) と agents/intent-reader.md を撤去 (git 履歴に保存。ローカル退避: `~/.agents/skills/.archive/express-intent-in-code-v0.19/`)。残したのは判断規範のみ — 命名梯子 (造語禁止・caller 観測)、コメント昇格先マップ、真の why 4類型の残置基準、歯止め (drive-by 禁止・**n=1 は既存再利用 / rule of three は新抽象** の tie-break を新設)、fresh-eyes 検証。description は 1,048 → 356 chars (trigger-only)。
+- **発火責務の分離**: 経路2 (生成時) の発火は user settings の PostToolUse hook (`redundancy-guard.sh`) が決定論的に担う — Edit/Write ごとに diff からコメント追加 / lint-suppression 追加を検知し、本スキルの適用指示を stderr (exit 2) で model へ自動注入する (セッション×ファイル単位の増分 dedup 付き)。根拠: SIGNPBL-103 の transcript 検証で、スキルが実装時に起動・全文ロード済みでも冗長コメントを生成し、効いたのはレビュー時の機械測定だけと判明 (CONTENT LIMIT)。プロンプト量はモデルの推論性能を奪うため、手続き記述を捨て検知をハーネス層へ移した。
+- **申し送り**: 薄化後の empirical eval 未実施 (evals/regression.md の A/B 記録は旧 v0.8.0 構成のもの)。batch 起動時の 3 兆候スクリーニング (多義衝突 / 段0 ノイズ語) と出力フォーマット・委譲実行節は撤去 — 必要になった場合は hook 側の検知拡張で対応する方針。
+
 ## v3.94.0 - 2026-08-07
 
 ### Changed
