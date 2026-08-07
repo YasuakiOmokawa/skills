@@ -5,6 +5,12 @@ All notable changes to omokawa-skills will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v3.98.0 - 2026-08-08
+
+### Added
+
+- **setup.sh Section E + `scripts/register-redundancy-guard-hook.sh`: redundancy-guard hook の settings.json 登録を自動化**: plain skill インストールで運べない唯一のマシンローカル要素だった PostToolUse 配線 (`~/.claude/settings.json`) を、対話セットアップの Section E または単体スクリプトで登録できるようにした。冪等 (登録済み検知)・非破壊 (jq 検証 → .bak 退避 → atomic mv)・不正 JSON は無変更で中止・settings 未存在時は新規作成。`CLAUDE_SETTINGS` で対象を差し替え可能 (テスト用)。これで新マシン導入は「skills install → setup.sh (または register スクリプト単体)」に閉じる。検証: fixture 6 種 (hooks なし / Stop のみ / 他 PostToolUse あり / 登録済み / 不正 JSON / ファイル無し) + 実 settings への冪等 no-op を確認。
+
 ## v3.97.0 - 2026-08-08
 
 ### Changed
