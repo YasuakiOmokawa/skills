@@ -1,11 +1,17 @@
 ---
 name: express-intent-in-code
-description: Use when the redundancy-guard hook reports added comments or lint suppressions, when /review-code-quality hands off a naming / cohesion finding, when a name stops at mechanism (`bbox_xhtml`) or shape (`word_coordinate_data`) and its purpose survives only in why-comments, or when the user says 「意図が伝わる名前にして」「コメントなしで読めるコードにして」.
+description: Use when the redundancy-guard hook reports added comments / lint suppressions / a new file next to siblings, before writing a new helper / util / file (reuse ladder), when /review-code-quality hands off a naming / cohesion finding, when a name stops at mechanism (`bbox_xhtml`) or shape (`word_coordinate_data`) and its purpose survives only in why-comments, or when the user says 「意図が伝わる名前にして」「コメントなしで読めるコードにして」.
 ---
 
 # Express Intent In Code
 
 意図はコメントでなく名前・型・構造で表明する。ゴールは why コメントの撲滅ではなく**純化** — 昇格できる why はコードへ移し、コードから読めない真の why だけを残す。
+
+## 書く前の再利用梯子 (最初に該当した段で止める)
+
+新しい関数・ヘルパー・ファイルを書き始める前に順に問う:
+⓪そもそも要るか → ①このコードベースに既にあるか (隣接ファイル・同種 dir を grep してから書く — 数ファイル先の再実装が最頻の無駄) → ②言語標準 → ③プラットフォーム標準機能 → ④導入済み依存 → ⑤どれも無ければ最小コード。
+suppression (rubocop:disable 等) を書きたくなったら①へ戻る — 既存イディオムなら不要なことが多い。
 
 ## 命名梯子 (飛び級禁止、1 段ずつ)
 

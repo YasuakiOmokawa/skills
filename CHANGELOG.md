@@ -5,6 +5,13 @@ All notable changes to omokawa-skills will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v3.96.0 - 2026-08-08
+
+### Changed
+
+- **`express-intent-in-code` skill: ponytail 由来の「書く前の再利用梯子」を追加 (0.20.0 → 0.21.0)**: 新しい関数・ヘルパー・ファイルを書く前に ⓪要るか → ①codebase に既にあるか (隣接 grep) → ②言語標準 → ③プラットフォーム標準 → ④導入済み依存 → ⑤最小コード、を最初に該当した段で打ち切る 6 行を新設 (DietrichGebert/ponytail の ladder を翻案、MIT)。suppression を書きたくなったら①へ戻る接続も明記。description に new-file / before-writing トリガーを追加 (SKILL.md 42→48 行)。対の検知として user settings の redundancy-guard hook に「未追跡ファイル + 同 dir 同拡張子の隣接あり」で 1 回だけ `[reuse-ladder]` を注入する検出を追加。根拠: PR 40148 実測の再発明 4 件 (Capybara.string 不使用 / セレクタだけ違う複製関数 / 既存 pushText 再インライン / shared_examples 不使用) は全て梯子①で止まるべきケースで、5 スキルの誰も所有していなかった。`empirical-prompt-tuning` 2 シナリオ (再利用誘惑 / 移植回帰) で検証: 誘惑側は bias-free executor が書く前に梯子を自己適用し既存ヘルパー 2 本を import (複製ゼロ)、回帰側は純化健在。全 [critical] ○。
+- **申し送り**: 既存ファイル内へのコピペブロック追加 (shared_examples ケース) は新規ファイル検知に掛からない — コミット時/CI 層 (バイト一致検知・dry-ssot-text 配線) が未実装の宿題。移植回帰で JSDoc 形式のやや長い why 文面が観測された (非クリティカル、文面は code-comments 7 原則の管轄)。
+
 ## v3.95.0 - 2026-08-08
 
 ### Changed
