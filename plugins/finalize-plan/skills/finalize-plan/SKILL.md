@@ -60,7 +60,7 @@ Task (Agent) ツールが自分の利用可能ツール一覧に無い場合の�
 
 ### 完了報告
 
-最終メッセージに必ず含める: (a) Write した成果物の絶対パス (プランファイル・`<plan>.qa-ledger.md`・`<plan>.preflight.md`)、(b) Step 3.5 の正本カバレッジ・ゲート結果と Step 4 の手段割当件数 (auto/manual/対象外)、(c) 未定項目・要人間確認項目の一覧。
+最終メッセージに必ず含める: (a) Write した成果物の絶対パス (プランファイル・`<plan>.qa-ledger.md`・`<plan>.preflight.md`)、(b) Step 3.5 の正本カバレッジ・ゲート結果と Step 4 の手段割当件数 (auto/manual/孤児)、(c) 未定項目・要人間確認項目の一覧。
 
 ## Workflows
 
@@ -71,10 +71,14 @@ Task (Agent) ツールが自分の利用可能ツール一覧に無い場合の�
 ```
 ⛔ 分析ファイル（{パス}）にACまたはMECE分析結果が見つかりません。
 先に /define-acceptance-criteria → /mece-plan-review を実行してください。
-PoC / 使い捨て検証中であれば本来 finalize-plan は不要 — /iterate-with-prototypes の ledger 追記 (step 6) で代替する。
+PoC / 使い捨て検証中で分析ファイルを一度も作っていない場合は本来 finalize-plan は不要 — /iterate-with-prototypes の ledger 追記 (step 6) で代替する。
 ```
 
-例外: `/iterate-with-prototypes` の step 4-5 (doc 逆生成 + AC/MECE) 自体を省略し、分析ファイルが一度も作られていない **ledger 駆動** セッションでは、本 skill を起動せず iterate-with-prototypes step 6 の ledger 追記代替 (QA 手順を ledger に書く) に従う。上の中断メッセージは「分析ファイルが本来あるべきなのに無い」場合のみ表示する。
+例外: `/iterate-with-prototypes` の step 4-5 (doc 逆生成 + AC/MECE) 自体を省略し、分析ファイルが一度も作られていない **ledger 駆動** セッションでは、本 skill を起動せず iterate-with-prototypes step 6 の ledger 追記代替 (QA 手順を ledger に書く) に従う。上の中断メッセージは「分析ファイルが本来あるべきなのに無い」場合のみ表示する。既に本 skill が起動されていてこの例外に該当すると判定した場合は、Step 1.7 以降 (プラン追記・台帳・preflight) を一切行わず次の 1 行だけを出力して終了する:
+
+```
+ledger 駆動セッションのため finalize-plan は不要 — /iterate-with-prototypes step 6 の ledger 追記 (QA 手順) で代替する。
+```
 
 `/iterate-with-prototypes` の step 5 (`/define-acceptance-criteria` → `/mece-plan-review`) を経て `## 受け入れ条件` `## MECE分析結果` を備えた分析ファイルが既に作られている場合、この例外にはあたらない — design-first 経由の分析ファイルと同じ入力として扱い、本 skill を通常どおり起動する。Step 1.7 以降 (QA-ID enumerate・Step 3.5 の正本カバレッジ・ゲート・Step 4 の QA-ID 台帳・Step 5 の preflight 契約) は分析ファイルの起源 (design-first / プロトタイプ先行) を区別せず同一に動作する。
 
@@ -97,20 +101,23 @@ PoC / 使い捨て検証中であれば本来 finalize-plan は不要 — /itera
 [MECE追加]   → QA-M-01, QA-M-02, ...  (Mece)
 ```
 
-**0 件カテゴリは ID を発行しない** が Step 3 の対象 AC 行では `0/0` 件数表記を必ず残す (詳細・生成例・fallback は [references/qa-id-enumeration.md](references/qa-id-enumeration.md))。
+**0 件カテゴリは ID を発行しない** が Step 3 の対象 AC 行では 0 件でも `カテゴリ名+0` (例 `不変条件0`) で件数を残す — 書式は [references/output-template.md](references/output-template.md) が SSOT (採番の詳細・生成例・fallback は [references/qa-id-enumeration.md](references/qa-id-enumeration.md))。
 
 **[MECE追加] のカウント**: `[MECE追加]` / `[MECE追加 変更]` タグ付き AC は base 5 カテゴリ (正常系 / 異常系 / エッジケース / 不変条件 / 非影響確認) **とは別に** QA-M-NN を採番し、`対象AC` 件数の総数に**加算**して扱う。**タグ優先**: AC 本文が `### 正常系` 等のセクション内にインライン配置されていても、`[MECE追加]` タグが section 見出しより優先し QA-M を採番する。例: base 9 件 (3/2/2/1/1) + MECE追加 1 件 → 対象AC `10項目 (正常系3 / 異常系2 / エッジケース2 / 不変条件1 / 非影響1 / MECE追加1)`。
 
 ### Step 2: QA planner 並列実行
 
 - `manual-qa-planner` + `auto-qa-planner` を**同一メッセージ内**で並列起動。両 planner は再分類せず `${ENUMERATED_QA_AC}` の QA-ID を信頼する
-- **lite tier の縮約**: tier 表に従い auto-qa-planner は起動しない (skip)。manual-qa-planner も dispatch せず、main agent 自身が手動 QA 手順を 1 セクションに統合して書く (= 表の「inline」の意味)
+- **lite tier の縮約**: tier 表に従い auto-qa-planner は起動しない (skip)。manual-qa-planner も dispatch せず、main agent 自身が手動 QA 手順を 1 セクションに統合して書く (= 表の「inline」の意味)。代行手続きは [references/agent-orchestration.md](references/agent-orchestration.md) の in-context fallback と同じ (対象は `agents/manual-qa-planner.md` のみ、備考行の挿入は Task 不可時に限るので lite では行わない)
+- **lite tier の下流**: Step 3 は `### 自動QA（テストコード仕様）` を節ごと落とさず 1 行の対象外表記を残す (canonical 文言は [references/output-template.md](references/output-template.md))。Step 4 は auto 行 0 件を異常扱いせず、全 QA-ID を manual または孤児 (`要人間確認`) として初期化する
 
 2 agent はいずれも `Task(subagent_type="general-purpose")` で起動し、prompt 冒頭で agent 定義ファイルを Read させる (repo 制約上 typed subagent_type は使わない)。各 agent 固有 prompt の全文 (最小レシピ含む)・並列メッセージ構成・Task ツール利用不可時の in-context fallback は [references/agent-orchestration.md](references/agent-orchestration.md) 参照。
 
 ### Step 3: プランファイルに `## 実装準備` 追記
 
 Step 2 の結果を統合し、プランファイル末尾に `## 実装準備` を追記する。2 サブセクション: **手動QA手順** (環境 `{BASE_URL}` は QA 実行時にユーザーから取得、`**対象AC**: N項目（正常系X / 異常系Y / エッジケースZ / 不変条件U / 非影響W / MECE追加V）`、人間がそのまま追える手順 + 各操作に automation 用ツール名を括弧で併記) / **自動QA（テストコード仕様）** (RSpec / Vitest 仕様)。カテゴリ名・0 件表記は output-template.md SSOT 準拠。
+
+統合時、手動QA項目の `出典: AC原文` には Step 1.7 の enumerate 元 AC の原文を括弧で併記する (要約は可、言い換え・書き換えは不可)。planner が出した検証内容が enumerate 元 AC と対応しない QA-ID はそのまま統合せず `要人間確認` として完了報告に列挙する — Step 3.5 は atom ID、Step 4 は QA-ID 集合しか見ないため、中身のすり替わり (別 AC の内容が同じ QA-ID に載る) はどちらのゲートも素通りする。
 
 完全なテンプレ全文・0 件カテゴリ表記ルール・in-context fallback 時の備考挿入位置は [references/output-template.md](references/output-template.md) 参照。
 
@@ -126,13 +133,13 @@ Step 3 でプランファイルへ `## 実装準備` を **Write した後** に
 
 **ある場合**: 分析ファイルの `## 正本抽出結果` から「差分」「未実装」状態の atom (対応不要な「一致」は除外) を集め、プランファイル出典欄で引用済みの atom と `comm -23` で真の集合差分を取る。atom ID はテーブルの **1 列目 (atom ID 列) のみ**から読む — 期待値列に atom ID 風の文字列 (例 HTTP-404) が混ざっても拾わない (誤検出すると幻の「未カバー」を出す)。**検証済み Bash** (fixture で実行検証済み、要対応 atom 抽出・引用 atom 収集・ID 集合差分の全文) は [references/coverage-gate-bash.md](references/coverage-gate-bash.md) 参照。出力は未カバー時 `正本カバレッジ: 未カバー N 件`、カバー時 `正本カバレッジ: 差分 0 件 (...)`。
 
-未カバー atom が出た場合、分析ファイルから該当 atom 行 (期待値原文) を引き、QA-M-NN として手動QA手順へ「出典: <atom ID>」付きで Edit 追記する (原文引用・「自動補完」である旨を明記)。既存の QA 項目と検証内容が実質同一なら、新規 QA-M を作らず既存項目の出典へ atom ID を追加併記してよい (重複手順を増やさないため)。併記は `出典: AC原文 / 出典: FIG-09` のように「出典:」を atom ごとに繰り返す — カンマ区切り列挙 (`出典: AC原文, FIG-09`) はゲートの grep に拾われず未カバーのまま残る。追記後にゲートを再実行し差分ゼロを確認する。ゲート結果 (`skip` / `差分 0 件` / `補完 N 件`) は `## 実装準備` に残す。**未カバーを検出して補完した場合の最終記録行は、Bash の transient echo (`未カバー N 件`) や再実行後の `差分 0 件` ではなく `補完 N 件 (…再実行で差分 0 件)` とする** (補完が起きた事実と件数を記録に残すため。補完せず初めから差分ゼロなら `差分 0 件`、正本なしなら `skip`)。**`## 実装準備` に既存の `正本カバレッジ:` 行がある場合は最新の結果で置換する（重複追記しない）**（再実行・Step 3.5 のやり直しで行が積み重なると、どれが最新か機械判定できなくなるため）。
+未カバー atom が出た場合、分析ファイルから該当 atom 行 (期待値原文) を引き、QA-M-NN として手動QA手順へ「出典: <atom ID>」付きで Edit 追記する (原文引用・「自動補完」である旨を明記)。既存の QA 項目と検証内容が実質同一なら、新規 QA-M を作らず既存項目の出典へ atom ID を追加併記してよい (重複手順を増やさないため。**判定対象はプランファイルに実際に書かれた確認項目の本文** — QA-ID が紐づく AC の意味ではない。ゲート自体がプラン本文を走査する以上、判定もプラン本文を正にする)。併記は `出典: AC原文 / 出典: FIG-09` のように「出典:」を atom ごとに繰り返す — カンマ区切り列挙 (`出典: AC原文, FIG-09`) はゲートの grep に拾われず未カバーのまま残る。追記後にゲートを再実行し差分ゼロを確認する。ゲート結果 (`skip` / `差分 0 件` / `補完 N 件`) は `## 実装準備` に残す (記録位置は [references/output-template.md](references/output-template.md) が SSOT)。**未カバーを検出して補完した場合の最終記録行は、Bash の transient echo (`未カバー N 件`) や再実行後の `差分 0 件` ではなく `補完 N 件 (…再実行で差分 0 件)` とする** (補完が起きた事実と件数を記録に残すため。補完せず初めから差分ゼロなら `差分 0 件`、正本なしなら `skip`)。**`## 実装準備` に既存の `正本カバレッジ:` 行がある場合は最新の結果で置換する（重複追記しない）**（再実行・Step 3.5 のやり直しで行が積み重なると、どれが最新か機械判定できなくなるため）。
 
 補完しても「対象AC」件数 (Step 1.7 由来の集計) は書き換えない — 補完分はゲート結果行にのみ計上する別集計。なお本ゲートが検査するのは正本 atom のカバレッジだけで、QA-ID 全体が manual/auto のどちらかに載っているかの網羅性は Step 4 の孤児検出が担う。
 
 ### Step 4: QA 実行台帳の初期化
 
-`<plan>.qa-ledger.md` (プランファイルと同ディレクトリ、拡張子前に `.qa-ledger` を挿入) を、Step 1.7 で enumerate した全 QA-ID に **Step 3.5 で追記した QA-M-NN を合流させた集合**を対象に初期化する (合流しないと補完分がゲートを通した意味を失う)。Step 1.7 の結果が同一セッションに無い場合は、分析ファイル `## 受け入れ条件` の QA-ID ラベルとプランファイルの追記分から再構成する (例: `grep -oE 'QA-[A-Z]+-[0-9]+' "$ANALYSIS_FILE" | sort -u`)。手段は QA-ID ごとに 1 つだけ割り当てる: auto-qa-planner の QA-ID カバレッジマトリクスに載っていれば `auto`、それ以外で manual-qa-planner の見出しに載っていれば `manual`、両方に載っている (dual coverage) 場合は `auto` を正として manual 行は作らない (auto 側でカバー済みなのに manual 側にも pending 行が残って完了しない状態を防ぐ)。どちらにも載っていない QA-ID は `対象外(N/A)` (備考「担当手段未特定、要人間確認」)。**検証済み Bash** (fixture で実行検証済み):
+`<plan>.qa-ledger.md` (プランファイルと同ディレクトリ、拡張子前に `.qa-ledger` を挿入) を、Step 1.7 で enumerate した全 QA-ID に **Step 3.5 で追記した QA-M-NN を合流させた集合**を対象に初期化する (合流しないと補完分がゲートを通した意味を失う)。Step 1.7 の結果が同一セッションに無い場合は、分析ファイル `## 受け入れ条件` の QA-ID ラベルとプランファイルの追記分から再構成する (例: `grep -oE 'QA-[A-Z]+-[0-9]+' "$ANALYSIS_FILE" | sort -u`)。手段は QA-ID ごとに 1 つだけ割り当てる: auto-qa-planner の QA-ID カバレッジマトリクスに載っていれば `auto`、それ以外で manual-qa-planner の見出しに載っていれば `manual`、両方に載っている (dual coverage) 場合は `auto` を正として manual 行は作らない (auto 側でカバー済みなのに manual 側にも pending 行が残って完了しない状態を防ぐ)。どちらにも載っていない QA-ID (孤児) は手段 `-`・状態 `要人間確認` (備考「担当手段未特定」) で初期化する — `対象外(N/A)` は完了集計で許容されるため、割当漏れで実際に落ちた AC が黙って完了を通ってしまう ([references/qa-ledger.md](references/qa-ledger.md) が状態語彙・遷移の SSOT)。**検証済み Bash** (fixture で実行検証済み):
 
 ```bash
 ALL_IDS="/tmp/enumerated_qa_ids.txt"   # Step 1.7 の enumerate 結果 + Step 3.5 補完分 (QA-ID 1行1件)
@@ -151,10 +158,10 @@ comm -12 /tmp/all_qa_ids.txt /tmp/auto_qa_ids.txt > /tmp/assign_auto.txt        
 comm -23 /tmp/manual_qa_ids_all.txt /tmp/auto_qa_ids.txt > /tmp/manual_candidate.txt   # dualは除外
 comm -12 /tmp/all_qa_ids.txt /tmp/manual_candidate.txt > /tmp/assign_manual.txt
 cat /tmp/assign_auto.txt /tmp/assign_manual.txt | sort -u > /tmp/assigned.txt
-comm -23 /tmp/all_qa_ids.txt /tmp/assigned.txt > /tmp/assign_na.txt                    # どちらにも無い→対象外
+comm -23 /tmp/all_qa_ids.txt /tmp/assigned.txt > /tmp/assign_orphan.txt                # どちらにも無い→孤児
 ```
 
-`assign_auto.txt` → 手段=auto pending、`assign_manual.txt` → 手段=manual pending、`assign_na.txt` → 状態=対象外(N/A) (備考「担当手段未特定、要人間確認」) として台帳の行を生成する。フォーマット・状態語彙・「最新行が勝つ」規則・実装フェーズでの追記例は [references/qa-ledger.md](references/qa-ledger.md) 参照。
+`assign_auto.txt` → 手段=auto pending、`assign_manual.txt` → 手段=manual pending、`assign_orphan.txt` → 手段=`-`・状態=`要人間確認` (備考「担当手段未特定」) として台帳の行を生成する。フォーマット・状態語彙・「最新行が勝つ」規則・実装フェーズでの追記例は [references/qa-ledger.md](references/qa-ledger.md) 参照。
 
 ### Step 5: Preflight 契約の生成
 
