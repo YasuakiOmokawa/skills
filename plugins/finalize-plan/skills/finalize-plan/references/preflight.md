@@ -1,6 +1,6 @@
 # Preflight 契約 (`<プラン名>.preflight.md`)
 
-ループ開始前に一括収集する入力の置き場。生成者は finalize-plan (SKILL.md の Step 5)。参照者は `/qa-ui` (Step 2 / Phase A・B) と finalize-plan Step 2A (起点ブランチ確認)。
+ループ開始前に一括収集する入力の置き場。生成者は finalize-plan (SKILL.md の Step 5)。参照者は `/qa-ui` (Step 2 / Phase A・B) と `/review-plan-diff` (起点ブランチ = diff 比較元)。
 
 ## 置き場・命名
 
@@ -14,7 +14,7 @@
 | ログイン手段 | 誰が・いつ・どの URL でログインするかの手順 | 手順のみ。実際の認証情報は書かない。人間向け手順メモであり、qa-ui はこの欄を読まずログイン画面検出時は常に停止して人間に依頼する |
 | 権限アカウント一覧 | 検証に必要な権限種別とその用途 | 権限名と用途のみ。実アカウント (メールアドレス等) は書かない。qa-ui Phase B が参照 |
 | テストデータ準備手順 | 固有データ・状態を要する QA-ID/AC のための準備コマンド・手順 | qa-ui Phase A が参照 |
-| 起点ブランチ | Step 2A が確定した起点ブランチ名 | finalize-plan Step 2A が参照 (qa-ui は読まない) |
+| 起点ブランチ | finalize-plan Step 5 が `git branch --show-current` から機械転記 (実装はこのブランチから新規に切る) | `/review-plan-diff` が diff 比較元として参照 (qa-ui は読まない) |
 | サーバ・DB 起動コマンド | 検証環境を起動するコマンド | 人間向け参考情報。qa-ui はこの欄を読んで自動起動せず、接続失敗時は現行どおり停止して人間に依頼する |
 
 ## セキュリティ規則 (厳守)
@@ -37,6 +37,6 @@
 | ログイン手段 | 未定 |
 | 権限アカウント一覧 | 管理者権限 (権限分岐 AC の検証用) |
 | テストデータ準備手順 | `bin/rails db:seed:qa_fixture` |
-| 起点ブランチ | develop |
+| 起点ブランチ | main |
 | サーバ・DB 起動コマンド | `docker compose up -d` |
 ```

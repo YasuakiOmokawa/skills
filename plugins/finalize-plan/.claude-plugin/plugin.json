@@ -1,7 +1,7 @@
 {
   "name": "finalize-plan",
-  "description": "プランモードで設計が確定した後、実装に移る直前に使用。分析ファイルからAC・MECE結果を読み込み、プランファイルにブランチ・QA手順を追記する。",
-  "version": "2.9.0",
+  "description": "プランモードで設計が確定した後、実装に移る直前に使用。分析ファイルからAC・MECE結果を読み込み、プランファイルにQA手順を追記する。",
+  "version": "2.10.0",
   "author": {
     "name": "Yasuaki Omokawa",
     "url": "https://github.com/YasuakiOmokawa"
@@ -11,7 +11,6 @@
   "license": "MIT",
   "keywords": [
     "plan-driven",
-    "branch",
     "qa"
   ]
 }

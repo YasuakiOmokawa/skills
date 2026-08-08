@@ -5,6 +5,14 @@ All notable changes to omokawa-skills will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v3.99.0 - 2026-08-08
+
+### Changed
+
+- **`finalize-plan` skill: ブランチ戦略ロールを廃止 (2.9.0 → 2.10.0)**: Step 2A (起点ブランチ確定 + 作業ブランチ命名 + 重複チェック) と `## 実装準備` の `### ブランチ戦略` 出力サブセクション (新規作成形式・カレント継続形式の 2 テンプレ) を撤去し、Step 2B を Step 2 へ改称した。実装開始時に「カレントブランチから新しく切って実装」と指示すれば足り、事前のブランチ計画は欠陥検出に寄与しないため (利用者決定 2026-08-08)。2026-08-02 の branch-planner インライン化に続く簡素化で、`## 実装準備` は 手動QA手順 / 自動QA（テストコード仕様） の 2 サブセクションになった。
+- **preflight の 起点ブランチ 欄は存置し、供給元だけ差し替え**: `/review-plan-diff` がこの欄を diff 比較元として読む (git 参照は禁止されている) ため欄自体は残し、Step 5 が `git branch --show-current` の値を機械転記する方式に変更 (判断・命名は行わない。detached HEAD 等で取得できない場合は `未定` として既存の AskUserQuestion 一括確認へ流す)。
+- **連動更新**: `iterate-with-prototypes` (0.18.0 → 0.19.0) の ledger 駆動フォールバックを「ブランチ戦略 + QA 手順の 2 点」→「QA 手順」へ、`define-acceptance-criteria` (0.31.0 → 0.32.0) の併用推奨記述を「ブランチ・QA 手順を起こす」→「QA 手順を起こす」へ。両 plugin の evals/regression.md の該当 assertion も新仕様へ移行。finalize-plan の trigger から「ブランチ戦略を決めて」を削除。
+
 ## v3.98.0 - 2026-08-08
 
 ### Added
