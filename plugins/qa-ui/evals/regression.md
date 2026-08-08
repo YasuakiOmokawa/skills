@@ -156,3 +156,17 @@ automation モードが明示指定されている。対象は PoC プランフ�
 収束記録: 2026-07-18 (SKILL.md/agents/references の regression 再検証、no-fix)。SKILL.md・agents/ui-evaluator.md・references 4 ファイル (automation-mode / delegated-execution / ledger-gates / orchestrated-mode) に対し、本ファイルの全 12 シナリオを fresh executor (Task dispatch, blank slate) で 1 ラウンド再実行し全 [critical] ○ / accuracy 100% / retries 0。Iter-0 静的チェックで frontmatter description の謳うトリガー・範囲 (人間委譲既定 / automation オプション / 3 フォールバック / 台帳ゲートと機械集計完了判定) と本文 Step 1-6 の実カバーに乖離なしを確認し、executor 実行前の修正は不要だった。ChromeDevTools MCP が無い環境のため automation 系シナリオは inline 供給の ui-evaluator 結果を判定入力とする机上再現で実行し (S12 は MCP 非依存の Step 3 分岐判定に限定)、実ブラウザ必須で blocked としたシナリオは無し。SKILL.md/agents/references への修正は入れていない (converged, no-fix)。executor が挙げた新規指摘は (a) fixture/環境由来の scaffolding (S1 被験ソース欠如で最小修正が記述止まり・S6 preflight が権限片側のみ記載・S9 read-only sandbox で seed 実行不可・S12 MCP 不可) と (b) 挙動を歪めない軽微な記述明確化余地 (S2 automation で 手段=manual の台帳ラウンド列番号・S3 混在ラウンドで PASS 側 QA-ID の記帳) のみで、いずれも全 executor が正しい挙動に到達しており修正対象外と判断した (regression=劣化検出器の用途に照らし過学習を避ける。S2/S3 の一本化は 2026-07-17 記録が先送りした記述揺れと同系で別 PR 検討)。
 
 記録: 2026-07-25 (opus5/fable5 静的最適化パス)。Iter 0 (description/body 整合) gap なし — description の謳う既定人間委譲・automation opt-in・3 系フォールバック・ラウンド上限と狭い例外・orchestrated 集約は全て本文に対応。ルーブリック走査の結果、無変更と判定: 重複は既に「集約」方式で SSOT 化済み、⚠️ 強調はハザードゲート (URL/認証ハードコード禁止) のみ、自己検証足場なし、委譲実行の判定基準も literal (AskUserQuestion 可用性) で明示済み。empirical 検証は session の subagent dispatch 上限到達のためスキップ (利用者承認済みの縮小完了)。次回スキル変更 PR では本 suite の fresh executor 再実行を通常どおり行うこと。
+
+---
+
+以下は v1.27.0 (短寿命トースト Gotcha 行追加) 分。収束記録: 2026-08-08。baseline (行なし) 2 シナリオで [critical] 全○ながら両 executor に「初見⇔workaround既知」の分類振動 (retries 1+1) と workaround 自力導出コスト (steps 6-10、app+sonner ソース実読) を観測。行追加後の iter1 (4 シナリオ: 空振り後リカバリ / 10 秒エラーの除外条件 / 分類判定 / 初見 IdP regression) + iter2 (安定性 + 事前計画 hold-out) の 6 実行で [critical] 全○ / accuracy 100% / retries 0 に収束。除外条件 (10 秒 + closeButton は直接撮影) の overreach なし、初見 IdP fixture への誤マッチなし。親側 Step 5 シナリオ群は evaluator の分類出力を入力に取るため、初見 fixture の分類が不変であることの evaluator 側検証で互換を確認 (親側ロジックは本 PR で無変更)。残課題として記録: pause 中の duration 実測手順 / 片道操作の再試行前提 / 可変部文言の一致粒度は行スコープ外の既存論点。
+
+## シナリオ: 短寿命トーストの証跡空振り (ui-evaluator 側判断)
+
+あなたは ui-evaluator として automation モードで検証中。検証項目「役割変更の成功トースト表示」で、`click` → `take_screenshot` の証跡撮影が 2 回連続で空振りした (トーストは duration 4 秒で、ツール往復の間に消えている。DOM の snapshot では操作直後に通知領域へテキストが挿入されたことまでは観測できた)。この事象を「検証不能」として親エージェントへ報告するか否かを、分類名とともに答えよ。
+
+### Requirements checklist
+1. [critical] 回避策が存在する事象として扱い、「初見」または「真の制約」の検証不能で親へエスカレートしない (workaround既知 として回避策適用 → 通常の PASS/FAIL 判定に戻す)
+2. [critical] 空振りスクリーンショットを根拠に「トーストが実装されていない」と FAIL 判定しない
+3. 回避策手順が「evaluate_script 1 回内で出現監視 → 最終確定操作 → 出現 await (上限はツール timeout 以下) → relatedTarget 付き mouseover で pause」の形になっている
+4. 寿命がツール往復より十分長い通知 (10 秒 + closeButton) には本行を適用しない除外条件を認識している
