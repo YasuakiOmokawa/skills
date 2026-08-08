@@ -5,6 +5,14 @@ All notable changes to omokawa-skills will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v3.100.0 - 2026-08-08
+
+### Changed
+
+- **`finalize-plan` skill: eval 繰り越し 10 件を消化 (2.10.0 → 2.11.0)**: PR #139 の fresh executor 再実行で観測した spec gap 10 件を、薄い規則 (表記の SSOT 整合・1〜2 行の規則・位置宣言) だけで消化した。表記 SSOT 整合: Step 1.7 の `0/0` という独自略記 (テンプレに実在せず executor が redo した) を output-template.md の `カテゴリ名+0` へ統一。lite tier の下流規定: 自動QA サブセクションは節ごと落とさず `自動QA: lite tier のため対象外 (auto 0 件)` の 1 行を残し (canonical 文言は output-template.md)、Step 4 は auto 0 件を正常扱いとする。代行時に `agents/manual-qa-planner.md` を Read する手続き (in-context fallback と同一) も明記。位置 SSOT: Step 3.5 のゲート結果行は「手動QA手順の末尾 = `### 自動QA` 見出しの直前」と output-template.md で宣言し、SKILL.md は参照のみ。
+- **孤児 QA-ID を完了ブロック側へ**: manual/auto どちらの planner 出力にも載らない QA-ID の初期状態を `対象外(N/A)` (完了集計で許容) から手段 `-`・状態 `要人間確認` (許容されない) へ変更。割当漏れで実際に落ちた AC が黙って完了判定を通る穴を塞ぐ。`要人間確認` は qa-ui の完了判定 Bash (終端状態は `PASS` / `検証不能(真の制約)` / `対象外(N/A)` のみ) がそのままブロックするため、qa-ui 側の変更は不要。
+- **照合・判定の曖昧さ解消ほか**: planner が出した検証内容が enumerate 元 AC と対応しない QA-ID は統合せず `要人間確認` に回す規則を Step 3 に追加 (QA-ID だけ合っていて中身がすり替わる経路は既存ゲートが素通しするため)。Step 3.5 の「実質同一」判定はプラン本文を対象とすると明記。Step 1.5 の ledger 駆動例外に固定の終了メッセージを追加 (従来は出力未定義の分岐だった)。⛔ 中断メッセージ 3 行目を「分析ファイルを一度も作っていない場合」に限定し、AC 済み・MECE 未了のプロトタイプ先行ユーザーを ledger 代替へ差し戻さないようにした。preflight は権限用途の逆算補完 (逆算元 QA-ID が特定できる範囲) とセル注記禁止 (後段が機械的に読む表のため) を明文化。evals/regression.md は孤児 QA-ID の assertion を追随更新 (シナリオ追加なし)。
+
 ## v3.99.0 - 2026-08-08
 
 ### Changed
