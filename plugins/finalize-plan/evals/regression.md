@@ -11,7 +11,7 @@ fresh executor (blank slate, Task dispatch) で下記シナリオを再実行し
 
 収束記録 (v2.0.0): 2026-07-06。改訂版を含む有効 4 シナリオを fresh executor で再実行し全 [critical] ○ (PR 分割の復活・ブランチ複数化の逸脱なし。正本カバレッジ / 台帳初期化 / preflight / Step 1.5 合流判定は実フィクスチャ実行込みで従来どおり)。
 
-structural review mode + trigger 判定: (a) lite tier で auto-qa-planner を skip し、manual-qa-planner は main agent が inline 統合する (Step 2A→2B の lite 縮約注記)、(b) 「実装準備を追記して」「ブランチ戦略を決めて」が本 skill に発火する。
+structural review mode + trigger 判定: (a) lite tier で auto-qa-planner を skip し、manual-qa-planner は main agent が inline 統合する (Step 2 の lite 縮約注記)、(b) 「実装準備を追記して」「QA 手順をプランに書いて」が本 skill に発火する。
 
 ### Requirements checklist
 1. [critical] 両セクション (AC / MECE 分析結果) 欠落時の即中断が維持されている
@@ -38,10 +38,10 @@ PR 分割廃止 (利用者決定 2026-07-06) に伴い撤去。実装漏れの�
 
 収束記録: 2026-07-05 (v1.20.0 PR)。Iter1-3 で fresh executor が全 [critical] ○ / retries 0。
 
-Step 4 完了直後を所与として Step 5 を机上実行させる。所与: Step 2A で起点ブランチ develop を確定済み。手動QA手順には「環境: http://localhost:3000」、テストデータ準備コマンド `bin/rails db:seed:qa_fixture`、権限アカウント要件「管理者権限 (権限分岐 AC の検証用)」の記載がある。ログイン手段とサーバ・DB 起動コマンドはプラン・README のどこにも記載がない。`<プラン名>.preflight.md` は未存在。生成する preflight の内容とユーザー確認の回数・内容を答えさせる。
+Step 4 完了直後を所与として Step 5 を机上実行させる。所与: 実行時のカレントブランチは develop (`git branch --show-current` が develop を返す)。手動QA手順には「環境: http://localhost:3000」、テストデータ準備コマンド `bin/rails db:seed:qa_fixture`、権限アカウント要件「管理者権限 (権限分岐 AC の検証用)」の記載がある。ログイン手段とサーバ・DB 起動コマンドはプラン・README のどこにも記載がない。`<プラン名>.preflight.md` は未存在。生成する preflight の内容とユーザー確認の回数・内容を答えさせる。
 
 ### Requirements checklist
-1. [critical] preflight に 6 項目が全て載り、ベース URL / テストデータ準備 / 権限アカウント (用途付き) / 起点ブランチがプラン記載・Step 2A の結果から転記される
+1. [critical] preflight に 6 項目が全て載り、ベース URL / テストデータ準備 / 権限アカウント (用途付き) がプラン記載から転記される。起点ブランチは判断・命名を行わず `git branch --show-current` の値 (develop) をそのまま機械転記する (ブランチ名の生成・重複チェックをしない)
 2. [critical] ログイン手段とサーバ・DB 起動コマンドは `未定` とし、AskUserQuestion 1 回にまとめて確認する (項目ごとに個別停止しない)
 3. パスワード等の秘密情報を書かない (権限アカウントは権限名と用途のみ)
 4. ログイン手段を推測で埋めない (自動ログインを前提とする記載をしない)
@@ -72,14 +72,14 @@ fresh executor に Step 1.5 (例外節含む) を渡し、次の 3 パターン�
 
 本 skill が Task 委譲で subagent として起動されたときの入力解決・質問分岐・Task 起動可否・`${CLAUDE_PLUGIN_ROOT}` 解決・完了報告の各読み替え (SKILL.md「## 委譲実行」節) を検証する。fresh executor に以下 2 パターンを実行させる (成果物は実 run dir へ Write、fixture は `plan-search-final.md` + `.analysis.md`)。
 
-**パターン A (median)**: 委譲プロンプトにプランファイルの絶対パスを明示して渡す。Step 1〜5 まで完走させ、Step 2A のインライン実行 (ブランチ戦略。agent 起動なし) + Step 2B の manual-qa-planner / auto-qa-planner 2 agent 並列起動を含むフルパイプラインを実行させる。
+**パターン A (median)**: 委譲プロンプトにプランファイルの絶対パスを明示して渡す。Step 1〜5 まで完走させ、Step 2 の manual-qa-planner / auto-qa-planner 2 agent 並列起動を含むフルパイプラインを実行させる。
 
 **パターン B (edge)**: 委譲プロンプトにプランファイルのパスを一切含めない (「さっきのプランを finalize してください」のみ)。会話コンテキストの `Plan File Info:` も存在しない状態で実行させる。
 
 ### Requirements checklist (パターン A)
-1. [critical] プランファイルに `## 実装準備` (ブランチ戦略・手動QA手順・自動QA手順) が追記され Write されている
+1. [critical] プランファイルに `## 実装準備` (手動QA手順・自動QA手順) が追記され Write されている
 2. [critical] Step 5 で preflight の未定項目に行き当たった場面で、AskUserQuestion 相当の対話待ちで停止せず、未定項目の一覧を最終メッセージに含めて終了している (未定項目が残らなかった場合はこの項目は不問とする)
-3. Step 2A/2B で agent へ渡すプロンプト中、`${CLAUDE_PLUGIN_ROOT}` に相当するパスが生文字列のまま残らず、いま読んでいる SKILL.md の所在から導いた解決済み絶対パスになっている
+3. Step 2 で agent へ渡すプロンプト中、`${CLAUDE_PLUGIN_ROOT}` に相当するパスが生文字列のまま残らず、いま読んでいる SKILL.md の所在から導いた解決済み絶対パスになっている
 4. `<plan>.qa-ledger.md` が QA-ID ごとに手段 (auto/manual/対象外) と状態付きで初期化されている
 5. Step 3.5 の正本カバレッジ・ゲート結果がプランファイルの `## 実装準備` に記録されている
 6. 最終メッセージに、生成した成果物 (プラン・qa-ledger・preflight) の絶対パスが含まれている
@@ -95,5 +95,7 @@ fresh executor に Step 1.5 (例外節含む) を渡し、次の 3 パターン�
 収束記録: 2026-07-17 (v2.4.0 progressive disclosure 分割)。Step 3.5 の正本カバレッジ Bash を references/coverage-gate-bash.md へ verbatim 退避し、Step 2 最小レシピ / Step 3 出力テンプレの既存 references との重複を削除 (挙動変更なし)。全 7 シナリオを fresh executor で再実行し全 [critical] ○ (coverage-gate-bash.md への 1 hop 到達・skip 文言の逐語再現を確認)。body-only executor の追加検証で、誤検出ガード 2 点 (atom ID は 1 列目のみ・期待値欄の HTTP-404 等を拾わない) が参照先にしか無いと幻の「未カバー」を出しうると判明したため、同 2 点を Step 3.5 本文へインライン化した。body-only 条件シナリオの suite 追加は別 PR で検討。
 
 収束記録: 2026-07-18 (fixed-then-converged)。全 7 シナリオ (lite tier / 正本カバレッジ+台帳 / preflight base+派生 / Step 1.5 判定 / 委譲 A・B) を fresh executor で再実行し初回ラウンドで全 [critical] ○ / accuracy 100% / retries 0。委譲 A は 3 planner の nested Task 起動 (`${CLAUDE_PLUGIN_ROOT}` 解決済み絶対パス)・FIG-12 の QA-M-01 自動補完・preflight 未定項目の最終メッセージ列挙まで完走。ただし正本カバレッジ+台帳シナリオの executor が新規不明点 1 件を提起: Step 3.5 の記録語彙 `補完 N 件` と検証済み Bash の transient echo (`未カバー N 件` / `差分 0 件`) の対応が一箇所に明示されておらず、補完後の最終記録行に `差分 0 件` を書くと補完の事実と件数が記録から失われうる (critical は全 ○ のまま、executor は `補完 N 件` を自力で正しく選択。委譲 A も同一 path で `補完 N 件` を無誤で使用)。executor 提案の General Fix Rule に沿って Step 3.5 へ「補完した場合の最終記録行は Bash の transient echo でなく `補完 N 件 (…再実行で差分 0 件)` とする」の 1 文を追記 (1 テーマ最小修正・挙動不変)。修正後、正本カバレッジ+台帳シナリオを pristine fixture で fresh 再実行し全 [critical] ○ / 新規不明点 0 (`補完 3 件 (…再実行で差分 0 件)` を逐語記録)。validate_skills.py 通過。
+
+記録: 2026-08-08 (ブランチ戦略ロール廃止, v2.10.0)。利用者決定によりブランチ戦略 (Step 2A + `### ブランチ戦略` 出力) を廃止し、Step 2B を Step 2 へ改称した。本 suite の assertion もこれに追随して移行済み: lite tier シナリオの trigger を「ブランチ戦略を決めて」→「QA 手順をプランに書いて」へ差し替え、preflight シナリオの所与を「Step 2A で起点ブランチ確定済み」→「カレントブランチが develop」へ、checklist 1 を `git branch --show-current` の機械転記 (判断・命名なし) の検証へ書き換え、委譲 A シナリオから Step 2A のインライン実行を除去し `## 実装準備` の期待サブセクションを 2 つ (手動QA・自動QA) にした。過去の収束記録に出てくる branch-planner / Step 2A への言及は history としてそのまま残す (当時の実行事実の記録であり現行仕様ではない)。
 
 記録: 2026-07-25 (opus5/fable5 静的最適化パス)。Iter 0 (description/body 整合) gap なし。ルーブリック走査 (過剰強調・重複規則・自己検証足場・literal スコープ) の結果、本文は既に 2026-07-07〜07-18 の empirical tuning で該当項目が解消済みであり無変更と判定 (密な規則はいずれも失敗モード根拠つき・ゲート類は契約的で保持対象)。empirical 検証は session の subagent dispatch 上限到達のためスキップ (利用者承認済みの縮小完了)。次回スキル変更 PR では本 suite の fresh executor 再実行を通常どおり行うこと。

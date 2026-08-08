@@ -119,7 +119,7 @@ The loop 表とその直下の note 群、`iterate の実体` から、(a) step 
 1. [critical] (a) では `/finalize-plan` を通常どおり起動すると判定し、AC/MECE 欠落のまま即中断ゲートを迂回する提案をしない
 2. [critical] 「step5 完走 → 分析ファイル成立 → finalize-plan 通常起動」(a) と「step4-5 省略 → ledger 追記代替」(b) の分岐を取り違えない
 3. [critical] 委任文言が台帳化+spike までなら verdict 確定で終了、PRD 網羅実装の明示依頼なら Code-A まで進む、と読み分けている
-4. (b) の ledger 追記には最低限ブランチ戦略と QA 手順の 2 点が入る (PR 分割はしない) と判定される
+4. (b) の ledger 追記には最低限 QA 手順が入る (ブランチは計画せず実装開始時にカレントブランチから切る、PR 分割もしない) と判定される
 5. (c) では loop を中断し design-first (`/mece-plan-review` 等の実装前ゲート) へ切り替えると判定される
 6. Code-A 着手 gate が「最上位仮定が grounded」であり、下位仮定が unverified でも gate に影響しないと読み取れている
 

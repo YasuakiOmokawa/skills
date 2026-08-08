@@ -169,4 +169,4 @@ description: Fills a matrix of 3 required categories (normal, error, edge) by co
 ## 併用推奨 skill
 
 - `/mece-plan-review` — 本 skill 出力の AC を 3 視点で MECE 検証
-- `/finalize-plan` — AC + MECE 結果からブランチ・QA 手順を起こす
+- `/finalize-plan` — AC + MECE 結果から QA 手順を起こす

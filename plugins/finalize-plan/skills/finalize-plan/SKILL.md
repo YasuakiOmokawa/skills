@@ -1,11 +1,11 @@
 ---
 name: finalize-plan
-description: Turns AC and MECE results from the analysis file into a branch strategy and manual/auto QA steps appended to the plan file, then gates QA-ID coverage against any structured source-of-truth atoms, initializes the QA execution ledger (`<plan>.qa-ledger.md`), and generates the preflight contract (`<plan>.preflight.md`) so QA input-waiting moves before the loop starts. Use when the user has completed `/define-acceptance-criteria` + `/mece-plan-review` and is about to move from plan mode into implementation, or says "実装準備を追記して" / "ブランチ戦略を決めて" / "QA 手順をプランに書いて".
+description: Turns AC and MECE results from the analysis file into manual/auto QA steps appended to the plan file, then gates QA-ID coverage against any structured source-of-truth atoms, initializes the QA execution ledger (`<plan>.qa-ledger.md`), and generates the preflight contract (`<plan>.preflight.md`) so QA input-waiting moves before the loop starts. Use when the user has completed `/define-acceptance-criteria` + `/mece-plan-review` and is about to move from plan mode into implementation, or says "実装準備を追記して" / "QA 手順をプランに書いて".
 ---
 
 # finalize-plan
 
-分析ファイル (`<plan>.analysis.md`) から AC・MECE 結果を読み込み、プランファイル末尾に `## 実装準備` (ブランチ・QA 手順) を追記する。入力欠落時は即中断。`## 正本抽出結果` があれば QA-ID の正本カバレッジをゲートし、QA-ID ごとの実行台帳 (`<plan>.qa-ledger.md`) を初期化する。あわせて、QA 開始時に個別で尋ねる入力 (ベース URL・テストデータ準備・権限アカウント等) を事前に一括収集する preflight 契約 (`<plan>.preflight.md`) を生成する。
+分析ファイル (`<plan>.analysis.md`) から AC・MECE 結果を読み込み、プランファイル末尾に `## 実装準備` (QA 手順) を追記する。入力欠落時は即中断。`## 正本抽出結果` があれば QA-ID の正本カバレッジをゲートし、QA-ID ごとの実行台帳 (`<plan>.qa-ledger.md`) を初期化する。あわせて、QA 開始時に個別で尋ねる入力 (ベース URL・テストデータ準備・権限アカウント等) を事前に一括収集する preflight 契約 (`<plan>.preflight.md`) を生成する。
 
 ## Arguments
 
@@ -21,9 +21,9 @@ description: Turns AC and MECE results from the analysis file into a branch stra
 | **standard** (default) | 6-15 | ✓ | ✓ |
 | **deep** | >15 / auth / billing / payment / migration | ✓ | ✓ |
 
-リスク領域は AC 件数によらず **deep**。lite では Step 1.7 の QA-ID enumerate を簡略形 (`QA-N-01`, `QA-N-02`... の通し番号) に縮約してよい。ブランチ戦略 (Step 2A) は tier によらず main agent がインラインで行う (agent 起動なし)。
+リスク領域は AC 件数によらず **deep**。lite では Step 1.7 の QA-ID enumerate を簡略形 (`QA-N-01`, `QA-N-02`... の通し番号) に縮約してよい。
 
-**PR 分割は行わない**: 実装単位の事前梱包 (PR を何本に切るか) は欠陥検出に寄与しない — 実案件 2 回の実測で、欠陥検出の実体は QA-ID カバレッジマトリクス・実装後の diff 突き合わせ・qa-ledger 審判再実行の 3 層であり、PR 分割固有の検出は 0 件だった一方、帳簿ずれのノイズ指摘と割当漏れ事故の発生源になっていた。PR 梱包の判断は出荷時に `/create-pr` が行う (利用者決定 2026-07-06)。ブランチ戦略は起点ブランチから単一の作業ブランチ 1 本に簡素化した結果「起点確認と命名」だけになったため、専用 agent (branch-planner) を廃し Step 2A へインライン化した (2026-08-02)。
+**PR 分割は行わない**: 実装単位の事前梱包 (PR を何本に切るか) は欠陥検出に寄与しない — 実案件 2 回の実測で、欠陥検出の実体は QA-ID カバレッジマトリクス・実装後の diff 突き合わせ・qa-ledger 審判再実行の 3 層であり、PR 分割固有の検出は 0 件だった一方、帳簿ずれのノイズ指摘と割当漏れ事故の発生源になっていた。PR 梱包の判断は出荷時に `/create-pr` が行う (利用者決定 2026-07-06)。ブランチ戦略は起点ブランチから単一の作業ブランチ 1 本に簡素化した結果「起点確認と命名」だけになったため、専用 agent (branch-planner) を廃し Step 2A へインライン化した (2026-08-02)。さらに 2026-08-08 にはブランチ戦略のロール自体を廃止した — 実装開始時に「カレントブランチから新しく切る」と指示すれば足り、事前のブランチ計画は欠陥検出に寄与しないため (利用者決定 2026-08-08)。preflight の 起点ブランチ 欄は `/review-plan-diff` の diff 比較元として残し、Step 5 が `git branch --show-current` の値を機械転記する。
 
 **agent 省略が sanctioned なのは lite tier の skip 列のみ** — deep tier で「文脈が十分だから直接書ける」という判断での省略はしない (planner agent を通さない直接策定は QA-ID トレーサビリティの独立検証を欠く)。
 
@@ -32,12 +32,11 @@ description: Turns AC and MECE results from the analysis file into a branch stra
 1. **Step 1**: プランファイルパスを特定
 2. **Step 1.5**: 分析ファイルから `## 受け入れ条件` と `## MECE分析結果` を抽出 (両方必須、片方欠落で中断)。`## 正本抽出結果` があれば追加入力として読む
 3. **Step 1.7**: main agent が AC を QA-ID 形式で 1 回だけ enumerate (`${ENUMERATED_QA_AC}`)
-4. **Step 2A**: main agent がインラインでブランチ戦略 (起点ブランチ・単一の作業ブランチ名) を策定
-5. **Step 2B** (並列、同一メッセージ): manual-qa-planner + auto-qa-planner
-6. **Step 3**: 結果を統合してプランファイルに `## 実装準備` を追記
-7. **Step 3.5**: 正本カバレッジ・ゲート (Step 3 の Write 後、プランファイル自体を対象に実行)
-8. **Step 4**: QA 実行台帳 `<plan>.qa-ledger.md` を初期化
-9. **Step 5**: プラン内容と Step 2A の結果から `<プラン名>.preflight.md` を生成 (既存なら不足項目のみ補完、`未定` は AskUserQuestion 1 回にまとめて確認)
+4. **Step 2** (並列、同一メッセージ): manual-qa-planner + auto-qa-planner
+5. **Step 3**: 結果を統合してプランファイルに `## 実装準備` を追記
+6. **Step 3.5**: 正本カバレッジ・ゲート (Step 3 の Write 後、プランファイル自体を対象に実行)
+7. **Step 4**: QA 実行台帳 `<plan>.qa-ledger.md` を初期化
+8. **Step 5**: プラン内容から `<プラン名>.preflight.md` を生成 (既存なら不足項目のみ補完、`未定` は AskUserQuestion 1 回にまとめて確認)
 
 ## 委譲実行 (subagent として起動された場合)
 
@@ -49,7 +48,7 @@ description: Turns AC and MECE results from the analysis file into a branch stra
 
 ### 質問分岐の読み替え
 
-AskUserQuestion が利用可能ツールに無い実行文脈 (= subagent) では、Step 5 の未定項目確認・Step 1.7 fallback の AC 分類不能確認・Step 2A の起点ブランチ確認のいずれも、質問を試みず該当項目を最終メッセージに列挙して終了する。判定基準は AskUserQuestion が利用可能ツール一覧にあるかどうかであり、subagent かどうかでは判定しない。
+AskUserQuestion が利用可能ツールに無い実行文脈 (= subagent) では、Step 5 の未定項目確認・Step 1.7 fallback の AC 分類不能確認のいずれも、質問を試みず該当項目を最終メッセージに列挙して終了する。判定基準は AskUserQuestion が利用可能ツール一覧にあるかどうかであり、subagent かどうかでは判定しない。
 
 ### Task 起動可否
 
@@ -75,7 +74,7 @@ Task (Agent) ツールが自分の利用可能ツール一覧に無い場合の�
 PoC / 使い捨て検証中であれば本来 finalize-plan は不要 — /iterate-with-prototypes の ledger 追記 (step 6) で代替する。
 ```
 
-例外: `/iterate-with-prototypes` の step 4-5 (doc 逆生成 + AC/MECE) 自体を省略し、分析ファイルが一度も作られていない **ledger 駆動** セッションでは、本 skill を起動せず iterate-with-prototypes step 6 の ledger 追記代替 (ブランチ戦略 + QA 手順を ledger に書く) に従う。上の中断メッセージは「分析ファイルが本来あるべきなのに無い」場合のみ表示する。
+例外: `/iterate-with-prototypes` の step 4-5 (doc 逆生成 + AC/MECE) 自体を省略し、分析ファイルが一度も作られていない **ledger 駆動** セッションでは、本 skill を起動せず iterate-with-prototypes step 6 の ledger 追記代替 (QA 手順を ledger に書く) に従う。上の中断メッセージは「分析ファイルが本来あるべきなのに無い」場合のみ表示する。
 
 `/iterate-with-prototypes` の step 5 (`/define-acceptance-criteria` → `/mece-plan-review`) を経て `## 受け入れ条件` `## MECE分析結果` を備えた分析ファイルが既に作られている場合、この例外にはあたらない — design-first 経由の分析ファイルと同じ入力として扱い、本 skill を通常どおり起動する。Step 1.7 以降 (QA-ID enumerate・Step 3.5 の正本カバレッジ・ゲート・Step 4 の QA-ID 台帳・Step 5 の preflight 契約) は分析ファイルの起源 (design-first / プロトタイプ先行) を区別せず同一に動作する。
 
@@ -102,26 +101,7 @@ PoC / 使い捨て検証中であれば本来 finalize-plan は不要 — /itera
 
 **[MECE追加] のカウント**: `[MECE追加]` / `[MECE追加 変更]` タグ付き AC は base 5 カテゴリ (正常系 / 異常系 / エッジケース / 不変条件 / 非影響確認) **とは別に** QA-M-NN を採番し、`対象AC` 件数の総数に**加算**して扱う。**タグ優先**: AC 本文が `### 正常系` 等のセクション内にインライン配置されていても、`[MECE追加]` タグが section 見出しより優先し QA-M を採番する。例: base 9 件 (3/2/2/1/1) + MECE追加 1 件 → 対象AC `10項目 (正常系3 / 異常系2 / エッジケース2 / 不変条件1 / 非影響1 / MECE追加1)`。
 
-### Step 2A: ブランチ戦略 (main agent がインラインで実行)
-
-agent を起動せず main agent が直接行う。決めるのは**起点ブランチ 1 つと作業ブランチ名 1 つ**だけで、派生ブランチは作らない (PR 分割を行わないため)。
-
-**① 起点ブランチの確定** — `<プラン名>.preflight.md` が存在し起点ブランチ欄が `未定` 以外で埋まっていればそれを採用し、以下の判定を省略する。無ければ `git branch --show-current` とプランの前提から確定する:
-
-- プランが「カレントブランチの続き」を前提 (既存の作業ブランチ上で実装継続) → **カレントブランチ起点**
-- 独立した新機能で親が明示されている → その親 (develop / main 等)
-- 既にカレントブランチが目的の作業ブランチとして作成済み → 新規に切らず現ブランチを前提にする
-- **判断がつかない場合は推測で固定せずユーザーに 1 度確認する** (裸の `develop` 既定で押し切らない。AskUserQuestion が利用可能ツールに無い場合は「## 委譲実行」の読み替えに従い、確定できない旨を最終メッセージに列挙する)
-
-確定した起点名は出力に明示する (**develop ハードコード禁止**)。
-
-**② ブランチ名の生成** — プレフィックスは `feature/` (新機能) / `fix/` (バグ修正) / `refactor/` (リファクタリング) / `docs/` (ドキュメント) / `chore/` (設定変更等) から選ぶ。kebab-case・2-4 単語・日本語不可。例: リース査定レビュー機能 → `feature/lease-assessment-review`、ログインバグ修正 → `fix/login-bug`。
-
-**③ 重複チェック** — `git branch -a` と突き合わせ、既存と重複するなら連番を付与する (`feature/user-notification` → `feature/user-notification-2`)。
-
-出力は Step 3 の `### ブランチ戦略` サブセクションにそのまま入る。新規に切る場合とカレント継続の場合で書式が異なる (2 形式の完成形は [references/output-template.md](references/output-template.md) 参照)。
-
-### Step 2B: QA planner 並列実行
+### Step 2: QA planner 並列実行
 
 - `manual-qa-planner` + `auto-qa-planner` を**同一メッセージ内**で並列起動。両 planner は再分類せず `${ENUMERATED_QA_AC}` の QA-ID を信頼する
 - **lite tier の縮約**: tier 表に従い auto-qa-planner は起動しない (skip)。manual-qa-planner も dispatch せず、main agent 自身が手動 QA 手順を 1 セクションに統合して書く (= 表の「inline」の意味)
@@ -130,7 +110,7 @@ agent を起動せず main agent が直接行う。決めるのは**起点ブラ
 
 ### Step 3: プランファイルに `## 実装準備` 追記
 
-Step 2A/2B の結果を統合し、プランファイル末尾に `## 実装準備` を追記する。3 サブセクション: **ブランチ戦略** (単一の作業ブランチ・命名理由・既存ブランチ確認) / **手動QA手順** (環境 `{BASE_URL}` は QA 実行時にユーザーから取得、`**対象AC**: N項目（正常系X / 異常系Y / エッジケースZ / 不変条件U / 非影響W / MECE追加V）`、人間がそのまま追える手順 + 各操作に automation 用ツール名を括弧で併記) / **自動QA（テストコード仕様）** (RSpec / Vitest 仕様)。カテゴリ名・0 件表記は output-template.md SSOT 準拠。
+Step 2 の結果を統合し、プランファイル末尾に `## 実装準備` を追記する。2 サブセクション: **手動QA手順** (環境 `{BASE_URL}` は QA 実行時にユーザーから取得、`**対象AC**: N項目（正常系X / 異常系Y / エッジケースZ / 不変条件U / 非影響W / MECE追加V）`、人間がそのまま追える手順 + 各操作に automation 用ツール名を括弧で併記) / **自動QA（テストコード仕様）** (RSpec / Vitest 仕様)。カテゴリ名・0 件表記は output-template.md SSOT 準拠。
 
 完全なテンプレ全文・0 件カテゴリ表記ルール・in-context fallback 時の備考挿入位置は [references/output-template.md](references/output-template.md) 参照。
 
@@ -178,11 +158,11 @@ comm -23 /tmp/all_qa_ids.txt /tmp/assigned.txt > /tmp/assign_na.txt             
 
 ### Step 5: Preflight 契約の生成
 
-ループ開始前に一括収集する入力 (`<プラン名>.preflight.md`) を、プラン内容 (Step 3 で書いた手動QA手順) と Step 2A の結果から生成する。置き場・項目表・セキュリティ規則は [references/preflight.md](references/preflight.md) が SSOT。既に存在する場合は不足項目のみ補完する (既存記載は上書きしない)。
+ループ開始前に一括収集する入力 (`<プラン名>.preflight.md`) を、プラン内容 (Step 3 で書いた手動QA手順) から生成する。置き場・項目表・セキュリティ規則は [references/preflight.md](references/preflight.md) が SSOT。既に存在する場合は不足項目のみ補完する (既存記載は上書きしない)。
 
 1. ベース URL・テストデータ準備手順・権限アカウント一覧は Step 3 の手動QA手順に記載があればそこから転記する。埋まらなければ `未定`。
 2. ログイン手段は既定で `未定` とする (自動ログインは行わないため、記載が無い限り推測で埋めない)。
-3. 起点ブランチは Step 2A が確定した値をそのまま転記する。
+3. 起点ブランチは `git branch --show-current` の値を機械転記する (finalize-plan 実行時のカレントブランチ = 実装が新規ブランチを切る起点。判断・命名は行わない)。取得できない場合 (detached HEAD 等) は `未定`。この欄は `/review-plan-diff` が diff 比較元として読むため残している。
 4. サーバ・DB 起動コマンドはプラン・README 等に既記載があれば転記、なければ `未定`。
 5. 生成・補完後も `未定` が残る項目があれば、それらをまとめて **AskUserQuestion 1 回**でユーザーに確認する (項目ごとに個別に停止しない。AskUserQuestion が利用可能ツールに無い場合の読み替えは「## 委譲実行」参照)。
 
@@ -214,4 +194,4 @@ comm -23 /tmp/all_qa_ids.txt /tmp/assigned.txt > /tmp/assign_na.txt             
 ## Gotchas
 
 - preflight.md の項目表 (ベース URL / ログイン手段 / 権限アカウント一覧 / サーバ・DB 起動コマンド) は Web アプリ前提で設計されており、CLI ツール等 URL/認証を持たないプロジェクトでは字面通り埋まらない。`未定` と一律に残さず、根拠 (ソース確認済みで機構が存在しない等) を添えて `該当なし` と記載する運用が 3 回の委譲実行評価 (finalize-plan tuning iter1-3) で安定して機能した
-- Step 2B の planner への dispatch prompt で出力列構成を独自指定しない。auto-qa-planner の QA-ID カバレッジマトリクスは、後段 `/qa-ui` の審判再実行ゲートが機械契約として読む 6 列固定 (`| QA-ID | 出典 | カテゴリ | テストファイル | テストケース | 実行コマンド |`、実行コマンド = 最終列 = awk `$7`) で、この契約は qa-ui 側 references/ledger-gates.md にしか書かれていない。dispatch 側が「3 列で出せ」等と上書きすると列位置がずれ、ゲートが全 auto 行を `実行コマンド未定義` → `要人間確認` に落とす (実測: 独自 3 列指定で出力させ、ゲート直前に 29 行の手動変換が必要になった)
+- Step 2 の planner への dispatch prompt で出力列構成を独自指定しない。auto-qa-planner の QA-ID カバレッジマトリクスは、後段 `/qa-ui` の審判再実行ゲートが機械契約として読む 6 列固定 (`| QA-ID | 出典 | カテゴリ | テストファイル | テストケース | 実行コマンド |`、実行コマンド = 最終列 = awk `$7`) で、この契約は qa-ui 側 references/ledger-gates.md にしか書かれていない。dispatch 側が「3 列で出せ」等と上書きすると列位置がずれ、ゲートが全 auto 行を `実行コマンド未定義` → `要人間確認` に落とす (実測: 独自 3 列指定で出力させ、ゲート直前に 29 行の手動変換が必要になった)
