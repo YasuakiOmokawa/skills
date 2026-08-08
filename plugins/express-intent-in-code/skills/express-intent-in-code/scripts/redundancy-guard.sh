@@ -56,17 +56,22 @@ warnings=""
 if [ "$first_sight" = 1 ] && ! git -C "$dir" ls-files --error-unmatch "$f" >/dev/null 2>&1; then
   sibling=$(find "$dir" -maxdepth 1 -type f -name "*.${ext}" ! -name "$(basename "$f")" 2>/dev/null | head -1)
   if [ -n "$sibling" ]; then
-    warnings="${warnings}[reuse-ladder] ${f}: 新規ファイル。書き終える前に、同 dir の隣接ファイルに再利用できる実装・イディオムが無いか確認する (梯子: ①codebase に既にあるか → ②言語標準 → ③プラットフォーム標準 → ④導入済み依存 → ⑤最小コード。最初に該当した段で止める)。\n"
+    warnings="${warnings}[reuse-ladder] ${f}: 新規ファイル。書き終える前に、同 dir の隣接ファイルに再利用できる実装・イディオムが無いか確認する (梯子: ①codebase に既にあるか → ②言語標準 → ③プラットフォーム標準 → ④導入済み依存 → ⑤最小コード。最初に該当した段で止める)。新規ファイル追加はインライン処置の範囲外 — Skill ツールで express-intent-in-code を起動し、本文の再利用梯子・命名梯子に従って判定すること (各段の判定基準と歯止めは本文にのみある)。\n"
   fi
 fi
 if [ "$comments" -gt "${prev_comments:-0}" ]; then
-  warnings="${warnings}[express-intent] ${f}: コメント追加 計${comments}行 (ファイル全体のコメント率 ${ratio}%)。/express-intent-in-code を適用: 各コメントを名前/型/定数/private メソッドへの昇格で置換できないか判断する。残せるのは真の why 4類型 (外部仕様/実測根拠/危険・セキュリティ/FIXME) を名前付き定義の直上に置くものだけで、文面は code-comments 7原則に従う。既存の 4類型コメントは削らない。\n"
+  if [ "$comments" -le 2 ]; then
+    warnings="${warnings}[express-intent] ${f}: コメント追加 計${comments}行 (ファイル全体のコメント率 ${ratio}%)。この規模 (1〜2 行) はこの場で判定してよい: 名前/型/定数/private メソッドへの昇格で置換できないか判断し、残せるのは真の why 4類型 (外部仕様/実測根拠/危険・セキュリティ/FIXME) を名前付き定義の直上に置くものだけ。文面は code-comments 7原則に従う。既存の 4類型コメントは削らない。\n"
+  else
+    warnings="${warnings}[express-intent] ${f}: コメント追加 計${comments}行 (ファイル全体のコメント率 ${ratio}%)。3 行以上の追加はインライン処置の範囲外 — Skill ツールで express-intent-in-code を起動し、本文の昇格表・命名梯子・歯止めに従って全コメントを判定すること (この文面の要約には梯子と歯止めが載っていない)。既存の 4類型コメントは削らない。\n"
+  fi
 fi
 if [ "$suppress" -gt "${prev_suppress:-0}" ]; then
   warnings="${warnings}[lint-suppression] ${f}: suppression 追加 計${suppress}行 (rubocop:disable / eslint-disable / ts-ignore 等)。suppression は非イディオムな書き方の兆候 — 隣接ファイルが同じ問題を suppression なしでどう解いているか確認してから残すこと。\n"
 fi
 
 if [ -n "$warnings" ]; then
+  warnings="${warnings}subagent として実行中の場合は、この指摘と処置内容 (残した / 昇格した / スキル起動した) を呼び出し元への最終報告に 1 行含めること。\n"
   printf '%b' "$warnings" >&2
   exit 2
 fi
