@@ -22,16 +22,27 @@ main agent は BB / WB / Red Team の **JSONLines 出力** をパースし、本
 
 ### 分析サマリー
 - 分析日時: YYYY-MM-DD
-- 対象リポジトリ: ${REPO_NAME} (関連リポ: ${RELATED_REPOS})
+- 対象リポジトリ: ${REPO_NAME}
 - 実行メタ: tier=[standard/deep] / dispatch [D]体 / 経過 [T]分 (D = 起動した subagent 数、T = `date +%s` 現在値と `${T_START}` の差を分単位切り上げ。今後の検出率・コスト実測の基礎データ。tier を上流記録から上書きした場合は `tier=deep (上流 standard を auth 強制で上書き)` のように根拠を括弧内に併記する — SKILL.md tier 節の上書き記録義務の記録先はこの行)
 - ACカバレッジ: N/M項目充足
-- 漏れ件数: X (お見合い検出された件数 = 両 Analyst が言及ゼロで Red Team が独自検出)
-- 重複件数: Y (BB ↔ WB が同じ問題を言及した「真の合意」+「補強し合う合意」の合計。プランファイル 1 行サマリーの `重複 [Z]件` と同じ定義 = [synthesis-and-errors.md](synthesis-and-errors.md) の「サマリー値の定義 (SSOT)」)
+- 漏れ件数: X
+- 重複件数: Y
 - 判定: MECE OK / 要修正（Critical N件）
+- 判定不能 (Unknown): [Red Team 出力に「判定不能 (Unknown)」がある場合、理由付きで列挙。0 件ならこの行ごと省略]
+```
 
+**分析サマリーの集計定義 (本ファイルが SSOT)**:
+- **漏れ件数**: Red Team が独自検出した `お見合い` の件数 = **`M*` と `T*` の合計** (checklist は M / T を対象領域で排他に振り分けるため単純合算)。**severity 問わず全件、ただし 1 件のお見合いを Critical に昇格させても M* で 1 件のみカウント (二重計上禁止)**。standard で Red Team を skip した場合は `0件 (Red Team skip のため未検出)` と注記付きで表記する (数値スロットへの括弧注記は許容)。Unknown は漏れ件数・Critical のいずれにも計上しない独立軸で、ある場合は `漏れ件数: N (+ Unknown K 件は未確定)` と併記する
+- **重複件数**: 4 分類クロスリファレンス表で **「真の合意」+「補強し合う合意」の合計件数**
+- **Critical 件数**: 統合 Critical 指摘の件数 (severity Critical のみ)。**漏れ件数と Critical 件数は独立に集計** (Critical 昇格お見合いは漏れに 1 件 + Critical に 1 件カウントするが、別軸の集計なので二重計上違反にはならない)
+
+### 4分類クロスリファレンス (area タグで機械集約)
+
+```markdown
 ### 4分類クロスリファレンス (area タグで機械集約)
 | # | Area | BB 指摘 ID | WB 指摘 ID | 分類 (真の合意/補強合意/実装漏れ/仕様漏れ/お見合い) | 統合 Severity | 統合内容 |
 |---|------|------|------|------|---------|---------|
+```
 
 **分類の意味**:
 - **真の合意**: BB と WB が同じ問題を**同じ層**から発見 (両方仕様 or 両方コード)
@@ -46,13 +57,20 @@ main agent は BB / WB / Red Team の **JSONLines 出力** をパースし、本
 
 1. Red Team 出力 `M*` JSONLines を読む (`id`, `area`, `perspective`, `content`, `severity`)
 2. 各 `M*` を 4分類クロスリファレンス表に新規行として追加: `BB 指摘 ID = null`, `WB 指摘 ID = null`, `分類 = お見合い`, `統合 Severity = M*.severity`, `統合内容 = M*.content (perspective: M*.perspective)`
-3. `T*` (純技術リスク補完) は「純技術リスク補完」表にのみ載せ、4分類クロスリファレンス表へは転記しない。ただし漏れ件数 `Y` には `M*` と合算で算入する ([synthesis-and-errors.md](synthesis-and-errors.md) の `Y` 定義が SSOT)
+3. `T*` (純技術リスク補完) は「純技術リスク補完」表にのみ載せ、4分類クロスリファレンス表へは転記しない。ただし漏れ件数には `M*` と合算で算入する (上記「分析サマリーの集計定義」が SSOT)
+
+**お見合い M* と AC カバレッジ表の関係**:
+- **既存 AC に紐付く** お見合い (例: AC-7「/admin/* 非影響」が両者言及なし) → AC カバレッジ表で総合「不十分」+ 4 分類クロスリファレンス表でも「お見合い」行として両方に出す
+- **既存 AC に紐付かない** お見合い (例: Red Team 独自検出の rate-limit / cleanup 等) → 4 分類クロスリファレンス表のみに「お見合い」行として出し、`[MECE追加]` AC として AC カバレッジ表の末尾に追加する
 
 ### ACカバレッジ検証結果 (main agent が BB / WB の AC 判定から機械合成)
 
+```markdown
+### ACカバレッジ検証結果
 | AC-ID | AC項目 (短く要約) | カテゴリ | BB 判定 | WB 判定 | 総合判定 |
 |---|--------|---------|--------|---------|---------|
 | AC-1 | ... | 正常系/異常系/エッジ/非影響 | 充足/不十分/言及なし | 充足/不十分/言及なし | 充足/不十分 |
+```
 
 **機械合成手順** (main agent):
 1. dispatch 時に AC を `AC-1, AC-2, ...` で序数付けて subagent に渡す
@@ -60,28 +78,26 @@ main agent は BB / WB / Red Team の **JSONLines 出力** をパースし、本
 3. synthesis-and-errors.md Step 3-1 のマージルール (SSOT) に従って総合判定列を算出
 4. 元 AC 文の「カテゴリ」(正常系/異常系/エッジ/非影響) を分析ファイルの AC セクションから引いて補完
 
-**ACカバレッジ N/M の定義**: M = **全 AC 項目数 (`[MECE追加]` を含む)**、N = M のうち総合判定が「充足」となった項目数。`[MECE追加]` 行の AC-ID は元 AC の最大番号の続きで採番する (例: 元 AC-1〜4 → 追加分は AC-5, AC-6, ...)。
+**ACカバレッジ N/M の定義**: M = **全 AC 項目数 (`[MECE追加]` を含む)**、N = M のうち総合判定が「充足」となった項目数。`[MECE追加]` 行の AC-ID は元 AC の最大番号の続きで採番する (例: 元 AC-1〜4 → 追加分は AC-5, AC-6, ...)。`[MECE追加]` 行は BB/WB 判定を経ていないため AC カバレッジ表では **BB / WB / 総合の 3 列すべて「未判定」** と表記し、分子 N には含めない。`[MECE追加 変更]` 行と無タグ補足は既存 AC の書き換え / 補足であり M でも元 AC として 1 回のみ数える。カバレッジ表では `[MECE追加 変更]` 行は元の総合判定を維持し、変更後スコープが未検証である旨を行内注記する。
 
-**`[MECE追加]` 比率 X/M (品質指標)**: 全 AC のうち MECE 検証で追加された項目数 X の比率:
+**`[MECE追加]` 比率 X/M (品質指標)**: 全 AC のうち MECE 検証で追加された項目数 X の比率。X は**配置カテゴリ (`### その他（[MECE追加]）` 含む) を問わず全 `[MECE追加]` を数える** (`[MECE追加 変更]` と無タグ補足は数えない):
 
 - `X/M ≤ 10%`: 元 AC が十分網羅的
 - `X/M = 10〜30%`: 一定の漏れあり
 - `X/M > 30%`: 観点選択が大きく外れていた可能性
 - **M < 10 の小規模 AC では比率でなく件数で読む** (母数が小さいと数件の追加で 30% を超え、指標が実態と釣り合わない)
 
+```markdown
 #### MECE分析によるAC追加提案
 - [ ] `[MECE追加]` [追加すべきAC項目の説明]
-- [ ] `[MECE追加]` ...
 
 ### Critical指摘（要修正）
 | # | 指摘 | プラン該当箇所 | 推奨修正内容 | 根拠 (BB/WB/Red Team) | 4分類 |
 |---|------|--------------|------------|------|---------|
-| 1 | ... | セクション名・内容 | ... | BB-C1 + WB-C3 | 真の合意 |
 
 ### Important / Nice-to-have
 | # | 重要度 | 指摘 | 推奨対応 | 根拠 | 4分類 |
 |---|--------|------|---------|------|---------|
-| 1 | 🟡/🟢 | ... | ... | ... | ... |
 
 ### お見合い検出 (Red Team 独自)
 | # | 領域 | チェックリスト観点 | 発見事項 | Severity |
@@ -102,54 +118,19 @@ ${WB_JSONL}
 </details>
 ```
 
-**元 Markdown 全文は転記しない (v1.34.0 で廃止)**: BB / WB / Red Team の Markdown 部 (Self-report 等) の `<details>` 全文転記は、分析ファイル肥大と main agent のコンテキスト保持コストの主因だったため廃止した。Red Team の JSONL は上の 4分類クロスリファレンス表・お見合い表・純技術リスク表・Critical/Important 表へ合成済みのため転記せず、Markdown 部から転記するのは「判定不能 (Unknown)」のみ (SKILL.md Step 3)。Wiki Researcher opt-in 時はその箇条書き (事実情報のみで元々短い) を `<details>` で「各ロール出力」に併置してよい。
+**元 Markdown 全文は転記しない**: BB / WB / Red Team の Markdown 部 (Self-report 等) の `<details>` 全文転記は、分析ファイル肥大と main agent のコンテキスト保持コストの主因だったため廃止済み。Red Team の JSONL は上の 4分類クロスリファレンス表・お見合い表・純技術リスク表・Critical/Important 表へ合成済みのため転記せず、Markdown 部から転記するのは「判定不能 (Unknown)」のみ (SKILL.md Step 3-3)。
 
-## Critical=0の場合（MECE OK）
-
-この節は**省略可否の差分のみ**を示す — 表の列構成は上部の標準テンプレートが SSOT であり、Critical=0 でも `Area` 列・`AC-ID` 列は削らない。
-
-```markdown
-## MECE分析結果
-
-### 分析サマリー
-- 分析日時: YYYY-MM-DD
-- 対象リポジトリ: ${REPO_NAME} (関連リポ: ${RELATED_REPOS})
-- 実行メタ: tier=[standard/deep] / dispatch [D]体 / 経過 [T]分
-- ACカバレッジ: N/M項目充足
-- 漏れ件数: X (standard で Red Team を skip した場合は `0件 (Red Team skip のため未検出)` と表記)
-- 重複件数: Y
-- 判定: MECE OK
-
-### 4分類クロスリファレンス
-| # | BB 指摘 ID | WB 指摘 ID | 分類 | 統合 Severity | 統合内容 |
-|---|------|------|------|---------|---------|
-
-### ACカバレッジ検証結果
-| # | AC項目 | カテゴリ | BB 検証 | WB 検証 | 総合判定 |
-|---|--------|---------|--------|---------|---------|
-
-#### MECE分析によるAC追加提案
-- [ ] `[MECE追加]` ...
-
-### Important / Nice-to-have（任意）
-| # | 重要度 | 指摘 | 推奨対応 | 根拠 | 4分類 |
-|---|--------|------|---------|------|---------|
-
-（Important / Nice-to-have が 0 件の場合はこのテーブル自体を省略してよい）
-
-### 各ロール出力 (JSONL)
-（`<details>` に BB / WB の findings + AC 判定 JSONL のみ格納。元 Markdown 全文は転記しない）
-```
+**Critical=0 (MECE OK) の場合の省略規則**: 表の列構成は上記の標準テンプレートが SSOT であり、Critical=0 でも `Area` 列・`AC-ID` 列は削らない。省略してよいのは (a) `### Critical指摘（要修正）` テーブル (0 件のため節ごと省略可)、(b) Important / Nice-to-have が 0 件の場合のそのテーブル、(c) Red Team skip 時のお見合い表・純技術リスク表 (空のまま「Red Team skip のため未検出」と明記)。
 
 ## プランファイルへのサマリー追記
 
 プランファイルの `## 品質検証` セクションに **1 行だけ** 追記する（セクションがなければ作成）:
 
 ```markdown
-- MECE判定: [OK or 要修正（Critical N件）] / Important [I]件 (うちAC反映 [R]件) / ACカバレッジ [N]/[M] (うち[MECE追加] [X]件) / 漏れ [Y]件 / 重複 [Z]件 → [分析ファイル名]
+- MECE判定: [OK (Critical: 0) or 要修正（Critical N件）] / Important [I]件 (うちAC反映 [R]件) → [分析ファイル名]
 ```
 
-`I` / `R` の定義は [synthesis-and-errors.md](synthesis-and-errors.md) の「サマリー値の定義 (SSOT)」。
+`I` / `R` の定義は [synthesis-and-errors.md](synthesis-and-errors.md) の「サマリー値の定義 (SSOT)」。カバレッジ・漏れ・重複・Unknown の詳細集計は分析サマリー側にのみ記録する。
 
 ## AC ブラッシュアップの運用ルール
 

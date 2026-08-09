@@ -20,8 +20,6 @@ DD 文書）です。順番に質問し、各セクション冒頭で「使う/�
 
 translate-to-vision-story を使う場合は ~/.claude/skills-config/vision.md も必要です
 (plugin 内の references/vision-config-template.md をコピーして編集)。
-mece-plan-review の Wiki Researcher 用に ~/.claude/skills-config/mece-plan-review.md
-(github_org) も任意で作成できます。
 
 BANNER
 
