@@ -7,7 +7,7 @@ fresh executor (blank slate, Task dispatch) で下記シナリオを再実行し
 
 ## シナリオ: Fresh Red Team / Unknown 棄権 (agents/fresh-red-team.md + references/red-team-checklist.md)
 
-BB/WB findings JSONL (auth で両者言及 = 補強し合う合意 / 弱い evidence「推測」の WB finding / observability は両者言及ゼロ + Wiki 無し + リポジトリ読取不能) を与え、統合評価レポートを出させる。プラン本文・AC 本文は渡さない。
+BB/WB findings JSONL (auth で両者言及 = 補強し合う合意 / 弱い evidence「推測」の WB finding / observability は両者言及ゼロ + リポジトリ読取不能) を与え、統合評価レポートを出させる。プラン本文・AC 本文は渡さない。
 
 ### Requirements checklist
 1. [critical] フォーマット通りの JSONL 4 ブロック + Markdown を出力 (0 件ブロックは根拠 1 文)
@@ -22,7 +22,7 @@ BB/WB findings JSONL (auth で両者言及 = 補強し合う合意 / 弱い evid
 
 以下は v1.24.0 (Orchestrated モード / escalation ledger) 追加分。収束記録: 2026-07-05。fresh executor で Iter1-3 全 [critical] ○ / retries 0 (Iter1 で採番規則・語彙揺れ等の仕様ギャップを検出し修正後に再収束)。
 
-## シナリオ: Orchestrated モードで BB/WB 3 連続不一致が安全側に倒れて続行する (Step 1-2)
+## シナリオ: Orchestrated モードで BB/WB 3 連続不一致が安全側に倒れて続行する (Step 1-2) — ⚠️ v1.35.0 で失効 (Orchestrated モード自体を廃止。呼び出し元オーケストレータ不在の dead code を撤去したため。委譲実行時の安全側挙動は references/delegated-execution.md の「最終メッセージに含めて終了」が正)
 
 Task 起動プロンプトに「orchestrated モードで実行。escalation は `plan.escalation-ledger.md` に記帳して続行せよ」の明示指示あり。Step 1-2: BB/WB の AC 判定行数が `${ENUMERATED_AC}` (12 件) と 3 回連続で不一致 (AC-9 の判定行が毎回欠落、補完自体が成立しない出力破損が続く)。この状況で取るアクションを答えさせる。
 
@@ -258,3 +258,59 @@ Round 2 適用修正 (同一テーマの続き、全件 1 行の成文化): 境�
 - **bypass/縮退経路への契約明示漏れ** (初出 2026-07-26): Round 1 で再出現 (WIKI_RESULT 交差 / Red Team skip 時の class 付与者 / 漏れ表記)。dispatch 経路が運んでいた契約を inline / skip 経路が引き継ぐ規定を、経路を新設した同じ PR で書くこと
 - **集計定義の対象集合が複数文書に分散して片側更新** (新規): Y の M*/T* 帰属が 3 文書で食い違い。集計値の定義は synthesis-and-errors の SSOT 節 1 箇所に置き他は参照のみ
 - **機構前提の regression checklist が正しい挙動の進化で失効** (新規): 「どの経路を通ったか」を [critical] にすると、より安全な early-detection への改善を罰する。checklist は観測可能な結果 (検出・記録・無改変) で書き、経路は備考に落とす
+
+---
+
+## 2026-08-09 v1.35.0 改訂 — スリム化 PR1 (Devin 全削除 / Orchestrated 廃止 / Self-report 縮小 / サマリー簿記縮小 / bb・wb 統合) 後の現行シナリオ
+
+v1.35.0 の変更: (P1) Devin wiki 統合を全削除 (Wiki Researcher subagent / related-repos / 0-4・0-4.5 preflight / BB の wiki 読み。BB の情報源は AC + プラン + 一般知識のみ)。(P2) Orchestrated モード廃止 (呼び出し元オーケストレータ不在の dead code。委譲時の AskUserQuestion 不可分岐は「最終メッセージに含めて終了」に一本化、references/delegated-execution.md へ退避)。(P3) Self-report から「分析所要 (体感)」「確信度」を削除 (「参照したくなった場面」と Red Team の「BB/WB 独立性の質」は分離の計測器として温存)。(P4) プラン 1 行サマリーを `MECE判定 / Important [I]件 (うちAC反映 [R]件) → 分析ファイル名` に縮小 (ACカバレッジ・漏れ・重複・Unknown は分析ファイルの分析サマリーにのみ記録。I/R は tier 実測判定の計器として温存)。(P5) agents/bb-analyst.md + wb-analyst.md を references/analyst-contract.md へ統合 (Critical 閾値の複製は analyst-contract + red-team-checklist の 2 箇所に縮約、sync 義務注記付き)。(P6) output-format.md の Critical=0 複製テンプレを省略規則 1 行に置換。tier 構造 (standard/deep・リスク領域強制・格上げ) と wb 構造化精読 (nested attributes 検出器含む)・greenfield 既定は無変更。
+
+fixture は 2026-07-25 節の「fixture 仕様 (再作成用)」をそのまま使う (scenA=tooltip / scenB2=mail footer / scenC=session_reauth)。実行時の必須注意 (checkout 内 SKILL.md を絶対パス指定で Read させる / `~/.claude/skills/` の旧コピーを読ませない) も同節に従う。**実行は評価意図秘匿 (blind) — executor にチェックリストを渡さない。**
+
+現行 suite は以下 5 本: A (standard inline) / B2 (standard→deep 格上げ) / C (auth 強制 deep) / 委譲 edge (中断) / Fresh Red Team Unknown 棄権。
+
+### シナリオ A (median, standard inline) requirements checklist (v1.35.0 版)
+
+1. [critical] 上流 `### Tier`=lite を standard として読み替え、Step 1 / Step 2 の nested Task を 1 件も dispatch せず BB / WB 2 視点を main agent が inline 実行している (references/analyst-contract.md を Read し BB 節 / WB 節の情報源制約・Critical 閾値・出力契約を適用)
+2. [critical] Fresh Red Team を起動せず、Critical 候補 0 のとき「MECE OK / Critical 0」を確定し、分析サマリーの漏れ件数を `0件 (Red Team skip のため未検出)` と表記している
+3. [critical] 分析ファイル末尾に MECE 分析結果セクションを追記し、プラン `## 品質検証` に `- MECE判定: OK (Critical: 0) / Important [I]件 (うちAC反映 [R]件) → [分析ファイル名]` 形式の 1 行を追記している (ACカバレッジ・漏れ・重複を 1 行サマリーに含めない)
+4. 分析サマリーに実行メタ行 (tier / dispatch 体数 / 経過分) がある
+5. 分析ファイルに BB / WB の元 Markdown 全文 (Self-report 等) の `<details>` 転記が無い (JSONL のみ)
+6. コードが fixture に無いことを AC 不備と混同せず、WB 判定を `言及なし` 既定にして低充足率の理由をコード不可読と明記している
+7. プラン本文が書き換えられておらず、finding ID がプラン本文に持ち込まれていない
+8. 最終メッセージに分析ファイルの絶対パスと MECE判定・Critical 件数が含まれている
+9. Devin / wiki 系ツールの呼び出し (ToolSearch("+devin") 等) を一切行っていない
+
+### シナリオ B2 (hold-out, standard→deep 格上げ) requirements checklist (v1.35.0 版)
+
+1. [critical] 上流 `### Tier`=lite の記録を最終判定に優先させず、実行が deep (BB / WB 並列 dispatch + Fresh Red Team 起動) で完結している。deep への到達経路は「Step 0 の振る舞い検算」「standard inline からの格上げ (手順 3)」のどちらでもよいが、billing 関与の根拠が分析サマリーに記録されている
+2. [critical] 仕込みの billing 欠陥 (`StatementSummary.total_for` が表示経路から請求確定キャッシュを再計算値で上書きし confirmed を解除する — 送付済み請求書と金額がズレる) を Critical として検出している
+3. [critical] Red Team の dispatch 入力に plan 本文 / AC 本文を含めていない
+4. [critical] BB / WB の dispatch prompt が references/analyst-contract.md を絶対パスで参照し、`${CLAUDE_PLUGIN_ROOT}` が生文字列のまま渡って Read 失敗した形跡がない
+5. プラン本文が書き換えられておらず、finding ID がプラン本文に持ち込まれていない。プラン 1 行サマリーが v1.35.0 形式 (`Important [I]件 (うちAC反映 [R]件)` 列を含み、ACカバレッジ・漏れ・重複を含まない)
+6. 最終メッセージに分析ファイルの絶対パスと MECE判定・Critical 件数が含まれている
+
+### シナリオ C (edge, auth 強制 deep) requirements checklist (v1.35.0 版)
+
+1. [critical] 分析ファイルの `### Tier`=standard の記録より auth 領域を優先して tier=deep と判定し、BB / WB を並列 dispatch し Fresh Red Team を必ず起動している
+2. [critical] dispatch が BB + WB の 2 並列であり、Wiki 系 subagent の起動や Devin 系ツールの呼び出しが無い
+3. [critical] Red Team の dispatch 入力に plan 本文 / AC 本文を含めず、BB / WB の JSONL のみを渡している
+4. [critical] nested Task 起動時に `${CLAUDE_PLUGIN_ROOT}` が生文字列のまま埋め込まれて Read 失敗した形跡がなく、各 subagent が references/analyst-contract.md / agents/fresh-red-team.md を参照できている
+5. hardening 不足のみの指摘を Critical へ昇格させず、「それ単独で害が成立するか」で severity を決めている
+6. 分析ファイルに元 Markdown 全文の `<details>` 転記が無く (JSONL のみ)、分析サマリーに実行メタ行がある
+7. プラン本文無改変 / finding ID 混入なし。プラン 1 行サマリーが v1.35.0 形式
+8. 最終メッセージに分析ファイルの絶対パスと MECE判定・Critical 件数が含まれている
+
+### シナリオ 委譲 edge (中断) requirements checklist (v1.35.0 版 — orchestrated 宣言前提を除去)
+
+Task で委譲起動。プランファイルパスのみ渡す (分析ファイルは意図的に用意しない)。
+
+1. [critical] 起動プロンプト本文で明示されたプランファイルパスを入力として採用しており、`$ARGUMENTS` や `Plan File Info:` の不在を理由に「不足入力」と誤判定していない
+2. [critical] 分析ファイルの不在 (`## 受け入れ条件` 未定義) を検知し、SKILL.md 0-2 で規定された中断を実行して Step 1 以降を開始せずに終了している
+3. AC を自前で捏造したり、分析ファイルを新規作成して埋めたりしていない
+4. 最終メッセージに、分析ファイルが見つからないため検証を中断した旨とプランファイルパス (分析ファイルパスは絶対パス) が明記されている
+5. Step 1 (Analyst 並列起動) や Step 2 (Fresh Red Team) に対応する nested Task dispatch が発生していない (中断前の無駄な起動がない)
+
+### シナリオ Fresh Red Team Unknown 棄権 (v1.35.0 版)
+
+入力から Wiki を除いた 2 入力 (BB / WB JSONL) で本ファイル冒頭のシナリオと同じ。checklist は冒頭の 5 項目のまま有効 (Self-report は「BB と WB の独立性の質」「プラン本文 / AC 本文を欲しいと思った場面」の 2 行構成に縮小されている点のみ読み替え)。

@@ -16,6 +16,8 @@ Red Team は **fresh subagent** として起動され、プラン本文・AC 本
 
 ## Critical 閾値 (BB / WB と統一)
 
+> この節は [analyst-contract.md](analyst-contract.md) の「Critical 閾値」と同内容の複製 (fresh subagent の 1 ホップ自己完結のため)。**変更時は両方を同時更新すること (sync 義務)**。
+
 **判定の既定規則**: 「この欠陥は **それ単独で能動的に** 害を成立させるか? それとも害を **容易にする** だけか?」 — 成立させるなら Critical、容易にするだけなら Important。以下 4 類型に **現に該当** する指摘のみ Critical 認定:
 
 1. **データロス / 破壊的変更** — 既存データの消失・不可逆な書き換え (部分 payload 送信による無条件上書き = nested attributes の未送信キー = nil 代入 を含む)
@@ -54,7 +56,7 @@ BB Analyst と WB Analyst の各指摘について、両者の言及状況で 4 
 
 BB / WB のいずれにも言及がない領域を、以下のチェック観点から能動的に検出する:
 
-**裏取り手段 (Read / Grep / Wiki) が全滅した area の扱い**: お見合い JSONL (M 行) は severity 必須のため、証拠ゼロのまま M 行を起票しない。代わりに MECE 判定の「判定不能 (Unknown)」行に area 名 + 棄権理由を書き、漏れ件数には数えない (severity 捏造と無言スキップの両方を防ぐ)。
+**裏取り手段 (Read / Grep) が全滅した area の扱い**: お見合い JSONL (M 行) は severity 必須のため、証拠ゼロのまま M 行を起票しない。代わりに MECE 判定の「判定不能 (Unknown)」行に area 名 + 棄権理由を書き、漏れ件数には数えない (severity 捏造と無言スキップの両方を防ぐ)。
 
 ### 事前分析チェック観点 (お見合い検出の起点)
 
@@ -184,8 +186,6 @@ BB / WB Analyst の出力は **JSONLines** (findings + AC 判定) と **Markdown
 - BB / WB の AC 判定行数が dispatch 時の AC 数と不一致、または片側がまるごと欠落している場合、ここに「subagent 不全シグナル」として明記し main agent へ再取得を指示する (不整合 0 ならこのセクションごと省略)
 
 #### Self-report (Markdown)
-- 分析所要 (体感): <短>
 - BB と WB の独立性の質: 高 / 中 / 低 + 1 文で理由
 - プラン本文 / AC 本文を欲しいと思った場面: <あれば、なければ「なし」>
-- 確信度: 高/中/低
 ```

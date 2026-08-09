@@ -34,7 +34,7 @@ omokawa-skills は **monorepo + N plugins** 構造。各 skill / command は `pl
 
 ## MECE 検証
 
-**MECE** = Mutually Exclusive, Collectively Exhaustive。AC の網羅性を BB (仕様) / WB (コード) の 2 視点 + Fresh Red Team で検証する。既定 (standard tier) は main agent が BB+WB を inline 実行し、Critical 候補が出たときだけ Fresh Red Team を dispatch。リスク領域・AC >15 件 (deep tier) は BB / WB を並列 subagent 起動し Red Team 必須。Wiki Researcher (Devin) はユーザー明示 opt-in 時のみ参加する。`mece-plan-review` の主目的。
+**MECE** = Mutually Exclusive, Collectively Exhaustive。AC の網羅性を BB (仕様) / WB (コード) の 2 視点 + Fresh Red Team で検証する。既定 (standard tier) は main agent が BB+WB を inline 実行し、Critical 候補が出たときだけ Fresh Red Team を dispatch。リスク領域・AC >15 件 (deep tier) は BB / WB を並列 subagent 起動し Red Team 必須。`mece-plan-review` の主目的。
 
 ## サブエージェント / 並列起動
 
@@ -42,7 +42,7 @@ omokawa-skills は **monorepo + N plugins** 構造。各 skill / command は `pl
 - `review-design`: anti-pattern 必須 + DDD / Hexagonal / Clean / Deep-Module から Q1-Q3 matrix で選ばれた subset を並列起動 (unhealthy・新規 module・greenfield では all 5) → 必須 Devil's Advocate critique
 - `review-code-quality`: 3 analyzer 並列（Cohesion / Coupling / Business-Impact — Business-Impact は domain attribute 変更時のみ）
 - `finalize-plan`: Manual-QA / Auto-QA の 2 並列
-- `mece-plan-review`: 既定 (standard) は subagent 0 で main agent が inline 実行。deep のみ BB / WB 2 並列 (Wiki Researcher opt-in 時 3 並列) → Fresh Red Team の統合判定
+- `mece-plan-review`: 既定 (standard) は subagent 0 で main agent が inline 実行。deep のみ BB / WB 2 並列 → Fresh Red Team の統合判定
 - `model-data`: パイプライン式（Requirements → Conceptual → Conceptual-Review (FAIL 時 Conceptual へ差し戻し、最大 3 回) → Logical → DBML）
 - `qa-ui`: automation モード時のみ ui-evaluator を独立コンテキストで起動
 
@@ -55,7 +55,6 @@ omokawa-skills は **monorepo + N plugins** 構造。各 skill / command は `pl
 - `environments.md` — integration 環境名（rollback 対象）
 - `create-design-doc/` — create-design-doc が参照する DD テンプレート・実例（組織の内部文書のためリポジトリには置かない。setup.sh が手元のファイルをコピーして配置）
 - `vision.md` — translate-to-vision-story が照合するビジョン要素 (テンプレートは plugin 内 references/vision-config-template.md)
-- `mece-plan-review.md` — Wiki Researcher の関連リポ探索に使う github_org (未設定なら git remote から推定)
 
 スキル本文では「このファイルを Read で取得」と書き、ハードコードしない。
 
@@ -79,4 +78,4 @@ Atlassian MCP / Jira MCP のツール名は環境によってプレフィック�
 
 ## Generator-Evaluator 分離
 
-`qa-ui` / `mece-plan-review` で採用するパターン：**実装したエージェント自身では評価しない**。別コンテキストの evaluator エージェントが画面/プランを見て判定する。バイアスを避けるため。(ただし qa-ui の既定は人間委譲で、evaluator エージェントによる判定は automation モード時のみ。人間委譲でも「実装者自身が判定しない」原則は同じ)
+`qa-ui` / `mece-plan-review` で採用するパターン：**実装したエージェント自身では評価しない**。別コンテキストの evaluator エージェントが画面/プランを見て判定する。バイアスを避けるため。(ただし qa-ui の既定は人間委譲で、evaluator エージェントによる判定は automation モード時のみ。mece-plan-review の独立コンテキスト担保は Fresh Red Team で、standard tier で Critical 候補 0 のときは skip される。いずれも「実装者自身が判定しない」原則は同じ)

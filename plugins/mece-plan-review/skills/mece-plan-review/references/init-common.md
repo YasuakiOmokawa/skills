@@ -28,7 +28,7 @@ git remote get-url origin | sed 's/.*github.com[:/]\(.*\)\.git/\1/'
 ```
 
 - 成功時: `<org>/<repo>` 形式で `${REPO_NAME}` として保持
-- 失敗時 (non-git リポジトリ): `${REPO_NAME}` を `"unknown-repo"` として継続。Devin wiki 依存処理は `[non-git: Devin 未使用]` でスキップ
+- 失敗時 (non-git リポジトリ): `${REPO_NAME}` を `"unknown-repo"` として継続
 
 ## 各 skill 固有の追加処理
 
@@ -39,4 +39,3 @@ git remote get-url origin | sed 's/.*github.com[:/]\(.*\)\.git/\1/'
 ### mece-plan-review
 - 分析ファイルから `## 受け入れ条件` セクションを抽出 (なければ即座に中断)
 - AC 項目を `- [ ]` 単位で enumerate して `AC-1, AC-2, ...` の序数を付与
-- 関連リポジトリ取得 (`gh repo list <ORG>` で Wiki Researcher 用)
