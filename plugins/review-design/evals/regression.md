@@ -259,3 +259,20 @@ Round 1 で **2/2 の executor が独立に同じ不明点を報告**したた�
 記録のみの残差 (各 1 件、executor は自力で正解): Step 4 の Edit/Write をツールでなく意図で規定 / 再 Review の契約 (クローズ確認 + 修正起因の新規指摘検出 — C executor が自発的に実施し 4 件の新規 ❌ を検出した価値ある挙動) / ❌ 件数の測定点 (直前 Step 3 出力) / reviewer 間矛盾の tie-break / 1 issue = 1 line の集約キー (原因か処方か) / 修正済み ⚠️ の記載先。次回 PR では「再 Review の契約」の成文化を筆頭候補とする。
 
 収束判定: Round 1 (A/B 100%) + Round 2 (A/B 100%・hold-out C 90% 全 critical ○) で 2 連続クリア相当。本ラウンドの修正 2 点は分類表への転記のみで実行経路を変えない (executor が既に同じ挙動を実施済み) ため、fresh 再検証は次回スキル変更 PR の regression 実行に委ねる。
+
+## 収束記録: SKILL.md スリム化 v2 — Fable 5 世代向け (2026-08-09、v1.31.0)
+
+SKILL.md を限界まで薄くした: 113 行 / 13.4KB → 91 行 / 9.8KB (バイト -26.5%)。description から workflow 要約文を削除して trigger 専業化 (territory 強制実行トリガーは維持)、本文から理由説明文・references と二重の記述・deep-modules 系の重複ポインタ (deep-module-reviewer.md から到達可能)・Quality standards 節 (criticism-first は冒頭 1 行へ集約) を削除。Row 1/Row 4 precedence は例示 2 件 (read-only predicate / `require_admin!`) を残して圧縮。毎回実行される step (tier 表 / Q1-Q3 / Q1.1 / matrix / Step 0 / DA レシピ) はインライン維持し、挙動規則の削除ゼロ (verbatim 維持または圧縮のみ)。references/agents はスリム対象外 (分岐時にしかロードされない progressive disclosure のため)。
+
+検証: 保存済み全 15 シナリオ (greenfield reviewer / deep-module a·b·c / 委譲 A·B·C / PoC A·B / matrix routing / §9 A·B / 配置 A·B·C) を評価意図秘匿の fresh executor (blank slate, Task dispatch, checklist 非開示・成果物直読み + self-report 採点) で再実行し、**15/15 全 [critical] ○**。2026-07-26 の申し送り (escalation 条件 4 の Row 4 転記・Hung 行の fresh 再検証) も本ラウンドで消化。特に:
+- 配置 B (edge): 圧縮後の precedence 行を直接引用して Row 1 skip 誘導を却下。Q1.1「検証不能→項目単位違反」がテスト基盤ゼロの brownfield で発火。R2 で ❌ 0 になっても Row 4 単独条件で DA subagent を維持 (escalation 条件 4 の実地検証)
+- 委譲 A / PoC A·B / 配置 C: Step 0 の ledger/マッピング表 Read 規則と Step 5.2 の deferral・killed 非 fatal 化が圧縮後も全件で機能。killed (対応先チケット無し) への一般化も維持
+- §9 A: 観点 9 ❌ → Intl 置換 + 自前実装と旧専用テストの両削除 (片手落ちなし)。§9 B: 制約主張を実 tsconfig と照合して ⚠️ 維持 (「型は lib 追加で通る、真の制約は実行環境の Intl v3 対応」というより深い裏どりの創発あり — 2026-07-18 と同じ望ましい方向)
+- temporary 分類 (concurrent limit) → 再送は 5 executor で発火し、全員 fallback もタグも付けず完走。matrix routing は 6 ラウンドの feedback loop を含め Row 3 根拠で all 5 選定
+
+同 PR 内の追加修正 1 件 (実挙動の成文化): delegated-execution.md の `${CLAUDE_PLUGIN_ROOT}` 解決規則が「1 階層上 = skill root を変数に代入」と読め、代入すると `skills/review-design/skills/review-design/` に二重ネストする事実誤りを 2 executor (§9 B・配置 B) が独立指摘 (両者とも plugin root 解決へ自己修正して完走)。プレフィックス写像の文に書き直した。実行経路は変えない (executor が既に同じ挙動を実施済み) ため fresh 再検証は次回 skill 変更 PR の regression 実行に委ねる。
+
+observed long-tail (記録のみ、いずれも今回スリムで触れていない既存領域):
+- acceptable/⚠️ 指摘の Edit 境界・feedback loop の再実行範囲 (all 5 か subset か)・⚠️ が生え続ける場合のループ終了条件 — 15 executor 中 8 体が独立指摘。2026-07-26 申し送りの「再 Review の契約」と同根で、**次回 skill 変更 PR の筆頭候補 (据え置き 2 回目)**
+- temporary dispatch 失敗の終端条件が未規定 (hung のみ ~15 分 bound)。harness の "Do not retry" 文言との衝突を 4 executor が観測 (全員 skill の分類を優先して成功)
+- ❌ カウント単位 (reviewer 総合 verdict か個別 finding か) / Row 4 `migration` の粒度例不在 (nullable 列追加も該当か) / `Task` ツールが `Agent` 名の harness での読み替え規則 / greenfield 定義境界 (スタブのみのリポ・到達不能リポ) / reviewer 間で推奨が対立したときの裁定規則 / プラン不在時の feedback loop の Edit 先と保存 3 節の出力先 / §9 の wrapper 固有方針テストと組込み再検証テストの切り分け基準
