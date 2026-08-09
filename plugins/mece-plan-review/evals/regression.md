@@ -314,3 +314,22 @@ Task で委譲起動。プランファイルパスのみ渡す (分析ファイ�
 ### シナリオ Fresh Red Team Unknown 棄権 (v1.35.0 版)
 
 入力から Wiki を除いた 2 入力 (BB / WB JSONL) で本ファイル冒頭のシナリオと同じ。checklist は冒頭の 5 項目のまま有効 (Self-report は「BB と WB の独立性の質」「プラン本文 / AC 本文を欲しいと思った場面」の 2 行構成に縮小されている点のみ読み替え)。
+
+### 実行記録 (2026-08-10, v1.35.0 スリム化後の初回 regression。blind・成果物直読み + self-report 採点)
+
+| シナリオ | 成否 | accuracy | retries | 実行メタ | 備考 |
+|---|---|---|---|---|---|
+| A (standard inline) | ○ | 100% (9/9) | 0 | dispatch 0体 / 4分 | lite→standard 読み替え・Red Team skip・新サマリー形式・analyst-contract 経由の greenfield 既定すべて適合。Devin 系ツール呼び出し 0 |
+| B2 (mail footer) | ○ | 100% (6/6) | 0 | dispatch 3体 / 15分 | **inline→deep 格上げ経路 (standard 手順 3) が初めて実地で発火**し正動作。仕込み billing 欠陥を Critical 検出、Red Team severity 1 件を監査記録付き格下げ |
+| C (auth 強制 deep) | ○ | 100% (8/8) | 0 | dispatch 3体 / 19分 | 上流 standard を auth 強制で上書き。BB+WB 2 並列 + Red Team 必須。Red Team の Critical 2 件を「現に該当」規則で格下げ (再格上げ条件併記)。freshness (plan/AC 不送信) 維持 |
+| 委譲 edge (中断) | ○ | 100% (5/5) | 0 | dispatch 0体 | 0-2 即中断・捏造なし・絶対パス置換済み |
+| Fresh Red Team Unknown | ○ | 100% (5/5) | 0 | — | 裏取り全滅 area を severity 捏造せず Unknown 棄権、`(+ Unknown K 件)` 併記。書き込み禁止 1 行が機能しファイル書込 0 |
+
+**収束判定**: 全 5 シナリオ [critical] 全 ○ / 1 ラウンド / 修正 0。bb・wb 統合 (analyst-contract 経由の 2 段参照)・Critical 閾値 2 複製化・新サマリー形式・Devin 全削除・Orchestrated 廃止のいずれも劣化なし。
+
+**記録のみの残差** (全件 executor が自力で妥当解に到達、出力影響なし。次回該当 PR で成文化を検討):
+- 中断時 (Step 0-2) の委譲完了報告契約が未明文 (delegated-execution.md は Step 3 完了時のみ規定) / 中断経路で 0-1 の副次取得 (REPO_NAME・T_START) をスキップしてよいか
+- 裏取り全滅時の起票回避規則が M 行にのみ明文 (T 行への準用が暗黙) / Red Team `sources` に AC-N を取りうるか / AC 総数のみ (本文抜き) を Red Team dispatch に含めれば AC マージ検証が完全化する改善案
+- 標準カテゴリ節が元 AC に無い場合の `[MECE追加]` 追記先 / `### その他（[MECE追加]）` の配置位置と行形式 / コード不可読時の 4 分類ラベル「実装漏れ」の誤読防止注記 (executor は自発的に注記) / WB コード不可読理由 1 行の details 内残置と「元 Markdown 転記禁止」の優先関係
+- Critical 閾値類型 4 (回収不能) と「現に該当」規則の噛み合わせ (誤りの成立自体が未確認の仕様前提に依存するケース) / 格上げが分析ファイル書込前に確定した場合の inline サマリー扱い / `[MECE追加]` の採番順 (複数カテゴリ時) / X/M が中間域 (M 10〜25) のときの読み方
+- `${REPO_NAME}`=unknown-repo かつ `${CODE_ROOT}` 実在の組み合わせの明示 / main agent が severity 確定のためコードを読んでよいか (Core rule 2 は subagent 役割への制約で main agent の Step 3-1 は未規定) / Critical 0 が格下げ由来の場合の記録先粒度 / 委譲実行時の Agent name パラメータ拒否 (harness 制約)
