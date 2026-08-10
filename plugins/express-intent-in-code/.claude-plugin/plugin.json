@@ -1,7 +1,7 @@
 {
   "name": "express-intent-in-code",
   "description": "意図をコメントでなく名前・型・構造で表明させる判断規範 (薄型)。命名梯子 (機構名→目的名→ドメイン語、造語禁止)・コメントの昇格先マップ・真の why 4類型の残置基準・n=1 再利用 / rule of three の歯止めだけを 1 ファイルに収める。発火は redundancy-guard hook (PostToolUse) が決定論的に担う。",
-  "version": "0.23.0",
+  "version": "0.24.0",
   "author": {
     "name": "Yasuaki Omokawa",
     "url": "https://github.com/YasuakiOmokawa"

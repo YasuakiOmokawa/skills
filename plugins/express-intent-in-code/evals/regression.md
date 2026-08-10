@@ -39,7 +39,7 @@
   - Failure pattern ledger: 新規なし (G-EIIC-1 は Iter1 から一貫して意図どおり動作し、fix 適用は不要だった)。
   - スコープ外として記録するのみに留めた事項 (次回非 G-EIIC-1 テーマのチューニングで再訪): テスト基盤が無い fixture での「検証」記述の代替手段が不明瞭、T3 (コメント→名前/型/定数) の適用範囲境界、疎な repo (grounding 証拠が少ない) での段4 探索手順の簡略化余地。
 
-用途: **regression 検出器** (capability 改善の信号としては使わない)。本 skill を変更する PR では fresh executor (blank slate, Task dispatch) で下記シナリオを再実行し、全 [critical] ○ を確認してから merge する。実行方法は empirical-prompt-tuning の「Subagent invocation contract」に従う (成果物はインライン、ファイル編集禁止)。
+用途: **regression 検出器** (capability 改善の信号としては使わない)。本 skill を変更する PR では fresh executor (blank slate, Task dispatch) で下記シナリオを再実行し、全 [critical] ○ を確認してから merge する。実行方法は empirical-prompt-tuning の「Subagent invocation contract」に従う (成果物はインライン、ファイル編集禁止)。hook (redundancy-guard.sh) を変更する PR では `bash evals/test-redundancy-guard.sh <hook パス>` の決定論的テスト (9 ケース) を全 PASS させる。
 
 シナリオは median (bbox) + 段4 強化の hold-out 4 種 (F 段4 到達 / G 根拠ある据え置き / H 造語の罠 / I 名前不能→構造変更) + 旧 edge 4 種 (over-promotion+keep+drive-by 回避 / 分割判定 / 言語フォールバック / no-op 抑制) を必要に応じ再現する。
 
@@ -366,5 +366,71 @@ export function notifyAndRecord(document: Document, approver: Approver) {
 収束記録: 2026-07-17 (v0.16.0 progressive disclosure 分割)。バッチ/パイプライン起動パラグラフを references/batch-invocation.md へ退避 (SKILL.md diff は 1 行のみ、挙動変更なし)。全 13 シナリオを fresh executor で再実行し、移設内容に関わる委譲 B/C/D 含め [critical] ○ (batch-invocation.md への 1 hop 到達と行番号付き引用を確認)。シナリオ O は 3 試行中 2 PASS — 今回未変更の domain-abstraction.md 側の判定揺らぎで N の収束記録 (3 試行中 2 PASS) と同型、分割由来の regression ではない。O/N は判定系シナリオとして複数試行での観測を継続する。
 
 収束記録: 2026-07-18 (regression 再検証・skill 無変更)。express-intent-in-code の SKILL 本文・agents・references を一切変更せず、保存済み全 13 シナリオ (median / F / G / H / I / N / O / 生成P / 生成Q / 委譲4種) を fresh executor (general-purpose subagent, blank slate, Task dispatch) で 1 ラウンド再実行。全シナリオで全 [critical] ○・accuracy 100%・skill 欠陥由来の新規不明点 0。Iter 0 静的整合性チェックで frontmatter description のトリガー (経路1 の handoff/mechanism 名, 経路2 の生成3瞬間, whole-diff 機械スクリーニング 3 兆候) と本文カバー範囲に乖離なしを確認 (修正不要)。委譲4種は実 git fixture repo で ground-truth 検証: target は対象 (`orderByWeightMap`→`sortTasksByPriority` 段4 snap) + 唯一の caller のみ改名伝播 (無関係 2 ファイルは無変更)、noop/holdout は git status clean の真正 no-op (機械検査 3 兆候いずれも該当なし)、chain は handoff 2件 (`trackData`→`trackFieldSaveStatus` / `notifyAndRecord` の通知/監査ログ責務分割) を消化し `seal-image-controller.ts` は無変更、を git status で実測確認。過去に判定揺らぎ (3 試行中 2 PASS) を記録した N (`draft` 73hits vs `document_item` の概念一致選定) と O (`Policy` suffix 規約不一致で却下・ユーザー提案 `Resolver` を CS 語彙理由だけで却下しない) は本ラウンド 1 試行でいずれも PASS — capability の劣化兆候なし。委譲 target/chain の Step 8 で executor が nested intent-reader Task を実起動 (無条件 cold self-read への退行なし) を確認。F は intent-reader の medium 確信 + 具体的曖昧性指摘を受け Step 8 の設計どおり推奨名を 1 回再調整 (skill が意図どおり機能した retry で欠陥ではない)。生成Q の既知弱点 (公開関数本体に裸の複合条件ガードを残す・v0.8.0 で 1/3) は本ラウンドで非再現 (単一述語呼び + 単一比較のみ)。新規不明点は全て scaffolding 起因 (fixture に実 lint/test 基盤・caller・grounding file:line が無い) または skill 既存規則から自己解決される一般曖昧さ (段1/段3 境界, T2 分割境界, intent-reader 段ラベル不一致=intent-reader.md Gotchas 既定) で、いずれも過去記録の「テーマ外」項目と同型。過去の収束記録が直前ラウンドのクリアとして先行するため、本日 1 ラウンドで収束確定。Failure pattern ledger: 新規なし。
+
+## シナリオ R: 禁止規律コメント → 静的テスト昇格 + 述語 kernel 例外
+
+実利用 (taimei-auth PR #142 セッション) が露呈させたケース。working code (TypeScript, `src/mfa/policy.ts`)。hook が「コメント追加 計3行 (3 行以上)」を指摘した状態でスキルを起動する:
+
+```typescript
+// src/mfa/ の他ファイルで user.twoFactorEnabled を直接比較しないこと。
+// MFA 要否の判定は必ずこの関数を通す (ログイン時の判定と設定画面の出し分けの二重化防止)。
+// この関数は 1 行だが削除しないこと。
+export function requiresMfaChallenge(user: User): boolean {
+  return user.twoFactorEnabled;
+}
+```
+
+ground truth: caller 2 箇所 (`login-flow.ts` 判定経路 / `security-screen.tsx` 表示経路)、`2fa-` リテラルを grep で固定する静的 tripwire テストの前例が実在、ESLint 導入済み。
+
+### Requirements checklist
+
+1. [critical] 禁止規律コメント (直接比較禁止) を名前・型・定数のどれにも昇格できないと判定し、静的テスト (grep tripwire) / ast-grep / lint ルールへの昇格を具体形 (何をどこに作るか) 付きで提案する
+2. [critical] `requiresMfaChallenge` を「意図を足さないラッパ」として削除提案しない — 複数文脈 (判定経路と表示経路) が同一述語を要求する 1 行述語 kernel の例外を適用する
+3. [critical] 防御コメント (「削除しないこと」) は静的テスト昇格を提示した上で不要化する (ルールとコメントの軍拡競争を解消する)
+4. 二重化防止の why の記録が 0 箇所にならない (テスト・lint ルールまたは 1 文コメントとして残る)
+
+合格条件: 全 [critical] PASS。**禁止規律コメントを「真の why 4 類型でない」ことだけを理由に代替なしで削除したら FAIL**。**述語 kernel をインライン化 (削除) 提案したら FAIL**。
+
+## シナリオ S: 正本参照 1 文の残置判定
+
+実利用 (taimei-auth PR #142 の /dry-ssot-text 縮約置換セッション) が露呈させたケース。working code (Ruby, `app/services/challenge_store.rb`)。hook が「コメント追加 計3行 (3 行以上)」を指摘した状態でスキルを起動する:
+
+```ruby
+class ChallengeStore
+  # 設計詳細: docs/adr/0013-mfa-challenge-expiry.md
+  def store(challenge)
+    # 5 分で失効させるための TTL
+    ttl = 300
+    # キーを組み立てる
+    key = "mfa:#{challenge.user_id}"
+    redis.setex(key, ttl, challenge.code)
+  end
+end
+```
+
+ground truth: ADR は実在し失効時間設計の正本。同一 why の重複は他ファイルに無い。
+
+### Requirements checklist
+
+1. [critical] 正本参照 1 文 (`# 設計詳細: docs/adr/...`) を「4 類型のどれでもない」ことを理由に削除しない — 残す判定 (code-comments 原則 6 の受け皿)
+2. [critical] TTL コメント + `ttl = 300` を意図名の定数 (`CHALLENGE_EXPIRY_SECONDS` 相当) へ昇格しコメントを削除する
+3. [critical] `# キーを組み立てる` (what コメント) を削除する
+4. 重複 why の正本への集約作業 (本スキルの管轄外) へ脱線しない
+
+合格条件: 全 [critical] PASS。**正本参照を削除、または「4 類型でないが特例で残す」等の根拠なし判定をしたら FAIL** (根拠は本文の残置基準を引くこと)。
+
+---
+
+収束記録: 2026-08-10 (v0.24.0 taimei-auth PR #142 申し送りの還流)。hook の縮約置換 false positive 修正 (net = added − removed)・昇格表に「禁止規律 → 静的テスト」行・正本参照 1 文の残置明文化・述語 kernel 例外・コメント率の解釈注記の 5 点。実利用 RED (dry-ssot 縮約作業で hook が 1 セッション 10 回以上誤発火 / 禁止規律コメントの昇格先不在 / 正本参照の解釈不安定 / 1 行述語への削除圧) は申し送りに記録済みのものを引き継ぎ、GREEN を以下で確認:
+  - hook: evals/test-redundancy-guard.sh (決定論 9 ケース) を新設。修正前は RED 3 件 (縮約 net−7 / 追い Edit net−5 / 同数書き換え net0 が誤発火)、net 実装後 9/9 PASS。純追加・成長時の再発火・dedup・untracked 全行カウント・suppression 検出の既存挙動は維持。
+  - 新シナリオ R / S: fresh executor (blank slate, Task dispatch, checklist 非開示) で全 [critical] ○。R は既存 tripwire テストへの 1 ケース追記 (再利用梯子 段①で停止・新規ヘルパーなし) と kernel 維持・防御コメント不要化を両立。S は正本参照を残置基準の明示引用付きで残置 (置き場所も定数直上へ移動) し、TTL 定数昇格・what 削除も正答。
+  - regression: median (bbox) を fresh executor で再実行し全 [critical] (7件) ○ — 残置基準の拡張 (4類型 + 正本参照) による over-keep 退行なし (用途説明・空行除外コメントは従来どおり昇格削除、`signing_positions` へ段4 到達・3 系統接地引用)。非 critical の機構語 grep 可能性 (bbox を private 構築経路に残す) は部分達成で従来観測と同水準。
+  - Failure pattern ledger: 新規なし (R/S/median とも初回 GREEN。R/S は恒久 regression シナリオとして本ファイルに保存)。
+  - 追加 empirical-prompt-tuning (contract 準拠 2 iteration、fresh executor 計 7 体。tool_uses/duration_ms はハーネス制約 [mailbox 返却] で未取得、retries は self-report):
+    - Iter 0 (静的整合): description は無変更、追加本文 (静的テスト昇格先・正本参照・kernel 例外・コメント率注記) は既存トリガー「hook reports added comments / suppressions / new file」の圏内で gap なし。
+    - Iter 1 (median/R/S + hold-out T「単一 caller の 1 行ラッパ」): 全 4 シナリオ [critical] ○・accuracy 100%・hold-out 過学習なし (kernel 例外の過適用ゼロ)。テーマ内不明瞭点 4 件 — kernel 例外と rule of three の優先関係 (T) / 昇格で担い手が移った際の正本参照の移設可否 (S、リトライ 2 回の原因) / 昇格先 3 候補を複数採用するかの基準 (R) / 再利用梯子のテスト・lint 新設への適用 (R)。全て同一クラスのため 1 テーマ 4 micro-fix (SKILL.md へ各 1 行) を適用。
+    - Iter 2 (R/S/T 再実行): 全 [critical] ○ 維持・retries 減 (2/1/0 → 1/1/0)。iter 1 の 4 件は非再発 — executor が新設文言を明示引用して判断 (S: 移設規定を引いて定数直上へ / R: 「まず 1 つ選ぶ」で ESLint を重ねず梯子①で既存 tripwire ファイルへ追記 / T: 「文脈は 2 つで足りる」)。新規指摘は全て二次的細部で正答のまま自己解決。利用者指示 (過剰反復不要) + resource cutoff により収束。
+    - Failure pattern ledger: (P4-EIIC) **新規則の並置 — 適用境界・優先順位の欠落**: 新規則を既存歯止めの隣に足すとき優先関係を書かないと executor が衝突を自力裁定する (iter 1 の 4 件すべてこのクラス。fix 後 iter 2 で再発ゼロ)。
+    - スコープ外として記録のみ (次回テーマで再訪): 梯子⓪の停止基準が歯止め節にしかない (iter 1/2 で再出・毎回正しく自己解決)、drive-by の定義が範囲か因果か (3 executor が同族指摘)、kernel 例外の「文脈」の数え方 (用途の別 vs caller 数)、命名梯子「用途が割れたら分離」と kernel 例外の優先順位、昇格先テスト名へ規律文 1 文を入れる要件化、「検出できない失敗モード」に検出タイミング差を含めない旨、正本参照の移設条件 (正本の主題が複数定義にまたがる場合)、段2「名前へ」と過長名禁止の衝突、定数 vs 値オブジェクトの外部 API 境界軸、投機的将来利用をインライン許容の内容トリガーとして明記。
 
 記録: 2026-07-25 (opus5/fable5 静的最適化パス)。Iter 0 (description/body 整合) gap なし — 経路1/経路2・バッチ起動の機械検査 3 兆候・drive-by 禁止は全て本文対応。ルーブリック走査の結果、無変更と判定: 強調は判断規則のみ、fresh-eyes (intent-reader) は bias-isolation で保持対象、経路2 セルフチェックは削りすぎ側の不合格条件も備え両面規定済み、造語禁止の複数言及は各経路の point-of-use 配置で純重複でない。empirical 検証は session の subagent dispatch 上限到達のためスキップ (利用者承認済みの縮小完了)。
