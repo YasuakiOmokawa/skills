@@ -1,0 +1,19 @@
+{
+  "name": "apply-findings",
+  "description": "組み込み /code-review 実行後やコミット・PR 作成前に、指摘 (code-review の指摘・コードベース規約/パターンからの逸脱・lint 違反) のうち機械的に安全なものを自動適用し、判断が必要なものを一覧集約したい時に使用。PR の review-only 点検にも対応。",
+  "version": "1.0.0",
+  "author": {
+    "name": "Yasuaki Omokawa",
+    "url": "https://github.com/YasuakiOmokawa"
+  },
+  "homepage": "https://github.com/YasuakiOmokawa/skills",
+  "repository": "https://github.com/YasuakiOmokawa/skills",
+  "license": "MIT",
+  "keywords": [
+    "code-review",
+    "findings",
+    "conventions",
+    "linting",
+    "commit"
+  ]
+}

@@ -1,6 +1,6 @@
 ---
 name: express-intent-in-code
-description: Use when the redundancy-guard hook reports added comments / lint suppressions / a new file next to siblings, before writing a new helper / util / file (reuse ladder), when /review-code-quality hands off a naming / cohesion finding, when a name stops at mechanism (`bbox_xhtml`) or shape (`word_coordinate_data`) and its purpose survives only in why-comments, or when the user says 「意図が伝わる名前にして」「コメントなしで読めるコードにして」.
+description: Use when the redundancy-guard hook reports added comments / lint suppressions / a new file next to siblings, before writing a new helper / util / file (reuse ladder), when /apply-findings surfaces a naming / cohesion judgment item, when a name stops at mechanism (`bbox_xhtml`) or shape (`word_coordinate_data`) and its purpose survives only in why-comments, or when the user says 「意図が伝わる名前にして」「コメントなしで読めるコードにして」.
 ---
 
 # Express Intent In Code

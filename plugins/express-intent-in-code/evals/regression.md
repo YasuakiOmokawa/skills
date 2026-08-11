@@ -289,7 +289,7 @@ end
 
 ## シナリオ: 委譲実行 (Task dispatch) で対象明示時は通常どおり変換する
 
-working code: todo アプリの `feature/priority` ブランチに、優先度でソートする関数 (取得元/内部表現由来の機構名 + 直上に日本語 why コメント) が追加されている。`/review-code-quality` から naming/凝集 finding としてこの関数が申し送られている想定で、対象を明示して委譲する。
+working code: todo アプリの `feature/priority` ブランチに、優先度でソートする関数 (取得元/内部表現由来の機構名 + 直上に日本語 why コメント) が追加されている。コードレビューの naming/凝集 finding としてこの関数が判断項目に挙がっている想定で、対象を明示して委譲する。
 
 ### Requirements checklist
 
@@ -303,11 +303,11 @@ working code: todo アプリの `feature/priority` ブランチに、優先度�
 
 ## シナリオ: 委譲実行 + 対象未指定・handoff 無しは確認待ちでなく no-op 宣言で終了する
 
-対象リポジトリに 申し送りファイル (`quality-review-handoff-<branch>.md`) が存在せず、委譲プロンプトにも対象の明示指定が無い状態で「このリポジトリの命名を良くしてください」とだけ指示される。
+会話内にコードレビュー由来の naming/凝集 finding が共有されておらず、委譲プロンプトにも対象の明示指定が無い状態で「このリポジトリの命名を良くしてください」とだけ指示される。
 
 ### Requirements checklist
 
-1. [critical] 申し送りファイル (`quality-review-handoff-<branch>.md`) 相当のファイルが存在しないことを確認したうえで、diff 全体や全識別子を対象にした改名候補スキャンを行っていない
+1. [critical] 対象指定 (会話内の naming/凝集 finding・明示指定) が無いことを確認したうえで、diff 全体や全識別子を対象にした改名候補スキャンを行っていない
 2. [critical] 「ユーザーに確認」で停止する代わりに、「handoff 無しのため変換対象なし」相当の no-op 宣言を最終メッセージに含めて終了している
 3. 多義衝突 (blast radius 内で同じ語が2つのドメイン概念を指す) や段0ノイズ語 (`doc`/`data`/`info`/`target`/`tmp` 等) の grep スクリーニングが実行されている、または該当なしと明記されている
 4. リポジトリ内のファイルが実際には変更されていない (no-op 宣言と実態が一致している)
@@ -317,11 +317,11 @@ working code: todo アプリの `feature/priority` ブランチに、優先度�
 
 ## シナリオ: 委譲実行 + handoff は存在するが該当 finding が無い (hold-out・過学習チェック)
 
-対象リポジトリに 申し送りファイル (`quality-review-handoff-<branch>.md`) は存在するが、記載されている finding がパフォーマンス・テストカバレッジのみで naming/凝集 finding を含まない。対象の明示指定も無い状態で「このリポジトリの命名を改善してください」と指示される。
+会話内にコードレビュー由来の finding は共有されているが、内容がパフォーマンス・テストカバレッジのみで naming/凝集 finding を含まない。対象の明示指定も無い状態で「このリポジトリの命名を改善してください」と指示される。
 
 ### Requirements checklist
 
-1. [critical] 申し送りファイル (`quality-review-handoff-<branch>.md`) を確認したうえで、記載されている finding が naming/凝集 finding でないことを認識し、それらを誤って対象化していない
+1. [critical] 共有された finding が naming/凝集 finding でないことを認識し、それらを誤って対象化していない
 2. [critical] 「ユーザーに確認」で停止する代わりに、「該当する naming/凝集 finding が無いため変換対象なし」相当の no-op 宣言を最終メッセージに含めて終了している
 3. 多義衝突・段0ノイズ語の grep スクリーニングが実行されている、または該当なしと明記されている
 4. リポジトリ内のファイルが実際には変更されていない (no-op 宣言と実態が一致している)
@@ -351,7 +351,7 @@ export function notifyAndRecord(document: Document, approver: Approver) {
 }
 ```
 
-申し送りファイル (`quality-review-handoff-<branch>.md`) に review-code-quality 由来の naming/凝集 finding が2件記載されている (`trackData`, `notifyAndRecord`)。シナリオ文脈に「実装時に経路2を適用済み。品質パス連鎖の一環として本 skill を実行」と明記する。
+会話内にコードレビュー由来の naming/凝集 finding が2件共有されている (`trackData`, `notifyAndRecord`)。シナリオ文脈に「実装時に経路2を適用済み。品質パス連鎖の一環として本 skill を実行」と明記する。
 
 ### Requirements checklist
 

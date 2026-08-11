@@ -22,10 +22,8 @@ silent skip / silent success 禁止。以下のいずれかを必ず 1 行出力
 | 条件 | 文言 |
 |---|---|
 | auto 削除のみ (単独 stub / 全 identifier 撤去済 receive_messages / caller-only spec 残存の it block) を N 件実行 | `[dead mock: auto N 件削除]` |
-| Manual Review 保留のみ (部分削除など) を M 件検出、auto 削除なし | `[dead mock: Manual Review M 件 (保留)]` |
-| auto 削除 N 件 + Manual Review 保留 M 件が両方発生 | `[dead mock: auto N 件削除 / Manual Review M 件 (保留)]` |
-
-Orchestrated モード時は「Manual Review M 件 (保留)」に含まれる項目を escalation ledger に「保留」として記帳する (SKILL.md の Manual Review Items #4 読み替え規則)。文言自体は同一 (ledger 記帳の実施は文言選択に影響しない)。
+| 判断系保留のみ (部分削除など) を M 件検出、auto 削除なし | `[dead mock: 判断系 M 件 (保留)]` |
+| auto 削除 N 件 + 判断系保留 M 件が両方発生 | `[dead mock: auto N 件削除 / 判断系 M 件 (保留)]` |
 
 検出手順 1 の出力で identifier 0 件と確定した時点で手順 2 を実行せず即スキップ報告して良い (rg 不要)。
 
@@ -64,10 +62,10 @@ rg --no-heading -n \
 
 - ヒットしたファイル/行
 - 削除後の差分プレビュー
-- **削除単位の分類** (auto / Manual Review):
+- **削除単位の分類** (auto / 判断系):
   - `receive(:X)` の単独 stub で X が削除済 → **行ごと自動削除** (auto)
   - `receive_messages(a:, b:)` で **a, b すべてが削除済 identifier** → **行ごと自動削除** (auto, full removal)
-  - `receive_messages(a:, b:)` で **一部 (例: a だけ) が削除済、他は実装に残存** → **Manual Review Items** に回す (auto しない)
+  - `receive_messages(a:, b:)` で **一部 (例: a だけ) が削除済、他は実装に残存** → **判断系** に回す (auto しない)
   - **caller-only spec 残存** (`expect(receiver.X)` / `receiver.X` で X が削除済 def) → **it block ごと自動削除候補** (auto)。テスト意図が壊れていないか reviewer 確認を促す注記を付ける
 
 ### 4. 承認後の実行
@@ -78,4 +76,4 @@ rg --no-heading -n \
 
 - caller 側で `obj.X` 呼出を撤去しただけ (実装は残存) の場合は対象外。`delegate` / `def` の **定義削除** に限る。
 - 逆方向 (impl 側で `def X` を撤去後、spec の caller-only 呼出が残存) は **検出対象** (上記検出手順 2 で拾う)。it block ごと auto 削除候補に分類する。
-- 部分削除 (`receive_messages(a:, b:)` のうち a だけ削除) は Manual Review。書換え候補 (例: `receive_messages(b:)` 化 / 行ごと削除 / テスト見直し) を併記してユーザーに選択させる。
+- 部分削除 (`receive_messages(a:, b:)` のうち a だけ削除) は判断系。書換え候補 (例: `receive_messages(b:)` 化 / 行ごと削除 / テスト見直し) を併記してユーザーに選択させる。

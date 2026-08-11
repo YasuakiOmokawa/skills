@@ -40,7 +40,6 @@ omokawa-skills は **monorepo + N plugins** 構造。各 skill / command は `pl
 
 メインエージェントが複数の **specialist エージェント** を `Task` ツールで並列起動して結果を統合する設計パターン。
 - `review-design`: anti-pattern 必須 + DDD / Hexagonal / Clean / Deep-Module から Q1-Q3 matrix で選ばれた subset を並列起動 (unhealthy・新規 module・greenfield では all 5) → 必須 Devil's Advocate critique
-- `review-code-quality`: 3 analyzer 並列（Cohesion / Coupling / Business-Impact — Business-Impact は domain attribute 変更時のみ）
 - `finalize-plan`: Manual-QA / Auto-QA の 2 並列
 - `mece-plan-review`: 既定 (standard) は subagent 0 で main agent が inline 実行。deep のみ BB / WB 2 並列 → Fresh Red Team の統合判定
 - `model-data`: パイプライン式（Requirements → Conceptual → Conceptual-Review (FAIL 時 Conceptual へ差し戻し、最大 3 回) → Logical → DBML）
