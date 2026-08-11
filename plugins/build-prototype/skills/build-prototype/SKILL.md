@@ -39,5 +39,5 @@ PoC を、既存コードベースの慣習に合った「DD を起こせる水�
 ## 併用推奨 skill
 
 - /review-design — 配置・パターン選定の事前レビュー
-- /review-code-quality, /polish-before-commit — コミット前の品質パス (起動は任意)
+- 組み込み /code-review → /apply-findings — コミット前の品質パス (起動は任意)
 - /build-poc — 前工程 / /create-design-doc — 次工程 (この skill の申し送り節を入力にする)

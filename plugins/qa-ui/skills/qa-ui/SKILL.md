@@ -308,4 +308,3 @@ Major/Minor の修正・再検証ループ中、ユーザー向けの進捗表�
 
 - `/finalize-plan` — QA 手順（QA-ID 台帳・preflight 契約を含む）と AC の参照元となるプランを準備する
 - `/review-plan-diff` — UI 検証の前に、プランと実装 diff の突き合わせで実装漏れ・計画外差異を検出しておく（前段）
-- `/review-code-quality` — UI 検証と並行して設計レベルの品質を確認する

@@ -41,7 +41,7 @@ clone せずに、`examples/skills-config/*.example.md` を `~/.claude/skills-co
 | [`mece-plan-review`](./plugins/mece-plan-review/skills/mece-plan-review/SKILL.md) | 受け入れ条件を BB/WB 2 視点 + Red Team で MECE 検証 (既定 inline、リスク領域は並列 deep) |
 | [`review-design`](./plugins/review-design/skills/review-design/SKILL.md) | 「どこに・どう作るか」を判定 |
 | [`finalize-plan`](./plugins/finalize-plan/skills/finalize-plan/SKILL.md) | プラン→実装可能形式へ変換 |
-| [`polish-before-commit`](./plugins/polish-before-commit/skills/polish-before-commit/SKILL.md) | コミット前の自動仕上げ |
+| [`apply-findings`](./plugins/apply-findings/skills/apply-findings/SKILL.md) | /code-review 指摘と規約・パターン逸脱の自動適用 + 判断集約 |
 
 #### プロトタイプ駆動 (PoC → プロトタイプ → DD の 3 段連鎖)
 
@@ -58,7 +58,6 @@ clone せずに、`examples/skills-config/*.example.md` を `~/.claude/skills-co
 | [`iterate-with-prototypes`](./plugins/iterate-with-prototypes/skills/iterate-with-prototypes/SKILL.md) | 未検証仮定のある複雑機能を code-first(動かしてから設計)で本番まで回す |
 | [`extract-figma-spec`](./plugins/extract-figma-spec/skills/extract-figma-spec/SKILL.md) | Figma 指定を全プロパティ抽出しチェックリスト照合して反映漏れを防ぐ |
 | [`qa-ui`](./plugins/qa-ui/skills/qa-ui/SKILL.md) | QA-ID 台帳から実行手順書を組み立て人間に検証委譲 (browser automation は明示指定時のみ) |
-| [`review-code-quality`](./plugins/review-code-quality/skills/review-code-quality/SKILL.md) | 設計レベルの品質問題を検出 |
 | [`express-intent-in-code`](./plugins/express-intent-in-code/skills/express-intent-in-code/SKILL.md) | 機構名/形状名を目的(why)表明形へ変換し why コメント依存を減らす |
 | [`create-pr`](./plugins/create-pr/skills/create-pr/SKILL.md) | カレントブランチから PR 作成 (既定 draft、明示指示で ready for review) |
 | [`dry-ssot-text`](./plugins/dry-ssot-text/skills/dry-ssot-text/SKILL.md) | AI-generated document を SSOT に統合 |
@@ -99,27 +98,15 @@ clone せずに、`examples/skills-config/*.example.md` を `~/.claude/skills-co
 ### 単発の設計 => 実装
 
 ```
-プランファイルをつくって /grill-with-docs
+設計して /grill-with-docs を実行
 
 /review-design
-/define-acceptance-criteria
-/mece-plan-review
-/finalize-plan
-/dry-ssot-text → /purge-private-vocab → /cognitive-rhythm-writing
+/define-acceptance-criteria => /mece-plan-review => /finalize-plan
 
-/express-intent-in-code のガイドラインで実装。コミットは指示まで禁止
+カレントブランチからあたらしくきって実装し、検証。ui検証が必要なら /qa-ui で検証。コミットは指示まで禁止
+/ponytail-review => /simplify => /vercel-react-best-practices => /vercel-composition-patterns => /react-doctor => コードコメントと md ファイルに /dry-ssot-text => /purge-private-vocab => /cognitive-rhythm-writing
 
-/review-plan-diff
-/qa-ui
-
-/simplify
-/vercel-react-best-practices
-/vercel-composition-patterns
-/react-doctor
-/review-code-quality
-/express-intent-in-code
-/polish-before-commit
-コードコメントと md ファイルに /dry-ssot-text → /purge-private-vocab → /cognitive-rhythm-writing
+/code-review を実行 => /apply-findings
 
 /create-pr
 ```

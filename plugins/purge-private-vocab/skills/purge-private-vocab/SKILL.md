@@ -125,7 +125,7 @@ Q4. 番号/層ラベルか? (`Critical-A`, `α/β/γ 層`, `AC-12`, 方式候補
 
 「持ち込み可」セクションは reviewer 誤検出疑念回避のため、heuristic ヒットして Q1/Q2 で抜けた語と、heuristic 未ヒットだが疑われそうな公開語 (JWT, RFC, Express 等) を明示する。
 
-**standard / deep tier ではこの提案レポートを完全提示してから適用に進む**。chain 実行 (`/dry-ssot-text` → 本 skill → `/polish-before-commit`) の「流れを止めない」圧力でレポート提示ごと省略するのが観測された失点なので、提示を省けるのは lite のみ。対話承認者の有無の判定基準と self-approve の可否は [references/execution-contexts.md](references/execution-contexts.md) の「委譲実行」節を参照。
+**standard / deep tier ではこの提案レポートを完全提示してから適用に進む**。chain 実行 (`/dry-ssot-text` → 本 skill → `/apply-findings`) の「流れを止めない」圧力でレポート提示ごと省略するのが観測された失点なので、提示を省けるのは lite のみ。対話承認者の有無の判定基準と self-approve の可否は [references/execution-contexts.md](references/execution-contexts.md) の「委譲実行」節を参照。
 
 ### 5. 適用
 
