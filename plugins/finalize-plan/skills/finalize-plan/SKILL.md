@@ -23,7 +23,7 @@ description: Turns AC and MECE results from the analysis file into manual/auto Q
 
 リスク領域は AC 件数によらず **deep**。lite では Step 1.7 の QA-ID enumerate を簡略形 (`QA-N-01`, `QA-N-02`... の通し番号) に縮約してよい。
 
-**PR 分割は行わない**: 実装単位の事前梱包 (PR を何本に切るか) は欠陥検出に寄与しない — 実案件 2 回の実測で、欠陥検出の実体は QA-ID カバレッジマトリクス・実装後の diff 突き合わせ・qa-ledger 審判再実行の 3 層であり、PR 分割固有の検出は 0 件だった一方、帳簿ずれのノイズ指摘と割当漏れ事故の発生源になっていた。PR 梱包の判断は出荷時に `/create-pr` が行う (利用者決定 2026-07-06)。ブランチ戦略は起点ブランチから単一の作業ブランチ 1 本に簡素化した結果「起点確認と命名」だけになったため、専用 agent (branch-planner) を廃し Step 2A へインライン化した (2026-08-02)。さらに 2026-08-08 にはブランチ戦略のロール自体を廃止した — 実装開始時に「カレントブランチから新しく切る」と指示すれば足り、事前のブランチ計画は欠陥検出に寄与しないため (利用者決定 2026-08-08)。preflight の 起点ブランチ 欄は `/review-plan-diff` の diff 比較元として残し、Step 5 が `git branch --show-current` の値を機械転記する。
+**PR 分割は行わない**: 実装単位の事前梱包 (PR を何本に切るか) は欠陥検出に寄与しない — 実案件 2 回の実測で、欠陥検出の実体は QA-ID カバレッジマトリクス・実装後の diff 突き合わせ・qa-ledger 審判再実行の 3 層であり、PR 分割固有の検出は 0 件だった一方、帳簿ずれのノイズ指摘と割当漏れ事故の発生源になっていた。PR 梱包の判断は出荷時に `/create-pr` が行う (利用者決定 2026-07-06)。ブランチ戦略は起点ブランチから単一の作業ブランチ 1 本に簡素化した結果「起点確認と命名」だけになったため、専用 agent (branch-planner) を廃し Step 2A へインライン化した (2026-08-02)。さらに 2026-08-08 にはブランチ戦略のロール自体を廃止した — 実装開始時に「カレントブランチから新しく切る」と指示すれば足り、事前のブランチ計画は欠陥検出に寄与しないため (利用者決定 2026-08-08)。preflight の 起点ブランチ 欄は実装の起点の記録として残し、Step 5 が `git branch --show-current` の値を機械転記する。
 
 **agent 省略が sanctioned なのは lite tier の skip 列のみ** — deep tier で「文脈が十分だから直接書ける」という判断での省略はしない (planner agent を通さない直接策定は QA-ID トレーサビリティの独立検証を欠く)。
 
@@ -160,7 +160,7 @@ comm -23 /tmp/all_qa_ids.txt /tmp/assigned.txt > /tmp/assign_orphan.txt         
 
 1. ベース URL・テストデータ準備手順・権限アカウント一覧は Step 3 の手動QA手順に記載があればそこから転記する。埋まらなければ `未定`。
 2. ログイン手段は既定で `未定` とする (自動ログインは行わないため、記載が無い限り推測で埋めない)。
-3. 起点ブランチは `git branch --show-current` の値を機械転記する (finalize-plan 実行時のカレントブランチ = 実装が新規ブランチを切る起点。判断・命名は行わない)。取得できない場合 (detached HEAD 等) は `未定`。この欄は `/review-plan-diff` が diff 比較元として読むため残している。
+3. 起点ブランチは `git branch --show-current` の値を機械転記する (finalize-plan 実行時のカレントブランチ = 実装が新規ブランチを切る起点。判断・命名は行わない)。取得できない場合 (detached HEAD 等) は `未定`。
 4. サーバ・DB 起動コマンドはプラン・README 等に既記載があれば転記、なければ `未定`。
 5. 生成・補完後も `未定` が残る項目があれば、それらをまとめて **AskUserQuestion 1 回**でユーザーに確認する (項目ごとに個別に停止しない。AskUserQuestion が利用可能ツールに無い場合の読み替えは「## 委譲実行」参照)。
 
@@ -184,7 +184,6 @@ comm -23 /tmp/all_qa_ids.txt /tmp/assigned.txt > /tmp/assign_orphan.txt         
 - `/extract-figma-spec` — Figma 由来の UI を含むスライスでは本 skill 実行前にこのスライス用の分析ファイルへ実行し `## 正本抽出結果` を用意する (分析ファイルはプラン単位のため、PoC 期の実行結果は引き継がれない)
 - `/define-acceptance-criteria` — 入力となる AC を定義する (前段)
 - `/mece-plan-review` — AC の網羅性を検証してから本スキルに引き継ぐ (前段)
-- `/review-plan-diff` — 実装完了後、本スキルが確定したプラン・QA-ID マトリクスと実 diff を突き合わせて実装漏れ・計画外差異を検出する (後段)
 - `/qa-ui` — 実装完了後、本スキルが定めた QA 手順・`<plan>.qa-ledger.md`・`<plan>.preflight.md` を使って UI 検証する (後段)
 - `/create-pr` — 実装完了後、PR 梱包 (何本に切るか) を判断して PR を作成する (後段。PR 分割は finalize-plan では行わない)
 

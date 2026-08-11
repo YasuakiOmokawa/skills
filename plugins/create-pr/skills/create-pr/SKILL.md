@@ -147,7 +147,6 @@ ready 指定時は上記コマンドから `--draft` を省く。既存 PR を�
 
 ## 併用推奨 skill
 
-- `/review-plan-diff` — PR 作成前に、確定プランと実装後の diff を突き合わせ、実装漏れ・計画外差異を検出しておく（前段）
 - `/apply-findings` — コミット前に /code-review 指摘と規約・パターン逸脱を適用してから本 skill を起動
 - `/finalize-plan` — プランを実装可能形式に変換し、その流れで本 skill を呼ぶ
 - `/purge-private-vocab` — PR description 生成後に plan 内造語を点検
