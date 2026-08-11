@@ -26,7 +26,7 @@ description: やりたいこと (brief / PRD / gdocs URL) を技術調査して�
    根拠欄に (未検証) と明記する (調査は仮説の候補リストであり結論ではない。実案件で調査結果の
    誤り 3 点を実装検証が訂正した)。
    候補が実質 1 つで危険な前提の検証が主となる案件では、星取表の代わりに
-   /iterate-with-prototypes の仮説 ledger (主張 / 検証方法 / kill 条件) を成果物にしてよい
+   仮説 ledger (主張 / 検証方法 / kill 条件 の 3 列表) を成果物にしてよい
 4. **PoC クローズ基準を先に 1 行宣言する**: 「勝ち筋候補のセルが実測根拠を持ったら PoC 終了」。
    基準を超える作り込みはしない (基準の事前宣言が無いと PoC は「動く仕様の鏡」に変質する —
    実案件で 87 コミット中 feasibility 検証は 20% のみだった)
@@ -54,7 +54,6 @@ description: やりたいこと (brief / PRD / gdocs URL) を技術調査して�
 
 ## 併用推奨 skill
 
-- /iterate-with-prototypes — 検証したい仮説が多い大きめ PoC の規律 (仮説 ledger と spike)
 - /extract-figma-spec — Figma 再現が検証対象に含まれる場合
 - /qa-ui — PoC UI の確認
 - /build-prototype — 次工程 (この skill の申し送り節を入力にする)

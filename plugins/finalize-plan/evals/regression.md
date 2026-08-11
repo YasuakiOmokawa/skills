@@ -57,12 +57,14 @@ Step 4 完了直後を所与として Step 5 を机上実行させる。所与: 
 
 ## シナリオ: プロトタイプ先行経由の分析ファイルでの Step 1.5 判定
 
-fresh executor に Step 1.5 (例外節含む) を渡し、次の 3 パターンで本 skill の起動可否を判定させる: (a) `/iterate-with-prototypes` の step 4-5 を省略し分析ファイルが一度も無い状態、(b) `/iterate-with-prototypes` の step 5 を完走し `## 受け入れ条件` `## MECE分析結果` が揃った分析ファイルがある状態、(c) 分析ファイルに AC/MECE のどちらか一方が欠落したまま本 skill が呼ばれた状態 (design-first 経由・プロトタイプ先行経由を問わない)。
+**改訂注記 (2026-08-11)**: iterate-with-prototypes plugin 削除 (利用者決定) に伴い、ledger 駆動セッション例外を Step 1.5 から撤去した。分析ファイル欠落時は経路 (design-first / プロトタイプ先行 / PoC) によらず常に既定の中断メッセージで停止する。旧パターン (a) の期待値を「例外適用 (ledger 追記代替)」から「中断」へ差し替え。
+
+fresh executor に Step 1.5 (例外節撤去後) を渡し、次の 3 パターンで本 skill の起動可否を判定させる: (a) PoC / 使い捨て検証セッションで分析ファイルが一度も無い状態 (会話履歴に PoC 文脈が明示されている)、(b) プロトタイプ先行経路の後に `/define-acceptance-criteria` → `/mece-plan-review` を完走し `## 受け入れ条件` `## MECE分析結果` が揃った分析ファイルがある状態、(c) 分析ファイルに AC/MECE のどちらか一方が欠落したまま本 skill が呼ばれた状態 (design-first 経由・プロトタイプ先行経由を問わない)。
 
 ### Requirements checklist
 1. [critical] (c) ではプロトタイプ先行経由であっても迂回せず、既定の中断メッセージを出して停止すると判定される (AC/MECE 欠落のまま finalize-plan を通そうとしない)
-2. [critical] (b) では ledger 追記代替に落とさず、Step 1.7 以降 (QA-ID enumerate・正本カバレッジゲート・QA-ID 台帳・preflight) を design-first 経由と同一の手順で実行すると判定される (合流手順が実行順で書ける)
-3. (a) でのみ本 skill を起動せず iterate-with-prototypes step 6 の ledger 追記代替に従うと判定される
+2. [critical] (b) では Step 1.7 以降 (QA-ID enumerate・正本カバレッジゲート・QA-ID 台帳・preflight) を design-first 経由と同一の手順で実行すると判定される (合流手順が実行順で書ける)
+3. [critical] (a) でも PoC 文脈を理由に ledger 追記等の代替へ落とさず、既定の中断メッセージを出して停止すると判定される (撤去済みの例外を推測で復活させない)
 
 収束記録: 2026-07-06 (v1.23.0 PR)。初回実行で全 [critical] ○ (プロトタイプ先行経由でも即中断ゲートを迂回しないことを確認)。
 
@@ -99,5 +101,7 @@ fresh executor に Step 1.5 (例外節含む) を渡し、次の 3 パターン�
 記録: 2026-08-08 (ブランチ戦略ロール廃止, v2.10.0)。利用者決定によりブランチ戦略 (Step 2A + `### ブランチ戦略` 出力) を廃止し、Step 2B を Step 2 へ改称した。本 suite の assertion もこれに追随して移行済み: lite tier シナリオの trigger を「ブランチ戦略を決めて」→「QA 手順をプランに書いて」へ差し替え、preflight シナリオの所与を「Step 2A で起点ブランチ確定済み」→「カレントブランチが develop」へ、checklist 1 を `git branch --show-current` の機械転記 (判断・命名なし) の検証へ書き換え、委譲 A シナリオから Step 2A のインライン実行を除去し `## 実装準備` の期待サブセクションを 2 つ (手動QA・自動QA) にした。過去の収束記録に出てくる branch-planner / Step 2A への言及は history としてそのまま残す (当時の実行事実の記録であり現行仕様ではない)。
 
 記録: 2026-08-08 (eval 繰り越し 10 件消化, v2.11.0)。PR #139 の fresh executor 再実行で観測した spec gap 10 件を薄い規則で消化した: `0/0` 表記を output-template.md SSOT (`カテゴリ名+0`) へ統一 / lite tier の下流 (自動QA節を 1 行の対象外表記で残す・auto 0 件を Step 4 で正常扱い) を明文化 / Step 3.5 記録行の位置 SSOT を output-template.md に宣言 / 孤児 QA-ID の初期状態を `対象外(N/A)` → `要人間確認` (完了ブロック) へ変更 / ledger 駆動例外の終了メッセージ追加 / planner 出力と enumerate 元 AC の照合規則を Step 3 に追加 / 「実質同一」の判定対象をプラン本文と明記 / lite 代行時に manual-qa-planner 定義を Read する旨を追記 / ⛔ メッセージ 3 行目を「分析ファイル未作成」ケースへ限定 / preflight の用途逆算補完・セル注記禁止を明文化。本 suite の assertion 追随は正本カバレッジ+台帳シナリオの checklist 3 (孤児 QA-ID の初期状態) のみ。2026-07-07 記録の残不明点「lite tier での自動QA見出しの残し方」は本消化で解消。シナリオ追加なし。
+
+記録: 2026-08-11 (iterate-with-prototypes plugin 削除, v2.12.0)。利用者決定により ledger 駆動セッション例外 (Step 1.5) を撤去し、分析ファイル欠落時は経路によらず既定の中断メッセージで停止する仕様へ変更した。本 suite の「プロトタイプ先行経由の分析ファイルでの Step 1.5 判定」シナリオを現行仕様へ改訂 (旧パターン (a) の期待値を例外適用→中断へ差し替え、checklist 3 を [critical] へ昇格)。fresh executor 再実行 1 ラウンド目で全 [critical] ○ / Trace all OK。executor 提起の unclear points 2 件 (分析ファイル自体の不在がセクション欠落条件に未明文化・撤去済み例外の negative space が善意の補完を誘う) を General Fix Rule に沿って Step 1.5 へ 2 文追記 (不在・空ファイル = 全セクション欠落と同値 / PoC 等の上流非実行フェーズにも例外なし) で消化し、pristine fresh executor で再実行して全 [critical] ○ / retries 0 (executor が追記 2 文を判定根拠として明示引用し、(a) での ledger 代替の検討を即棄却したことを自己申告 — 追記が参照されている証拠)。新規 unclear points 3 件 (中断メッセージの `{パス}` 形式が未規定・見出しのみ存在する空セクションの判定粒度・PoC 停止時の次アクション案内が上流の適用条件と噛み合わない) は critical 非影響のため繰り越し。過去の収束記録に出てくる ledger 駆動例外 / `/iterate-with-prototypes` への言及は history としてそのまま残す。
 
 記録: 2026-07-25 (opus5/fable5 静的最適化パス)。Iter 0 (description/body 整合) gap なし。ルーブリック走査 (過剰強調・重複規則・自己検証足場・literal スコープ) の結果、本文は既に 2026-07-07〜07-18 の empirical tuning で該当項目が解消済みであり無変更と判定 (密な規則はいずれも失敗モード根拠つき・ゲート類は契約的で保持対象)。empirical 検証は session の subagent dispatch 上限到達のためスキップ (利用者承認済みの縮小完了)。次回スキル変更 PR では本 suite の fresh executor 再実行を通常どおり行うこと。

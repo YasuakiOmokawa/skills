@@ -55,7 +55,6 @@ clone せずに、`examples/skills-config/*.example.md` を `~/.claude/skills-co
 
 | Plugin | 役割 |
 |---|---|
-| [`iterate-with-prototypes`](./plugins/iterate-with-prototypes/skills/iterate-with-prototypes/SKILL.md) | 未検証仮定のある複雑機能を code-first(動かしてから設計)で本番まで回す |
 | [`extract-figma-spec`](./plugins/extract-figma-spec/skills/extract-figma-spec/SKILL.md) | Figma 指定を全プロパティ抽出しチェックリスト照合して反映漏れを防ぐ |
 | [`qa-ui`](./plugins/qa-ui/skills/qa-ui/SKILL.md) | QA-ID 台帳から実行手順書を組み立て人間に検証委譲 (browser automation は明示指定時のみ) |
 | [`express-intent-in-code`](./plugins/express-intent-in-code/skills/express-intent-in-code/SKILL.md) | 機構名/形状名を目的(why)表明形へ変換し why コメント依存を減らす |
