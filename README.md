@@ -61,7 +61,6 @@ clone せずに、`examples/skills-config/*.example.md` を `~/.claude/skills-co
 | [`create-pr`](./plugins/create-pr/skills/create-pr/SKILL.md) | カレントブランチから PR 作成 (既定 draft、明示指示で ready for review) |
 | [`dry-ssot-text`](./plugins/dry-ssot-text/skills/dry-ssot-text/SKILL.md) | AI-generated document を SSOT に統合 |
 | [`purge-private-vocab`](./plugins/purge-private-vocab/skills/purge-private-vocab/SKILL.md) | plan 由来の固有語を対外文書から除染 |
-| [`review-plan-diff`](./plugins/review-plan-diff/skills/review-plan-diff/SKILL.md) | 確定プランと実装後の diff を突き合わせ実装漏れ・仕様逸脱を検出 |
 
 ### personal 系 (環境・組織依存の設定が必要)
 
