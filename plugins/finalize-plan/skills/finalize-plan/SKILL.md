@@ -1,193 +1,83 @@
 ---
 name: finalize-plan
-description: Turns AC and MECE results from the analysis file into manual/auto QA steps appended to the plan file, then gates QA-ID coverage against any structured source-of-truth atoms, initializes the QA execution ledger (`<plan>.qa-ledger.md`), and generates the preflight contract (`<plan>.preflight.md`) so QA input-waiting moves before the loop starts. Use when the user has completed `/define-acceptance-criteria` + `/mece-plan-review` and is about to move from plan mode into implementation, or says "実装準備を追記して" / "QA 手順をプランに書いて".
+description: Use when acceptance criteria and MECE review are complete and a plan needs implementation-ready QA preparation immediately before coding, or when asked to add implementation preparation or QA steps to a plan.
 ---
 
 # finalize-plan
 
-分析ファイル (`<plan>.analysis.md`) から AC・MECE 結果を読み込み、プランファイル末尾に `## 実装準備` (QA 手順) を追記する。入力欠落時は即中断。`## 正本抽出結果` があれば QA-ID の正本カバレッジをゲートし、QA-ID ごとの実行台帳 (`<plan>.qa-ledger.md`) を初期化する。あわせて、QA 開始時に個別で尋ねる入力 (ベース URL・テストデータ準備・権限アカウント等) を事前に一括収集する preflight 契約 (`<plan>.preflight.md`) を生成する。
+`$ARGUMENTS` はプランファイルパス。`<plan>.analysis.md` の AC・MECE からプラン、`<plan>.qa-ledger.md`、`<plan>.preflight.md` を生成する。
 
-## Arguments
+## Tier
 
-- `$ARGUMENTS`: プランファイルパス (省略時は会話コンテキストの `Plan File Info:` から取得、見つからなければ確認。解決順位・委譲実行時の扱いは下記「## 委譲実行」参照)
+分析ファイルの `### Tier` を継承する。未記載は standard。件数は `[MECE追加]` を含む enumerate 対象 AC の総数。auth / billing / payment / migration は件数によらず deep。
 
-## Task complexity tier
+| Tier | AC | Manual planner | Auto planner |
+|---|---:|---|---|
+| lite | ≤5 | main agent が inline | skip |
+| standard | 6–15 | dispatch | dispatch |
+| deep | >15 / risk | dispatch | dispatch |
 
-`<plan>.analysis.md` 冒頭の `### Tier` を継承し、agent の起動範囲を変える:
+PR 分割・ブランチ設計は行わない。
 
-| Tier | AC 件数 | manual-qa-planner | auto-qa-planner |
-|---|---|---|---|
-| **lite** | ≤5 | inline (1 セクション統合) | skip |
-| **standard** (default) | 6-15 | ✓ | ✓ |
-| **deep** | >15 / auth / billing / payment / migration | ✓ | ✓ |
+## Workflow
 
-リスク領域は AC 件数によらず **deep**。lite では Step 1.7 の QA-ID enumerate を簡略形 (`QA-N-01`, `QA-N-02`... の通し番号) に縮約してよい。
+### 1. 入力
 
-**PR 分割は行わない**: 実装単位の事前梱包 (PR を何本に切るか) は欠陥検出に寄与しない — 実案件 2 回の実測で、欠陥検出の実体は QA-ID カバレッジマトリクス・実装後の diff 突き合わせ・qa-ledger 審判再実行の 3 層であり、PR 分割固有の検出は 0 件だった一方、帳簿ずれのノイズ指摘と割当漏れ事故の発生源になっていた。PR 梱包の判断は出荷時に `/create-pr` が行う (利用者決定 2026-07-06)。ブランチ戦略は起点ブランチから単一の作業ブランチ 1 本に簡素化した結果「起点確認と命名」だけになったため、専用 agent (branch-planner) を廃し Step 2A へインライン化した (2026-08-02)。さらに 2026-08-08 にはブランチ戦略のロール自体を廃止した — 実装開始時に「カレントブランチから新しく切る」と指示すれば足り、事前のブランチ計画は欠陥検出に寄与しないため (利用者決定 2026-08-08)。preflight の 起点ブランチ 欄は実装の起点の記録として残し、Step 5 が `git branch --show-current` の値を機械転記する。
+プランパスは `$ARGUMENTS` → `Plan File Info:` → user confirmation の順で得る。分析ファイルは拡張子前へ `.analysis` を挿入する。
 
-**agent 省略が sanctioned なのは lite tier の skip 列のみ** — deep tier で「文脈が十分だから直接書ける」という判断での省略はしない (planner agent を通さない直接策定は QA-ID トレーサビリティの独立検証を欠く)。
+分析ファイルに本文を持つ `## 受け入れ条件` と `## MECE分析結果` の両方が必要。不在・空・片方欠落なら停止する。
 
-## Quick start
-
-1. **Step 1**: プランファイルパスを特定
-2. **Step 1.5**: 分析ファイルから `## 受け入れ条件` と `## MECE分析結果` を抽出 (両方必須、片方欠落で中断)。`## 正本抽出結果` があれば追加入力として読む
-3. **Step 1.7**: main agent が AC を QA-ID 形式で 1 回だけ enumerate (`${ENUMERATED_QA_AC}`)
-4. **Step 2** (並列、同一メッセージ): manual-qa-planner + auto-qa-planner
-5. **Step 3**: 結果を統合してプランファイルに `## 実装準備` を追記
-6. **Step 3.5**: 正本カバレッジ・ゲート (Step 3 の Write 後、プランファイル自体を対象に実行)
-7. **Step 4**: QA 実行台帳 `<plan>.qa-ledger.md` を初期化
-8. **Step 5**: プラン内容から `<プラン名>.preflight.md` を生成 (既存なら不足項目のみ補完、`未定` は AskUserQuestion 1 回にまとめて確認)
-
-## 委譲実行 (subagent として起動された場合)
-
-本 skill が Task 委譲で subagent として起動された場合、以下の読み替えを適用する。単独起動 (ユーザーがメイン会話で直接起動) の動作は変えない。
-
-### 入力解決の順位
-
-プランファイルパスは次の順で解決する: ① `$ARGUMENTS` → ② 起動プロンプト本文の明示指定 (Task 委譲時はこれが `$ARGUMENTS` 相当) → ③ 会話コンテキストの `Plan File Info:` (単独起動時のみ有効)。①〜③のいずれでも解決できない場合、ファイル探索やセッション文脈からの当て推量でパスを補完せず、「不足入力: プランファイルパス」を最終メッセージに含めて即座に終了する (返答を待たない)。
-
-### 質問分岐の読み替え
-
-AskUserQuestion が利用可能ツールに無い実行文脈 (= subagent) では、Step 5 の未定項目確認・Step 1.7 fallback の AC 分類不能確認のいずれも、質問を試みず該当項目を最終メッセージに列挙して終了する。判定基準は AskUserQuestion が利用可能ツール一覧にあるかどうかであり、subagent かどうかでは判定しない。
-
-### Task 起動可否
-
-Task (Agent) ツールが自分の利用可能ツール一覧に無い場合のみ [references/agent-orchestration.md](references/agent-orchestration.md) の in-context fallback に切り替える。subagent として動作していること自体は fallback の理由にならない (subagent からの nested Task 起動は深さ 5 まで可能)。
-
-### `${CLAUDE_PLUGIN_ROOT}` の解決
-
-本文・agent 定義中の `${CLAUDE_PLUGIN_ROOT}` が生文字列のまま見える場合、いま読んでいる SKILL.md の所在ディレクトリを skill root とみなし、`${CLAUDE_PLUGIN_ROOT}/skills/finalize-plan/` をその絶対パスへ読み替える。nested Task の prompt に埋め込むパス・in-context fallback で Read する agent 定義パスは、読み替え後の絶対パスを使う (プレースホルダ文字列や相対パスのまま渡さない)。
-
-### 完了報告
-
-最終メッセージに必ず含める: (a) Write した成果物の絶対パス (プランファイル・`<plan>.qa-ledger.md`・`<plan>.preflight.md`)、(b) Step 3.5 の正本カバレッジ・ゲート結果と Step 4 の手段割当件数 (auto/manual/孤児)、(c) 未定項目・要人間確認項目の一覧。
-
-## Workflows
-
-### Step 1.5: 分析ファイル抽出 (片方欠落で即中断)
-
-分析ファイルパス = プランファイルの拡張子前に `.analysis` を挿入 (例: `feature-xxx.md` → `feature-xxx.analysis.md`)。`## 受け入れ条件` と `## MECE分析結果` の**両方**が必要。片方でも欠落なら次のメッセージを表示して中断:
-
-```
+```text
 ⛔ 分析ファイル（{パス}）にACまたはMECE分析結果が見つかりません。
 先に /define-acceptance-criteria → /mece-plan-review を実行してください。
 ```
 
-分析ファイルの起源 (design-first / プロトタイプ先行) は区別しない — `## 受け入れ条件` `## MECE分析結果` が揃っていれば同じ入力として扱い、Step 1.7 以降も同一に動作する。分析ファイル自体の不在・空ファイルは全セクション欠落と同値として扱う。PoC / 使い捨て検証など上流 (`/define-acceptance-criteria` → `/mece-plan-review`) が走らないフェーズにも例外は設けず、上の中断メッセージで停止する。
+経路や PoC 文脈による例外はない。分析ファイルの `## 正本抽出結果` は任意入力。プランまたは Read 済み参照先に Figma URL があるのに分析ファイルへ同節がなければ `/extract-figma-spec` を提案し、単独実行では採否を待つ。委譲実行では要人間確認へ加えて続行する。
 
-分析ファイルに `## 正本抽出結果` (extract-figma-spec Step5 等が生成する "atom ID + 期待値 + 状態" のテーブル) があれば追加入力として読む。無くてもエラーにはしない (Step 3.5 が skip として扱うフォールバックを維持する)。
+### 2. QA-ID
 
-**Figma 正本の未抽出検知 (能動ゲート)**: プランファイル・その参照先 (DD 等、プラン本文にパスや URL が記載され Read 済みのもの) の本文に Figma URL (`figma.com/design/` 等) が含まれるのに、分析ファイルへ `## 正本抽出結果` が無い場合は、そのまま進めず「Figma 正本が未抽出 — Step 3.5 の正本カバレッジ・ゲートは正本抽出結果が無いと skip になる」と警告し、`/extract-figma-spec` の先行実行を提案する (単独起動時はユーザーの採否を待つ。委譲実行では警告を最終メッセージの要人間確認項目に含めて続行する)。理由: レビュー済みプロトタイプ + DD を正とみなして本 skill を通過し実装した後の Figma 照合で 24 atom 中 7 差分 (角丸・font-size・余白・色) が見つかり、実装後に 2 ラウンドの手戻りが発生した実測がある。受動的な併用推奨だけでは実行が飛ばされるため、URL の存在という機械的な兆候で能動検知する。
+main agent が [references/qa-id-enumeration.md](references/qa-id-enumeration.md) に従い AC を一度だけ enumerate する。
 
-### Step 1.7: QA-ID enumerate (main agent が 1 回だけ実行)
+### 3. QA planning
 
-`${AC_CONTENT}` の各 `- [ ]` 項目を以下の prefix で連番付与し `${ENUMERATED_QA_AC}` として両 planner に渡す:
+tier 表を実行する。lite は main agent が `agents/manual-qa-planner.md` を読み inline 適用する。standard / deep の prompt と fallback は [references/agent-orchestration.md](references/agent-orchestration.md)。
 
-```
-正常系       → QA-H-01, QA-H-02, ...  (Happy)
-異常系       → QA-E-01, QA-E-02, ...  (Error)
-エッジケース → QA-D-01, QA-D-02, ...  (eDge)
-不変条件     → QA-I-01, QA-I-02, ...  (Invariant)
-非影響確認   → QA-R-01, QA-R-02, ...  (Regression)
-[MECE追加]   → QA-M-01, QA-M-02, ...  (Mece)
-```
+### 4. プラン追記
 
-**0 件カテゴリは ID を発行しない** が Step 3 の対象 AC 行では 0 件でも `カテゴリ名+0` (例 `不変条件0`) で件数を残す — 書式は [references/output-template.md](references/output-template.md) が SSOT (採番の詳細・生成例・fallback は [references/qa-id-enumeration.md](references/qa-id-enumeration.md))。
+planner 出力を統合し、プラン末尾へ `## 実装準備` を追記する。書式は [references/output-template.md](references/output-template.md)。
 
-**[MECE追加] のカウント**: `[MECE追加]` / `[MECE追加 変更]` タグ付き AC は base 5 カテゴリ (正常系 / 異常系 / エッジケース / 不変条件 / 非影響確認) **とは別に** QA-M-NN を採番し、`対象AC` 件数の総数に**加算**して扱う。**タグ優先**: AC 本文が `### 正常系` 等のセクション内にインライン配置されていても、`[MECE追加]` タグが section 見出しより優先し QA-M を採番する。例: base 9 件 (3/2/2/1/1) + MECE追加 1 件 → 対象AC `10項目 (正常系3 / 異常系2 / エッジケース2 / 不変条件1 / 非影響1 / MECE追加1)`。
+manual の各 `出典:` は enumerate 元 AC 原文を保持する。対応しない QA-ID は統合せず要人間確認へ加える。
 
-### Step 2: QA planner 並列実行
+### 5. 正本カバレッジ
 
-- `manual-qa-planner` + `auto-qa-planner` を**同一メッセージ内**で並列起動。両 planner は再分類せず `${ENUMERATED_QA_AC}` の QA-ID を信頼する
-- **lite tier の縮約**: tier 表に従い auto-qa-planner は起動しない (skip)。manual-qa-planner も dispatch せず、main agent 自身が手動 QA 手順を 1 セクションに統合して書く (= 表の「inline」の意味)。代行手続きは [references/agent-orchestration.md](references/agent-orchestration.md) の in-context fallback と同じ (対象は `agents/manual-qa-planner.md` のみ、備考行の挿入は Task 不可時に限るので lite では行わない)
-- **lite tier の下流**: Step 3 は `### 自動QA（テストコード仕様）` を節ごと落とさず 1 行の対象外表記を残す (canonical 文言は [references/output-template.md](references/output-template.md))。Step 4 は auto 行 0 件を異常扱いせず、全 QA-ID を manual または孤児 (`要人間確認`) として初期化する
+Step 4 の Write 後、分析ファイルに `## 正本抽出結果` 見出しがなければ [references/output-template.md](references/output-template.md) の skip 行を記録する。見出しがあれば内容が空でも [references/coverage-gate-bash.md](references/coverage-gate-bash.md) をプラン自体へ実行する。
 
-2 agent はいずれも `Task(subagent_type="general-purpose")` で起動し、prompt 冒頭で agent 定義ファイルを Read させる (repo 制約上 typed subagent_type は使わない)。各 agent 固有 prompt の全文 (最小レシピ含む)・並列メッセージ構成・Task ツール利用不可時の in-context fallback は [references/agent-orchestration.md](references/agent-orchestration.md) 参照。
+未カバー atom の期待値を既存 manual 項目の確認本文が完全に検証していれば、AC原文を残したまま `出典: <atom ID>` を追加する (`出典: <AC原文> / 出典: <atom ID>`。atom ごとにラベルを繰り返す)。それ以外は enumerate 済み ID とプラン内 ID の最大 QA-M 連番を継続し、期待値原文と `出典: <atom ID>` を持つ新規 QA-M を manual へ追加する。補完後は再実行して差分ゼロを確認する。
 
-### Step 3: プランファイルに `## 実装準備` 追記
+記録書式と位置は output template に従う。既存行は置換する。補完 QA-M は ledger 対象へ加えるが、Step 2 由来の `対象AC` 件数には加えず coverage 行だけに計上する。
 
-Step 2 の結果を統合し、プランファイル末尾に `## 実装準備` を追記する。2 サブセクション: **手動QA手順** (環境 `{BASE_URL}` は QA 実行時にユーザーから取得、`**対象AC**: N項目（正常系X / 異常系Y / エッジケースZ / 不変条件U / 非影響W / MECE追加V）`、人間がそのまま追える手順 + 各操作に automation 用ツール名を括弧で併記) / **自動QA（テストコード仕様）** (RSpec / Vitest 仕様)。カテゴリ名・0 件表記は output-template.md SSOT 準拠。
+### 6. QA ledger
 
-統合時、手動QA項目の `出典: AC原文` には Step 1.7 の enumerate 元 AC の原文を括弧で併記する (要約は可、言い換え・書き換えは不可)。planner が出した検証内容が enumerate 元 AC と対応しない QA-ID はそのまま統合せず `要人間確認` として完了報告に列挙する — Step 3.5 は atom ID、Step 4 は QA-ID 集合しか見ないため、中身のすり替わり (別 AC の内容が同じ QA-ID に載る) はどちらのゲートも素通りする。
+Step 2 の全 QA-ID と Step 5 の補完 ID の和集合から [references/qa-ledger.md](references/qa-ledger.md) を初期化する。
 
-完全なテンプレ全文・0 件カテゴリ表記ルール・in-context fallback 時の備考挿入位置は [references/output-template.md](references/output-template.md) 参照。
+### 7. Preflight
 
-### Step 3.5: 正本カバレッジ・ゲート
+プランから [references/preflight.md](references/preflight.md) を生成する。不在なら6行を新規作成し、既存なら欠損行だけ追加する。解決不能値は artifact に `未定` として残す。
 
-Step 3 でプランファイルへ `## 実装準備` を **Write した後** に実行する (出典欄は Write 済みのプランファイル上にしか実在しないため、Step 3 の Write 前には検査できない)。
+## 委譲実行
 
-**`## 正本抽出結果` が無い場合**: `## 実装準備` に次の 1 行を残して終了する (下記「検証済み Bash」の echo 文言と一致させる)。AC 行数と QA-ID 数の突き合わせのような追加検査はしない。
+AskUserQuestion の有無と Task の有無で判定し、実行主体名では推測しない。
 
-```
-正本カバレッジ: skip (構造化正本なし、または分析ファイル空)
-```
+- プランパス: `$ARGUMENTS` → 起動 prompt の明示パス。`Plan File Info:` は単独実行だけで使う。解決不能なら探索・推測・Write をせず `不足入力: プランファイルパス` で即終了。
+- AskUserQuestion 不可: 分類不能、preflight 未定、要人間確認を質問せず最終報告へ列挙。
+- Task 不可: [references/agent-orchestration.md](references/agent-orchestration.md) の in-context fallback。subagent であること自体は fallback 条件ではない。
+- `${CLAUDE_PLUGIN_ROOT}`: この SKILL.md の所在から skill root の絶対パスへ解決してから nested prompt / Read に渡す。
 
-**ある場合**: 分析ファイルの `## 正本抽出結果` から「差分」「未実装」状態の atom (対応不要な「一致」は除外) を集め、プランファイル出典欄で引用済みの atom と `comm -23` で真の集合差分を取る。atom ID はテーブルの **1 列目 (atom ID 列) のみ**から読む — 期待値列に atom ID 風の文字列 (例 HTTP-404) が混ざっても拾わない (誤検出すると幻の「未カバー」を出す)。**検証済み Bash** (fixture で実行検証済み、要対応 atom 抽出・引用 atom 収集・ID 集合差分の全文) は [references/coverage-gate-bash.md](references/coverage-gate-bash.md) 参照。出力は未カバー時 `正本カバレッジ: 未カバー N 件`、カバー時 `正本カバレッジ: 差分 0 件 (...)`。
+## 完了報告
 
-未カバー atom が出た場合、分析ファイルから該当 atom 行 (期待値原文) を引き、QA-M-NN として手動QA手順へ「出典: <atom ID>」付きで Edit 追記する (原文引用・「自動補完」である旨を明記)。既存の QA 項目と検証内容が実質同一なら、新規 QA-M を作らず既存項目の出典へ atom ID を追加併記してよい (重複手順を増やさないため。**判定対象はプランファイルに実際に書かれた確認項目の本文** — QA-ID が紐づく AC の意味ではない。ゲート自体がプラン本文を走査する以上、判定もプラン本文を正にする)。併記は `出典: AC原文 / 出典: FIG-09` のように「出典:」を atom ごとに繰り返す — カンマ区切り列挙 (`出典: AC原文, FIG-09`) はゲートの grep に拾われず未カバーのまま残る。追記後にゲートを再実行し差分ゼロを確認する。ゲート結果 (`skip` / `差分 0 件` / `補完 N 件`) は `## 実装準備` に残す (記録位置は [references/output-template.md](references/output-template.md) が SSOT)。**未カバーを検出して補完した場合の最終記録行は、Bash の transient echo (`未カバー N 件`) や再実行後の `差分 0 件` ではなく `補完 N 件 (…再実行で差分 0 件)` とする** (補完が起きた事実と件数を記録に残すため。補完せず初めから差分ゼロなら `差分 0 件`、正本なしなら `skip`)。**`## 実装準備` に既存の `正本カバレッジ:` 行がある場合は最新の結果で置換する（重複追記しない）**（再実行・Step 3.5 のやり直しで行が積み重なると、どれが最新か機械判定できなくなるため）。
+次を列挙する。
 
-補完しても「対象AC」件数 (Step 1.7 由来の集計) は書き換えない — 補完分はゲート結果行にのみ計上する別集計。なお本ゲートが検査するのは正本 atom のカバレッジだけで、QA-ID 全体が manual/auto のどちらかに載っているかの網羅性は Step 4 の孤児検出が担う。
-
-### Step 4: QA 実行台帳の初期化
-
-`<plan>.qa-ledger.md` (プランファイルと同ディレクトリ、拡張子前に `.qa-ledger` を挿入) を、Step 1.7 で enumerate した全 QA-ID に **Step 3.5 で追記した QA-M-NN を合流させた集合**を対象に初期化する (合流しないと補完分がゲートを通した意味を失う)。Step 1.7 の結果が同一セッションに無い場合は、分析ファイル `## 受け入れ条件` の QA-ID ラベルとプランファイルの追記分から再構成する (例: `grep -oE 'QA-[A-Z]+-[0-9]+' "$ANALYSIS_FILE" | sort -u`)。手段は QA-ID ごとに 1 つだけ割り当てる: auto-qa-planner の QA-ID カバレッジマトリクスに載っていれば `auto`、それ以外で manual-qa-planner の見出しに載っていれば `manual`、両方に載っている (dual coverage) 場合は `auto` を正として manual 行は作らない (auto 側でカバー済みなのに manual 側にも pending 行が残って完了しない状態を防ぐ)。どちらにも載っていない QA-ID (孤児) は手段 `-`・状態 `要人間確認` (備考「担当手段未特定」) で初期化する — `対象外(N/A)` は完了集計で許容されるため、割当漏れで実際に落ちた AC が黙って完了を通ってしまう ([references/qa-ledger.md](references/qa-ledger.md) が状態語彙・遷移の SSOT)。**検証済み Bash** (fixture で実行検証済み):
-
-```bash
-ALL_IDS="/tmp/enumerated_qa_ids.txt"   # Step 1.7 の enumerate 結果 + Step 3.5 補完分 (QA-ID 1行1件)
-PLAN_FILE="<plan>.md"
-
-if [ ! -s "$ALL_IDS" ] || [ ! -s "$PLAN_FILE" ]; then
-  echo "⚠️ 入力が空/不存在: ALL_IDS=$ALL_IDS PLAN_FILE=$PLAN_FILE — 台帳初期化を実行不可。" >&2
-  exit 2
-fi
-
-sort -u "$ALL_IDS" > /tmp/all_qa_ids.txt
-awk -F'|' '/^\| *QA-[A-Z]+-[0-9]+ *\|/{id=$2;gsub(/^[ \t]+|[ \t]+$/,"",id);print id}' "$PLAN_FILE" | sort -u > /tmp/auto_qa_ids.txt
-grep -oE '^\*\*QA-[A-Z]+-[0-9]+' "$PLAN_FILE" | tr -d '*' | sort -u > /tmp/manual_qa_ids_all.txt
-
-comm -12 /tmp/all_qa_ids.txt /tmp/auto_qa_ids.txt > /tmp/assign_auto.txt              # auto優先
-comm -23 /tmp/manual_qa_ids_all.txt /tmp/auto_qa_ids.txt > /tmp/manual_candidate.txt   # dualは除外
-comm -12 /tmp/all_qa_ids.txt /tmp/manual_candidate.txt > /tmp/assign_manual.txt
-cat /tmp/assign_auto.txt /tmp/assign_manual.txt | sort -u > /tmp/assigned.txt
-comm -23 /tmp/all_qa_ids.txt /tmp/assigned.txt > /tmp/assign_orphan.txt                # どちらにも無い→孤児
-```
-
-`assign_auto.txt` → 手段=auto pending、`assign_manual.txt` → 手段=manual pending、`assign_orphan.txt` → 手段=`-`・状態=`要人間確認` (備考「担当手段未特定」) として台帳の行を生成する。フォーマット・状態語彙・「最新行が勝つ」規則・実装フェーズでの追記例は [references/qa-ledger.md](references/qa-ledger.md) 参照。
-
-### Step 5: Preflight 契約の生成
-
-ループ開始前に一括収集する入力 (`<プラン名>.preflight.md`) を、プラン内容 (Step 3 で書いた手動QA手順) から生成する。置き場・項目表・セキュリティ規則は [references/preflight.md](references/preflight.md) が SSOT。既に存在する場合は不足項目のみ補完する (既存記載は上書きしない)。
-
-1. ベース URL・テストデータ準備手順・権限アカウント一覧は Step 3 の手動QA手順に記載があればそこから転記する。埋まらなければ `未定`。
-2. ログイン手段は既定で `未定` とする (自動ログインは行わないため、記載が無い限り推測で埋めない)。
-3. 起点ブランチは `git branch --show-current` の値を機械転記する (finalize-plan 実行時のカレントブランチ = 実装が新規ブランチを切る起点。判断・命名は行わない)。取得できない場合 (detached HEAD 等) は `未定`。
-4. サーバ・DB 起動コマンドはプラン・README 等に既記載があれば転記、なければ `未定`。
-5. 生成・補完後も `未定` が残る項目があれば、それらをまとめて **AskUserQuestion 1 回**でユーザーに確認する (項目ごとに個別に停止しない。AskUserQuestion が利用可能ツールに無い場合の読み替えは「## 委譲実行」参照)。
-
-## Quality standards
-
-- **実行可能性**: 人間がそのまま追える粒度の手動 QA 手順 (各操作に automation 用ツール名を括弧で併記)
-- **QA-ID トレーサビリティ**: QA-H/E/D/R/M 全項目が手動 QA または自動 QA のいずれかでカバーされている。Step 3.5 の機械 ID 差分結果 (`skip` / `差分 0 件` / `補完 N 件`) を成果物に残す (目視確認ではなく機械判定の結果を残す。skip 時もその理由を残す)
-- **0 件カテゴリ可視化**: 対象 AC 行は 0 件カテゴリも件数を明示 (例 `非影響0`、省略禁止)。書式・canonical カテゴリ名・禁止理由は output-template.md を SSOT とする
-
-## Advanced
-
-- [references/qa-id-enumeration.md](references/qa-id-enumeration.md) — QA-ID 採番ルール詳細・生成例・Step 1.7 失敗時の `QA-X-NN` fallback
-- [references/agent-orchestration.md](references/agent-orchestration.md) — 各 agent への Task prompt / 並列メッセージ構成 / Task ツール不可時の in-context 代替モード
-- [references/output-template.md](references/output-template.md) — Step 3 出力テンプレ全文 / 0 件カテゴリ表記 / fallback 時の備考行
-- [references/coverage-gate-bash.md](references/coverage-gate-bash.md) — Step 3.5 正本カバレッジ・ゲートの検証済み Bash 全文
-- [references/qa-ledger.md](references/qa-ledger.md) — QA 実行台帳のフォーマット・状態語彙・「最新行が勝つ」規則・手段割当規則・実装フェーズでの追記例
-- [references/preflight.md](references/preflight.md) — preflight 契約 (`<plan>.preflight.md`) の置き場・項目表・セキュリティ規則・未定項目の扱い
-
-## 併用推奨 skill
-
-- `/extract-figma-spec` — Figma 由来の UI を含むスライスでは本 skill 実行前にこのスライス用の分析ファイルへ実行し `## 正本抽出結果` を用意する (分析ファイルはプラン単位のため、PoC 期の実行結果は引き継がれない)
-- `/define-acceptance-criteria` — 入力となる AC を定義する (前段)
-- `/mece-plan-review` — AC の網羅性を検証してから本スキルに引き継ぐ (前段)
-- `/qa-ui` — 実装完了後、本スキルが定めた QA 手順・`<plan>.qa-ledger.md`・`<plan>.preflight.md` を使って UI 検証する (後段)
-- `/create-pr` — 実装完了後、PR 梱包 (何本に切るか) を判断して PR を作成する (後段。PR 分割は finalize-plan では行わない)
-
-## Gotchas
-
-- preflight.md の項目表 (ベース URL / ログイン手段 / 権限アカウント一覧 / サーバ・DB 起動コマンド) は Web アプリ前提で設計されており、CLI ツール等 URL/認証を持たないプロジェクトでは字面通り埋まらない。`未定` と一律に残さず、根拠 (ソース確認済みで機構が存在しない等) を添えて `該当なし` と記載する運用が 3 回の委譲実行評価 (finalize-plan tuning iter1-3) で安定して機能した
-- Step 2 の planner への dispatch prompt で出力列構成を独自指定しない。auto-qa-planner の QA-ID カバレッジマトリクスは、後段 `/qa-ui` の審判再実行ゲートが機械契約として読む 6 列固定 (`| QA-ID | 出典 | カテゴリ | テストファイル | テストケース | 実行コマンド |`、実行コマンド = 最終列 = awk `$7`) で、この契約は qa-ui 側 references/ledger-gates.md にしか書かれていない。dispatch 側が「3 列で出せ」等と上書きすると列位置がずれ、ゲートが全 auto 行を `実行コマンド未定義` → `要人間確認` に落とす (実測: 独自 3 列指定で出力させ、ゲート直前に 29 行の手動変換が必要になった)
+- Write したプラン、ledger、preflight の絶対パス
+- coverage gate 結果
+- ledger 割当結果の auto / manual / orphan 件数
+- preflight の `未定`、QA-X、orphan、AC不一致、Figma未抽出を含む要人間確認項目

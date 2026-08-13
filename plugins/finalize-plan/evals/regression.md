@@ -1,107 +1,57 @@
-# regression eval (empirical-prompt-tuning 収束時保存)
+# finalize-plan regression
 
-収束記録: 2026-06-12 (v3.28.0 PR)。Iter1-3 で fresh executor が全 [critical] ○ / accuracy 100% / retries 0。
-用途: **regression 検出器** (capability 改善の信号としては使わない)。本 skill を変更する PR では
-fresh executor (blank slate, Task dispatch) で下記シナリオを再実行し、全 [critical] ○ を確認してから merge する。
-実行方法は empirical-prompt-tuning の「Subagent invocation contract」に従う (成果物はインライン、ファイル編集禁止)。
+Run each scenario with a fresh executor. All `[critical]` items must pass.
 
-## シナリオ: lite tier 縮約 + trigger
+## Standard: coverage, ledger, preflight
 
-**改訂注記 (2026-07-06)**: PR 分割廃止 (利用者決定) に伴い、pr-splitter への言及をシナリオ本文・checklist から除去した (auto-qa-planner のみの skip 記述に改訂)。
+Input: standard plan, complete AC/MECE, one uncovered structured-source atom, no ledger/preflight.
 
-収束記録 (v2.0.0): 2026-07-06。改訂版を含む有効 4 シナリオを fresh executor で再実行し全 [critical] ○ (PR 分割の復活・ブランチ複数化の逸脱なし。正本カバレッジ / 台帳初期化 / preflight / Step 1.5 合流判定は実フィクスチャ実行込みで従来どおり)。
+1. [critical] QA-ID is enumerated once; manual and auto planners run in parallel without reclassification.
+2. [critical] The uncovered atom is added to manual QA with original expectation and `出典: <atom>`; the rerun reaches zero diff and records `補完 N 件 (再実行で差分 0 件)`.
+3. [critical] Ledger contains every enumerated and supplemented QA-ID. Assignment is auto-first, then manual; orphan is `- / 要人間確認 / 担当手段未特定`; dual coverage yields one auto row.
+4. [critical] Preflight has exactly six fields. Known values are copied, unknown values are `未定`, and one question covers all unknowns.
+5. Auto coverage matrix has exactly six columns with QA-ID in `$2` and execution command in `$7`.
 
-structural review mode + trigger 判定: (a) lite tier で auto-qa-planner を skip し、manual-qa-planner は main agent が inline 統合する (Step 2 の lite 縮約注記)、(b) 「実装準備を追記して」「QA 手順をプランに書いて」が本 skill に発火する。
+## Lite
 
-### Requirements checklist
-1. [critical] 両セクション (AC / MECE 分析結果) 欠落時の即中断が維持されている
-2. [critical] QA-ID enumerate は main agent が 1 回だけ実行し planner は再分類しない
-3. lite では tier 表に従い auto-qa-planner skip、manual-qa は main agent inline と読み取れる
-4. 0 件カテゴリの件数表記 (省略禁止) が維持されている
+Input: four ACs including one MECE addition, complete AC/MECE, no `## 正本抽出結果` section.
 
-再検証記録 (hold-out): 2026-07-07。Step 1.5 例外節の単独起動/委譲実行共通化、preflight.md のプレースホルダ扱い明文化の 2 改修後、fresh executor で本シナリオ (AC/MECE 両方充足の通常プランでの lite tier フルパイプライン) を hold-out として実行し全 [critical] ○、上記 2 改修由来の退行なし。一方 tier 表の branch-planner 列「✓ (簡略)」の意味・`agents/manual-qa-planner.md` の URL 推定ルールが teams 非依存パスを網羅しない点・lite tier での自動QA見出しの残し方の 3 点が新たな不明点として残った (本シナリオの合否には影響せず、今回は未修正)。**うち 1 点目 (tier 表の branch-planner 列) は 2026-08-02 の branch-planner インライン化で列ごと消滅し moot。**
+1. [critical] No planner is dispatched; main reads the manual agent and writes QA-ID headings inline.
+2. [critical] Auto section remains with `自動QA: lite tier のため対象外 (auto 0 件)`.
+3. [critical] Coverage records `正本カバレッジ: skip (構造化正本なし、または分析ファイル空)` and performs no other source check.
+4. All six category counts remain visible, including zeros.
+5. Zero auto rows is valid; every QA-ID is manual or orphan.
 
-## シナリオ: 正本カバレッジ・ゲート + QA 実行台帳初期化 (v3.1 QA-ID 台帳ゲート方式)
+## Input gate
 
-Step 3.5 (正本カバレッジ・ゲート) と Step 4 (台帳初期化) の新設を検証する。fresh executor に `<plan>.analysis.md` (正本あり版・正本なし版の 2 パターン) と Step 1.7 の enumerate 結果を与え、Step 3 の Write 後に両 Step を実行させる。
+Evaluate: (a) no analysis file, (b) one required section missing, (c) complete sections after any upstream route.
 
-### Requirements checklist
-1. [critical] `## 正本抽出結果` があり未カバー atom (差分/未実装行の atom ID が出典欄に引用されていない) が存在する分析ファイルで実行すると、該当 atom が QA-M-NN として `## 実装準備` の手動QA手順に出典 (atom ID + 期待値原文) 付きで追記され「自動補完」である旨が明記される。追記後に再実行すると差分ゼロになる
-2. [critical] `## 正本抽出結果` が無い分析ファイルで実行すると、「正本カバレッジ: skip (構造化正本なし、または分析ファイル空)」の 1 行のみが `## 実装準備` に残り、AC 行数と QA-ID 数の突き合わせのような追加検査は行われない
-3. [critical] Step 4 実行後、Step 1.7 で enumerate した全 QA-ID が `<plan>.qa-ledger.md` に 1 行ずつ存在する。auto-qa-planner の QA-ID カバレッジマトリクスに載る QA-ID は手段=auto、それ以外で manual-qa-planner の見出しに載る QA-ID は手段=manual、どちらにも載らない QA-ID (孤児) は手段=`-`・状態=`要人間確認` (備考「担当手段未特定」) で初期化される (完了集計で許容されない状態にすることで、割当漏れの AC が黙って完了を通らないようにする)。両方に載る (dual coverage) QA-ID は manual 行が重複生成されない
+1. [critical] (a) and (b) stop with the canonical AC/MECE message; PoC or prototype context creates no exception.
+2. [critical] (c) runs the same full workflow regardless of upstream route.
+3. A Figma URL without `## 正本抽出結果` triggers the extraction proposal; delegated execution records it and continues.
 
-## シナリオ: PR 割当ゲート (削除)
+## Preflight edge
 
-PR 分割廃止 (利用者決定 2026-07-06) に伴い撤去。実装漏れの検出は正本カバレッジ・ゲート + 実装後の diff 突き合わせ + qa-ledger 審判再実行の 3 層へ移管した。
+Input: `{BASE_URL}` placeholder, known test-data command, known permission without purpose, unknown login/server command, branch `develop`.
 
-## シナリオ: preflight 契約の生成 (Step 5)
+1. [critical] Placeholder becomes `未定`; test data is copied; permission purpose may be derived only from a matching QA-ID; branch is copied as `develop`.
+2. [critical] Login and server command remain `未定` and are asked together.
+3. Secrets, email, and actual accounts are absent.
 
-収束記録: 2026-07-05 (v1.20.0 PR)。Iter1-3 で fresh executor が全 [critical] ○ / retries 0。
+## Delegated execution
 
-Step 4 完了直後を所与として Step 5 を机上実行させる。所与: 実行時のカレントブランチは develop (`git branch --show-current` が develop を返す)。手動QA手順には「環境: http://localhost:3000」、テストデータ準備コマンド `bin/rails db:seed:qa_fixture`、権限アカウント要件「管理者権限 (権限分岐 AC の検証用)」の記載がある。ログイン手段とサーバ・DB 起動コマンドはプラン・README のどこにも記載がない。`<プラン名>.preflight.md` は未存在。生成する preflight の内容とユーザー確認の回数・内容を答えさせる。
+Pattern A supplies an absolute plan path with AskUserQuestion unavailable. Pattern B supplies no path.
 
-### Requirements checklist
-1. [critical] preflight に 6 項目が全て載り、ベース URL / テストデータ準備 / 権限アカウント (用途付き) がプラン記載から転記される。起点ブランチは判断・命名を行わず `git branch --show-current` の値 (develop) をそのまま機械転記する (ブランチ名の生成・重複チェックをしない)
-2. [critical] ログイン手段とサーバ・DB 起動コマンドは `未定` とし、AskUserQuestion 1 回にまとめて確認する (項目ごとに個別停止しない)
-3. パスワード等の秘密情報を書かない (権限アカウントは権限名と用途のみ)
-4. ログイン手段を推測で埋めない (自動ログインを前提とする記載をしない)
+1. [critical] A resolves plugin paths absolutely, uses nested Task when available, never asks, and reports artifact paths, coverage, assignment counts, and unresolved items.
+2. [critical] B neither searches nor writes; it immediately ends with `不足入力: プランファイルパス`.
+3. Task absence alone selects in-context fallback; being a subagent does not.
 
-### 派生シナリオ: 手動QA手順にテンプレートのプレースホルダ (`{BASE_URL}` 等) しか無い場合
+## Deep delegated hold-out
 
-上記所与を、手動QA手順のベース URL 欄が `{BASE_URL}` のような未解決プレースホルダのままである状態に差し替えて実行する。
+Input: auth plan with three ACs, complete AC/MECE, Figma URL in a Read DD without source heading, explicit delegated path, Task available, AskUserQuestion unavailable, and an existing preflight missing two rows.
 
-#### Requirements checklist
-1. [critical] プレースホルダ文字列をそのまま「記載あり」として preflight のベース URL 欄に転記せず、`未定` として扱い AskUserQuestion の確認対象に含める
-
-再検証記録: 2026-07-07。preflight.md にプレースホルダを `未定` 扱いとする規則を明文化する改修後、fresh executor で本派生シナリオを再実行し [critical] ○ (プレースホルダの転記なし)。
-
-## シナリオ: プロトタイプ先行経由の分析ファイルでの Step 1.5 判定
-
-**改訂注記 (2026-08-11)**: iterate-with-prototypes plugin 削除 (利用者決定) に伴い、ledger 駆動セッション例外を Step 1.5 から撤去した。分析ファイル欠落時は経路 (design-first / プロトタイプ先行 / PoC) によらず常に既定の中断メッセージで停止する。旧パターン (a) の期待値を「例外適用 (ledger 追記代替)」から「中断」へ差し替え。
-
-fresh executor に Step 1.5 (例外節撤去後) を渡し、次の 3 パターンで本 skill の起動可否を判定させる: (a) PoC / 使い捨て検証セッションで分析ファイルが一度も無い状態 (会話履歴に PoC 文脈が明示されている)、(b) プロトタイプ先行経路の後に `/define-acceptance-criteria` → `/mece-plan-review` を完走し `## 受け入れ条件` `## MECE分析結果` が揃った分析ファイルがある状態、(c) 分析ファイルに AC/MECE のどちらか一方が欠落したまま本 skill が呼ばれた状態 (design-first 経由・プロトタイプ先行経由を問わない)。
-
-### Requirements checklist
-1. [critical] (c) ではプロトタイプ先行経由であっても迂回せず、既定の中断メッセージを出して停止すると判定される (AC/MECE 欠落のまま finalize-plan を通そうとしない)
-2. [critical] (b) では Step 1.7 以降 (QA-ID enumerate・正本カバレッジゲート・QA-ID 台帳・preflight) を design-first 経由と同一の手順で実行すると判定される (合流手順が実行順で書ける)
-3. [critical] (a) でも PoC 文脈を理由に ledger 追記等の代替へ落とさず、既定の中断メッセージを出して停止すると判定される (撤去済みの例外を推測で復活させない)
-
-収束記録: 2026-07-06 (v1.23.0 PR)。初回実行で全 [critical] ○ (プロトタイプ先行経由でも即中断ゲートを迂回しないことを確認)。
-
-再検証記録: 2026-07-07。Step 1.5 の例外節 (ledger 駆動セッション扱い) を単独起動・委譲実行の区別によらず「経路情報が明示されている場合のみ適用、判別不能なら安全側で通常フロー」と一般化する改修後、fresh executor で (c) パターン (PoC 文脈が会話履歴に明示、AC/MECE 一部欠落) を再実行し [critical] 1 ○ (中断メッセージに G-FP-2 の PoC 代替言及を含めつつ、それ以上進行しないことを確認)。
-
-## シナリオ: 委譲実行 (subagent として起動された場合)
-
-本 skill が Task 委譲で subagent として起動されたときの入力解決・質問分岐・Task 起動可否・`${CLAUDE_PLUGIN_ROOT}` 解決・完了報告の各読み替え (SKILL.md「## 委譲実行」節) を検証する。fresh executor に以下 2 パターンを実行させる (成果物は実 run dir へ Write、fixture は `plan-search-final.md` + `.analysis.md`)。
-
-**パターン A (median)**: 委譲プロンプトにプランファイルの絶対パスを明示して渡す。Step 1〜5 まで完走させ、Step 2 の manual-qa-planner / auto-qa-planner 2 agent 並列起動を含むフルパイプラインを実行させる。
-
-**パターン B (edge)**: 委譲プロンプトにプランファイルのパスを一切含めない (「さっきのプランを finalize してください」のみ)。会話コンテキストの `Plan File Info:` も存在しない状態で実行させる。
-
-### Requirements checklist (パターン A)
-1. [critical] プランファイルに `## 実装準備` (手動QA手順・自動QA手順) が追記され Write されている
-2. [critical] Step 5 で preflight の未定項目に行き当たった場面で、AskUserQuestion 相当の対話待ちで停止せず、未定項目の一覧を最終メッセージに含めて終了している (未定項目が残らなかった場合はこの項目は不問とする)
-3. Step 2 で agent へ渡すプロンプト中、`${CLAUDE_PLUGIN_ROOT}` に相当するパスが生文字列のまま残らず、いま読んでいる SKILL.md の所在から導いた解決済み絶対パスになっている
-4. `<plan>.qa-ledger.md` が QA-ID ごとに手段 (auto/manual/対象外) と状態付きで初期化されている
-5. Step 3.5 の正本カバレッジ・ゲート結果がプランファイルの `## 実装準備` に記録されている
-6. 最終メッセージに、生成した成果物 (プラン・qa-ledger・preflight) の絶対パスが含まれている
-
-### Requirements checklist (パターン B)
-1. [critical] 委譲プロンプトにプランファイルのパス指定が無いことを認識し、セッション文脈やファイル探索からの当て推量でパスを補完せず、「不足入力: プランファイルパス」に相当する内容を含む最終メッセージで終了している
-2. [critical] 人間の返答を待つ体裁ではなく、即座に終了する体裁で応答が完結している
-3. 存在しない・特定できていないプランファイルへの Write や、無関係なファイルへの誤った書き込みを行っていない
-4. self-report の Discretionary fill-ins または Unclear points に、プランファイルパスが特定できなかった旨の記載がある
-
-収束記録: 2026-07-07。baseline (fix 前) から一貫して全 [critical] ○ / accuracy 100% (パターン A 6/6、パターン B 4/4) を 3 ラウンド (Iter1 baseline, Iter2, Iter3) 連続で確認。「## 委譲実行」節新設後は、branch-planner の起点ブランチ確認・preflight 未定項目の読み替え・`${CLAUDE_PLUGIN_ROOT}` 解決を executor が節の名前を挙げて明示的に適用したことを自己申告で確認 (偶然の合格ではなく参照して適用している証拠)。hold-out シナリオ (Step 1.5 の分析ファイル片方欠落 + `/iterate-with-prototypes` 経路情報なしの組み合わせ) も accuracy 100% (過学習兆候なし)。tool_uses/duration はパターン A で run ごとの分散が大きい (branch-planner が起点ブランチ確認のためにどこまで実 git/ソース検証を行うかという正当な裁量差に起因、機能面の合否には影響なし)。
-
-収束記録: 2026-07-17 (v2.4.0 progressive disclosure 分割)。Step 3.5 の正本カバレッジ Bash を references/coverage-gate-bash.md へ verbatim 退避し、Step 2 最小レシピ / Step 3 出力テンプレの既存 references との重複を削除 (挙動変更なし)。全 7 シナリオを fresh executor で再実行し全 [critical] ○ (coverage-gate-bash.md への 1 hop 到達・skip 文言の逐語再現を確認)。body-only executor の追加検証で、誤検出ガード 2 点 (atom ID は 1 列目のみ・期待値欄の HTTP-404 等を拾わない) が参照先にしか無いと幻の「未カバー」を出しうると判明したため、同 2 点を Step 3.5 本文へインライン化した。body-only 条件シナリオの suite 追加は別 PR で検討。
-
-収束記録: 2026-07-18 (fixed-then-converged)。全 7 シナリオ (lite tier / 正本カバレッジ+台帳 / preflight base+派生 / Step 1.5 判定 / 委譲 A・B) を fresh executor で再実行し初回ラウンドで全 [critical] ○ / accuracy 100% / retries 0。委譲 A は 3 planner の nested Task 起動 (`${CLAUDE_PLUGIN_ROOT}` 解決済み絶対パス)・FIG-12 の QA-M-01 自動補完・preflight 未定項目の最終メッセージ列挙まで完走。ただし正本カバレッジ+台帳シナリオの executor が新規不明点 1 件を提起: Step 3.5 の記録語彙 `補完 N 件` と検証済み Bash の transient echo (`未カバー N 件` / `差分 0 件`) の対応が一箇所に明示されておらず、補完後の最終記録行に `差分 0 件` を書くと補完の事実と件数が記録から失われうる (critical は全 ○ のまま、executor は `補完 N 件` を自力で正しく選択。委譲 A も同一 path で `補完 N 件` を無誤で使用)。executor 提案の General Fix Rule に沿って Step 3.5 へ「補完した場合の最終記録行は Bash の transient echo でなく `補完 N 件 (…再実行で差分 0 件)` とする」の 1 文を追記 (1 テーマ最小修正・挙動不変)。修正後、正本カバレッジ+台帳シナリオを pristine fixture で fresh 再実行し全 [critical] ○ / 新規不明点 0 (`補完 3 件 (…再実行で差分 0 件)` を逐語記録)。validate_skills.py 通過。
-
-記録: 2026-08-08 (ブランチ戦略ロール廃止, v2.10.0)。利用者決定によりブランチ戦略 (Step 2A + `### ブランチ戦略` 出力) を廃止し、Step 2B を Step 2 へ改称した。本 suite の assertion もこれに追随して移行済み: lite tier シナリオの trigger を「ブランチ戦略を決めて」→「QA 手順をプランに書いて」へ差し替え、preflight シナリオの所与を「Step 2A で起点ブランチ確定済み」→「カレントブランチが develop」へ、checklist 1 を `git branch --show-current` の機械転記 (判断・命名なし) の検証へ書き換え、委譲 A シナリオから Step 2A のインライン実行を除去し `## 実装準備` の期待サブセクションを 2 つ (手動QA・自動QA) にした。過去の収束記録に出てくる branch-planner / Step 2A への言及は history としてそのまま残す (当時の実行事実の記録であり現行仕様ではない)。
-
-記録: 2026-08-08 (eval 繰り越し 10 件消化, v2.11.0)。PR #139 の fresh executor 再実行で観測した spec gap 10 件を薄い規則で消化した: `0/0` 表記を output-template.md SSOT (`カテゴリ名+0`) へ統一 / lite tier の下流 (自動QA節を 1 行の対象外表記で残す・auto 0 件を Step 4 で正常扱い) を明文化 / Step 3.5 記録行の位置 SSOT を output-template.md に宣言 / 孤児 QA-ID の初期状態を `対象外(N/A)` → `要人間確認` (完了ブロック) へ変更 / ledger 駆動例外の終了メッセージ追加 / planner 出力と enumerate 元 AC の照合規則を Step 3 に追加 / 「実質同一」の判定対象をプラン本文と明記 / lite 代行時に manual-qa-planner 定義を Read する旨を追記 / ⛔ メッセージ 3 行目を「分析ファイル未作成」ケースへ限定 / preflight の用途逆算補完・セル注記禁止を明文化。本 suite の assertion 追随は正本カバレッジ+台帳シナリオの checklist 3 (孤児 QA-ID の初期状態) のみ。2026-07-07 記録の残不明点「lite tier での自動QA見出しの残し方」は本消化で解消。シナリオ追加なし。
-
-記録: 2026-08-11 (iterate-with-prototypes plugin 削除, v2.12.0)。利用者決定により ledger 駆動セッション例外 (Step 1.5) を撤去し、分析ファイル欠落時は経路によらず既定の中断メッセージで停止する仕様へ変更した。本 suite の「プロトタイプ先行経由の分析ファイルでの Step 1.5 判定」シナリオを現行仕様へ改訂 (旧パターン (a) の期待値を例外適用→中断へ差し替え、checklist 3 を [critical] へ昇格)。fresh executor 再実行 1 ラウンド目で全 [critical] ○ / Trace all OK。executor 提起の unclear points 2 件 (分析ファイル自体の不在がセクション欠落条件に未明文化・撤去済み例外の negative space が善意の補完を誘う) を General Fix Rule に沿って Step 1.5 へ 2 文追記 (不在・空ファイル = 全セクション欠落と同値 / PoC 等の上流非実行フェーズにも例外なし) で消化し、pristine fresh executor で再実行して全 [critical] ○ / retries 0 (executor が追記 2 文を判定根拠として明示引用し、(a) での ledger 代替の検討を即棄却したことを自己申告 — 追記が参照されている証拠)。新規 unclear points 3 件 (中断メッセージの `{パス}` 形式が未規定・見出しのみ存在する空セクションの判定粒度・PoC 停止時の次アクション案内が上流の適用条件と噛み合わない) は critical 非影響のため繰り越し。過去の収束記録に出てくる ledger 駆動例外 / `/iterate-with-prototypes` への言及は history としてそのまま残す。
-
-記録: 2026-07-25 (opus5/fable5 静的最適化パス)。Iter 0 (description/body 整合) gap なし。ルーブリック走査 (過剰強調・重複規則・自己検証足場・literal スコープ) の結果、本文は既に 2026-07-07〜07-18 の empirical tuning で該当項目が解消済みであり無変更と判定 (密な規則はいずれも失敗モード根拠つき・ゲート類は契約的で保持対象)。empirical 検証は session の subagent dispatch 上限到達のためスキップ (利用者承認済みの縮小完了)。次回スキル変更 PR では本 suite の fresh executor 再実行を通常どおり行うこと。
+1. [critical] Risk forces deep and both planners run in parallel.
+2. [critical] Figma extraction is reported as unresolved while execution continues.
+3. [critical] Existing preflight values remain; only missing rows are added, unresolved values are saved as `未定`, and no question is attempted.
+4. [critical] Final report includes three artifact paths, coverage, ledger assignment counts, and unresolved items.
+5. Permission type/purpose reaches the final plan; secrets, email, and actual accounts do not.
