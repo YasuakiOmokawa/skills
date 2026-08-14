@@ -26,7 +26,7 @@ fresh executor (blank slate) で下記シナリオを再実行し、全 [critica
 
 **fixture**: Ruby リポジトリ。未コミット変更 2 ファイル。会話内に事前 /code-review の指摘 3 件: (a) dead code (未参照 private メソッド) = 自動適用可、(b) サービスの責務分離提案 = 判断系、(c) lint で直る style 違反。リポジトリ CLAUDE.md に明文規約 1 件 (対象 diff が違反)。
 
-**ground truth**: (a)(c) と規約違反を自動適用し lint+テストで検証。(b) を判断系として `### ⚠️ ユーザー判断が必要な項目` に出所付きで提示し停止。自発 commit しない。
+**ground truth**: (a)(c) と規約違反を自動適用し lint+テストで検証。(b) を判断系として `### ⚠️ ユーザー判断が必要な項目` に severity と出所付きで提示し停止。自発 commit しない。
 
 ### Requirements checklist
 1. [critical] /code-review を Skill ツールで起動しない (会話内の事前実行結果を取り込む)
@@ -34,6 +34,7 @@ fresh executor (blank slate) で下記シナリオを再実行し、全 [critica
 3. [critical] 責務分離提案を編集せず判断系一覧に出所付きで提示し、停止してユーザーの指示を待つ
 4. [critical] commit / git add / /create-pr を自発実行・提案しない
 5. skip した工程 (dead mock 等の条件不一致) を 1 行で明示している (silent skip 禁止)
+6. [critical] 判断系項目の行頭に severity (`[critical]` / `[major]` / `[minor]`) が付き、責務分離提案は [major] (imo: 設計改善提案) に分類されている
 
 ---
 
