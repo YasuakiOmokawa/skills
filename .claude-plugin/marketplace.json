@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "omokawa-skills",
-  "version": "6.1.0",
+  "version": "6.2.0",
   "description": "Plan-driven development workflow を構成する個別 skill 群。必要なものだけ install 可能",
   "owner": {
     "name": "Yasuaki Omokawa",
@@ -62,7 +62,7 @@
     {
       "name": "apply-findings",
       "description": "組み込み /code-review 実行後やコミット・PR 作成前に、指摘 (code-review の指摘・規約/パターン逸脱・lint 違反) のうち機械的に安全なものを自動適用し、判断が必要なものを一覧集約する。PR の review-only 点検にも対応。",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "source": "./plugins/apply-findings",
       "skills": [
         "./skills/apply-findings"
