@@ -1,6 +1,6 @@
 # ブランチ妥当性検証 (Step 1.5)
 
-カレントブランチ名を以下の判定基準で検証する。**いずれかに該当する場合は新ブランチに切替必須**。**切替は必ずコミット前に実行する** (コミット後の rename は GitHub Branch Rename API 副作用で関連 PR が CLOSED されてしまう)。
+最初に current branch の open PR を read-only query し、その branch 名と結果を cache してから、以下の判定基準を検証する。query 失敗時は新 branch を作らず、commit / push 前に停止する。命名違反なら新ブランチ名を決めるが、open PR が確認済みなら全 tier で branch を切り替えず、その PR の更新経路を保ち、命名違反だけを完了報告へ残す。open PR 0件では deep は関連検索が重複なしで完了するまで切り替えず、他 tier は決定直後に切り替える。切替は必ずコミット前に実行する。
 
 ## 判定基準
 
@@ -31,8 +31,8 @@
    - 注文確定通知メーラー追加 → `feature/order-notification-mailer`
    - 認証 token rotation バグ修正 → `fix/auth-token-rotation`
    - rubocop 違反修正 → `refactor/rubocop-cleanup`
-4. `git switch -c <new-branch-name>` を実行
-5. 切替後、`git branch --show-current` を再取得
+4. deep なら `<new-branch-name>` を preflight state に保持し、関連検索が継続判定を返した直後に `git switch -c <new-branch-name>` を実行する。他 tier はここで実行する
+5. 実行した場合は `git branch --show-current` を再取得
 
 ## 該当しない場合
 

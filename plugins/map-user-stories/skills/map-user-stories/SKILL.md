@@ -1,6 +1,6 @@
 ---
 name: map-user-stories
-description: Create an implementation-ready user story map, vertical-slice task list, and dependency-based delivery plan from an approved design, specification, Jira epic, page, or supplied text.
+description: Use when a design, specification, Jira epic, page, or supplied text must become an implementation-ready user story map and delivery plan.
 ---
 
 For DD input, record whether review is complete; if not, warn that later design changes can invalidate the map and continue. Output must satisfy the `create-jira-issues` contract.
@@ -24,7 +24,7 @@ Create one story for each independently reviewable actor outcome.
 
 ## Order the map
 
-Assign phases by dependency depth, not by technical category or importance. All stories at one depth may share a phase. Fold schema, migration, and infrastructure into the first vertical slice that needs them; create a shared-foundation story only when multiple stories depend on it.
+Assign phases by dependency depth, not by technical category or importance. Dependency depth starts at 0; all stories at one depth share one phase, numbered from 1 in depth order. Preserve source order within a depth. Name a phase from its shared actor outcome, or `依存深度 <depth>` when no shared name exists. Fold schema, migration, and infrastructure into the first vertical slice that needs them; create a shared-foundation story only when multiple stories depend on it.
 
 Required story columns are exact:
 
@@ -44,8 +44,8 @@ Keep work, exclusions, and completion in their dedicated columns; do not use `�
 
 ## Schedule and output
 
-Topologically order dependencies. When team capacity and duration are known, allocate sprints. Otherwise use a one-week default but leave sprint numbers unassigned and emit dependency waves (`未割当・依存波N`, period `未確定`).
+Topologically order dependencies. Allocate sprints only when duration is known and both team capacity and story/task workload estimates use the same explicit unit. Capacity without comparable workload is unresolved: do not invent points, sizes, velocity, duration, or sprint numbers. In every unresolved case, emit one wave per dependency depth as `未割当・依存波<depth+1>`, period `未確定`, and name the missing duration or missing/mismatched unit in `## Context`.
 
 Follow [references/output-templates.md](references/output-templates.md) exactly. Emit all seven ordered sections and mechanically validate every task TSV row has nine columns and every US TSV row has eight.
 
-Before finishing, self-check story granularity, dependencies, merge/split decisions, and phase placement. In an interactive task, present those four review axes without forcing an approval loop. In delegated execution, apply corrections immediately and report defaults and corrections.
+Before finishing, internally self-check story granularity, dependencies, merge/split decisions, and phase placement; correct defects before output.

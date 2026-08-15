@@ -1,12 +1,13 @@
 # PR body contract
 
-Before drafting, list the material reader-visible outcomes and operational facts. Do not enforce a minimum. If the template has an essence-list section such as `このPRでやること`, place them there as a numbered list; otherwise compress them across the existing sections without adding a heading.
+Every material reader-visible outcome and operational fact must be recoverable from the body. If the template has an essence-list section such as `このPRでやること`, use a numbered list there; otherwise distribute them across existing sections without adding a heading.
 
 ## Default shape
 
 - Preserve every template heading, order, and HTML comment. Do not add headings.
+- A verified related issue uses one canonical preamble line, `related <issue-url>`, after any explicitly requested opening note and before the template's first original line (or as the body first line when there is no note). This is not a heading or section and remains valid when the template has no headings or related-issue slot. Omit it when no issue is verified.
 - Except template checklists/revert blocks, essence lists, and multiple explicit scope-outs, each section is one physical line by default.
-- Expand only the section the user explicitly named. Keep its summary as the first line, then use prose for rationale, rejected alternatives, tradeoffs, or measured detail.
+- Expand only the section the user explicitly named. Keep its summary as the first line; when supplied, preserve that section's rationale, rejected alternatives, tradeoffs, and measured detail.
 - Leave an inapplicable section blank with one blank line. Do not write filler such as `特になし`, `該当なし`, or `自明な観点なし`.
 - Mark a template checkbox only when verified. For an either/or branch, mark exactly the applicable choice.
 
@@ -24,13 +25,13 @@ Before drafting, list the material reader-visible outcomes and operational facts
 
 A principal symbol may appear once when it is the PR's subject. Otherwise prefer reader vocabulary over identifiers. If motivation is not explicit, infer only the immediate user inconvenience implied by the behavior; do not invent business context.
 
-For performance evidence, summarize `before → after` with the decisive condition in one line unless detail was requested. For trivial verification with no observed result, use `目視確認のみ` or leave blank. Never claim a local or CI check that was not observed.
+For performance evidence, summarize `before → after` with the decisive condition in one line unless detail was requested. Use `目視確認のみ` only when visual inspection was observed; with no observed result, leave the section blank. Never claim a local or CI check that was not observed.
 
 Scope-outs must be explicit in the session/issue/diff and still absent from the final diff. If their destination is unknown, say `未定`; delete stale or unrelated scope-outs.
 
 ## Final audit
 
-1. Reading only each first line reconstructs the PR's purpose, impact, decision, and verification.
-2. Every pre-draft outcome is recoverable from the body.
-3. No plan-local labels, duplicate facts, invented evidence, or diff inventory remains.
-4. Only user-requested sections exceed the default shape, and expanded prose retains rejected alternatives/reasons when supplied.
+1. **斜め読み・本質回収**: first lines reconstruct purpose, impact, decision, and verification; every material outcome is recoverable.
+2. **コードから読める情報**: no file, helper, import, parameter, or implementation inventory remains unless it is the PR's subject.
+3. **分量・重複・事実整合**: facts are not duplicated; scope-outs match the final diff; only requested sections exceed the default shape.
+4. **私語彙・生成痕跡**: no plan-local labels, filler, mechanical phrasing, or invented evidence remains.

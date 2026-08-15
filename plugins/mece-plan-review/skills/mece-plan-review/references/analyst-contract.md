@@ -11,8 +11,6 @@ BB (Black Box) / WB (White Box) 両 Analyst の責務・情報源制約・Critic
 
 ### Critical 閾値
 
-> この節は [red-team-checklist.md](red-team-checklist.md) の「Critical 閾値」と同内容の複製 (dispatch 先の 1 ホップ自己完結のため)。**変更時は両方を同時更新すること (sync 義務)**。
-
 **判定の既定規則**: 「この欠陥は **それ単独で能動的に** 害を成立させるか? それとも害を **容易にする** だけか?」 — 成立させるなら Critical、容易にするだけなら Important。以下 4 類型に **現に該当** する指摘のみ Critical 認定:
 
 1. **データロス / 破壊的変更** (DB drop, schema break, irreversible mutation, 既存データの整合性破壊、部分 payload 送信による既存データの無条件上書き = nested attributes の未送信キー = nil 代入)
@@ -36,7 +34,7 @@ BB (Black Box) / WB (White Box) 両 Analyst の責務・情報源制約・Critic
 
 `auth` / `data` / `security` / `performance` / `observability` / `network` / `ui` / `deps` / `business` / `infra` / `その他`
 
-複数該当する場合はメインの 1 つを選ぶ (例: 認証バイパスは `security` を優先)。`その他` は最小化すること。
+AC の controlled label から area を機械変換せず、finding の主題を次の上から first-match で1つ選ぶ: 能動的侵害・認可迂回=`security`; 認証状態・identity・role=`auth`; schema・永続化・整合性=`data`; HTTP・外部protocol・接続=`network`; 描画・入力・a11y=`ui`; library/package互換=`deps`; deploy・config・resource=`infra`; latency・volume・runtime=`performance`; log・metric・trace=`observability`; domain rule・workflow・contract=`business`; どれにも該当しない=`その他`。複数主題でも最初に一致した1つを使う。
 
 ### AC ID
 

@@ -1,12 +1,10 @@
-# 初期化処理 (define-acceptance-criteria / mece-plan-review 共通)
-
-このファイルは両 skill で共通する初期化手順をまとめたもの。**両 plugin の `references/init-common.md` に同内容で重複配置している** (plugin self-containment の制約上、cross-plugin file sharing ができないため)。**内容を変更する場合は両方を同時に更新すること** (sync 義務)。
+# 初期化処理
 
 ## プランファイル特定
 
 プランファイルパスを次の優先順位で解決する:
 
-1. `$ARGUMENTS` が指定されていればそれを使用
+1. `$ARGUMENTS` の `--reset-mece` 以外にパスが指定されていればそれを使用
 2. 委譲実行では、起動プロンプト本文に明示されたパスを `$ARGUMENTS` 相当として使用
 3. 単独起動 (メイン会話でユーザーが直接起動) 時のみ、システムプロンプトの `Plan File Info:` セクションからパスを取得
 4. いずれでも解決できない場合は「不足入力: プランファイルパス」と最終メッセージで返し、その場で終了する (返答を待たない)
@@ -17,25 +15,9 @@
 
 プランファイルの拡張子前に `.analysis` を挿入したパスを使用する:
 
-- 例: `~/.claude/plans/feature-xxx.md` → `~/.claude/plans/feature-xxx.analysis.md` (プランファイルは `~/.claude/plans/` 配下を推奨)
+- 例: `feature-xxx.md` → `feature-xxx.analysis.md`
 
-両 skill で同じ規約を使うことで、`/define-acceptance-criteria` で書き出した分析ファイルが `/mece-plan-review` でそのまま参照可能になる。
+## 分析ファイル
 
-## リポジトリ名取得
-
-```bash
-git remote get-url origin | sed 's/.*github.com[:/]\(.*\)\.git/\1/'
-```
-
-- 成功時: `<org>/<repo>` 形式で `${REPO_NAME}` として保持
-- 失敗時 (non-git リポジトリ): `${REPO_NAME}` を `"unknown-repo"` として継続
-
-## 各 skill 固有の追加処理
-
-### define-acceptance-criteria
 - 分析ファイルが存在しなければ新規作成
-- 既存の場合は末尾に追記 (重複セクションには注意)
-
-### mece-plan-review
-- 分析ファイルから `## 受け入れ条件` セクションを抽出 (なければ即座に中断)
-- AC 項目を `- [ ]` 単位で enumerate して `AC-1, AC-2, ...` の序数を付与
+- 既存の場合は skill 所有 section を upsert し、他 section を保持。MECE後は既定停止し、`--reset-mece` 指定時だけ旧 MECE 追加・結果を失効させる

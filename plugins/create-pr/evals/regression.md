@@ -1,80 +1,74 @@
-# regression eval (empirical-prompt-tuning 収束時保存)
+# Regression scenarios
 
-## シナリオ 1: lite tier + 質問なし
+## Lite branch, default draft
 
-$ARGUMENTS なし (default base = develop)。1 commit 済み + 未コミット 1 ファイル、single domain、<50 LoC、既存 pattern 踏襲。自動取得節は生コマンド文字列のまま。コマンド列と判断を列挙させ、(a) ユーザー確認の有無 (b) tier と評価時点 (c) Step 9 観点 (d) Pre-work 点数を明答させる。
-
-### Requirements checklist
-1. [critical] ユーザーへの確認・質問を一切行わず draft PR 作成まで進む
-2. [critical] tier = lite、評価時点は Step 1 の git log [base]..HEAD 時点 (Step 2 の commit は数えない)
-3. Step 9 は [A]+[D] の 2 観点のみ、Pre-work 本質リストは 1-2 点
-4. fallback で git status -sb / git log --oneline -15 を Bash 実行
-5. PR body は mktemp、milestone 確認は --paginate
-
-## シナリオ 2: 展開指示なし (1 行サマリー既定)
-
-$ARGUMENTS なし。feature ブランチ 3 commits + migration 1 本 (→ deep tier)、テンプレは「設計判断」「やらなかったこと」「レビューしてほしい観点」見出しを含むが本質列挙系セクション (「このPRでやること」) は無し。セッション文脈に設計判断議論 (採用 1 + 棄却案 2 件・却下理由付き)、明示スコープ外 (後続チケット番号付き)、動作確認 (spec 結果 + 手動確認) を与える。
+The branch has one local production-file change in one domain, follows an established pattern, and has no nontrivial design decision. One related file is uncommitted. Return the intended command sequence and decisions without asking questions.
 
 ### Requirements checklist
-1. [critical] 定型 (Revert 手順 / チェックリスト) 以外の各セクションが 1 行サマリーのみ (複数文段落・bullet・表・コードブロック無し。「やらなかったこと」1 項目 1 行は可)
-2. [critical] 詳細展開指示が無いため「設計判断」に棄却案の散文展開を書かない (棄却案は完了報告の「展開可能」列挙へ)
-3. [critical] ユーザー確認なしで draft PR 作成まで進む
-4. 完了報告に展開可能素材の列挙がある
-5. deep の重要事実を水増しせず列挙し、「やったこと」1 文畳み込み + 既存見出しへ分配する (番号リスト格上げしない)
-6. 「やらなかったこと」1 行に「何を + なぜ + 次にどこで」を含む
 
-## シナリオ 3: 「設計判断は詳しく」展開指示あり
+1. [critical] Classify as lite and proceed to a draft PR without confirmation.
+2. [critical] Audit `斜め読み・本質回収` and `私語彙・生成痕跡`; do not require the other two standard axes.
+3. Commit only task-related changes in a semantically coherent unit.
+4. Use a unique `mktemp` body file and paginate milestone lookup.
 
-$ARGUMENTS = `develop 設計判断は詳しく` でシナリオ 2 と同一文脈。
+## Standard retry-safe report export endpoint
 
-### Requirements checklist
-1. [critical] 「設計判断」がサマリー行 + 直下散文展開の構成で棄却案 2 件と却下理由を含む
-2. [critical] 指示のない他セクションは 1 行サマリーのまま
-3. [critical] ユーザー確認なしで draft PR 作成まで進む
-4. 先頭トークンをベースブランチ (`git ls-remote --heads origin` で確認)、残りを詳細展開指示として解釈
-5. 展開部は散文中心 (bullet 3+ の羅列でない)、1 段落目 = 選択結果
-
-## シナリオ 4: perf PR + 実測表素材 (baseline 失敗 = 内部リポの実 PR で観測した失敗 (perf PR の実測表混入) の再現)
-
-$ARGUMENTS なし。perf ブランチ 2 commits (standard tier)、テンプレに「設計判断」系見出し無し。セッション素材に EXPLAIN ANALYZE 実測 4 条件・spec parity 結果・設計判断議論 (既存パターン踏襲・旧経路温存) を与える。
+The branch has three commits across a report-export endpoint, service, and tests. The diff adds an idempotency key so client retries do not duplicate export jobs. Tests are present in the diff but no execution result is supplied. A dry run is required: produce the proposed title, template-shaped body, and self-check; perform no mutation.
 
 ### Requirements checklist
-1. [critical] 「動作確認結果」が 1 行サマリー (実測表・spec 出力のコードブロックを本文に入れない)。キー数値 (改善前後ペア + 前提条件の括弧注記) を含む
-2. [critical] 「やったこと」「なぜやるのか」が各 1 文
-3. [critical] テンプレに無い「設計判断」見出しを追加しない (反映先候補も無ければ本文非反映、完了報告で「展開可能」通知)
-4. 関連セクションが説明段落にならない (1 行リンク + 関係ラベル 1 句まで)
-5. 完了報告に展開可能素材の列挙がある
 
-## シナリオ 5: 委譲実行 (base 明示指定、gh pr create 失敗時の縮退)
+1. [critical] Classify as standard and apply all four named axes: `斜め読み・本質回収`, `コードから読める情報`, `分量・重複・事実整合`, and `私語彙・生成痕跡`.
+2. [critical] Do not claim that tests passed or invent any other verification evidence.
+3. Produce a Japanese Conventional-Commits title of at most 72 characters.
+4. Express the retry-safe outcome without a file/helper/import inventory or a new template heading.
+5. Preserve the body default shape and report the dry-run command without executing it.
 
-会話履歴を持たない委譲実行で、起動プロンプトの `$ARGUMENTS` 相当に base branch `main` を明示指定。対象リポジトリの `origin` はローカル bare repo に付け替え済みで、push は成功するが `gh pr create` は GitHub ホスト未解決で失敗する (実 GitHub への push・PR 作成は発生しない)。Step 4c/6 の情報源は起動プロンプトへの明示転記かファイルベース (diff・commit メッセージ) に限られる。
+## Deep branch without expansion request
 
-### Requirements checklist
-1. [critical] push が実行され成功している
-2. [critical] `gh pr create` 失敗時、組み立て済みコマンド全文と生成済みタイトル・本文を最終メッセージに含めて終了している (存在しない PR URL を捏造しない)
-3. タイトルが `<type>(<scope>): <説明>` 形式かつ 72 文字以内
-4. 明示指定した base branch が実際に使用され、デフォルトブランチへの誤ったフォールバックが起きていない
-5. PR 本文がテンプレに無い見出しを追加していない、またはテンプレ未検出の旨が明示されている
-6. push 失敗など別要因で中断せず、`gh pr create` (Step 10) まで到達している
-
-## シナリオ 6: 委譲実行 (詳細展開指示を委譲プロンプトで受信、base 未指定)
-
-会話履歴を持たない委譲実行で、詳細展開指示 (「設計判断は詳しく」) を起動プロンプトの `$ARGUMENTS` 相当で受信。base branch 指定なしのためデフォルトブランチ解決に進む。対象リポジトリにテンプレートが無い場合、フォールバック構成に「設計判断」相当の見出しが無いため、新規見出しを追加せず完了報告での提示に回すのが正しい (テンプレ実在時は該当セクションを散文展開する)。
+The branch has three commits and a migration. The template includes design-decision, scope-out, review-focus, verification, checklist, and revert sections but no essence-list or related-issue section. Supplied context includes one selected design, two rejected alternatives with reasons, one ticketed scope-out, and observed test/manual results. Run three exact-search variants: (A) one verified related issue; (B) one verified open PR for the same change on another head; (C) no verified hit.
 
 ### Requirements checklist
-1. [critical] テンプレに「設計判断」相当セクションがあれば散文展開されている。無ければ新規見出しを追加せず完了報告で展開可能素材として提示している (どちらも許容。テンプレ非実在を理由に×とはしない)
-2. [critical] 詳細展開の材料を、存在しないセッション発話から捏造せず diff・commit メッセージ等ファイルベースの根拠から構成している
-3. base branch 未指定のため、リポジトリのデフォルトブランチが正しく解決されている
-4. 詳細展開の対象が「設計判断」相当セクションに限定され、他セクションは 1 行サマリーのまま
-5. `gh pr create` 失敗時、組み立て済みコマンドと本文が最終メッセージに含まれている (実 PR URL を捏造しない)
 
-## シナリオ 7: 既存 open PR がある対象ブランチへの再呼び出し
+1. [critical] Classify as deep and keep non-checklist/revert sections to their default one-line shape because expansion was not requested.
+2. [critical] Do not add an essence list or another heading; distribute all material outcomes across existing sections.
+3. Keep rejected-alternative detail out of the body and list it as expandable material in the completion report.
+4. Make each scope-out include what, why, and destination, consistent with the final diff.
+5. [critical] Search with only the exact scope token and full title-description queries and perform no keyword/synonym expansion.
+6. [critical] A inserts one plain `related <issue-url>` body line at the canonical position without adding or depending on a heading.
+7. [critical] B stops before branch switching, any new commit or push, and `gh pr create`; it reports the duplicate PR URL and matching evidence and does not treat the PR as an issue link.
+8. [critical] C stops searching after the two bounded queries and continues without a related line.
+9. [critical] Do not add a `BREAKING CHANGE` footer unless the fixture explicitly states a breaking change; deep tier alone is insufficient.
 
-$ARGUMENTS なし (「PR を作って」のみ)。対象ブランチに未 push のコミットが 1 本あり、`gh pr list --head <branch> --state open` は既存 open PR (#42) を返す (事前確認済みの前提として与える)。この評価 fixture では外部 mutation を禁止し、`gh pr edit` は実行せず組み立てたコマンドを成果物として評価する。
+## Explicit design-decision expansion
+
+Use the preceding deep fixture with arguments `develop 設計判断は詳しく`.
 
 ### Requirements checklist
-1. [critical] `gh pr create` を実行しようとせず、既存 PR (#42) を検出して push + `gh pr edit --body-file` の更新経路を選ぶ
-2. [critical] 未 push コミットを反映する `git push` が実行され成功している
-3. `gh pr edit <対象PR番号>` の PR 番号が事前確認結果の番号と一致する (捏造しない)
-4. `gh pr edit` は実行せず、組み立てた完全なコマンド文字列を最終メッセージで報告して終了している
-5. 完了報告に既存 PR の番号または URL を含めている
+
+1. [critical] Verify `develop` as the base token and treat the remainder as the expansion request.
+2. [critical] Expand only the matching template section, retaining its one-line summary first.
+3. Include the supplied alternatives and reasons without inventing discussion.
+4. Keep every unrequested section at the default shape.
+
+## Delegated GitHub failure
+
+A history-free delegated run explicitly receives base `main`. Diff and commit messages contain the available rationale. Push to a local bare remote succeeds, while every GitHub-host query fails resolution.
+
+### Requirements checklist
+
+1. [critical] Use the supplied base and file evidence; do not fabricate missing session discussion.
+2. [critical] After the successful push, return the complete proposed create command, title, and body when GitHub access fails; do not invent a PR URL.
+3. Preserve the discovered template and omit unverified labels or milestone.
+4. Do not claim mutation beyond the observed push.
+
+## Holdout: existing open PR
+
+The branch name violates the naming convention and has one unpushed commit. The Step 1.5 read-only query says open PR `#42` already targets that exact branch and is draft. External mutation is disabled for the fixture.
+
+### Requirements checklist
+
+1. [critical] Select the existing-PR update path and never propose a second `gh pr create`.
+2. [critical] Preserve title, labels, milestone, and draft state while proposing push plus `gh pr edit 42 --body-file`.
+3. [critical] Do not switch away from the naming-violating branch; report the naming violation while preserving the cached existing-PR identity.
+4. Use the observed PR number and do not execute the disabled mutation.
+5. Return the complete proposed update command and existing PR identity.

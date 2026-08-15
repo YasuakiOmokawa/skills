@@ -1,7 +1,7 @@
 {
   "name": "review-design",
   "description": "Use before adding a feature, file, module, interface, or seam, or when deciding where code should live; always use for auth, billing, payment, migration, or security changes. Trigger on explicit design-review requests too.",
-  "version": "1.32.0",
+  "version": "1.33.0",
   "author": {
     "name": "Yasuaki Omokawa",
     "url": "https://github.com/YasuakiOmokawa"

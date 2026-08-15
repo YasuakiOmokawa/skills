@@ -35,7 +35,7 @@ else
   added_lines=$(cat "$f")
   removed_lines=""
 fi
-# net = added - removed: comment-reducing rewrites (縮約置換, e.g. /dry-ssot-text work) must not
+# net = added - removed: comment-reducing rewrites must not
 # fire. Trade-off: an equal-count rewrite passes silently — acceptable, the goal is add-suppression.
 added_comments=$(printf '%s\n' "$added_lines" | grep -Ec "$comment_re" || true)
 removed_comments=$(printf '%s\n' "$removed_lines" | grep -Ec "$comment_re" || true)
@@ -69,7 +69,7 @@ if [ "$first_sight" = 1 ] && ! git -C "$dir" ls-files --error-unmatch "$f" >/dev
 fi
 if [ "$comments" -gt "${prev_comments:-0}" ]; then
   if [ "$comments" -le 2 ]; then
-    warnings="${warnings}[express-intent] ${f}: コメント追加 計${comments}行 (ファイル全体のコメント率 ${ratio}%)。この規模 (1〜2 行) はこの場で判定してよい: 名前/型/定数/private メソッド/静的テスト (禁止規律) への昇格で置換できないか判断し、残せるのは真の why 4類型 (外部仕様/実測根拠/危険・セキュリティ/FIXME) と正本参照 1 文 (ADR / 正本コメントへのポインタ) を名前付き定義の直上に置くものだけ。文面は code-comments 7原則に従う。既存の 4類型コメント・正本参照は削らない。\n"
+    warnings="${warnings}[express-intent] ${f}: コメント追加 計${comments}行 (ファイル全体のコメント率 ${ratio}%)。この規模 (1〜2 行) はこの場で判定してよい: 名前/型/定数/private メソッド/静的テスト (禁止規律) への昇格で置換できないか判断し、残せるのは真の why 4類型 (外部仕様/実測根拠/危険・セキュリティ/FIXME) と正本参照 1 文 (ADR / 正本コメントへのポインタ) を名前付き定義の直上に置くものだけ。対象名や機構を反復せず、理由・制約だけを書く。既存の 4類型コメント・正本参照は削らない。\n"
   else
     warnings="${warnings}[express-intent] ${f}: コメント追加 計${comments}行 (ファイル全体のコメント率 ${ratio}%)。3 行以上の追加はインライン処置の範囲外 — Skill ツールで express-intent-in-code を起動し、本文の昇格表・命名梯子・歯止めに従って全コメントを判定すること (この文面の要約には梯子と歯止めが載っていない)。既存の 4類型コメント・正本参照 1 文 (ADR / 正本コメントへのポインタ) は削らない。\n"
   fi

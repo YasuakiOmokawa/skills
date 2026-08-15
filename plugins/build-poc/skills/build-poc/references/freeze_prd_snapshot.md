@@ -16,14 +16,14 @@
 2. エクスポートする。
 
    - 全文: `rclone backend copyid drive: <docID> <案件dir>/ --drive-export-formats md`
-   - タブ: `curl -sL -H "Authorization: Bearer <token>" "https://docs.google.com/feeds/download/documents/export/Export?id=<docID>&exportFormat=markdown&tab=t.<tabID>"`
-   - token は rclone の OAuth access token をコマンド置換で header へ直接渡す。token 単体の表示、ファイル・環境変数への保存、`rclone.conf` 直接読取、dump 単独実行は行わない。401 は `rclone about drive:` 後に一度再取得し、403 rate limit は待機または rclone へ切り替える。
+   - タブ: 最終出力と同じディレクトリの temp へ `curl -sSL -w '%{http_code}|%{content_type}' -o <temp>` で取得する。401 は `rclone about drive:` 後に一度だけ同じ temp へ再取得する。403 は待機・再試行せず temp を破棄して rclone 全文へ切り替える。200・HTML/XHTML 以外の Content-Type・UTF-8 の Unicode 非空白文字あり・本文全体に HTML 文書 marker なしを確認したときだけ、temp を最終出力へ atomic rename する。単純な `curl -sL > <最終出力>` は成功判定に使わない。統合 `curl tab=` はこの transaction を inline で実行し、縮退 (1) の wrapper は同じ transaction を実装した `scripts/export_gdoc_tab.sh <docID> <t.tabID> <出力先>` を呼ぶ。
+   - token は `rclone config dump | jq ...` から一時 shell 変数へだけ受け、curl の stdin header (`-H @-`) または private FD へ渡す。header値を curl argv・ファイル・環境変数へ置かず、使用後は変数を空にして unset する。xtrace が有効なら token 取得前から unset 後まで一時停止し、その後だけ元へ戻す。token 単体の表示、`rclone.conf` 直接読取、dump の端末出力は行わない。401 が再試行後も続く場合、通信失敗、200 以外、空・空白のみ body、HTML/XHTML Content-Type、HTML 文書 marker を含む body は temp を破棄して未取得とする。
 
-   統合コマンドが権限 deny なら再試行せず、既知の deny でも直ちに次の順で縮退する。発動理由・日付・経路/範囲の遷移を `## 進捗` に1行記録する。
+   統合コマンドが権限 deny なら再試行せず、既知の deny でも直ちに次の順で縮退する。tab export が 403 の場合は同じ endpoint の wrapper を再試行せず縮退 (2) へ進む。fallback の成否が確定してから、発動理由・日付・実際の経路/範囲を `## 進捗` に1行記録する。
 
-   `- <日付> 縮退発動: <理由> — curl tab= → rclone 全文 (範囲: タブ単体 → 全文)`
+   `- <日付> 縮退発動: <理由> — 統合 curl tab= → <wrapper curl tab= / rclone 全文 / 未取得> (範囲: タブ単体 → <タブ単体 / 全文 / 未取得>)`
 
-   1. 許可済みなら `scripts/export_gdoc_tab.sh <docID> <t.tabID> <出力先>` を実行する。許可状態は実行結果で判断し、既知の未許可なら実行しない。settings を読まず、agent が許可を追加しない。未許可で対話可能ならユーザーへ `!` 実行を依頼し、対話不能なら次へ進む。成功時の経路名は `curl tab=`。
+   1. 許可済みなら `scripts/export_gdoc_tab.sh <docID> <t.tabID> <出力先>` を実行する。許可状態は実行結果で判断し、既知の未許可なら実行しない。settings を読まず、agent が許可を追加しない。未許可で対話可能ならユーザーへ `!` 実行を依頼し、対話不能なら次へ進む。成功時の経路名は `wrapper curl tab=`。
    2. rclone 全文へ切り替え、他タブを含むことを報告する。対話可能なら範囲変更を確認する。
    3. rclone も不可なら未取得として停止し、完了扱いにしない。
 

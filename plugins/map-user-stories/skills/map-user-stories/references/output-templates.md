@@ -12,7 +12,7 @@ Emit these sections in order:
 
 ## Context
 
-State source, DD review status when applicable, scheduling assumptions, and unresolved capacity.
+State source, DD review status when applicable, scheduling assumptions, and unresolved capacity or workload-estimate units. Sprint allocation requires capacity and workload in the same explicit unit plus known duration.
 
 ## Phase story table
 

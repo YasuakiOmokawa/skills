@@ -42,25 +42,25 @@ tier 表を実行する。lite は main agent が `agents/manual-qa-planner.md` 
 
 ### 4. プラン追記
 
-planner 出力を統合し、プランの `## 実装準備` を作成または置換する。書式は [references/output-template.md](references/output-template.md)。
+planner 出力を統合し、プランの `## 実装準備` を upsert する。既存節は最初の完全一致見出しから次の `## ` 見出し直前または EOF までを置換し、直前に空行だけを挟んだ `---` があればそれも置換範囲へ含める。同名の重複節と付随 separator は削除し、1節・separator 1本だけ保持する。書式は [references/output-template.md](references/output-template.md)。
 
 manual の各 `出典:` は enumerate 元 AC 原文を保持する。対応しない QA-ID は統合せず要人間確認へ加える。
 
 ### 5. 正本カバレッジ
 
-Step 4 の Write 後、`## 正本抽出結果` がなければ [references/output-template.md](references/output-template.md) の skip 行を記録する。見出しがあれば空でも [references/coverage-gate-bash.md](references/coverage-gate-bash.md) をプラン自体へ実行する。
+Step 4 の Write 後、分析ファイルに `## 正本抽出結果` がなければ [references/output-template.md](references/output-template.md) の skip 行をプランへ記録する。見出しがあれば空でも、[references/coverage-gate-bash.md](references/coverage-gate-bash.md) の `ANALYSIS_FILE` に分析ファイル、`PLAN_FILE` にプランを指定して実行する。終了値は `0=pass/skip`、`1=未カバー`、`2=構造エラー`。`2` は `RUN_DIR` を削除し、補完・Step 6-7・成功報告を行わず未完了として停止する。
 
-未カバー atom を既存 manual の確認本文が完全に検証していれば、AC原文を残して atom ごとに `出典: <atom ID>` を追加する。それ以外は enumerate 済み ID とプラン内 ID の最大 QA-M 連番を継続し、期待値原文と atom 出典を持つ QA-M を追加する。補完後に再実行して差分ゼロを確認する。
+未カバー atom を既存 manual の確認本文が完全に検証していれば、元の `出典: <AC原文>` を保ち、その QA ブロックへ atom ごとに `**正本出典: <atom ID>**` を追加する。それ以外は enumerate 済み ID とプラン内 ID の最大 QA-M 連番を継続し、期待値原文と atom 出典を持つ QA-M を追加する。補完はこの1回だけ行い、gate を1回だけ再実行する。なお未カバーなら追加補完・再試行をせず、atom ID を coverage 行と完了報告に残して未完了とする。Step 6-7 は続行する。
 
 記録位置・書式は output template に従い既存行を置換する。補完 QA-M は ledger に加えるが、Step 2 の `対象AC` 件数には加えず coverage 行だけに計上する。
 
 ### 6. QA ledger
 
-Step 2 の全 QA-ID と Step 5 の補完 ID の和集合から [references/qa-ledger.md](references/qa-ledger.md) を作る。既存 ledger があれば履歴を保持し、新規 `(QA-ID, 手段)` の初期行だけ追記する。その後 `RUN_DIR` を削除する。
+Step 2 の全 QA-ID と Step 5 の補完 ID の和集合から [references/qa-ledger.md](references/qa-ledger.md) を作る。ordered `(QA-ID, 手段, exact source)` の fingerprint を `## 実装準備` marker と ledger generation に記録する。fingerprint が変われば全 current assignments を pending にした新 generation を追記し、同じなら新規 `(QA-ID, 手段)` だけ追記する。その後 `RUN_DIR` を削除する。
 
 ### 7. Preflight
 
-プランから [references/preflight.md](references/preflight.md) を生成する。不在なら6行を新規作成し、既存なら欠損行だけ追加する。解決不能値は artifact に `未定` として残す。
+プランから [references/preflight.md](references/preflight.md) を生成する。現在の6候補値の fingerprint が既存 marker と同じなら user 更新を含む artifact を保持する。異なるか marker が無ければ6行を現在値 (`未定` 含む) で置換し marker を更新する。
 
 ## 委譲実行
 

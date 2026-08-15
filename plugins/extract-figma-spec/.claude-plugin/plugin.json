@@ -1,7 +1,7 @@
 {
   "name": "extract-figma-spec",
   "description": "Use before or during Figma-driven implementation to extract returned design properties into atomized checks, compare them with code, and write a canonical results table.",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "author": {
     "name": "Yasuaki Omokawa",
     "url": "https://github.com/YasuakiOmokawa"

@@ -26,8 +26,8 @@ reviewer はこのファイルを SSOT として使う。
 | # | 観点 | ✅ | ⚠️ | ❌ |
 |---|---|---|---|---|
 | 1 | Entity vs VO | Entity は ID で識別、VO 的概念は適切に扱う | VO にすべき概念がプリミティブのまま (例: 金額が Integer のみ) | ID で識別すべきものに ID なし / VO が可変 (setter 公開) |
-| 2 | Aggregate 境界 | 外部から Root のみ参照、Aggregate 間は ID 参照 | 内部 Entity 直アクセス 1-2 箇所 (読み取りのみ) | 内部 Entity を外部から create/update/delete |
-| 3 | Domain Event | 副作用が明示管理 (Service 呼出 or `after_commit` の Job キックのみ) | `after_commit` で Job キック (Rails 許容) | `before/after_save` で外部 API / メール / 3 つ以上の副作用連鎖 |
+| 2 | Aggregate 境界 | 外部から Root のみ参照、Aggregate 間は ID 参照 | 内部 Entity の読み取りが境界内に閉じ、外部へ更新能力を漏らさない | 内部 Entity を外部から create/update/delete |
+| 3 | Domain Event | 副作用が明示管理 (Service 呼出 or `after_commit` の Job キックのみ) | `after_commit` で Job キック (Rails 許容) | `before/after_save` で外部 API / メール / 順序依存の副作用連鎖 |
 | 4 | Domain Service | 単一 Entity 振る舞いは Entity に / 複数協調は Service | 単一 Entity ロジックが Service にあるがテスト性で正当 | Model 内で他 Model を直接 create/update / Service が全ロジック持ち Model 空 (Anemic) |
 
 ## 反例検索 Grep ヒント

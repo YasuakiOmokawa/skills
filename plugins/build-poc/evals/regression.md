@@ -1,13 +1,13 @@
 # build-poc regression suite
 
-skill 変更 PR では、白紙の fresh executor (general-purpose subagent) に SKILL.md パスとシナリオ + checklist を渡して再実行し、全 [critical] ○ を確認してから merge する。検証環境の約束: 他スキル起動 (/create-pr 等) は「起動宣言 + 想定結果 1 行」で代替可。fixture は実行ごとに独立させ、終了後に削除する (`~/.claude/prototyping-projects/` に eval_ プレフィックスの案件を作った場合は必ず消す)。
+変更時は白紙の fresh executor に SKILL.md、シナリオ、checklist を渡し、全 [critical] ○ を確認する。他スキル起動は「起動宣言 + 想定結果 1 行」で代替可。fixture は実行ごとに分離し、終了後に削除する。
 
-## 実行時の約束 (2026-07-25 の 11 ラウンド検証で確立)
+## 実行条件
 
 - **案件名はラウンドごとに一意にする** (`eval_poc_probe_r3a` のようにサフィックスを付ける)。P1 は既定パス (`~/.claude/prototyping-projects/`) への作成が [critical] なので、並走 executor が同じ案件名を掴むと衝突する
 - **成果物の書き込み先は run dir に限る** (例外は P1 の案件プランファイルのみ — 既定パス検証がチェック項目だから)
 - **入力メモは自作させず固定 fixture を渡す**。executor が自作すると「節が欠ける日」の有無が run ごとに変わり、裏どりの難易度と accuracy が揺れる。3 ファイルとも 3 節 (やったこと / 詰まったこと / 決めたこと) が揃った実メモ + 「節が欠けることがある」と書いた brief の組み合わせが、合成 fixture を作る判断を測る形になる
-- ネットワーク不可・MCP 不可を明示する (P1 で `curl` を叩いて到達性を測る executor が出た)
+- ネットワーク不可・MCP 不可を明示する
 
 ## シナリオ P1: 中央値 (スタンドアロン PoC)
 
@@ -35,9 +35,29 @@ checklist:
 checklist:
 1. [critical] references/freeze_prd_snapshot.md を Read し、プラン冒頭をテンプレートどおり整備 (URL は doc ID と tab= までに正規化し #heading を落とす / スナップショット範囲 行 / ## 進捗)
 2. [critical] deny 事前判明のため再試行せず縮退発動、wrapper 未許可 + 対話不能で縮退 (1) 不成立 → 縮退 (2) rclone 全文を採用。許可設定への自己追加をしない (settings ファイルを読んで許可状態を判定するのも不可)
-3. [critical] 縮退記帳を進捗欄に 1 行・遷移 (→) 表記。スナップショット範囲: 行は確定後の値、PRD gdocs: の URL は原指定 (tab= 付き) のまま
+3. [critical] fallback 確定後に、実際の経路・範囲を進捗欄へ 1 行・遷移 (→) 表記。fixture では rclone 全文を記録し、wrapper 成功を捏造しない。スナップショット範囲: 行は確定後の値、PRD gdocs: の URL は原指定 (tab= 付き) のまま
 4. 画像除去 sed・生エクスポート削除・named version 依頼 (人間手順) が実行計画に含まれる
 5. 子タブ包含確認は範囲が全文のため不要と判定
+
+## シナリオ P2b: gdocs 403 rate limit
+
+fixture: tab export が 403 rate limit を返す。
+
+checklist:
+1. [critical] 待機・再試行せず rclone へ切り替え、有限回で終了する。
+2. wrapper の permission 設定は operator prerequisite として報告し、agent 自身は settings を読まず変更しない。
+
+## シナリオ P2c: tab export の status・出力原子性
+
+fixture: curl を固定応答へ差し替え、`401 → 200 markdown`、`401 → 401`、`403`、`200 Text/HTML` (tag なし)、`200 <html>`、4 KiB 超の前置き後の `200 <!doctype html>`、`200 ASCII whitespace-only`、`200 Unicode whitespace-only` (NBSP/U+3000/BOM 混在)、`200 invalid UTF-8`、HTML marker validator の exit 2 を別々に実行する。既存の出力ファイルには sentinel を置く。
+
+checklist:
+1. [critical] `401 → 200 markdown` は curl 2 回・`rclone about drive:` 1 回だけで成功し、検証済み markdown を atomic rename で公開する。
+2. [critical] `401 → 401`、`403`、Content-Type/全文 marker の各 `200 HTML`、ASCII/Unicode の両 `200 whitespace-only`、`200 invalid UTF-8`、validator exit 2 は失敗し、temp body を残さず既存の出力ファイルも上書きしない。grep の「markerなし」exit 1だけを通過扱いにする。403 は再試行せず rclone 全文への fallback 条件になる。
+3. [critical] 統合 curl deny 後に wrapper が成功した監査行は実経路を `統合 curl tab= → wrapper curl tab=` と記録し、`curl tab=` 成功に偽装しない。
+4. Wrapper uses Bash 3-compatible syntax while still matching Content-Type case-insensitively.
+5. [critical] OAuth token is streamed to curl as stdin header input and never appears in curl argv, stdout, stderr, or a temp file, including when Bash xtrace is enabled before invocation.
+6. [critical] HUP/INT/TERM exits with a nonzero signal status, removes the temp body, preserves the sentinel, and never resumes to publish output.
 
 ## シナリオ P3: 維持作業依頼エッジ (裏どり完了後のリファクタ・README・rebase 依頼)
 

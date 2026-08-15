@@ -1,7 +1,7 @@
 {
   "name": "dry-ssot-text",
-  "description": "Collapse repeated prose or code-comment explanations into one SSOT and replace other occurrences with deletion or the shortest resolvable reference, while preserving navigation and distinct facts.",
-  "version": "0.18.0",
+  "description": "Use when reader-facing prose or code-comment explanations repeat across a document or change set; not for code structure or logic duplication.",
+  "version": "0.19.0",
   "author": {
     "name": "Yasuaki Omokawa",
     "url": "https://github.com/YasuakiOmokawa"

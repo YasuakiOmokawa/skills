@@ -1,7 +1,5 @@
 # DA escalation / fatal criteria / mode tags
 
-SKILL.md "Workflow" の本文と相互参照する canonical 定義集。SKILL.md には triggering 条件と短縮表のみを残す。
-
 ## Three execution modes — full table
 
 | Mode | When | Final-report tag |
@@ -14,9 +12,9 @@ SKILL.md "Workflow" の本文と相互参照する canonical 定義集。SKILL.m
 
 **Permanent vs temporary dispatch failure** (decides whether fallback applies at all):
 
-- **Permanent** → in-context fallback + tail tag: dispatch capability absent, permission denied, or spawn budget exhausted.
+- **Permanent** → in-context fallback + tail tag: dispatch capability absent, permission denied, or spawn budget exhausted. 対象 agent / capability の permanent 判定は invocation 終了まで sticky とし、feedback loop の再実行でも dispatch を再試行せず直接 fallback する。
 - **Temporary** → 1回だけ再試行し、再失敗なら in-context fallback + tag: concurrent-subagent limit, rate limit.
-- **Hung** → 15分以内に1回 re-ping し、結果がなければ in-context fallback + tag.
+- **Hung** → dispatch から最大15分だけ待ち、結果がなければ1回だけ re-ping する。re-ping 後は最大60秒を deadline とし、結果がなければ in-context fallback + tag。追加の ping / wait は行わない。
 - A DA whose escalation condition is met but whose dispatch is permanently unavailable runs inline **and** carries the tail tag (escalation met + fallback are independent facts).
 
 ## DA escalation conditions (machine-checkable)
@@ -32,11 +30,4 @@ Switch from `inline default` to `subagent dispatch` if **any** of:
 3. `$ARGUMENTS` contains `--strict-da`
 4. Row 4 territory (auth / billing / payment / migration / security)。reviewer 全 ✅ でも dispatch する
 
-## Fatal vs single-trigger (separate concepts)
-
-| Term | Used for | When |
-|---|---|---|
-| Single-trigger escalator | inline → subagent switch | after Parallel Review, before DA |
-| **Fatal criteria** | DA classifying each finding as "fatal / acceptable" | during DA (inline or subagent) |
-
-Fatal ⊇ single-triggers (4 above) **plus** `anti-pattern-checker` ❌ judgments. The latter is already surfaced by Step 3, so escalation handles it via the `❌ ≥ 2` route. Subjective preferences are "acceptable", not "fatal".
+Escalators select the DA execution mode before critique. DA classification uses the four single-trigger categories plus `anti-pattern-checker` ❌ as the fatal set; subjective preferences are `acceptable`.

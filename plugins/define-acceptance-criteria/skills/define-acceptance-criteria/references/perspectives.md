@@ -35,7 +35,7 @@
 
 ### 変更種別 → デフォルト観点軸 (controlled vocabulary)
 
-種別を選定した後、以下の表から該当する観点軸を 3-5 個選ぶ。各軸の右列の controlled label を AC 行頭に使う。
+種別を選定した後、SKILL.md の tier 表が指定する数の観点軸を以下から選ぶ。各軸の右列の controlled label を AC 行頭に使う。
 
 | 変更種別 | 軸名 | controlled label (AC 行頭で使う、既定値はそのまま採用) |
 |---|---|---|
@@ -54,6 +54,7 @@
 | ui_change | デバイス | `device` |
 | ui_change | ブラウザ | `browser` |
 | ui_change | アクセシビリティ | `a11y` |
+| ui_change | 正本の描画属性 | `visual` |
 | batch_change | データ量 | `data_volume` |
 | batch_change | 実行時間 | `runtime` |
 | batch_change | 冪等性 | `idempotency` |
@@ -91,31 +92,6 @@
 **req_context**: 全リクエストへ自動付与される条件があるプロダクトで URL の生成・結合・リダイレクトに触れる変更へ採用し、その条件付き AC を最低1本置く。
 
 **unsent_keys**: PATCH/POST の参照実装からキーを間引く変更へ採用し、サーバ側の nested attributes / setter まで確認する AC を最低1本置く。
-
-### area タグ対応 (mece-plan-review との接続)
-
-各 controlled label は mece-plan-review の `area` タグに以下のように対応する:
-
-| AC 観点 label | area タグ (mece-plan-review) |
-|---|---|
-| `auth_state` / `idp` / `user_type` / `permission` | `auth` |
-| `req_form` / `compat` | `business` or `network` |
-| `req_context` | `network` |
-| `data_volume` / `migration` / `data_compat` / `unsent_keys` | `data` |
-| `device` / `browser` / `a11y` | `ui` |
-| `runtime` / `idempotency` | `performance` |
-| `flag_state` / `rollout` / `flag_removal` | `business` |
-| `info_src` / `context` / `output_contract` | `business` (or `その他`) |
-| `fallback` / `rollback` / `lifecycle` | `infra` |
-| `env` / `resource` / `config_scope` | `infra` |
-| `semver` / `caller` / `doc_sync` / `deprecation` | `deps` |
-| `dev_impact` | `その他` |
-| `api_version` / `auth_method` / `rate_limit` | `network` |
-| `delivery` / `template` | `business` |
-| `error_prop` | `observability` (or `その他`) |
-| `observability` | `observability` |
-
-この対応表は mece-plan-review が JSONL findings を集約する際に同 `area` でクロスリファレンスするため、ラベル粒度を揃える目的で重要。
 
 ## Step B: 表に該当する変更種別がない場合
 

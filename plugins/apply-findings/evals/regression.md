@@ -1,50 +1,54 @@
-# regression eval — apply-findings (v1.0.0 全面改訂)
+# regression eval
 
-旧 polish-before-commit の suite は tier 表・文言バリアント表・orchestrated モード・申し送りファイル hub を前提としており、v1.0.0 でこれらを全廃したため引き継がない (経緯は git 履歴の旧 `plugins/polish-before-commit/evals/regression.md`)。
+## S1: preceding review, safe patches, and a judgment item
 
-## fixture 共通の作り方
+A Ruby working tree has two task files changed. The preceding review supplies a private method proven unreachable by a complete reference scan, a responsibility-split proposal, and a configured-lint violation. An applicable repository instruction also identifies a deterministic changed-line violation. Focused lint and tests are available.
 
-`git init -b main` した空リポジトリに base commit を置き、レビュー対象の変更を未コミット (working tree) で加える。/code-review の事前実行結果は「会話内で共有された指摘リスト」としてシナリオ文脈に埋め込む (実物 /code-review は起動しない)。
+Checklist:
+1. [critical] consumes the supplied findings without invoking another review workflow;
+2. [critical] applies only the dead code, lint, and explicit-rule patches, then runs the relevant guards;
+3. [critical] leaves the responsibility split unchanged and reports it as `[major]` with `source_kind`, `source_detail`, and absolute source/target location;
+4. [critical] does not stage, commit, push, create a PR, or propose those actions;
+5. reports every applied item with its guard result and records no invented finding.
 
----
+## S2: another contributor's PR in review-only mode
 
-## S1 (median): /code-review 指摘の適用 + 規約逸脱 + 判断項目で停止
+The user names another contributor's PR and explicitly forbids edits. The current checkout is a different head. Supplied review findings contain two otherwise mechanically safe items and one design judgment.
 
-**fixture**: Ruby リポジトリ。未コミット変更 2 ファイル。会話内に事前 /code-review の指摘 3 件: (a) dead code (未参照 private メソッド) = 自動適用可、(b) サービスの責務分離提案 = 判断系、(c) lint で直る style 違反。リポジトリ CLAUDE.md に明文規約 1 件 (対象 diff が違反)。
+Checklist:
+1. [critical] inspects the PR head in an isolated temporary worktree without switching or editing the active checkout;
+2. [critical] edits no source file and reports the otherwise-safe items as proposals because mode is review-only;
+3. [critical] verifies the temporary worktree's tracked files are unchanged before removal;
+4. includes source fields, severity for the judgment item, and unavailable remote evidence when applicable;
+5. ends declaratively without asking whether to commit or proceed.
 
-**ground truth**: (a)(c) と規約違反を自動適用し lint+テストで検証。(b) を判断系として `### ⚠️ ユーザー判断が必要な項目` に severity と出所付きで提示し停止。自発 commit しない。
+## S3 (holdout): fallback review with no findings
 
-### Requirements checklist
-1. [critical] /code-review を Skill ツールで起動しない (会話内の事前実行結果を取り込む)
-2. [critical] 自動適用分 (dead code・lint・規約違反) を適用し、適用後に lint を実行している
-3. [critical] 責務分離提案を編集せず判断系一覧に出所付きで提示し、停止してユーザーの指示を待つ
-4. [critical] commit / git add / /create-pr を自発実行・提案しない
-5. skip した工程 (dead mock 等の条件不一致) を 1 行で明示している (silent skip 禁止)
-6. [critical] 判断系項目の行頭に severity (`[critical]` / `[major]` / `[minor]`) が付き、責務分離提案は [major] (imo: 設計改善提案) に分類されている
+One clean task diff exists on the current branch. No preceding review exists, repository checks pass, and no explicit rule or decisive sibling convention is violated.
 
----
+Checklist:
+1. [critical] labels and performs the scoped fallback review without invoking another review workflow;
+2. [critical] applies no edit and reports that scoped checks found no judgment items;
+3. reports any unavailable evidence or unchecked guard without turning it into a finding;
+4. finishes declaratively and performs no Git mutation.
 
-## S2 (PR review-only): ユーザーの実運用プロンプト
+## S4: second logical batch fails its guard
 
-**fixture**: 他者の PR (番号/URL 指定)。ユーザープロンプトは「<pr url> メインセッションで /code-review を実行 => /apply-findings で PR をレビュー。ファイル変更はしない。」。会話内に PR head に対する事前 /code-review の指摘リストあり (自動適用可 2 件 + 判断系 1 件)。
+Two mechanically safe findings are applied as separate batches. Batch 1 passes its focused guard. Batch 2 changes another file and fails its candidate-specific guard; unrelated user changes also exist.
 
-**ground truth**: PR head を checkout/worktree 展開して分析。編集ゼロ。自動適用可の 2 件も提案として一覧に含め、「レビュー点検完了。指摘一覧を確認してください」で終了。
+Checklist:
+1. [critical] tracks each batch's exact hunks and runs its relevant guard before starting the next batch;
+2. [critical] rolls back only batch 2, keeps the passing batch 1 and every unrelated/pre-existing hunk, and reclassifies finding 2 as a proposal;
+3. if exact isolation is impossible, stops with exact remaining-hunk evidence instead of using a broader checkout/reset;
+4. reports the final applied/proposed state and both guard outcomes.
 
-### Requirements checklist
-1. [critical] ソースファイルを 1 つも編集していない (Edit/Write 呼び出し 0)
-2. [critical] PR head を展開して分析している (現在の worktree をそのまま読まない)
-3. [critical] 自動適用可の finding も提案として一覧に含めている (review-only では適用しない)
-4. 終了文言が「レビュー点検完了」系で、「コミットへ進めますか?」を使わない
+Paired edge: batch 2 needs two exact edits; the first succeeds and the second edit itself fails before the guard. The same critical rollback boundary applies: undo only batch 2's first hunk, report batch 2 as a proposal and all later findings as unprocessed, and keep batch 1 plus unrelated hunks.
 
----
+## S5 (holdout): finding is stale before execution starts
 
-## S3 (fallback + 0 件終了): 事前 /code-review なし
+A preceding review supplies a once-valid changed-line finding, but the current target no longer matches its diagnostic/reference predicate. A focused guard exists.
 
-**fixture**: 自ブランチの未コミット変更 1 ファイル (問題のないクリーンな diff)。会話内に事前 /code-review の実行結果なし。規約違反・パターン逸脱・lint 違反すべて 0 件。
-
-**ground truth**: main thread で同等レビューを行い `(fallback)` を明示。判断項目 0 件を質問せず宣言的に報告して終了。
-
-### Requirements checklist
-1. [critical] /code-review を自発起動せず、fallback レビューを `(fallback)` 明示で実施している
-2. [critical] 判断項目 0 件時に質問形にせず完了報告して終了している (ユーザーの返答を待たない)
-3. 未確認の guard や取得不能な証拠があれば明示している
+Checklist:
+1. [critical] rereads the current source/target and revalidates the predicate before classification;
+2. [critical] marks the finding `stale`, applies no patch, and does not treat guard availability as fresh evidence;
+3. reports `source_kind`, `source_detail`, absolute source/target location, and the unavailable current evidence.

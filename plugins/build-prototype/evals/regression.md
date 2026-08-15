@@ -1,52 +1,29 @@
-# build-prototype regression suite
+# build-prototype regression
 
-skill 変更 PR では、白紙の fresh executor (general-purpose subagent) に SKILL.md パスとシナリオ + checklist を渡して再実行し、全 [critical] ○ を確認してから merge する。検証環境の約束: 他スキル起動 (/create-pr, /review-design 等) は「起動宣言 + 想定結果 1 行」で代替可。
+Run each fixed scenario with a fresh executor. All `[critical]` items must pass.
 
-## fixture (実行ごとに独立構築し、終了後に削除)
+## Complete PoC handoff
 
-- `repo/`: remote 未設定の小さな git repo (main + initial commit)。README に慣習を明記 (bin/ 1 機能 1 実行ファイル / snake_case / パスのハードコード禁止 = 第 1 引数 → `NOTES_DIR` → usage+exit 1 / ヘッダなし TSV / `tests/test_<name>.sh` を `run_tests.sh` の `TESTS` に登録 / `set -euo pipefail` / bash + coreutils のみ)。見本 `bin/list_notes.sh` と `tests/test_list_notes.sh` + `tests/run_tests.sh` (現状 PASS) を同梱
-- `case/plan_<案件名>.md`: 冒頭メタ (やりたいこと / 実装対象リポジトリ = repo の絶対パス / PRD の所在) + 星取表 + (B1・C1 のみ) `## 申し送り (PoC → プロトタイプ)` 節
-- `case/poc/`: 慣習に反する荒い PoC スクリプト (キャメルケース・ハードコードパス・backtick)
-- `notes/`: サンプルメモ 3 ファイル。タグ表記揺れ (`Rust` / `rust`) と タグ無しノート 1 件を含む — これが「小文字正規化」「`(untagged)` 出力」の裏どり対象になる
+Input: a project plan contains the complete PoC→prototype handoff, a rough PoC, and an explicit target Git repository. The handoff requires lowercase tag normalization, `(untagged)` output, one command rather than two, and rejects SQLite/find-exec. The repository has observable placement, naming, layering, and test conventions but no remote.
 
-fixture 生成スクリプトの内容は本ファイルの記述から再構築できる。executor ごと・ラウンドごとに独立ディレクトリへ複製すること (共有 fixture は並走で競合する)。
+1. [critical] Read and apply every handoff fact/rejection without asking for already supplied input.
+2. [critical] Inspect real repository examples, state the conventions being followed, and rewrite rather than copy the PoC mechanism.
+3. Preserve all grounded behavior and rejected boundaries; add the behavior-locking test to the repository's existing test route.
+4. [critical] Commit on a new branch, handle the missing remote finitely without inventing a PR, and record branch/commit as the handoff location.
+5. [critical] Upsert one exact `## 申し送り (プロトタイプ → DD)` section with location, conventions, decisions/rationale/rejections, PoC changes, scope-outs, and residual risks.
 
-## シナリオ B1: 中央値 (申し送りあり)
+## Missing handoff section
 
-依頼文: 「<案件名> の PoC ができたので、プロトタイプにして」(案件ディレクトリと notes のパスを提示。repo は remote 未設定であることを実環境の制約として伝える)
+Input: the same facts are distributed across the plan's ledger, notes, deferrals, and PoC; the canonical handoff heading is absent.
 
-申し送り節には build-poc の契約 6 項目すべてを入れる。特に「操作性の知見」に *タグ無しノートを `(untagged)` として必ず出す* と *2 コマンド分割は棄却* を、「確定した事実」に *小文字正規化が必要* を書く。
+1. [critical] Reconstruct the canonical fields from those named sources without an approval loop or speculative facts.
+2. Record the reconstruction with sources, then follow the same convention-driven implementation and verification path.
+3. [critical] Preserve rejected alternatives and interaction findings, and produce one canonical prototype→DD handoff.
 
-checklist:
-1. [critical] `## 申し送り (PoC → プロトタイプ)` 節を読んで開始し、追加質問なしで進行
-2. [critical] 対象リポジトリの慣習を実ファイルで確認し、従う対象を宣言
-3. [critical] 開発基準ブランチから新ブランチを切り、PoC のコピーでなく慣習準拠の書き直しとして実装 (キャメルケース・ハードコードパス残存なし)
-4. `bash tests/run_tests.sh` が新スクリプトのテストを含めて PASS
-5. [critical] `## 申し送り (プロトタイプ → DD)` 節 (見出し完全一致) を末尾に追記し、所在 / 従った慣習 / 設計判断と根拠 (採らなかった案含む) / PoC から変えた点 / スコープ外 を含む
-6. remote の無い repo で PR 作成を適切に処理 (push を試み続けず、状況を宣言して省略・代替)
-7. 申し送りの「確定した事実」と「操作性の知見・棄却した配置と導線」が実装に反映されている
+## Holdout: unavailable current gdocs snapshot
 
-採点者メモ: 項目 7 の実体は (a) タグ名の小文字正規化、(b) タグ無しノートを `(untagged)` として出力、(c) 1 コマンド維持 (2 分割しない)、(d) SQLite / find -exec を再発明しない。4/4 で ○、2〜3 で partial、0〜1 で ×。
+Input: the plan names gdocs as PRD source and says it changed, but the current environment cannot access gdocs and the earlier snapshot file is also absent.
 
-## シナリオ B2: エッジ (申し送り節なしフォールバック)
-
-B1 と同じ fixture 構成だが、プランファイルに申し送り節が無く、同じ情報が星取表・`## 検証メモ (走り書き)`・`## 保留・未着手`・`## PoC` に散在する (操作性の知見と棄却候補も走り書きの中に混ぜる)。
-
-checklist:
-1. [critical] 節の欠如を検出し、エラー停止・過剰質問せず、同じ項目 (採用方式・確定事実・やらなかったこと・実装対象リポジトリ) を自分で整理してから開始
-2. [critical] 整理した内容を出所付きで明示的に宣言
-3. 対象リポジトリの慣習を実ファイルで確認し、従う対象を宣言
-4. [critical] 新ブランチ上で慣習準拠の書き直し実装を行い、`bash tests/run_tests.sh` が PASS
-5. [critical] `## 申し送り (プロトタイプ → DD)` 節 (見出し完全一致) を末尾に追記
-6. 散在情報のうち「棄却した候補」と「操作性の知見」も再構成に含め、実装に反映している (採点実体は B1 項目 7 と同じ)
-
-## シナリオ C1: ホールドアウト (PRD 正本が gdocs + 取得手段なし)
-
-別案件 (全文検索)。プランファイル冒頭に `PRD gdocs: <URL>` と `スナップショット範囲:` 行があり、進捗に PoC 開始時スナップショットの記帳があるが**その実ファイルは置かない**。依頼文で「PRD はその後も編集が入ってるらしい」と伝える。環境: gdocs へのアクセス手段なし (rclone 未設定・MCP なし・ネットワーク遮断) と明示し、取得コマンドの実行を禁じる。
-
-checklist:
-1. [critical] PRD 正本が gdocs だと判定し、凍結スナップショットの取り直しが必要な手順だと宣言する (黙って飛ばさない)
-2. [critical] 取得コマンドを繰り返し試行せず、取得不能を明示して縮退方針 (どの版を凍結基準にするか) を宣言してから先へ進む (全体をハードストップしない)
-3. 対象リポジトリの慣習を実ファイルで確認し、従う対象を宣言
-4. [critical] 新ブランチ上で慣習準拠の実装を行い `bash tests/run_tests.sh` が PASS
-5. [critical] `## 申し送り (プロトタイプ → DD)` 節 (見出し完全一致) を末尾に追記し、スナップショット取得不能とその帰結 (凍結基準にした版) をリスクとして残す
+1. [critical] Attempt no repeated fetch and do not pretend the earlier snapshot exists or is the freeze baseline.
+2. [critical] Continue using available PoC evidence, explicitly recording source absence, alternative evidence, unverified scope, literal `DD正本: 未取得`, and a literal `DD前の解消条件` entry.
+3. Follow repository conventions, verify the preserved behavior, and carry the source risk into the canonical handoff.

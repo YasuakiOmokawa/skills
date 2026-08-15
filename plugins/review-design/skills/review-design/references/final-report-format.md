@@ -1,6 +1,16 @@
 # Final report format (Step 6)
 
-Choose the first matching route: (1) no plan, (2) plan edited at any point, (3) unedited with ⚠️ / Unknown / acceptable residual, (4) unedited and all green. Treat Unknown as an unresolved residual, never as green.
+Choose the first matching route: (0) stopped with unresolved reviewer ❌ / fatal, (1) no plan, (2) plan edited at any point, (3) unedited with ⚠️ / Unknown / acceptable residual, (4) unedited and all green. Treat Unknown as a residual, never as green. Repeated non-fatal items remain route 2 or 3; they never select route 0.
+
+## Unresolved route
+
+Condition: route 0. Use `保存先: <plan>.design-review.md` when a plan exists; otherwise use `保存: プランファイル不在のため skip`.
+
+```
+設計レビュー未完了。未解決:
+- <reviewer ❌ or fatal and why no grounded edit remains>
+<保存先または保存行>
+```
 
 ## Problem-free route
 
@@ -49,8 +59,6 @@ Step 4 の Edit と Step 6 の Write はどちらも保存先パスが無いた�
 保存: プランファイル不在のため skip
 ```
 
-「1 issue = 1 line」の粒度規則 (下記) は本テンプレートにも適用する。
-
 ### "1 issue = 1 line" granularity
 
 - Same logical issue rippling across multiple files / spots → **one line** (collapse to the root issue).
@@ -58,12 +66,7 @@ Step 4 の Edit と Step 6 の Write はどちらも保存先パスが無いた�
 
 ## In-context fallback notation
 
-This tag is added ONLY when the environment forced fallback for at least one of:
-
-- Parallel Review reviewers (Step 3)
-- Devil's Advocate (Step 5, subagent dispatch attempt failed due to env constraint)
-
-It is **NOT** added when DA simply ran in `inline default` mode. Readers must not confuse "ran inline by design" with "ran inline because independent dispatch was unavailable".
+Add the tag only when the environment forced reviewer or DA fallback, never for normal `inline default`.
 
 Tail format (append exactly one line at the end of the chat report and therefore at the end of the saved prefix; the saved-only audit sections follow it):
 
@@ -71,29 +74,7 @@ Tail format (append exactly one line at the end of the chat report and therefore
 (in-context fallback mode: <agent names slash-separated>)
 ```
 
-### Examples
-
-DA only fell back:
-
-```
-(in-context fallback mode: devil's-advocate)
-```
-
-All reviewers + DA fell back:
-
-```
-(in-context fallback mode: anti-pattern-checker / ddd-reviewer / hexagonal-reviewer / clean-architecture-reviewer / devil's-advocate)
-```
-
-## What NOT to include
-
-The final report must **not** include:
-
-- Per-reviewer verdict dumps
-- Devil's Advocate critique details beyond concise residual-risk facts
-- Feedback-loop re-Review procedure or per-iteration state
-
-These remain internal. The user-facing report uses exactly one route template above plus the optional fallback tail.
+Do not include per-reviewer dumps, intermediate DA critiques, or feedback-loop state.
 
 ## Step 6 の保存ファイル (`<plan>.design-review.md`)
 
@@ -108,7 +89,9 @@ These remain internal. The user-facing report uses exactly one route template ab
 
 ## Fatal 残存
 
-fatal 残存件数: 0
+fatal 残存件数: <N>
+reviewer ❌ 残存件数: <R>
+- <unresolved item, or 該当なし>
 
 ## Acceptable 残存リスク
 
@@ -123,6 +106,6 @@ fatal 残存件数: 0
 - <Step 5.4 で洗い出した hidden assumption (1-2 件)>
 ```
 
-- 「Fatal 残存」は Step 5 のフィードバックループが収束した時点の値であり、常に `0` (fatal が残っていればループが継続しているため到達しない)
+- 通常の完了 route は `N=0, R=0`。Unresolved route は実数と各指摘を記録する
 - 「Acceptable 残存リスク」は Step 5 最終ラウンドの DA acceptable、Step 3 の ⚠️、Unknown を 1 行 1 件で列挙する。Unknown は acceptable と断定せず、不足証拠と解消条件を書く。該当が 1 件もない場合も見出しを残し「該当なし」と書く。
 - 「Hidden assumption」は Step 5.4 で洗い出した前提を 1 行 1 件で列挙する。該当なしの場合も見出し行は残し「該当なし」と書く

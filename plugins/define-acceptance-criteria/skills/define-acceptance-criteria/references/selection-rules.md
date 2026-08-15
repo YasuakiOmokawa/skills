@@ -29,7 +29,7 @@
 
 ## observability 軸の特例
 
-全変更種別で**追加候補**として考慮可能。Critical 検出力を上げるための共通軸 (mece-plan-review の Red Team が `observability` お見合いで Critical 検出することがあるため、define-AC 段階で取り込むと精度↑)。observability は tier 軸数 (主軸数) にカウントしない (追加候補)。
+全変更種別で Critical 検出用の追加候補にできる。observability は tier 軸数 (主軸数) にカウントしない。
 
 ## 複数主種別・主軸超過時の主軸確定 (Step 2 詳細)
 

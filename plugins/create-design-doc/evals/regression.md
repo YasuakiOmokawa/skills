@@ -1,51 +1,38 @@
-# create-design-doc regression suite
+# create-design-doc regression
 
-skill 変更 PR では、白紙の fresh executor (general-purpose subagent) に SKILL.md パスとシナリオ + checklist を渡して再実行し、全 [critical] ○ を確認してから merge する。検証環境の約束: 他スキル起動 (/dry-ssot-text 等の品質パス、/map-user-stories 等) は「起動宣言 + 想定結果 1 行」で代替可。
+Run each fixed scenario with a fresh executor. All `[critical]` items must pass.
 
-## fixture (実行ごとに独立構築し、終了後に削除)
+## Complete handoff and template
 
-シナリオごとに別ディレクトリへコピーする (共有 fixture は並走で競合する)。
+Input: a plan with `## 申し送り (プロトタイプ → DD)`, a prototype Git repository, and a DD template. The handoff includes one chosen design with rationale, one rejected alternative, one scope-out, and one unresolved prototype contradiction.
 
-- `case/prototyping-projects/<案件名>/plan_<案件名>.md`: 冒頭メタ + 星取表 (実測値付き) + `## 申し送り (PoC → プロトタイプ)` + `## 申し送り (プロトタイプ → DD)` (所在 / 従った慣習 / 設計判断と根拠 + 採らなかった案 / PoC から変えた点 / スコープ外)
-- `case/prototyping-projects/<案件名>/prototype/`: 慣習準拠の小コード一式 + git 履歴 2 コミット (PoC スクリプト → 慣習準拠で書き直し。申し送り欠落時の再構成材料になる)。`TooManyRows` 未定義・`actor` 未使用・`attributes` 素通しなど**意図的な欠落**を仕込む (「プロトタイプ側の欠落・矛盾も未確定に挙げる」の検証対象)
-- `case/skills-config/create-design-doc/`: D1 / D3 はテンプレートを配置、D2 は**未配置のまま**にする (テンプレ欠如フォールバックが検証対象)。executor には「この実行では `~/.claude/skills-config` は `case/skills-config` を指す」と伝える (利用者の実ファイルに依存しない)
+1. [critical] Read the handoff and implementation evidence before writing; do not invent missing facts.
+2. [critical] Preserve every template heading, order, and number.
+3. Put the grounded decision/rationale, rejection, scope-out, and unresolved contradiction in their owned sections without changing the plan.
+4. Apply the named text-quality checks or their explicit fallback without changing template structure.
+5. [critical] Save `dd_<project-directory-name>.md`, report its path and unresolved items, and finish at the DD boundary without waiting for human LGTM or starting downstream work absent a separate request.
 
-## シナリオ D1: 中央値 — 申し送りあり + テンプレートあり
+## Missing handoff and template
 
-依頼文: 「<案件名> の DD を作って」(案件ディレクトリを提示)
+Input: a prototype Git repository and project plan have no handoff section, and the configured template is absent.
 
-checklist:
-1. [critical] `## 申し送り (プロトタイプ → DD)` 節と `prototype/` のコードを読んでから DD を作成し、実在するクラス / ファイル名が DD に反映されている
-2. [critical] テンプレートの節構成 (見出しと番号) を保った DD になっている (独自構成に差し替えていない)
-3. [critical] 設計判断が申し送りの根拠付きで転記され、採らなかった案が Did not adopt に残る
-4. [critical] DD 完成後 (人間: DD レビュー → LGTM) で停止し、タスク分解・Jira 起票など後続工程へ勝手に進まない
-5. 材料が無い節を捏造せず「該当なし」/「未確定」+ 理由で明示している
-6. 手順 4 が指定する文章品質パスの適用 (宣言代替可)
-7. DD が案件ディレクトリに `dd_<案件ディレクトリ名>.md` として保存され、パスが報告される
+1. [critical] Declare the template fallback and use exactly the six fallback sections.
+2. [critical] Reconstruct decisions, rationale, rejection, and scope-out only from implementation/diff/history evidence; keep unavailable facts unresolved.
+3. Do not write the reconstruction back to the plan.
+4. Save and report the canonical DD path, then finish without an approval loop.
 
-## シナリオ D2: エッジ — 申し送り節なし + テンプレート未配置 (2 つのフォールバックが同時)
+## Holdout: unavailable prototype PR
 
-依頼文: 「<案件名> のプロトタイプを設計書にして」(案件ディレクトリを提示)
+Input: the handoff names a remote PR, but network access and local prototype code are unavailable. The handoff itself contains a decision, rationale, and rejected option.
 
-checklist:
-1. [critical] テンプレート未配置を検出し「テンプレートなしで作成」と宣言して進行 (エラー停止・差し戻しなし)
-2. [critical] 申し送り節が無いことを検出し、コード / コミット履歴から設計判断・根拠・スコープ外を自分で整理してから DD を書く
-3. [critical] DD に設計判断 + 根拠 + 採らなかった案 (Did not adopt 相当) が含まれる
-4. [critical] DD 完成 + 人間のレビュー待ちで停止し、後続工程に進まない
-5. コードから読めない事項 (既存経路の件数、UI 仕様など) を推測で断定せず未確定として明示。再構成した申し送り内容をプランファイルへ書き戻していない
-6. 手順 4 が指定する文章品質パスの適用 (宣言代替可)
-7. DD がファイルとして保存され、パスが報告される
+1. [critical] Continue from the handoff instead of stopping or fabricating PR evidence.
+2. [critical] Mark code-dependent schema/details unverified and preserve the handoff's grounded decision and rejected option.
+3. Preserve the supplied template structure and report the saved path plus missing evidence.
 
-## シナリオ D3: ホールドアウト — プロトタイプ PR が取得不能
+## Holdout: unresolved pre-DD condition
 
-fixture 差分: 申し送りの所在を PR 番号のみにし (`internal/expenses#482`)、`prototype/` を置かない。`gh` / ネットワークは使用不可。
+The canonical handoff contains `DD前の解消条件: current PRD snapshot required`, and available evidence cannot resolve it.
 
-依頼文: 「<案件名> の DD を起こして」
-
-checklist:
-1. [critical] PR が取得不能でも作業を止めず、申し送り節を材料に DD を作成している
-2. [critical] テンプレートの節構成に沿っている
-3. [critical] 設計判断 + 根拠 + Did not adopt が申し送りから転記されている
-4. PR / コード未確認の事実を明示し、コードを見ないと確定しない具体 (request / response の詳細 schema など) を断定していない
-5. 人間の DD レビュー待ちで停止している
-6. DD がファイルとして保存され、パスが報告される
+1. [critical] Return `不足入力: DD前の解消条件 (current PRD snapshot required)` and create no DD file.
+2. [critical] In the paired resolved case, use the artifact that resolves the condition as PRD truth; use PR/diff/prototype only as implementation evidence.
+3. [critical] Do not downgrade the gate to an ordinary unresolved DD section or start downstream work.

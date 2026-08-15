@@ -30,6 +30,8 @@ Use, when available:
 
 If no preceding review exists, label a fallback review and inspect the diff for correctness, security/authorization, error paths, and applicable repository rules. Do not invoke another review workflow implicitly.
 
+Before classifying, reread the current source/target and revalidate every finding's exact diagnostic or reference predicate. If its location or evidence no longer matches, mark it `stale`, never auto-apply it, and report the unavailable evidence.
+
 A convention is mechanically decisive only when an explicit rule names it, comparable occurrences in the target file give one style at least a two-thirds majority, or sibling files excluding the target file give one style a strict majority. Ties, a single example, and absent peers are judgment calls or no finding.
 
 Run only project-configured lint commands. Do not fall back to globally installed tools. First collect diagnostics without fixes. If an autofix is considered, isolate its patch and discard any hunk outside changed lines or conflicting with the selected convention.
@@ -51,7 +53,7 @@ In review-only mode, apply nothing. Mark a finding as otherwise qualifying only 
 
 ## Apply and guard
 
-Apply candidates as separate minimal patches. After each logical batch, rerun the candidate-relevant lint/syntax/test guard and re-evaluate findings invalidated by earlier edits. The candidate guard must pass; record unrelated pre-existing diagnostics separately instead of treating them as candidate failures. On failure, remove only the hunks created by this skill and reclassify the finding as a proposal; never revert unrelated or pre-existing changes.
+Apply candidates as separate minimal logical batches and track the exact hunks created by each batch. After each batch, rerun the candidate-relevant lint/syntax/test guard and re-evaluate findings invalidated by earlier edits. The candidate guard must pass; record unrelated pre-existing diagnostics separately instead of treating them as candidate failures. If any exact edit in a batch or its guard fails, remove only the hunks already created by that batch, keep earlier passing batches, reclassify the failed batch's finding as a proposal, and report later findings as unprocessed. If that exact rollback cannot be isolated, stop and report the remaining hunks without reverting anything broader. Never revert unrelated or pre-existing changes.
 
 If no passing guard is available, do not auto-apply. Report `lint 未設定` or `テスト未検証` as an unchecked guard, not as a finding.
 
