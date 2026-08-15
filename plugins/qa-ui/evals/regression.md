@@ -1,7 +1,5 @@
 # regression eval (empirical-prompt-tuning 収束時保存)
-再実行記録: 2026-07-26 (v1.25.0 PR / Claude 5 世代ガイドライン適合)。automation モードのラウンド 2 以降を「検証対象 QA-ID」入力による差分絞り込みへ統一 (ui-evaluator の「毎回全項目検証」規定と SKILL.md Step 4 絞り込みの矛盾を解消、automation-mode.md テンプレートに入力欄を配線)。Step 6 exit-1 の正準見出し「## UI QA 部分完了 (人間確認事項あり) または未完了」の転記を SKILL.md に明文化 (bash echo のみだった SSOT ギャップ)。全 12 シナリオを fresh executor で再実行、Step 6 編集を通る S4/S5/S7 は修正後ツリーで再実行し全 [critical] ○ (S5 は見出し明文化前 ×2/2 → 後 ○2/2)。絞り込みにより PASS 済み項目のリグレッション検出が evaluator の計画外差異報告頼みになるトレードオフを記録 — 実測で問題が出たら automation のみ全項目再検証へ戻す選択肢あり。
 
-収束記録: 2026-06-12 (v3.28.0 PR)。Iter1-3 で fresh executor が全 [critical] ○ / accuracy 100% / retries 0。
 用途: **regression 検出器** (capability 改善の信号としては使わない)。本 skill を変更する PR では
 fresh executor (blank slate, Task dispatch) で下記シナリオを再実行し、全 [critical] ○ を確認してから merge する。
 実行方法は empirical-prompt-tuning の「Subagent invocation contract」に従う (成果物はインライン、ファイル編集禁止)。
@@ -22,7 +20,6 @@ fresh executor (blank slate, Task dispatch) で下記シナリオを再実行し
 
 ---
 
-以下は v3.1 (QA-ID 台帳ゲート方式) 追加分。収束記録: 2026-07-05。fresh executor (Task dispatch) で 4 シナリオ × Iter1-3 の 12 実行が全 [critical] ○ / accuracy 100% / retries 0。
 
 ## シナリオ: 検証不能(真の制約) がループを止めない (Step 5 判定、automation モード明示指定時)
 
@@ -63,7 +60,6 @@ fresh executor (blank slate, Task dispatch) で下記シナリオを再実行し
 
 ---
 
-以下は v1.11.0 (preflight 契約参照) 追加分。収束記録: 2026-07-05。fresh executor で Iter1-3 全 [critical] ○ / retries 0 (Iter1 で判定順・パス結合の曖昧さを検出し SKILL.md 修正後に再収束)。
 
 ## シナリオ: preflight 参照で URL・テストデータ・権限アカウントを解決する (Step 2 / Phase A・B、automation モード明示指定時)
 
@@ -77,7 +73,6 @@ automation モードが明示指定されている。$ARGUMENTS はパスのみ 
 
 ---
 
-以下は v1.12.0 (Orchestrated モード / escalation ledger) 追加分。収束記録: 2026-07-05。fresh executor で Iter1-3 全 [critical] ○ / retries 0 (Iter1 で採番規則・語彙揺れ等の仕様ギャップを検出し修正後に再収束)。
 
 ## シナリオ: Orchestrated モードで Critical 1件が他 QA-ID の完了を止めない (Step 5 / Step 6、automation モード明示指定時)
 
@@ -91,11 +86,10 @@ Task 起動プロンプトに「orchestrated モードで実行。escalation は
 
 ---
 
-以下は v1.14.0 (人間委譲既定化) 追加分。収束記録: 2026-07-06。fresh executor で Iter1-3 の 3 実行が全 [critical] ○ / retries 0。
 
 ## シナリオ: 人間委譲（既定）で実行手順書を提示する (Step 1 / Step 4)
 
-台帳は QA-H-01〜QA-H-03 の 3 QA-ID（手段 = manual）が pending。同ディレクトリの `<プラン名>.preflight.md` にベース URL = `http://localhost:3000` / ログイン手段 = 「テストユーザー test@example.com でログイン」/ テストデータ準備手順 = `bin/rails db:seed:qa_fixture`（Phase A で実行済み）が記載されている。ユーザーからの起動指示は「UI を確認して」のみで、automation・ui-evaluator・ブラウザ等の語は含まれない。エージェントが Step 1〜Step 4 で取るアクションを答えさせる。
+台帳は次の 3 QA-ID（手段 = manual）が pending: QA-H-01「`/settings/profile` を開き氏名を変更して保存 → 成功トーストと変更後の氏名を確認」、QA-H-02「必須の氏名を空にして保存 → 必須エラーを確認」、QA-H-03「画面を再読込 → 保存済み氏名が維持されることを確認」。出典は順に AC-1 / AC-2 / AC-3。同ディレクトリの `<プラン名>.preflight.md` にベース URL = `http://localhost:3000` / ログイン手段 = 「テストユーザー test@example.com でログイン」/ テストデータ準備手順 = `bin/rails db:seed:qa_fixture`（Phase A で実行済み）が記載されている。ユーザーからの起動指示は「UI を確認して」のみで、automation・ui-evaluator・ブラウザ等の語は含まれない。エージェントが Step 1〜Step 4 で取るアクションを答えさせる。
 
 ### Requirements checklist
 1. [critical] 実行モードを人間委譲（既定）と判定し、`mcp__chrome-devtools-direct__list_pages` を含む ChromeDevTools MCP のツールを一切呼び出さない
@@ -105,11 +99,10 @@ Task 起動プロンプトに「orchestrated モードで実行。escalation は
 
 ---
 
-以下は v1.18.0 (委譲実行 / 分割実行契約) 追加分。収束記録: 2026-07-07。fresh executor (Task dispatch) で Iter1-2 + hold-out 1本の計 5 実行が全 [critical] ○ / accuracy 100% / retries 0。Iter1 の時点で既に baseline が全項目 ○ だった (subagent は単一ターン内で文字どおり「待つ」ことが構造的にできず、既定動作でも「手順書を返して終了」に自然収束するため)。ただし挙動が仕様として明文化されていなかったため `## 委譲実行` 節を新設し、分割実行契約・入力解決の優先順位を明記した。hold-out シナリオ (ベース URL 未解決) で accuracy 低下なし (過学習兆候なし)。
 
 ## シナリオ: 委譲実行 (Task dispatch) で Step 4 人間委譲の分割実行契約に従う (人間委譲既定モード)
 
-あなたは qa-ui の実行を Task で委譲された subagent である（AskUserQuestion が利用可能ツールに無い）。プランファイル・台帳（QA-H-01〜03 manual pending, QA-E-01〜02 auto pending）・preflight（ベース URL・ログイン手段・テストデータ準備手順いずれも記載済み）が揃っている。起動プロンプトに automation・ブラウザ等の語は含まれない。QA を実行し、完了したら結果を報告するよう指示されている。
+あなたは qa-ui の実行を Task で委譲された subagent である。QA-H-01「`/settings/profile` で氏名を変更・保存し成功トーストと変更値を確認」、QA-H-02「氏名を空にして必須エラーを確認」、QA-H-03「再読込後も保存値が維持されることを確認」が manual pending、QA-E-01〜02 は auto pending。preflight は URL `http://localhost:3000`、テストユーザーでのログイン、seed 実行済みを記載する。起動プロンプトに automation・ブラウザ等の語は含まれない。
 
 ### Requirements checklist
 1. [critical] 「automation で」等の明示指示が無いため Step 1 で人間委譲モード（既定）と判定し、ChromeDevTools MCP を一切使用していない
@@ -119,7 +112,7 @@ Task 起動プロンプトに「orchestrated モードで実行。escalation は
 
 ## シナリオ: 委譲実行 + orchestrated 宣言時も Step 4 の分割実行契約は変わらない
 
-あなたは qa-ui の実行を Task で委譲された subagent である。起動プロンプトに「orchestrated モードで実行。escalation は `<path>` に記帳して続行せよ」の明示指示があり、シナリオ・入力は前シナリオと同一（人間委譲モード、QA-H-01〜03 manual pending）。
+あなたは qa-ui の実行を Task で委譲された subagent である。起動プロンプトに「orchestrated モードで実行。escalation は `<path>` に記帳して続行せよ」の明示指示がある。人間委譲モードで、QA-H-01「`/settings/profile` で氏名を変更・保存し成功トーストと変更値を確認」、QA-H-02「氏名を空にして必須エラーを確認」、QA-H-03「再読込後も保存値が維持されることを確認」が manual pending。preflight は URL `http://localhost:3000`、テストユーザーでのログイン、seed 実行済みを記載している。
 
 ### Requirements checklist
 1. [critical] orchestrated 宣言があっても Step 4 の人間委譲初回手順書提示には「escalation ledger に記帳して続行」を適用せず、実回答が無い状態で判定を進めず、通常どおり手順書を最終メッセージとして返して終了している（orchestrated の読み替えは Step 5 以降の判定分岐が対象であり Step 4 の初回提示には及ばない）
@@ -137,7 +130,6 @@ Task 起動プロンプトに「orchestrated モードで実行。escalation は
 
 ---
 
-以下は v1.19.0 (正本抽出結果直接読込みフォールバック) 追加分。収束記録: 2026-07-07。fresh executor (Task dispatch) で median/edge Iter1-2 + hold-out 1本の計 5 実行が全 [critical] ○ / accuracy 100% / retries 0。Iter1 時点で既に全項目 ○ だったため Iter2 は再現性確認のみ。
 
 ## シナリオ: 正本抽出結果直接読込みフォールバックで検証項目を FIG 行から列挙する (Step 3、automation モード明示指定時)
 
@@ -146,20 +138,11 @@ automation モードが明示指定されている。対象は PoC プランフ�
 ### Requirements checklist
 1. [critical] 検証項目を FIG-02・FIG-04（「差分」の2件）から列挙し、「一致」の3件は対象外とする
 2. [critical] 発火する分岐が「正本抽出結果直接読込みフォールバック」であり、AC無しモード（汎用 git diff ベースの推論）に縮退していないと明言する
-3. 出力冒頭に警告文言「⚠️ QA プラン/台帳なし: 正本抽出結果直接読込み (台帳・ゲート無効)」を含める
+3. QA-ID 台帳と ledger gate が無効な fallback であることを明確に警告する
 4. この分岐が QA-ID 台帳前提の Step 1 人間委譲/automation 判定の対象外であり、現行どおり automation（ui-evaluator）で検証する旨に言及する
 
-収束記録: 2026-07-11 (description/keywords の人間委譲既定への同期)。plugin.json の description/keywords を SKILL.md の人間委譲既定に同期した (SKILL.md 本文は無変更)。人間委譲既定の代表シナリオ (Step 1-4 机上) を fresh executor で再実行し全 [critical] ○ / 新規不明点 0 で後方互換を確認した。
 
-収束記録: 2026-07-17 (v1.23.0 progressive disclosure 分割)。SKILL.md 483 行を 311 行へ再配置し、委譲実行 / automation モード / 台帳・ゲート Bash を references 3 ファイル (delegated-execution.md / automation-mode.md / ledger-gates.md) へ分離した (挙動変更なし)。本ファイルの全 12 シナリオを fresh executor (Task dispatch, blank slate) で再実行し全 [critical] ○ / retries 0。分割後の reference 到達 (automation の Gotchas 判定・ledger-gates の 0 examples 判定・delegated-execution の分割実行契約) も各シナリオ内で確認した。executor 1 体が orchestrated 時の Critical の台帳記帳トークン (`要人間確認` — orchestrated-mode.md L20 — と SKILL.md Step 6 の manual 由来 `FAIL(Critical)` 残存分岐) の揺れを指摘した — 旧版から存在する記述で外形挙動 (保留・継続・部分完了上限) は一致するため本 PR では未修正、一本化は別 PR で検討。
 
-収束記録: 2026-07-18 (SKILL.md/agents/references の regression 再検証、no-fix)。SKILL.md・agents/ui-evaluator.md・references 4 ファイル (automation-mode / delegated-execution / ledger-gates / orchestrated-mode) に対し、本ファイルの全 12 シナリオを fresh executor (Task dispatch, blank slate) で 1 ラウンド再実行し全 [critical] ○ / accuracy 100% / retries 0。Iter-0 静的チェックで frontmatter description の謳うトリガー・範囲 (人間委譲既定 / automation オプション / 3 フォールバック / 台帳ゲートと機械集計完了判定) と本文 Step 1-6 の実カバーに乖離なしを確認し、executor 実行前の修正は不要だった。ChromeDevTools MCP が無い環境のため automation 系シナリオは inline 供給の ui-evaluator 結果を判定入力とする机上再現で実行し (S12 は MCP 非依存の Step 3 分岐判定に限定)、実ブラウザ必須で blocked としたシナリオは無し。SKILL.md/agents/references への修正は入れていない (converged, no-fix)。executor が挙げた新規指摘は (a) fixture/環境由来の scaffolding (S1 被験ソース欠如で最小修正が記述止まり・S6 preflight が権限片側のみ記載・S9 read-only sandbox で seed 実行不可・S12 MCP 不可) と (b) 挙動を歪めない軽微な記述明確化余地 (S2 automation で 手段=manual の台帳ラウンド列番号・S3 混在ラウンドで PASS 側 QA-ID の記帳) のみで、いずれも全 executor が正しい挙動に到達しており修正対象外と判断した (regression=劣化検出器の用途に照らし過学習を避ける。S2/S3 の一本化は 2026-07-17 記録が先送りした記述揺れと同系で別 PR 検討)。
-
-記録: 2026-07-25 (opus5/fable5 静的最適化パス)。Iter 0 (description/body 整合) gap なし — description の謳う既定人間委譲・automation opt-in・3 系フォールバック・ラウンド上限と狭い例外・orchestrated 集約は全て本文に対応。ルーブリック走査の結果、無変更と判定: 重複は既に「集約」方式で SSOT 化済み、⚠️ 強調はハザードゲート (URL/認証ハードコード禁止) のみ、自己検証足場なし、委譲実行の判定基準も literal (AskUserQuestion 可用性) で明示済み。empirical 検証は session の subagent dispatch 上限到達のためスキップ (利用者承認済みの縮小完了)。次回スキル変更 PR では本 suite の fresh executor 再実行を通常どおり行うこと。
-
----
-
-以下は v1.27.0 (短寿命トースト Gotcha 行追加) 分。収束記録: 2026-08-08。baseline (行なし) 2 シナリオで [critical] 全○ながら両 executor に「初見⇔workaround既知」の分類振動 (retries 1+1) と workaround 自力導出コスト (steps 6-10、app+sonner ソース実読) を観測。行追加後の iter1 (4 シナリオ: 空振り後リカバリ / 10 秒エラーの除外条件 / 分類判定 / 初見 IdP regression) + iter2 (安定性 + 事前計画 hold-out) の 6 実行で [critical] 全○ / accuracy 100% / retries 0 に収束。除外条件 (10 秒 + closeButton は直接撮影) の overreach なし、初見 IdP fixture への誤マッチなし。親側 Step 5 シナリオ群は evaluator の分類出力を入力に取るため、初見 fixture の分類が不変であることの evaluator 側検証で互換を確認 (親側ロジックは本 PR で無変更)。残課題として記録: pause 中の duration 実測手順 / 片道操作の再試行前提 / 可変部文言の一致粒度は行スコープ外の既存論点。
 
 ## シナリオ: 短寿命トーストの証跡空振り (ui-evaluator 側判断)
 

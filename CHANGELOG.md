@@ -5,6 +5,13 @@ All notable changes to omokawa-skills will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v6.3.0 - 2026-08-15
+
+### Changed
+
+- 15 skills を frontier-model 向けに縮約し、重複説明・履歴・実行環境固有の制御を削減。判断境界と安全ゲートを自己完結させた。
+- 各 skill の fixed regression を fresh executor で再検証し、description・plugin metadata・marketplace metadata を現行契約へ同期した。
+
 ## v3.100.0 - 2026-08-08
 
 ### Changed

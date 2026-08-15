@@ -23,12 +23,13 @@ main agent は BB / WB / Red Team の **JSONLines 出力** をパースし、本
 ### 分析サマリー
 - 分析日時: YYYY-MM-DD
 - 対象リポジトリ: ${REPO_NAME}
-- 実行メタ: tier=[standard/deep] / dispatch [D]体 / 経過 [T]分 (D = 起動した subagent 数、T = `date +%s` 現在値と `${T_START}` の差を分単位切り上げ。今後の検出率・コスト実測の基礎データ。tier を上流記録から上書きした場合は `tier=deep (上流 standard を auth 強制で上書き)` のように根拠を括弧内に併記する — SKILL.md tier 節の上書き記録義務の記録先はこの行)
+- 実行メタ: tier=[standard/deep] / dispatch [D]体 (D = 起動した independent executor 数。tier を上流記録から上書きした場合は理由を括弧内に併記する)
 - ACカバレッジ: N/M項目充足
 - 漏れ件数: X
 - 重複件数: Y
 - 判定: MECE OK / 要修正（Critical N件）
 - 判定不能 (Unknown): [Red Team 出力に「判定不能 (Unknown)」がある場合、理由付きで列挙。0 件ならこの行ごと省略]
+- レビュー範囲外: [Red Team が関与シグナルなしとした一般領域を1行で列挙。なければ省略]
 ```
 
 **分析サマリーの集計定義 (本ファイルが SSOT)**:

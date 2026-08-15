@@ -1,218 +1,36 @@
-# PR description 文体原則・セクション分量・セルフチェック
+# PR body contract
 
-PR description はレビュアーが**最初の 3 秒で「読む気が起きるか」を判定する**場所。斜め読みで意図が掴めない description は後続のコードレビュー解像度を下げる。分量の既定は**全セクション 1 行サマリー**で、詳細展開はユーザーが明示指示したセクションに限る（「分量の既定」節が SSOT）。
+Before drafting, list the material reader-visible outcomes and operational facts. Do not enforce a minimum. If the template has an essence-list section such as `このPRでやること`, place them there as a numbered list; otherwise compress them across the existing sections without adding a heading.
 
-## Pre-work: 本質リスト (mandatory)
+## Default shape
 
-description 本文を書き始める **前に**、PR の本質を **bullet リスト** (点数は SKILL.md tier 表が SSOT) として scratch 出力する。各 bullet は「何を spec で固定するか / 何が動くようになるか / どのバグが解消するか」のような **読者目線の事実** を 1 行で。点は能力面 (何ができるようになるか) または読者が知るべき運用事実 (スキーマ変更・rollback 影響など deep tier の分解観点) で立て、実装面 (エンドポイント・画面・クラス) で立てない ([B] のコード情報禁止と衝突して分配先を失うため)。
+- Preserve every template heading, order, and HTML comment. Do not add headings.
+- Except template checklists/revert blocks, essence lists, and multiple explicit scope-outs, each section is one physical line by default.
+- Expand only the section the user explicitly named. Keep its summary as the first line, then use prose for rationale, rejected alternatives, tradeoffs, or measured detail.
+- Leave an inapplicable section blank with one blank line. Do not write filler such as `特になし`, `該当なし`, or `自明な観点なし`.
+- Mark a template checkbox only when verified. For an either/or branch, mark exactly the applicable choice.
 
-これを最初にやる理由:
-- plan / design doc から派生する PR では、設計時の独自語彙（層番号 / AC 番号 / フェーズ用語 / ギリシャ文字ラベル）が無意識に description に混入する。本質リストが plan 由来語彙の混入を物理的に阻止する
-- 「やったこと」「このPRでやること」「なぜやるのか」を独立に書こうとすると同じ概念を 3 回違う角度で書く重複が発生する。本質リストを SSOT にすることで、各セクションは「リストを利用者目線 / 事実 / 動機にどう翻訳するか」の単純作業になる
+## Content ownership
 
-出力先:
-- テンプレートに「このPRでやること」のような **本質列挙系セクション** があれば、そこに本質リストをそのまま番号付きリストで貼る（standard 1-3 個、deep 5-7 個）。この番号リストは [C] の bullet 禁止・書式表「1 文 50-80 字」の**明示的例外**とする。見出しの判別: 「このPRでやること」「このPRの目的」= 本質列挙系（番号リスト可）、「やったこと」「概要」= ステータス報告系（1 文。書式表の定義どおり）
-- 本質列挙系セクションが**無い**テンプレでは、tier によらず「やったこと」**1 文に畳み込む**（番号リストへの格上げはしない — 格上げは本質列挙系セクションが実在する場合に限る）。各点の語彙は読者目線の一般語に置換してよい（例: `notification_preferences` → 「専用テーブル」。[A] の本質リスト一致は「各点が文中に復元可能か」で判定）。1 文に収めきれない残点は「設計判断」「動作確認結果」など該当セクションのサマリー行へ分配する
-
-OK 例（spec 追加 PR）:
-```
-### このPRでやること
-
-以下 2 点を request 層で固定する spec を追加する。
-1. **enqueue 条件**: 先行 PR で変えた `SyncLicenseJob` の enqueue 条件が caller-site で正しく動くこと
-2. **team 隔離 (セキュリティ指摘)**: 別チームの id を URL に入れても `ExternalApi::Client.new` にログインチーム外の tenant_id が渡されないこと
-```
-
-NG（plan 由来 internal 語彙の持ち込み）:
-```
-セキュリティ指摘の 4 層担保 (γ. CustomCop / β. DB schema / α. request spec / 構造) のうち α 層を新規追加し、先行 PR でマージ済の caller 挙動を request 経路から固定する。
-```
-- 「4 層担保」「α 層」「caller 挙動」のような plan の internal 番号体系・抽象動詞で本質を覆い隠している
-- 改善: 上記 OK 例のように **「何が caller-site で固定されるか」を読者目線の具体 fact 2 点に分解** して列挙する
-
-リストが 5 個以上に膨らむ場合は PR スコープが広すぎる兆候 — **ただしこれは standard tier の既定**。**deep tier (migration / breaking / multi-domain 等) では正常な分解結果**で scope 過大ではない。standard で 5+ なら PR 分割を再検討するか「やらなかったこと」候補に振り分ける。(この 5+ 解釈ルールは本節が SSOT。点数自体は SKILL.md tier 表が SSOT)
-
-deep の点数拡張は scratch の分解精度と Step 9 の検索・検証観点を上げるためのもので、本質列挙系セクションが無いテンプレでは body 分量を standard と変えない（1 文畳み込み + 残点分配は tier 共通。「deep なのに body が増えない」は正常で手順漏れではない）。
-
-## 文体鉄則 (6 つ)
-
-1. **コードから読めることは書かない（最優先）**: 変更ファイル名・追加関数名・パラメータ追加・import 追加・helper 名・削除依存モジュール名など、diff を見れば分かる**付随識別子**は description に書かない。例外: PR の主題そのものを指す 1 シンボル（例: `Team#concludable_docs_count`）はサマリー行の意図アンカーとして書いてよい。分量は「分量の既定」節に従う（全セクション 1 行サマリーが既定）
-2. **斜め読みで意図が掴める構造**: 各セクション 1 行目だけで PR の全貌を再構築できること
-3. **重複禁止**: 同じ事実を 2 箇所に書かない。特に「やったこと」と「なぜやるのか」の言い換え重複に注意（事実=手段、なぜ=利用者目線の動機）
-4. **常体・動詞で締める**: 「だ・である調」統一。「〜実装した」「〜採用した」など動詞の終止形。敬体禁止
-5. **書かない勇気**: 該当しないセクションは見出し+空行で残す。「特になし」「該当なし」「適切に対応」のような埋め文は禁止
-6. **AI生成の初稿を声に出して読み直してから投稿**: 違和感のある語を自分の言葉に直す
-
-## NG 表現
-
-- 常時禁止: 「以下に〜を示す」「具体的には」「ポイントとして」「重要なのは」「適切に」「効率的に」「最適な」「〜と考えられる」「〜と思われる」
-- 同一段落で 2 回以上禁止: 「〜のため」「〜することで」「〜することにより」（句読点直前の節末理由用法のみ。`〜のために動作する` のような名詞用法は対象外）
-- 装飾の機械使用禁止: 絵文字（⚠️ 📝 🔧 ✅ 🎯）をセクションマーカーとして連発しない / `**強調**:` 形式の太字bullet は 1 セクション最大 2 つまで
-
-## NG / OK 対比例（実 PR ベース）
-
-NG（bullet 羅列・ファイル名と技術ディテールを列挙）:
-```
-## やったこと
-- `proxy.ts`: `/auth` を常に taimei-auth へ redirect する分岐を追加 (cookie 検証スキップ)。`signUpUrl` パラメータを追加し sign-up 完了時に `/auth/after-signup` に着地させる
-- `proxy.ts` + `package.json` + `bun.lockb`: `better-auth` 依存を削除
-```
-
-OK（bullet 列挙せず 1 行で意図のみ）:
-```
-## やったこと
-/auth 入口を常に taimei-auth へ委譲し、better-auth 依存と auth compose を taimei から剥がした。
-```
-
-差分: 1 行で PR 全体の意図を言い切る / ファイル名・helper・置換 API などコードから読める情報は全排除 / 採用パターン名は「設計判断」へ退避するか捨てる。
-
-## 分量の既定: 全セクション 1 行サマリー
-
-定型セクション（Revert 手順 / セルフレビューチェックリスト）を除き、**各セクションは 1 行サマリーだけで書く**。サマリー行は「そのセクションで読者が読む唯一の 1 行」として、判断の要点・キー数値まで含めて言い切る。複数文の段落・表・ログ・コードブロックは既定では書かない。行数の例外は 2 つだけ:
-
-- 本質列挙系セクション（「このPRでやること」）の番号リスト（Pre-work 節の規定）
-- 「やらなかったこと」の複数項目（1 項目 1 行。「詳細展開書式」節参照）
-
-**詳細展開はユーザーが明示指示したセクションに限る**:
-
-- 指示の経路: skill 呼び出し時の `$ARGUMENTS` / セッション中の発話（「設計判断は詳しく」「動作確認は実測表も載せて」）/ PR 作成後の依頼（post-create-edit.md の手順で本文更新）
-- 展開対象になりやすい素材: 棄却案が複数ある設計判断、性能 PR の実測値・EXPLAIN 結果、複数ケースの動作確認ログ
-- **自己判断で展開しない**。「該当事実が豊富」「重要そう」「レビュアーに親切」は展開理由にならない。素材が session にあれば本文には書かず、完了報告で「設計判断: 棄却案 2 件を展開可能」のように伝える
-
-1 行サマリーの例（perf PR）:
-
-- やったこと: `Team#concludable_docs_count の除外サブクエリを NOT IN から相関 NOT EXISTS に変え、Flipper で段階切替できるようにした。`
-- 設計判断: `相関サブクエリは既存 Documents::Filter の arel.exists を踏襲し、旧 NOT IN 経路は段階ロールアウト用に温存した。`
-- 動作確認結果: `spec 7 例で Flipper on/off の件数一致を検証、検証環境の実測で 42,636ms が 7,181ms に短縮（部分インデックス PR 併用時）。`
-
-## セクション分量対比表
-
-| タイプ | 分量目安 | 該当セクション | 空欄許容 |
-|---|---|---|---|
-| 簡潔 | **全項目 1 文で完結**（bullet・複数文の段落を並べない）。コードから読める事実は書かない。複合 Issue / Design Doc リスト等のみ bullet 使用 | ステータス報告系（関連 Issue / やったこと / なぜやるのか / レビューしてほしい観点 / 動作確認結果） | 原則不可。**trivial change（typo / コメント / 文言修正）例外**: 「動作確認結果」「レビューしてほしい観点」は (a) 1 行固定 fallback（`目視確認のみ` / `自明な観点なし`）、または (b) 空欄、を許容。「やったこと」「なぜやるのか」は trivial でも必ず 1 行で埋める |
-| 詳細 | **既定は 1 行サマリー**（判断の要点を 1 文で言い切る。「やらなかったこと」は 1 項目 1 行）。**ユーザーが詳細展開を指示したセクションのみ**理由・代替案・トレードオフ・スコープ外判断根拠を散文展開（「詳細展開書式」節） | 説明・議論系（**設計判断 / やらなかったこと** / 背景 / 影響範囲 等） | 該当事実が無ければ見出しのみ残し空欄可。「特になし」と書かない |
-| 定型 | テンプレ準拠。checkbox は 2 型で扱う — 完了宣言型（セルフレビュー等）は**事実確認できた項目のみ `[x]`**・セッションで観測できない項目は未チェックのまま残す（空チェックは虚偽記載より安全）。分岐選択型（Revert 手順の択一等）は**該当する分岐 1 つに `[x]`** | Revert 手順 / セルフレビューチェックリスト 等 | 不可 |
-
-テンプレートに無い見出しは追加しない。有る見出しは削除せず、空欄でも残す。
-
-## テンプレート内 HTML コメント (`<!-- ... -->`) の扱い
-
-- テンプレート内 `<!-- ... -->` コメントは **原文をそのまま残す**（説明・プレースホルダ・サンプルが含まれる）
-- migration 無しの場合でも rollback サンプルブロックは削除しない
-
-## 簡潔セクション書式表
-
-| 見出し | 役割 | 書式 | NG / 退避先 |
-|---|---|---|---|
-| 関連 Issue, Design Doc | チケット・先行 PR・DD のリンク | 単一なら 1 行（`related #1234`、推測不能なら `related -`）、複数なら bullet | 内容要約しない（本文の他セクションを解読するのに必要な関係ラベル — `(先行マージ)` 等 — の 1 句付記は可） |
-| やったこと | PR 全体の意図（タイトルの文章化版） | **1 文 50-80 字、句点で締める** | 動機・採用パターン・代替案・括弧補足は書かない。退避先: 設計理由 → 「設計判断」、スコープ外 → 「やらなかったこと」 |
-| なぜやるのか | 利用者目線の動機（誰がなぜ困っていたか / 何を可能にしたいか） | 1 文または 1 段落 2 行以内、bullet 化しない | 「やったこと」の言い換え禁止 |
-| レビューしてほしい観点 | 不安箇所・判断を仰ぎたい点 | 1 行（例: `eager_load の選択が適切か`） | 「テスト OK」など自明事項 |
-| 動作確認結果 | 確認手段 → 結果の事実 | 1 行（例: `curl で cookie 有/無 5 ケース全て期待通り`）。キー数値はサマリー行に含めてよい | ケース列挙 bullet / 実測表・ログ・コードブロック（詳細展開指示時のみ可）。「spec 追加した」など diff から読める事実 |
-
-セッションに明示の不安箇所が無い場合、「レビューしてほしい観点」は 設計判断の最重要トレードオフ → migration / rollback 影響 の順で導出する。導出できるのは設計判断・diff に**実在する**具体的なトレードオフ・影響だけで、一般論しか書けなければ空欄にする（空欄が導出に優先する）。
-
-「なぜやるのか」の明示素材がセッションに無い場合は、変更が解消する利用者の不便を機能の性質から 1 文で導出する（推測を膨らませない）。
-
-trivial change の「やったこと」例文:
-- typo: `README のセットアップ手順の表記 typo を修正した。`
-- コメント: `OrderService の責務記述コメントを実装と一致するよう更新した。`
-- 文言: `エラー画面のメッセージを「サーバーエラー」から「処理に失敗しました」に置換した。`
-
-動作確認結果の判断マトリクス（**「テスト OK」「特になし」を捻り出すくらいなら fallback / 空欄を選ぶ**）:
-
-| change 規模 | context あり | context なし |
+| Section role | Include | Exclude |
 |---|---|---|
-| trivial | 1 行で「手段 → 結果」 | `目視確認のみ` 固定 fallback または空欄 |
-| 非 trivial | 1 行で「手段 → 結果」 | `ローカルで <変更箇所> を手動確認`（捏造的な spec / CI 言及はしない） |
+| related issue/DD | verified links and one relationship label | summaries |
+| what changed | reader-visible intent/outcome | filenames, helpers, imports, parameters, implementation inventory |
+| why | user/business problem enabled or removed | restatement of what changed |
+| design decision | selected approach and decisive rationale | unrelated implementation details |
+| review focus | one concrete tradeoff or risk grounded in the diff | generic requests |
+| verification | method, result, key condition/number | invented tests, raw logs, case lists |
+| not done | explicit scope-out, reason, and known destination | speculative omissions |
 
-実測が複数条件にわたる場合、動作確認結果のキー数値は「現行本番のベースライン → ロールアウト後の目標構成」のペアを代表値とし、前提条件を括弧で注記する（例: `42,636ms が 7,181ms に短縮（部分インデックス併用時）`。他条件の実測は完了報告の「展開可能」に回す）。
+A principal symbol may appear once when it is the PR's subject. Otherwise prefer reader vocabulary over identifiers. If motivation is not explicit, infer only the immediate user inconvenience implied by the behavior; do not invent business context.
 
-**trivial 固定 fallback 一覧** (本表で明示されたもののみ Step 9 [D] 埋め文禁止の例外として認める。他に「自明な観点なし」「特になし」「該当なし」等を勝手に追加しないこと):
-- 動作確認結果: `目視確認のみ`
-- レビューしてほしい観点: 1 行で書けなければ **空欄** (固定 fallback 文言は設けない、Step 9 [D] 禁止対象)
+For performance evidence, summarize `before → after` with the decisive condition in one line unless detail was requested. For trivial verification with no observed result, use `目視確認のみ` or leave blank. Never claim a local or CI check that was not observed.
 
-「自明な観点なし」「特になし」「該当なし」は [D] 埋め文として **禁止**。書けないなら空欄にする。
+Scope-outs must be explicit in the session/issue/diff and still absent from the final diff. If their destination is unknown, say `未定`; delete stale or unrelated scope-outs.
 
-## 詳細展開書式
+## Final audit
 
-既定は 1 行サマリー（「分量の既定」節）。以下の「該当事実」は既定モードではサマリー行の材料と完了報告の「展開可能」判定に使い、散文展開は**ユーザーが詳細展開を指示したセクション**にだけ適用する。展開時もサマリー行を 1 行目に残し、その直下に散文を追加する。
-
-### 設計判断
-
-該当事実（サマリー行と展開の材料）:
-- 既存パターンと異なる実装をした場合: 違いと理由
-- 複数の実装方法を検討した場合: 選んだ方法と代替案の却下理由
-- トレードオフがある場合: 何を優先し何を犠牲にしたか、判断根拠
-- セッションコンテキストに設計判断議論が含まれる場合
-
-既定（1 行サマリー）: 該当事実のうち最も判断の重い 1 点を 1 文で言い切る（例は「分量の既定」節）。棄却案の本数や実測の詳細は書かず、完了報告の「展開可能」列挙に回す。
-
-展開指示時の書き方優先順:
-1. **第一優先**: 散文で完結（bullet なし）。複数段落で構成してよい
-2. **第二優先**: 散文 + 末尾の太字bullet **1〜2 つ**
-3. **NG**: bullet を 3 つ以上並べる / bullet だけで構成 / 理由を 1 行で済ませる
-
-展開時の段落構成: 1 段落目で**選択した結果**（= サマリー行）、2 段落目以降で**理由・代替案・トレードオフ**を 1 つずつ展開。
-
-### やらなかったこと
-
-該当事実（これに該当するものだけ書く）:
-- セッションコンテキストに「やらなかったこと」「スコープ外」として明示された議論
-- コミットメッセージや diff コメントに「TODO」「後続対応」「スコープ外」明示
-- 関連 Issue 本文に「対象外」「別 PR で対応」記載
-- 上記いずれにも該当しなければ **空欄のまま**（自分の想像で補完しない）
-
-既定（1 項目 1 行）: 「何をやらなかったか + なぜ + 次にどこで扱うか」を 1 文に圧縮する（例: `require_token? の重複解消は auth middleware 全体リファクタとセットで扱うべきため見送り、後続 XPROJ-474 で対応する。`）
-
-展開指示時: 1 項目につき以下 3 点を散文展開:
-1. **何を意図的にやらなかったか**（範囲・対象モジュール）
-2. **なぜ今回やらないと判断したか**（スコープ管理上の理由・依存関係・優先度）
-3. **次にどこで扱うか**（後続 PR 番号 / Jira チケット / `未定` の明示）
-
-**投稿前の事実整合チェック（必須）**: 各項目を**最終 diff に照らして**検証する — (1) その項目が**意図的なスコープ外判断**として正しいか（本 PR の diff に痕跡が無く、かつ「今回あえて対象外にした」判断であること。diff に無いだけでは不十分で、session 文脈で触れただけの名残 ── 一度実装して消した / 別 PR に移した / 本 PR の実スコープと無関係 ── は意図的判断でないので**削除**する）、(2)「後続でやる/別 PR」と書くなら、その先送りが実は develop 比の挙動変更など**本 PR で確定すべきもの**でないか。1 つでも不確かなら投稿前に該当行を削除または修正する。セッションコンテキスト由来で最終 diff とドリフトした項目（既に消した変更の名残・スコープ外と思い込んだ実装済み挙動）が混入しやすく、`disallowed-tools: AskUserQuestion` で確認なし投稿のため誤りは投稿後にしか直せず手戻りコストが高い。文体観点 [A]-[D] はこの事実整合を見ないので、ここで別途確認する。
-
-展開指示時の例: `本 PR では require_token? の重複解消には踏み込まない。重複の解消は auth middleware 全体のリファクタとセットで行うべきで、本 PR のスコープ（proxy 経路の一本化）を超えるため。後続 XPROJ-474 で別途対応する。`
-
-## テンプレートに無い見出しに相当する議論の反映先
-
-- セッションコンテキストに「設計判断」「やらなかったこと」相当の議論があっても、テンプレートにその見出しが**存在しない**場合は新規見出しを追加しない
-- 設計判断議論 → 「レビューしてほしい観点」に 1 行で要約（例: `税率を Decimal で保持する判断が妥当か`）
-- 「やらなかったこと」相当議論 → 該当見出しが無いなら反映先なし（情報を捨てる判断）
-- 反映先候補の見出しもすべて無い場合は本文に反映しない。無関係な既存見出し（「なぜやるのか」等）へ便宜的に折り込まない。素材は捨てず、完了報告の「展開可能」列挙で伝える（SKILL.md 注意事項の完了報告規定）
-
-## 空欄セクションの書式
-
-- 該当事実が無くセクションを空欄にする場合、**見出し行だけ残し、直下に空行を 1 行置く**（プレースホルダやコメントは追加しない）
-- 空行 1 行の理由: `## 見出し\n\n## 次の見出し` の形でレンダリング崩れを避ける
-
-## Step 9 セルフチェック (投稿前必須)
-
-### [A] 斜め読みテスト（最重要・最初に実施）
-
-- [ ] description 全文を**各セクション先頭 1 行目だけ**読み、PR の意図と影響範囲が 3 秒で再構築できるか
-- [ ] 「やったこと」が 1 行で PR 全体の意図を言い切れているか
-- [ ] Pre-work で書いた「本質リスト」(点数は tier 表) と「このPRでやること」(または「やったこと」+ 残点の分配先セクション) の内容が**一致**しているか (判定基準 = 各点が分配先込みで復元可能か。Pre-work 節が SSOT)
-- [ ] plan 由来の internal 番号体系（例: `α 層` / `AC-9` / `Critical-A` / `§設計詳細` / ギリシャ文字ラベル + 「層/相」）が description に残っていないか（**[B] と独立に必ずチェック**: plan 由来語彙は B では検出されない）
-
-### [B] コードから読める情報の混入検出
-
-- [ ] 「やったこと」「なぜやるのか」「レビューしてほしい観点」「動作確認結果」に**変更ファイル名・関数名・パラメータ追加・import 追加など diff を見れば分かる事実が書かれていないか**。書かれていれば設計理由は「設計判断」へ、スコープ外は「やらなかったこと」へ退避
-
-### [C] 分量・重複検出
-
-- [ ] 「やったこと」と「なぜやるのか」で同じ事実が両方に書かれていないか（不具合修正 PR で同一不具合に両方が触れる場合の所掌: 機構面の事実 = どこで何が失敗するか は「やったこと」、利用者・業務への影響は「なぜやるのか」に置く分担なら重複としない）
-- [ ] 各セクションが**1 行サマリーを超えていないか**（複数文の段落・bullet・表・ログ・コードブロックの混入。例外: 本質列挙系の番号リスト / 「やらなかったこと」の 1 項目 1 行 / 複合 Issue リスト / 詳細展開指示があったセクション）
-- [ ] **詳細展開がユーザー指示なしに行われていないか**（指示の記録が `$ARGUMENTS` かセッション発話に実在するか）/ 指示があったセクションが逆に 1〜2 行で済まされていないか
-- [ ] 「動作確認結果」がケース列挙になっていないか（「全 N 件期待通り」で潰せないか）
-- [ ] 「やらなかったこと」の各項目が**最終 diff と整合**しているか（やらなかったこと書式節の「投稿前の事実整合チェック」を実施。スコープ外として正しいか / 先送り項目が実は本 PR で確定すべきものでないか）
-
-### [D] AI臭検出
-
-- [ ] AI生成検出語（「以下に〜を示す」「具体的には」「適切に」「効率的に」「〜することにより」「〜と考えられる」）が含まれていないか
-- [ ] `**強調**:` 形式の太字bullet が 1 セクションに 3 つ以上並んでいないか
-- [ ] 機械的な絵文字（⚠️ 📝 🔧 ✅ 🎯 等）がセクションマーカーとして連発されていないか
-- [ ] 「〜のため」「〜することで」が 1 段落で 2 回以上出ていないか
-- [ ] 「特になし」「該当なし」のような中身のない埋め文が空欄セクションに書かれていないか
-- [ ] 詳細展開したセクションが箇条書きの羅列だけで散文がないか
-- [ ] 作業中 shorthand が散文の代わりに使われていないか — 矢印チェーン (`A → B → fails` のような説明圧縮)・ハイフン連結造語・セッション中にだけ通じる略記。読者は作業過程を見ていないため、完全な文に展開する（表内・PR チェーン図の依存表記 `PR1 → PR2` は対象外）
+1. Reading only each first line reconstructs the PR's purpose, impact, decision, and verification.
+2. Every pre-draft outcome is recoverable from the body.
+3. No plan-local labels, duplicate facts, invented evidence, or diff inventory remains.
+4. Only user-requested sections exceed the default shape, and expanded prose retains rejected alternatives/reasons when supplied.

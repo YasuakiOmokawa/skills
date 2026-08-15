@@ -16,14 +16,16 @@
 lite は auto 割当0件を有効とし、全 ID を manual または orphan に割り当てる。
 
 ```bash
-ALL_IDS="/tmp/enumerated_qa_ids.txt"
+test -n "$RUN_DIR" || exit 2
+ENUMERATED_IDS="$RUN_DIR/enumerated_qa_ids.txt"
 PLAN_FILE="<plan>.md"
-test -s "$ALL_IDS" && test -s "$PLAN_FILE" || exit 2
-sort -u "$ALL_IDS" > /tmp/all_qa_ids.txt
-awk -F'|' '/^\| *QA-[A-Z]+-[0-9]+ *\|/{id=$2;gsub(/^[ \t]+|[ \t]+$/,"",id);print id}' "$PLAN_FILE" | sort -u > /tmp/auto_qa_ids.txt
-grep -oE '^\*\*QA-[A-Z]+-[0-9]+' "$PLAN_FILE" | tr -d '*' | sort -u > /tmp/manual_qa_ids_all.txt
-comm -12 /tmp/all_qa_ids.txt /tmp/auto_qa_ids.txt > /tmp/assign_auto.txt
-comm -23 /tmp/manual_qa_ids_all.txt /tmp/auto_qa_ids.txt | comm -12 /tmp/all_qa_ids.txt - > /tmp/assign_manual.txt
-cat /tmp/assign_auto.txt /tmp/assign_manual.txt | sort -u > /tmp/assigned.txt
-comm -23 /tmp/all_qa_ids.txt /tmp/assigned.txt > /tmp/assign_orphan.txt
+test -s "$ENUMERATED_IDS" && test -s "$PLAN_FILE" || exit 2
+awk -F'|' '/^\| *QA-[A-Z]+-[0-9]+ *\|/{id=$2;gsub(/^[ \t]+|[ \t]+$/,"",id);print id}' "$PLAN_FILE" | sort -u > "$RUN_DIR/auto_qa_ids.txt"
+grep -oE '^\*\*QA-[A-Z]+-[0-9]+' "$PLAN_FILE" | tr -d '*' | sort -u > "$RUN_DIR/manual_qa_ids_all.txt"
+cat "$ENUMERATED_IDS" "$RUN_DIR/auto_qa_ids.txt" "$RUN_DIR/manual_qa_ids_all.txt" | sort -u > "$RUN_DIR/all_qa_ids.txt"
+ALL_IDS="$RUN_DIR/all_qa_ids.txt"
+comm -12 "$RUN_DIR/all_qa_ids.txt" "$RUN_DIR/auto_qa_ids.txt" > "$RUN_DIR/assign_auto.txt"
+comm -23 "$RUN_DIR/manual_qa_ids_all.txt" "$RUN_DIR/auto_qa_ids.txt" | comm -12 "$RUN_DIR/all_qa_ids.txt" - > "$RUN_DIR/assign_manual.txt"
+cat "$RUN_DIR/assign_auto.txt" "$RUN_DIR/assign_manual.txt" | sort -u > "$RUN_DIR/assigned.txt"
+comm -23 "$RUN_DIR/all_qa_ids.txt" "$RUN_DIR/assigned.txt" > "$RUN_DIR/assign_orphan.txt"
 ```

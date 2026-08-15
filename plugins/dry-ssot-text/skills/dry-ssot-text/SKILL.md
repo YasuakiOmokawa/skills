@@ -1,129 +1,54 @@
 ---
 name: dry-ssot-text
-description: Collapses repeated explanations of one concept into a single source of truth plus cross-references, while keeping navigation aids like TOCs and progress tables. Use when an AI-generated document (plan / design doc / RFC / PR description) has grown long with the same concept explained in multiple places, when the same why-explanation is repeated across multiple code comments, or when the user says "この文書の重複をまとめて" / "この文書を DRY にして" / "同じ説明が何回も出てくるので整理して". Also use when a change set spans multiple files (code comments + changed/new docs) with the same explanation duplicated across them. Prose duplication inside code comments is in scope; code structure duplication / refactoring is out of scope.
+description: Collapse repeated prose or code-comment explanations into one SSOT and replace other occurrences with deletion or the shortest resolvable reference, while preserving navigation and distinct facts.
 ---
 
-# DRY/SSOT Text Refactor
+Code structure and logic refactoring are out of scope. For a change set, scope with `git diff --name-only`, aggregate line and occurrence counts, and emit one report.
 
-AI 生成の長文 (plan / design doc / RFC / PR / README) で同一概念が複数箇所で繰り返される症状を、1 箇所に集約 (Single Source of Truth) + 他箇所をクロスリファレンスに置換することで解消する。同時に navigation aid (TOC / checklist / progress table) は残す。
+## Tier
 
-**核心原則**: 「同じ事実を 2 度書かない」だが「ナビゲーション目的の重複は別物」。
+Count occurrences per concept; use the largest duplicate group, not the sum. References left by this skill do not count.
 
-**対象範囲**: 文書に加えて**コードコメント内の説明文**も対象 (同じ why 説明・設計判断が複数コメントに散っている場合、正本を ADR / 1 箇所のコメントに集約し他は参照へ)。対象外はコード構造そのものの重複 (メソッド・ロジックの重複解消はリファクタリングの領分で本 skill は扱わない)。
-
-対象が単一文書でなく**変更差分全体** (コードコメント + 変更/新規 md ファイル) の場合は、変更ファイル一覧 (`git diff --name-only` 等) で対象を確定し、ファイルごとに Workflow を適用したうえで **dry-run レポートは変更セット全体で 1 通に統合**する。tier 判定は対象ファイル合計の行数・重複箇所数で行う (行数は各対象ファイルの全体行数の合計を指し、diff の追加/削除行数ではない。コード + md の混在は deep 行の「複数 doc 跨り」には数えず、合計行数と重複箇所数で判定する)。
-
-## Task complexity tier
-
-| Tier | 判定 | アクション |
+| Tier | Condition | Action |
 |---|---|---|
-| **skip** | 文書 <100 行 / 重複箇所数 ≤2 / 外向き説明資料 (顧客向け・ブログ) / API ref のような網羅列挙文書 | **skip** (集約効果薄) |
-| **lite** | 100-300 行, 重複 3-5 箇所 | dry-run 省略、直接 Edit 可 (4. の dry-run レポートは出力しない)。完了報告は §5 の tier 共通ルールに従う |
-| **standard** (default) | 300+ 行 or 共有前文書 or 重複 6+ 箇所 | dry-run レポート必須 → 承認後 Edit |
-| **deep** | 600+ 行 / 複数 doc 跨り (plan + design doc 一致) / 既存 cross-reference に他章が依存 (目次のアンカーは数えない) | dry-run + 各 reference 先のアンカー疎通検証 + 適用後の `grep -c` 重複ゼロ確認 |
+| skip | duplicates ≤2, customer-facing enumeration, or API reference | no edit |
+| lite | duplicates 3-5 | edit directly |
+| standard | duplicates ≥6, ≥300 total lines, or shared preliminary document | inline dry-run, then edit |
+| deep | ≥600 total lines, repeated prose across documents, or existing non-TOC references depend on moved anchors | standard plus anchor and final occurrence checks |
 
-**tier 判定の優先ルール**: 1 文書が複数 tier の条件に該当したら**重複箇所数を優先**する。skip は「重複箇所数 ≤2」が必須条件なので、行数が短くても重複が 3+ なら **lite 以上**に落とす。重複箇所数が指す tier の行数下限は満たさなくてよい (重複 3-5 なら 100 行未満でも lite、重複 6+ なら 300 行未満でも standard)。重複箇所数は**同一概念ごとに数える** (複数の重複グループが併存する場合は最大グループの箇所数で判定し、全グループを合算しない)。集約後に残した参照 1 文は、同文が何本あっても重複箇所に数えない。変更差分全体を対象にする場合も、この優先ルールを合算値に適用する。
+Duplicate count overrides line count. Short linear reader-facing documents use lite regardless of count. A mixed code+markdown change is not deep by itself. An explicit dry-run request always produces one.
 
-**tier 名の scope**: 4 tier (skip / lite / standard / deep) は本 skill 内の判定軸であり、同名 tier を持つ他 skill (`/purge-private-vocab` 等) の閾値とは対応しない。呼び出し側が「standard な文書」と呼んだケースでも上表で再判定する (本 skill では 300+ 行が standard、100-300 行は lite)。
+Line count is tier evidence only, never an output invariant; do not pad or optimize for it.
 
-## Core Pattern: 必要重複 vs 不要重複
+## Classify
 
-| 種類 | 例 | DRY 化するか | 理由 |
-|---|---|---|---|
-| **不要: 説明文** | 同じ設計判断を PR1/PR2/PR3 で再記述 | **する** | 1 箇所更新で済む |
-| **不要: 表/コード** | 同じ table が 2 箇所、片方に「再掲」 | **する** | 1 箇所更新で済む |
-| **不要: 引用文** | 公式ドキュメントの同一一節を 2 箇所引用 | **する** | 引用元に集約 |
-| **不要: 旧版が新版に包含** | 中間サマリ表が最終サマリ表に subsume / 粗い旧 QA が詳細 QA に含まれる | **する** | 詳細版を正本にし旧粗版を除く (相互リンクにしない点が同一重複と異なる。削除か 1 行参照かの選択は §3 が canonical) |
-| **不要: 同一対象の表記ゆれ** | 同じ ADR を `docs/adr/0004` と `ADR-0004` の 2 表記で参照 | **する** | 解決可能な方 (パス・正式 ID) へ全箇所寄せる (2 表記は同一概念の重複) |
-| **必要: TOC / 進捗 table** | 章立て一覧、PR 進捗表 | **しない** | 俯瞰 navigation |
-| **必要: checklist サマリ** | AC リスト 1 行 + 詳細は §設計詳細。QA-ID カバレッジマトリクスのような ID 紐付け表も同様に確認用として扱う | **しない** | 確認用 |
-| **必要: header + body 同名** | 「§Provider 内吸収型」見出しと本文冒頭 | **しない** | index 機能 |
-| **必要: 日付付き追記ログ** | プランファイルの日付付きフェーズ完了ログ・再入ログ (`- <日付> フェーズN 完了: ...`) | **しない** | 書式が同じでも各行が異なる事実を記録する監査証跡であり、旧版が新版に包含される重複とはみなさない |
-| **必要: 同一事実の役割違い提示** | ADR で §根拠 の数値が §影響 では結果として、§決定 では要約として再登場する | **しない** | 節ごとに読み手の問いが違い、片方を消すとその節が機能しない (判定テスト: その節だけを読む人にとって別の問いへの答えになっているか。節ペアが逐語一致するならこの例外は使わず不要重複として扱う) |
-| **必要: 用語集の短い定義** | glossary の 1-2 行定義エントリが本文の説明と重なって見える | **しない** | 反復説明でなく独立した参照用定義 (本文側が長文で同じ説明を繰り返す場合はその本文側のみ集約対象) |
+Consolidate repeated prose, tables, code quotes, notation variants, and an older explanation fully contained by a newer one. Preserve:
 
-## 委譲実行 (subagent として起動された場合)
+- TOCs, progress tables, AC/QA-ID checklists, headings that index their bodies, and dated audit logs;
+- short glossary entries;
+- facts serving different section roles, unless the passages are verbatim;
+- any independent fact not present in the chosen SSOT.
 
-対象文書の入力 (パスまたは本文) は次の優先順で解決する。
+Judge semantic repetition at paragraph or sentence level. Shared keywords alone are not duplicates.
 
-1. `$ARGUMENTS` (slash command 経由の明示指定)
-2. 起動プロンプト本文中の明示指定 (「対象文書: `<path>`」等。Task 委譲時はこれが実質的な入力経路になる)
-3. セッション文脈中で直近言及された文書 (単独起動時のみ有効。委譲実行では前段の会話履歴を参照できないため無効)
+## Resolve input
 
-いずれからも解決できない場合、ファイル探索や推測で代替対象を選ばず (候補確認目的の read-only 探索も行わない)、「不足入力: 対象文書パス」を最終メッセージとして返し即座に終了する。「待たない」は対話ツールを呼ばず応答を前提にしないことを指し、再実行方法の案内を添えるのは構わない。この経路では Workflow (§1-§5) に入らないので、tier 判定も §5 の完了報告も行わない。
+Use `$ARGUMENTS`, then an explicit path in the prompt, then a document mentioned in the current non-delegated session. Delegated runs have no prior conversation context. If unresolved, do not search; return `不足入力: 対象文書パス` and stop.
 
-## Workflow
+## Choose the SSOT
 
-### 1. 重複の特定
+Use the fullest existing standalone dedicated section; if none exists, create one without adding facts. A PR/chapter occurrence is never a dedicated section and must never be the SSOT. Put the standalone section near the beginning only when later scope cannot be understood without it; otherwise prefer the end. Retain each chapter's scope sentence; a chapter must not become reference-only. Synchronize numbering and TOC when headings move.
 
-文書全文を Read → 同一概念 (同じ事実、同じ table、同じコード片) が複数箇所で出現するパターンを列挙 (箇所数の確定は `grep -nE "<重複候補フレーズ>" <file>`) → 上記判定表で「不要重複」「必要重複」に分類。
+## Replace duplicates
 
-### 2. Canonical location の決定 (SSOT)
+- Referenced long-form documents (plan, design doc, RFC, ADR, README) use this branch regardless of length: delete fully subsumed paragraphs. Keep a required template heading with one anchor reference. For partial overlap, retain independent facts and add the shortest markdown anchor reference. If multiple ADR sections qualify, use `Rationale`.
+- Short linear documents: condense inline without anchors or new facts.
+- Code comments: prefer an existing markdown design section as SSOT. Delete a comment only when its identifier or file path already reaches the SSOT by search; otherwise retain one file-path reference. Do not add identifiers to the SSOT merely to justify deletion.
 
-不要重複ごとに、唯一の真実源を 1 箇所に決める。
+Within markdown use anchors; from code to markdown use file paths. Anchor text is the lowercase heading with punctuation removed and spaces replaced by hyphens.
 
-**推奨**: 文書末尾の **§設計詳細 / §参照** に専用セクションを設けて集約 (文書全体を散歩しなくて済む)。
+## Apply and verify
 
-**例外**: 概念が **文書冒頭の前提知識** (例: 「ゴール」「アーキテクチャ」、各章のスコープ文がその方針を前提に書かれている中核設計判断) なら専用セクションを冒頭近くに置く (配置が冒頭か末尾かに関わらず専用セクション化はする)。判定テストは「その概念を知らないと後続章のスコープが読めないか」。白黒つかない中間ケースは推奨 (末尾) を既定にしてよい — どちらに置いても成果物の質は変わらないので、ここで判断を往復しない。
+For standard/deep or an explicit request, first emit one inline report listing unnecessary and necessary duplicates with locations, the chosen SSOT, tier evidence, and planned replacements. A delegated run self-approves and continues.
 
-**避ける**: 最初に出現する PR/章のセクション内 → 後の章で「§PR1 参照」と書かれ、PR1 更新時に他章の意味が崩壊。文書途中の任意位置 → 読み手が forward/backward 両ジャンプ必要。
-
-正本には既存文の最も完全な版を採り、原文にない説明は書き足さない (削除で参照関係が読めなくなる場合のみ 1 文の橋渡しを許す)。連番見出しの文書に新設する場合は新設節も連番に組み込み、以降の章を繰り上げて目次を再生成する。
-
-### 3. クロスリファレンス置換
-
-**remedy は文書の読まれ方で分岐する** (下記 3 分岐のいずれか 1 つを選ぶ):
-
-- **参照される長文** (plan / design doc / RFC / ADR / README などの参照される文書・意思決定記録) → 重複説明を markdown アンカーリンク参照に置換する。ただし非正本側の内容が正本に**全文包含**される箇所はアンカーを貼らず削除する (元の文と同じ内容へのリンクは navigation の足しにならない)。削除で見出し配下が空になるなら見出しごと削除する — ただし ADR / RFC のように節構成がテンプレート契約になっている文書では必須節の見出しを残し、本文を正本への 1 行参照に縮約する (見出しごと消せるのは自由記述の章)。段落を削除した章は「スコープ + 実装 table」の二段になってよい。独自の事実を含む箇所はアンカー参照に置換し、その独自事実は残す (独自事実の有無は重複した段落の単位で見る — 章に別の固有情報があっても、重複段落そのものが全文包含なら削除)。置換の具体機構 (Before/After 例・置換時の注意・anchor 生成規則) は [references/cross-reference-mechanics.md](references/cross-reference-mechanics.md) 参照
-- **線形に通読される短文** (PR description / ~150 行以下の reader-facing 文書) → アンカーリンク化せず**その場で言い換え・縮約して 1 箇所に寄せる** (アンカーリンクは線形読みに forward/backward ジャンプを強い可読性を下げる)。PR description は skip ではなくこの言い換え remedy で処理する。この分岐にルーティングした文書は重複箇所数によらず lite 相当に確定し (tier 表の判定を上書きする)、dry-run を省略して直接 Edit してよい
-- **対象がソースコードコメント** → 他コメントはアンカーリンクでなく「削除」または「短い参照 1 文」に置換する。削除できるのは呼び出し側の識別子から正本へ grep で到達できる場合だけで (1 行 why に参照コメントを足すと元と同じ長さに戻るため)、到達可否は正本の現状記述に当該識別子かファイルパスがあるかで判定する — 同一ファイル内に残る別の参照コメントは到達手段に数えず、削除を成立させるために正本へ識別子を書き足すこともしない。到達できない箇所には参照 1 文を箇所ごとに残す (同文の参照が何本並んでも重複箇所には数えない)。canonical は最も文脈が濃い 1 箇所を選び、md と混在するなら md 側の既存専用セクションを canonical にする。dry-run (§4) は grep 結果 (ファイルパス:行番号) で示す。canonical 選定の詳細手順は [references/cross-reference-mechanics.md](references/cross-reference-mechanics.md) 参照
-
-**上 2 分岐が競合したときの tie-break**: 文書型が上の分岐の型リスト (plan / design doc / RFC / ADR / README) のいずれかなら、行数が ~150 行以下でもアンカーリンク remedy を採る (これらは通読でなく参照される前提の型)。~150 行の閾値は、型がこれらに該当しない reader-facing 文書 (PR description・告知文等) にのみ適用する。
-
-### 4. Dry-run レポート (要否は tier 表が canonical)
-
-tier 表の要否は**下限**を定める — lite で省略可でも、**呼び出し側が dry-run を明示要求した場合は tier 問わず提示**する。いきなり書き換えず提案レポートを先に作る (委譲実行では最終メッセージ内の節として提示し、レポート専用ファイルは作らない):
-
-```markdown
-## DRY 化提案レポート
-
-### 不要重複 (集約候補)
-1. **「AuthGateway 単一責務」** (3 箇所: L40, L75, L105) → §設計詳細 に集約
-2. **Token rotation 表** (2 箇所: L120-128, L145-153) → §設計詳細 に集約
-
-### 必要重複 (維持)
-1. **PR 進捗 table** (L25-32) → index 機能、維持
-2. **AC checklist** (L180-200) → 確認用、維持
-
-### 行数の見込み (参考値 — 成否判定には用いない)
-元: 250 行 → 後: 約 180 行 (28% 削減)
-
-### 確認ポイント
-- canonical location を §設計詳細 (文書末尾) に置く案で問題ないか?
-- 各 PR セクションのスコープ説明 (1 文) は維持するか?
-```
-
-### 5. 実適用
-
-承認後、Edit / Write で書き換える。対話承認者が不在の自動実行フローでは、dry-run レポートを提示したうえで self-approve して適用に進んでよい (レポート提示自体が監査痕跡)。
-
-canonical セクションの新設で章番号やアンカーが動いた場合、TOC などの navigation aid は同一適用内で同期更新する (維持義務は内容の保存であって据え置きではない)。
-
-適用後の検証: canonical フレーズを `grep -c "<フレーズ>" <file>` して 1 件のみヒットすること、置換したアンカーリンクが実在の見出しに解決すること (anchor 生成規則は [references/cross-reference-mechanics.md](references/cross-reference-mechanics.md))。検証フレーズは残した参照 1 文に含まれない差別化部分 (手段・数値を含む句) から選ぶ (ゴール要約の語句で grep すると参照側まで数えて偽陽性になる)。行数 (`wc -l`) は増減どちらもありうるので成否の指標にしない (指標は**同一情報の重複箇所数の減少**)。
-
-**完了報告 (tier 共通)**: 適用後の最終メッセージには「同一概念の重複を何箇所→1 箇所に縮約したか」の要約 (箇所数は集約前の総出現数で、正本になった箇所を含む) と対象文書の絶対パスを含める。skip 判定で書き換えなかった場合も、該当した skip 条件と対象パスを同じ形式で報告する (省略すると実施内容の監査痕跡が失われる)。
-
-## Gotchas (観測済みの残存曖昧点 — fresh executor が自己判断で解決した箇所)
-
-- 混在変更セットで参照の書式が分岐ごとに変わる (md 内の参照はアンカー、コード → md の参照はファイルパス) 点を明示していない。fresh executor はファイル種別で正しく選び分けたが自己判断だった
-- 「縮約」の許容範囲 (原文語句を要約し直すことが「原文にない説明の書き足し」に当たるか) を定義していない。fresh executor は新しい事実・数値を持ち込まない範囲の言い換えとして解決した
-- 重複の一致判定の単位 (段落・文単位か、数値やキーワードの部分一致も数えるか) を明示していない。fresh executor は段落単位で判定した
-
-## Advanced
-
-- [references/pitfalls.md](references/pitfalls.md) — Common pitfalls (過 DRY / TOC 削除 / canonical 任意位置 / dry-run 飛ばし / 必要重複の判定漏れ)
-
-## 併用推奨 skill
-
-- `/purge-private-vocab` — plan 由来の対外文書から造語を除去 (本 skill とは独立した別目的)。purge-private-vocab の出現回数判定 (grep カウント) は完全一致依存のため、表記ゆれがある文書では本 skill で表記統一を先に行うと過小カウントを防げる (本 skill → purge-private-vocab の順を推奨)
-- `/express-intent-in-code` — コードコメントの why 重複は、まず名前・型・定数へ蒸留できるか (express-intent-in-code の T3: コメント→名前/型/定数 蒸留) を判断し、蒸留し切れず文章として残る真の why の重複だけを本 skill が集約する。この判断を済ませれば足り、skill 自体の起動は必須ではない
+After any required report, edit immediately; delegated runs must not stop at the report. Preserve navigation. Verify a differentiating phrase occurs once and every new anchor resolves. For code, run the smallest syntax check that does not modify logic. Report each concept as `N → 1` with absolute paths. On skip, report the matched criterion and paths.

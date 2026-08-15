@@ -1,141 +1,31 @@
-# regression eval (empirical-prompt-tuning 収束時保存)
+# purge-private-vocab regression
 
-収束記録: 2026-06-12 (v3.28.0 PR)。Iter1-3 で fresh executor が全 [critical] ○ / accuracy 100% / retries 0。
-用途: **regression 検出器** (capability 改善の信号としては使わない)。本 skill を変更する PR では
-fresh executor (blank slate, Task dispatch) で下記シナリオを再実行し、全 [critical] ○ を確認してから merge する。
-実行方法は empirical-prompt-tuning の「Subagent invocation contract」に従う (成果物はインライン、ファイル編集禁止)。
+## A: authorized rewrite
 
-## シナリオ: 決定木 + lite 直接適用
+Target contains code identifiers `Billing::Client` and `XPROJ-663`, plan-only labels `Critical-A`, `AC-12`, `α 層`, and repeated `Single Switch`. The source defines all except the concrete component behind α; the target is file-backed and the user explicitly requests edits.
 
-structural review mode + trigger 判定: (a) Q1-Q4 決定木 (番号ラベルは出現回数に関わらず言い換え / 2+ 回造語は in-line 定義)、(b) lite は dry-run 省略のため承認不要で直接適用してよい (Step 5 冒頭)、(c) 「造語チェックして」「PR 説明の語彙を点検して」が本 skill に発火する。
+Checklist:
+1. [critical] preserves the real code/Jira identifiers;
+2. [critical] expands the numbered labels from source without adding decisions;
+3. [critical] rewrites α relationally without inventing a component;
+4. defines repeated useful shorthand only at first use and applies the authorized edit.
 
-### Requirements checklist
-1. [critical] codebase identifier / Jira ID は維持、番号ラベル (Critical-A / AC-12 / α 層) は実値へ言い換え
-2. [critical] 層ラベルで source plan 不在時は具体名を捏造せず関係性ベースの一般表現に言い換え
-3. lite は Step 4 を飛ばし承認不要で直接適用と読み取れる
+## B: source unavailable, review-only
 
-## シナリオ: 委譲実行 (subagent への Task 委譲)
+A delegated request supplies a target containing `Billing::Client`, `Critical-A`, and `rollout enabler`, no source, and explicitly forbids edits.
 
-収束記録: 2026-07-07。「入力解決順位」「対話承認者の判定基準」「縮退動作」を SKILL.md に追加した PR で
-Iter1-4 + hold-out C を実施。hold-out C の初回実行で、①起動プロンプトが具体パスを明示しそのパスが不在の場合に
-②③へフォールバック探索すべきか SKILL.md 上一義的でない点が unclear point として浮上したため、入力解決順位の
-記述に「①の具体パスが外れたことの埋め合わせとして②③を使わない」旨を追記し、fresh executor による再実行で解消を確認した。
-用途: **regression 検出器**。本 skill の委譲実行まわり (入力解決順位・self-approve 判定・縮退動作) を変更する PR では
-fresh executor (blank slate, Task dispatch) で下記シナリオ A/B を再実行し、全 [critical] ○ を確認してから merge する。
-実行方法は empirical-prompt-tuning の「Subagent invocation contract」に従う。
+Checklist:
+1. [critical] does not search for or invent a source plan;
+2. [critical] preserves the identifier and leaves source-dependent labels unchanged with `source plan 未確認のため要確認`;
+3. [critical] returns one report and makes no edit;
+4. does not invent an absolute path for inline input.
 
-### シナリオ A (target + source plan 併走)
+## C: plan is the target
 
-委譲プロンプト:
-```
-あなたは purge-private-vocab の実行を委譲されたエージェントです。次の SKILL.md を Read し、その指示に厳密に従って実行してください。
+A plan contains upstream `BB-N`, `WB-N`, and `IM-N` labels whose analysis file is supplied, plus locally expanded QA IDs and a real feature flag. The user authorizes editing.
 
-対象 SKILL.md: <plugin>/skills/purge-private-vocab/SKILL.md
-
-## 入力
-- target: $RUN/pr-desc.md
-- source plan: $RUN/source-plan.md
-
-造語チェックを実行し、完了したら結果を報告してください。
-```
-
-Requirements checklist:
-1. [critical] target 全文から Step 2 の検出パターンで候補語を抽出し、Q1〜Q4 の決定木に従って分類した提案レポートを提示している
-2. [critical] AskUserQuestion 相当が利用可能ツールに無い実行文脈であることを踏まえ、提案レポート提示後に承認待ちで停止せず self-approve し、Step 5 の Edit 適用まで完了している
-3. source plan にしか定義がない語 (Q3 該当) を、source plan の内容と突き合わせたうえで正しく要対応側に分類している
-
-### シナリオ B (target のみ、source plan 欠落)
-
-委譲プロンプト:
-```
-あなたは purge-private-vocab の実行を委譲されたエージェントです。次の SKILL.md を Read し、その指示に厳密に従って実行してください。
-
-対象 SKILL.md: <plugin>/skills/purge-private-vocab/SKILL.md
-
-## 入力
-- target: $RUN/pr-desc.md
-
-造語チェックを実行し、完了したら結果を報告してください。
-```
-
-Requirements checklist:
-1. [critical] source plan のパスが渡されていないことをその場で認識し、当て推量で存在しないパスを補完・探索せず、Q1/Q2 だけで機械判定できる候補語のみを処理する縮退動作に入っている
-2. [critical] source plan でしか判定できない候補語について、断定的に「持ち込み可」または「削除」と決めつけず、提案レポート上で「source plan 未確認のため要確認」と明記している
-
-## シナリオ: 変更差分全体の Q4 通算カウント (G-ppv-1)
-
-収束記録: 2026-07-07。Step 1 入力収集に「target が変更差分全体の場合、出現回数 (Q4) は差分全体で通算し、提案レポートは1通に統合する」を追加した PR で Iter1-2 を実施。Iter1 で「tier (lite/standard) 判定の字数・ヒット数を diff の追加行のみで数えるか、変更後ファイル内容全体で数えるか」が unclear point として浮上したため、Step 1 の追加文に「Task complexity tier の字数・ヒット数もこの集合 (変更後ファイルの該当箇所全体) で判定する」を追記し、Iter2 の fresh executor で再発しないことを確認した。
-用途: **regression 検出器**。target が複数ファイルにまたがる変更差分であるケース (Step 1 の当該規則) を変更する PR では、fresh executor (blank slate, Task dispatch) で下記シナリオを再実行し、全 [critical] PASS を確認してから merge する。
-
-### フィクスチャ構成
-- git repo (baseline commit 1 つ) に、コメント修正 2 ファイル + md 1 ファイルの変更を作業ツリーに加える
-- 造語「案D」(source plan で定義) を 3 ファイルにそれぞれ 1 回ずつ配置する (ファイル単位では 1 回で閾値未満、通算すると 3 回で閾値以上になる)
-- 番号ラベル `K-2` (source plan で定義) を md ファイルに 1 回配置する (Q4 の番号ラベル規則により出現回数によらず言い換え対象)
-
-委譲プロンプト:
-```
-あなたは purge-private-vocab の実行を委譲されたエージェントです。次の SKILL.md を Read し、その指示に厳密に従って実行してください。
-
-対象 SKILL.md: <plugin>/skills/purge-private-vocab/SKILL.md
-
-## 入力
-- target: $RUN/repo (作業ツリーの git diff、3ファイル: 2つのコード変更 + 1つの md 変更)
-- source plan: $RUN/source-plan.md
-
-この3ファイルの差分をレビュー済みなので、社内プラン用語が残ってないか点検して。問題があれば直接修正まで完了させて。
-```
-
-Requirements checklist:
-1. [critical] plan 造語の出現回数を対象ファイル全体で通算してから判定しており、ファイル単位に分割して数えた結果 (各1回) を理由に「要言い換えまたは削除」に誤分類していない
-2. [critical] 提案レポートが変更セット全体で1通に統合されている (ファイルごとの個別レポートになっていない)
-3. 番号ラベル (`K-2` 等) が出現回数によらず実値への言い換えとして提案されている
-
-### シナリオ C (hold-out: target 自体が不在)
-
-委譲プロンプト:
-```
-あなたは purge-private-vocab の実行を委譲されたエージェントです。次の SKILL.md を Read し、その指示に厳密に従って実行してください。
-
-対象 SKILL.md: <plugin>/skills/purge-private-vocab/SKILL.md
-
-## 入力
-- target: $RUN/pr-desc.md  (実在しないパス)
-
-造語チェックを実行し、完了したら結果を報告してください。
-```
-
-Requirements checklist:
-1. [critical] target パスが実在しないことを確認し、内容を推測・捏造せず「不足入力: target」相当の趣旨を返して即座に処理を打ち切っている
-2. [critical] target が存在しないにもかかわらず Edit 等の書き込み操作を一切実行していない
-
-収束記録: 2026-07-11 (description への plan 自体が target になる経路の追加)。plugin.json の description に「plan 自体が target になる経路 (分析ファイル由来 finding ID の混入)」を追加した。決定木 + lite tier の structural シナリオを fresh executor で再実行し全 [critical] ○ / 新規不明点 0 で収束を確認した。
-
-収束記録: 2026-07-17 (v0.15.0 / SKILL.md スリム化)。SKILL.md を 170 行 → 156 行に圧縮。相互排他かつ低頻度の 2 実行文脈 (deep 必須前置 / 委譲実行の入力解決順位・縮退動作・self-approve 判定) を新規 `references/execution-contexts.md` へ verbatim 退避し、SKILL.md 側は 1 hop ポインタ (核心原則直後の委譲起動 callout・deep tier 行・委譲実行スタブ・Advanced) に置換。Q4 決定木・in-line 定義ルール・Label vs Body・§anchor 中間ルートは HEAD と byte 同一で無改変 (git diff で確認)。上記 5 シナリオ (決定木+lite / 委譲 A / 委譲 B / G-ppv-1 / hold-out C) を fresh executor で 2 連続実行し、両ラウンドとも全 [critical] ○。委譲系 4 シナリオ全てで executor が execution-contexts.md を 1 hop で Read し縮退動作・self-approve・不足入力 target 打ち切りを正しく実行 (references-descent の tool_uses スパイクなし)。残存 unclear point 2 件 (lite で source plan 不在時の α 層に対する Q4 L81 層ラベル規則 vs Q4 source 未提供規則の棲み分け / 複数ファイル変更セットでの in-line 定義の宿主) はいずれも無改変領域の pre-existing な曖昧さで、挙動変更禁止のため本 PR では手を入れず将来の専用パスの候補として記録する。用途: **regression 検出器**。execution-contexts.md への退避構造を変更する PR では上記 5 シナリオを再実行し全 [critical] ○ を確認すること。
-
-## シナリオ: 複数成果物セット (PR 説明 + Jira チケット) — Opus 5 / Fable 5 tuning 由来
-
-fixture: 同一 source plan (`案 D (Provider 内吸収型)` / 層マッピング表 α=Web (Rails controller)・β=Service (`LedgerClient` ラッパ) / 対応表 `K-2`・`AC-12` / Jira `XPROJ-663`) から派生した 2 文書。`Provider 内吸収型` は各文書 1 回ずつ (通算 2 回) 置き、文書単位に数えると in-line 定義ルートに乗らないよう作る。`§設計詳細` を dangling anchor として 1 箇所置く。委譲起動 (AskUserQuestion 不在)。
-
-### Requirements checklist
-1. [critical] `Provider 内吸収型` の出現回数を対象文書全体で通算して判定し、【要 in-line 定義】として少なくとも 1 箇所に `用語 (= 短い説明)` を補っている (文書単位に各 1 回と数えて【要言い換えまたは削除】に落としていない)
-2. [critical] `Billing::Client` / `XPROJ-663` / `fy26q3_ledger_client` は維持し、番号・案ラベル (`K-2` / `AC-12` / `案 D`) は出現回数によらず実値へ言い換えている (in-line 定義ルートに載せていない)
-3. [critical] 提案レポートを提示したうえで承認待ちで停止せず、Edit による target への適用まで完了している
-4. 提案レポートが対象セット全体で 1 通に統合されており、各語について Q1–Q4 のどの分岐で分類したかが併記されている
-5. `α 層` / `β 層` を source plan の対応コンポーネント名に基づいて言い換えている
-6. 最終メッセージに、適用した修正の一覧と対象ファイルの絶対パスが含まれている
-
-## シナリオ: plan 自体が target (finding ID 混入 + QA-N 維持) — Opus 5 / Fable 5 tuning 由来
-
-fixture: 分析ファイル (`BB-1` / `BB-3` / `WB-1` / `IM-2` を定義) と、そこから書かれた plan (`BB-3` / `WB-1` / `IM-2` を各 2 回引用、QA 手順表に `QA-2` / `QA-3` を全展開、Flipper flag と file path を含む)。`IM-2` は上流が未決の二択 (Redis TTL 24h / DB カラム追加) で plan 側が「Redis」まで決着している状態にする (ID 展開で属性値を決定事項へ昇格させないかを見る)。委譲起動。
-
-### Requirements checklist
-1. [critical] target が plan ファイル自体であることを理由に skip せず、検査を実行している
-2. [critical] `BB-3` / `WB-1` / `IM-2` を出現回数によらず、上流文書の原文に基づく実値へ言い換えている (in-line 定義ルートに載せていない)
-3. [critical] plan 内の QA 手順表で内容が全展開されている `QA-2` / `QA-3` は言い換えず維持している
-4. 提案レポートを提示してから Edit を適用している
-5. 言い換え / 削除後の文が主述破綻せず、分析ファイル未読の読者が読み下せる
-6. 最終メッセージに、適用した修正の一覧と対象ファイルの絶対パスが含まれている
-
-収束記録: 2026-07-25 (Opus 5 / Fable 5 向け tuning)。SKILL.md 156 行 → 158 行 (三重記述の撤去で 6 行削減、実測由来の規則追記で +8 行)。撤去: 委譲実行スタブ節 (核心原則直後の callout と Advanced で 3 重に「委譲時は execution-contexts.md を Read」と述べていたため 1 箇所へ統合)、deep tier 行の「適用後の再読検証必須」(Step 5 が全 tier に課すため)、Step 4 の「省略・即時 self-approve 禁止」「tier に関わらず提示は必ず行う」(同一段落内で同じ規則を 3 回述べていた)。追記はいずれも fresh executor が実際に詰まった点のみ: 回数依存の修正を置く単位 = 独立に読まれる成果物ごと (Step 1) / 方式候補ラベル (`案 N`) の検出 grep / Q4 例示は外延ではない旨 / Q1 の一般構成概念の緩和は単独トークン限定 (`Provider 内吸収型` を素通しさせない) / 同一概念に複数ラベル併存時の代表語吸収 / ID 展開は原文の復元であって決定の追加ではない / source plan 不在で層ラベル規則・finding ID 規則のどちらにも当たらないラベルは「要確認」明記 (2026-07-17 と 2026-07-18 の記録が pre-existing 残存曖昧さとして 2 度記録した棲み分けを Q4 側に明文化)。上記 2 シナリオを fresh executor で 6 ラウンド (round1-6) 実行し、**全ラウンドで全 [critical] ○ / accuracy 100%**。round1 では削除した委譲実行スタブの regression として「target パス不在 → 不足入力: target で即打ち切り・書き込みゼロ」を別 executor で確認 (○)。round4 で hold-out (source plan 欠落 → 縮退動作 + `α 層` の関係性ベース言い換え) を追加し 4/4 ○ (accuracy 低下なし = overfitting なし)。tool_uses は 2 シナリオとも全ラウンド安定 (A 15-16 / B 10-12) で references-descent のスパイクなし。**厳密な収束条件 (新規 unclear point 0 が 2 連続) は未達**: 新規 unclear point は 8 → 7 → 6 → 7 → 6 → 6 と横ばいで、残存はいずれも出力に影響しない規則合成の細部 (公知語だが指示対象の成果物が読者非共有な `MECE 検証` の扱い / Q2 の「直近の定義」に同一文内の説明節を含むか / 委譲文脈でレポート提示を最終メッセージに書くか中間出力にするか / 展開文が target 内既述と重複する場合の縮約可否)。executor はいずれも一貫して正解側 (維持 / 定義付与 / Edit 前提示 / 縮約) を選んでおり、これらを規則化すると判断軸が増えて薄いスキル方針に反するため、意図的に未対応で残す。用途: **regression 検出器**。上記 2 シナリオを変更する PR では fresh executor で再実行し全 [critical] ○ を確認すること。
-
-収束記録: 2026-07-18 (定期 regression 再検証、skill 無改変)。保存済み 5 シナリオ (決定木+lite / 委譲 A / 委譲 B / G-ppv-1 / hold-out C) を fresh executor (blank slate, Task dispatch) で各 1 回実行し、全 [critical] ○ / accuracy 100% / retries 0 で収束を確認した。決定木+lite では source plan を与えたうえで α 層のみ実コンポーネント名を未定にしたフィクスチャで、Critical-A/AC-12 は実値へ言い換え・α 層は関係性ベースの一般表現 (「外部からの要求を受け付ける層」) へ言い換え・codebase identifier (`Billing::Client`) と Jira ID (`XPROJ-663`) は維持を確認 (「source plan 不在時」の checklist 文言は Q4/execution-contexts.md L12 が SSOT 化する「実コンポーネント名を解決できない場合」条件を α 層 未マップで再現)。委譲 A/B は execution-contexts.md を 1 hop で Read し self-approve と縮退動作 (source plan 欠落時に探索せず該当語を「source plan 未確認のため要確認」と明記) を正しく実行、hold-out C は指定 target 不在で Edit ゼロのまま「不足入力: target」で即打ち切り、G-ppv-1 は 案D を差分全体で通算 3 回と数え要 in-line 定義に分類 (design.md を宿主に採用し 2 コードコメントは plan ラベルを平易化)・K-2 を出現回数によらず実値へ言い換え・提案レポートを変更セット全体で 1 通に統合した。委譲 B で 1 件の unclear point (「Critical-A が Q4 finding-ID 復元規則の対象か、target 文脈から復元案を立てられない英数字ラベルとして『要確認』に倒すか」の線引き) が浮上したが、これは 2026-07-17 記録が pre-existing 残存曖昧さとして明記した「source plan 不在時の Q4 サブ規則の棲み分け」族の再出であり、executor 自身が「どちらの経路でも『source plan 未確認のため要確認』明記は共通で requirement を満たす」と結論づけた output-neutral な曖昧さのため、挙動を歪めず本ラウンドでは skill を無改変とした (将来の専用パス候補として継続記録)。SKILL.md / references は無改変で、前回の 2 連続クリア (2026-07-17) を直前ラウンドのクリアとして本日 1 ラウンドで収束確定。
+Checklist:
+1. [critical] does not skip merely because the target is a plan;
+2. [critical] expands upstream finding IDs from the analysis text while preserving unresolved choices as choices;
+3. [critical] preserves locally defined QA IDs and the feature flag;
+4. applies the edit only after the required report and leaves readable sentences.

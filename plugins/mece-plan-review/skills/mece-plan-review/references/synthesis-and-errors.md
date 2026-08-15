@@ -68,18 +68,18 @@ AC カバレッジ・漏れ・重複・判定不能 (Unknown) などの詳細集
 
 ## Error Handling
 
-### Analyst subagent 失敗
+### Analyst executor 失敗
 
 ```
-Task の戻り値がエラーまたはタイムアウト:
+executor の戻り値がエラーまたはタイムアウト:
   → 該当ロールを [未取得] として記録
   → Red Team に「BB or WB のいずれかが取得できなかった」旨を伝え、残りの結果のみで Step 2 を継続
 ```
 
-### Red Team subagent 失敗 (Task 不可時のフォールバックも兼ねる)
+### Red Team executor 失敗
 
 ```
-Red Team が失敗した場合、または Task (Agent) ツールが利用可能ツール一覧に無く nested dispatch 自体ができない場合:
+Red Team が失敗した場合、または独立 executor を利用できない場合:
   → メインエージェントが手動で BB+WB の結果を統合 (フォールバック)
   → 統合時は references/red-team-checklist.md のチェックリストを main agent 自身に適用する (Red Team の判定ロジックを代行)
   → 結果に [Red Team フォールバック] タグ付与
@@ -87,9 +87,9 @@ Red Team が失敗した場合、または Task (Agent) ツールが利用可能
 
 ### プランファイル書き込み失敗
 
-AskUserQuestion でパス確認を依頼する (委譲実行時の読み替えは [delegated-execution.md](delegated-execution.md))。
+interactive capability があればパス確認を依頼し、なければ不足パスを最終報告する。
 
 ### 分析ファイル lock / non-git リポジトリ
 
-- 分析ファイル書込み時に lock 検出 → 1 回リトライ、それでも失敗なら AskUserQuestion で対応確認 (委譲実行時の読み替えは [delegated-execution.md](delegated-execution.md))
+- 分析ファイル書込み時に lock 検出 → 1 回リトライし、それでも失敗なら interactive capability があれば対応確認、なければ最終報告
 - non-git リポ (`git remote get-url origin` 失敗) → `${REPO_NAME}` を「unknown-repo」として継続

@@ -2,14 +2,6 @@
 
 automation モードは「automation で実行して」「ブラウザで検証して」「ui-evaluator を使って」等、ブラウザ automation の使用を明示指示したときだけのオプション（Step 1 参照）。本ファイルは automation モードでのみ実施する手順を集約する。SKILL.md の各 Step が該当時点で本ファイルの対応節を読んで実行する。
 
-## Contents
-
-- [Step 1: ChromeDevTools MCP 接続確認](#step-1-chromedevtools-mcp-接続確認)
-- [Step 2: 開発サーバー確認・ログイン（automation の続行手順）](#step-2-開発サーバー確認ログインautomation-の続行手順)
-- [Step 4: ui-evaluator の Task 起動](#step-4-ui-evaluator-の-task-起動)
-- [Step 5 判定 2.: automation（ui-evaluator）側の検証不能判定](#step-5-判定-2-automationui-evaluator側の検証不能判定)
-- [${CLAUDE_PLUGIN_ROOT} の解決](#claude_plugin_root-の解決)
-
 ## Step 1: ChromeDevTools MCP 接続確認
 
 `mcp__chrome-devtools-direct__list_pages` を呼び出す。
@@ -35,34 +27,30 @@ Step 2 の「検証対象 URL の決定」（1.）は両モード共通で SKILL
      「PostgreSQLが起動していません。DBを起動してから再実行してください。」
    - Pending Migration画面（`ActiveRecord::PendingMigrationError`） → 「Run pending migrations」ボタンを `click` して待機後にリロードして再確認
 
-## Step 4: ui-evaluator の Task 起動
+## Step 4: ui-evaluator の実行
 
-ユーザーが「automation で実行して」「ブラウザで検証して」「ui-evaluator を使って」等、ブラウザ automation の使用を明示指示した場合のみ実施する（Step 1 参照）。`Task` ツール (`subagent_type="general-purpose"`、本リポ標準の dispatch) で `ui-evaluator` を起動する（委譲実行で Task が使えない場合の扱いは [delegated-execution.md](delegated-execution.md) を参照）。初回・再検証とも同一テンプレートを使い、`{N}` 等のプレースホルダだけ差し替える:
+ユーザーがブラウザ automation を明示指示した場合のみ実施する。独立 executor が利用できれば `ui-evaluator` を dispatch し、できなければ [delegated-execution.md](delegated-execution.md) の inline 規則に従う。初回・再検証とも同一入力を使う:
 
 ```
-Task:
-  subagent_type: general-purpose
-  prompt: |
-    あなたはUI検証エージェントです。
-    以下の指示ファイルを読み、その内容に厳密に従って検証を実行してください。
+UI evaluator input:
+あなたはUI検証エージェントです。以下の指示ファイルを読み、その内容に従って検証してください。
 
-    指示ファイル: ${CLAUDE_PLUGIN_ROOT}/skills/qa-ui/agents/ui-evaluator.md
+指示ファイル: ${CLAUDE_PLUGIN_ROOT}/skills/qa-ui/agents/ui-evaluator.md
 
-    ## 入力
-    - QAプランファイルパス: {プランファイルパス（`## 実装準備 > 手動QA手順` を含む）or 分析ファイルパス（AC直接読込みフォールバック時）or プランファイルパス（`## 正本抽出結果` を含む、正本抽出結果直接読込みフォールバック時）or "なし（AC無しモード）"}
-    - 変更ファイル一覧: {git diff --name-only の結果 (ブランチ全体、ラウンドを通じて維持)}
-    - ラウンド番号: {N}
-    - 検証対象 QA-ID: {ラウンド1は「台帳/AC から特定した全 UI 関連項目」/ ラウンド2以降は前ラウンドで FAIL(Major/Minor) と判定し修正した QA-ID だけをカンマ区切りで列挙（SKILL.md Step 4「対象 QA-ID を決める」と同じ絞り込み）}
-    - 前回の不合格理由: {初回は「なし（初回）」/ ラウンド2以降は前回の不合格詳細を転記}
-    - 適用した修正: {初回は「なし（初回）」/ ラウンド2以降は変更ファイルごとに修正概要 1 行}
-    - 手動確認済み: {なし / 検証不能エスカレートからの再開時、または `検証不能(真の制約)` を記帳済みの QA-ID がある場合に、除外した項目を 1 行}
-    - 検証対象画面: {特定した画面URL一覧}
+## 入力
+- QAプランファイルパス: {プランファイルパス、分析ファイルパス、または AC無し}
+- 変更ファイル一覧: {ブランチ全体の変更ファイル}
+- ラウンド番号: {N}
+- 検証対象 QA-ID: {初回は全 UI 項目、以後は修正した FAIL 項目}
+- 前回の不合格理由: {初回はなし}
+- 適用した修正: {初回はなし}
+- 手動確認済み: {除外済み QA-ID またはなし}
+- 検証対象画面: {URL一覧}
 
-    指示ファイルのワークフローに従い、「検証対象 QA-ID」に渡した項目を全て検証してください。
-    結果は指示ファイルの「結果出力」フォーマットに厳密に従ってください。
+「検証対象 QA-ID」を全て検証し、指示ファイルの結果形式で返してください。
 ```
 
-**ui-evaluator が報告を返さないときの fallback**: 起動した ui-evaluator が完了 (idle) 通知を繰り返すだけで結果出力が届かない場合、結果の再送要求は 2 回まで。それでも届かなければ待ち続けず、main agent が ChromeDevTools MCP で対象 QA-ID を直接検証してよい。直接検証の観測結果を Step 5 の判定入力に使い、fallback した旨を最終レポートに 1 行明記する (理由: 実測 2026-07-15 — Task 起動した ui-evaluator が催促 2 回の後も最終報告を返さず、main agent の直接検証は数分で完了した。委譲実行の Task 不可時の縮退は起動自体ができない場合の規定で、この「起動できたが報告が届かない」障害はそれとは別に扱う)。
+**報告なし fallback**: 再送要求後も届かなければ main agent が browser capability で直接検証し、fallback を報告する。
 
 ## Step 5 判定 2.: automation（ui-evaluator）側の検証不能判定
 
@@ -75,4 +63,4 @@ Step 5 の判定 2.（検証不能）で、automation（ui-evaluator）の場合
 
 ## ${CLAUDE_PLUGIN_ROOT} の解決
 
-Step 4 automation の Task 起動プロンプト中 `${CLAUDE_PLUGIN_ROOT}` が生文字列のまま見える場合（`npx skills add` 経由で本 SKILL.md を直接 Read している場合）、この SKILL.md が置かれているディレクトリを skill root とみなし、`${CLAUDE_PLUGIN_ROOT}/skills/qa-ui/` をその skill root へ読み替えてから絶対パスを埋め込む。
+Step 4 の入力中 `${CLAUDE_PLUGIN_ROOT}` が生文字列なら、この SKILL.md のディレクトリを skill root とみなし、`${CLAUDE_PLUGIN_ROOT}/skills/qa-ui/` をその root へ読み替えて絶対パスを埋め込む。

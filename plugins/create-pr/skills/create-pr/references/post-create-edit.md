@@ -22,12 +22,16 @@ cat <<'EOF' > "$PR_BODY_FILE"
 ...
 EOF
 
-# 2. まず gh pr edit --body-file を試し、失敗時のみ REST API にフォールバック
+# 2. Projects Classic deprecation のときだけ REST API にフォールバック
 PR_NUMBER=<作成した PR 番号>
-if ! gh pr edit "$PR_NUMBER" --body-file "$PR_BODY_FILE"; then
-  # Projects Classic deprecation エラー等で失敗した場合のみ
-  REPO=$(gh repo view --json nameWithOwner --jq .nameWithOwner)
-  gh api "repos/${REPO}/pulls/${PR_NUMBER}" --method PATCH -F "body=@${PR_BODY_FILE}"
+if ! EDIT_ERROR=$(gh pr edit "$PR_NUMBER" --body-file "$PR_BODY_FILE" 2>&1); then
+  case "$EDIT_ERROR" in
+    *"Projects (classic)"*|*"Projects Classic"*)
+      REPO=$(gh repo view --json nameWithOwner --jq .nameWithOwner)
+      gh api "repos/${REPO}/pulls/${PR_NUMBER}" --method PATCH -F "body=@${PR_BODY_FILE}"
+      ;;
+    *) printf '%s\n' "$EDIT_ERROR" >&2; exit 1 ;;
+  esac
 fi
 
 # 3. 一時ファイル削除
@@ -37,18 +41,5 @@ rm "$PR_BODY_FILE"
 ## 補足
 
 - `-F "body=@<path>"` はファイル内容をリクエストボディの文字列値として送信する gh CLI 機能（`--field` の `@` プレフィックスと同じ）
-- タイトル・ラベル更新は `gh pr edit --title` / `gh pr edit --add-label` で動作する。description 更新も `gh pr edit --body-file` を第一手とし、deprecation エラー時のみ REST API へ切替える
+- description 更新は `gh pr edit --body-file` を第一手とし、deprecation エラー時のみ REST API へ切替える
 - 同じ `mktemp` 規約は Step 10 (`gh pr create`) で `--body` ではなく `--body-file` を選ぶ場合にも適用する
-
-## nested JSON が必要なケース
-
-`-F dot.path=val` の dot 記法では nested object が確実に組み立たず 422 が返る。`--input -` + JSON heredoc を使う:
-
-```bash
-gh api -X PUT repos/.../branches/main/protection --input - <<'EOF'
-{
-  "required_status_checks": { "strict": true, "contexts": [...] },
-  "required_pull_request_reviews": { "required_approving_review_count": 0 }
-}
-EOF
-```

@@ -1,11 +1,9 @@
 ---
 name: review-design
-description: Use when starting a new feature, adding a file or module, designing a module's interface (deep vs shallow / where a seam goes), deciding "where should this code live", or when the user requests a design review with `/review-design`. ALSO use when the change touches auth / billing / payment / migration / security territory — run even if placement seems obvious (this territory rule overrides the skip conditions).
+description: Use before adding a feature, file, module, interface, or seam, or when deciding where code should live; always use for auth, billing, payment, migration, or security changes. Trigger on explicit design-review requests too.
 ---
 
-# review-design
-
-実装前の配置・パターン判定。Criticism first — default verdict は「問題あり」。Q1-Q3 で選んだ reviewer subset (anti-pattern-checker 必須 + DDD / Hexagonal / Clean Arch / Deep-Module) を並列レビュー → 必須 Devil's Advocate → 致命指摘は plan ファイルを直接書き換える。
+Q1-Q3 で reviewer subset を選び、並列レビューと Devil's Advocate を行う。fatal は設計へ反映する。
 
 ## Task complexity tier (skip / scope 判定)
 
@@ -30,11 +28,11 @@ description: Use when starting a new feature, adding a file or module, designing
 
 1. tests 通過 / 2. single responsibility (責務が一句で言える) / 3. 行数 ≤200 / 4. public method ≤10 かつ callback chain <3 / 5. after_commit・after_create 内で external API / 外部 IO を呼ばない
 
-- **healthy** → そのパターンに従う。`anti-pattern-checker` のみ。ただし項目 5 違反は 1-4 充足でも unhealthy 扱い (escape hatch)
+- **healthy** → そのパターンに従う。`anti-pattern-checker` のみ
 - **unhealthy** → 新パターン提案。**all 5**
 - **Greenfield** (対象リポにコード不在) は項目 1/3/4 が検証不能 → unhealthy → all 5。**Q1=No の greenfield も同じく all 5**。brownfield かつ Q1=No は下の matrix の None 行で決める
 
-### Reviewer selection matrix (first-match, top-down)
+### Reviewer selection matrix
 
 | Q1 | Q1.1 | Q2 | Reviewers |
 |---|---|---|---|
@@ -58,34 +56,20 @@ description: Use when starting a new feature, adding a file or module, designing
 ## Workflow
 
 1. **Step 1-2**: Q1-Q3 → matrix で reviewer 選定。
-2. **Step 3 — Parallel Review**: 選定 reviewer を `Task(subagent_type="general-purpose")` で並列 dispatch。各 Task は対応する `agents/*.md` を Read して適用。greenfield (まだコードが無い設計レビュー) では判定基準を Grep/Glob 反例検索でなく提案構造への forward-looking 制約として適用する。Task 不可時 fallback / `${CLAUDE_PLUGIN_ROOT}` 解決は「## 委譲実行」。
-3. **Step 4 — Plan edit**: 指摘があればプランファイルを `Edit` で直接修正 — 設計本文そのものを書き換える (分析要約の貼り付けは禁止)。ここで報告は出さず Step 5 へ。
+2. **Step 3 — Parallel Review**: independent-executor capability があれば選定 reviewer を並列 dispatch し、各 executor は対応する `agents/*.md` を適用する。greenfield は反例検索でなく提案構造への forward-looking 制約として判定する。capability が無ければ「## 委譲実行」の fallback。
+3. **Step 4 — Design revision**: reviewer ❌ または fatal の設計本文を修正する。プランがあれば本文を `Edit` し、なければ修正版を内部状態として保持する。編集理由を問わず、修正後は選択済み reviewer と DA を再実行する。⚠️ / Unknown は編集せず残存リスクにする。分析要約はプランへ貼らない。
 4. **Step 5 — Devil's Advocate (必須)**: 全 reviewer ✅ でも実行する (各 reviewer は自分のレンズしか見ない)。default は inline (main agent の自己批判):
-   1. Step 3 出力に**無い**角度から critique 3 件 (reviewer 指摘の再掲は禁止) — 運用 (deploy 直後 / 廃止直前 / incident) / スケール (100x traffic or data) / 他チーム・plugin から見た interface / rollback コスト。
+   1. Step 3 出力にない根拠付き critique を最大3件挙げる。0件なら `critique: 該当なし` と書く。観点は運用、100x scale、他チーム向け interface、rollback cost。
    2. ラベル付け前に grounding — critique が依存する行を Read するか反例を grep。前提がコードに成立しない critique は `fatal` でなく `acceptable`。greenfield はプランの記載構造で grounding。PoC 仮説 ledger / マッピング表に対応済み・意図的 deferral・killed と記録済みの論点は fatal 化しない。
    3. 各 critique を `fatal` / `acceptable` にラベル付け。fatal = `anti-pattern-checker` ❌ OR 4 escalator (DB tx boundary / concurrency / security / contract breach) の closed set — 集合外の問題はどれほど深刻でも `acceptable` + recommendation。
-   4. hidden assumption を 1-2 件 (保存先は [references/final-report-format.md](references/final-report-format.md) の Hidden assumption 節)。
+   4. 根拠のある hidden assumption を最大2件挙げ、0件なら `hidden assumption: 該当なし` と書く。
 
    inline → **subagent dispatch** の切替条件 (reviewers の ❌ ≥ 2 / escalator hit / `--strict-da` / Row 4 territory) と dispatch 失敗の permanent / temporary / hung 分類は [references/escalation-rules.md](references/escalation-rules.md) が canonical (SSOT)。恒久的に dispatch 不能なら inline 実行 + 報告末尾に in-context fallback タグ。DA prompt 全文は [references/reviewer-modes.md](references/reviewer-modes.md)。
-5. **Feedback loop**: fatal があれば Edit → Step 3-5 再実行。全 DA findings が acceptable になるまで繰り返す。
+5. **Feedback loop**: Step 4 で1件でも編集したら selected reviewers と DA を再実行する。fatal があれば修正し、fatal 0 まで繰り返す。
 6. **Step 6 — Final report**: 1 issue = 1 line でチャット表示 + 同内容を `<plan>.design-review.md` へ `Write`。パス規則・必須 3 節・プラン不在時の扱いは [references/final-report-format.md](references/final-report-format.md)。
 
 ## 委譲実行 (subagent として起動された場合)
 
-Task 経由で起動されたなら (判定基準: AskUserQuestion が利用可能ツールに無いか、で機械的に行う)、**進む前に [references/delegated-execution.md](references/delegated-execution.md) を必ず Read すること。** 同ファイルが規定: 入力解決順位 (`Plan File Info:` / 会話文脈は使わない) / 入力不足・指定パス不在時の即時完結 (捏造せず待たず終了) / Step 3 の Task 不可時 fallback / Design It Twice の非対話進行 / `${CLAUDE_PLUGIN_ROOT}` 解決 / 完了報告。
+委譲が明示されたか対話不能なら、**進む前に [references/delegated-execution.md](references/delegated-execution.md) を Read する。** 同ファイルが入力解決、入力不足時の終了、並列実行不可時の fallback、非対話進行、path 解決、完了報告を規定する。
 
-## Gotchas（観測済みの罠 — 実測で判明したものを 1 件 1 行で追記）
-
-## Advanced
-
-- [references/escalation-rules.md](references/escalation-rules.md) — 実行 3 mode / DA escalation 条件 / Fatal vs single-trigger 全表 (canonical)
-- [references/reviewer-modes.md](references/reviewer-modes.md) — DA prompts (inline & subagent) / feedback loop 詳細 / fallback 規則
-- [references/final-report-format.md](references/final-report-format.md) — 報告テンプレ / 保存 3 節 / "1-issue-1-line" 粒度 / fallback tag 例
-- [references/task-tier-boundaries.md](references/task-tier-boundaries.md) — tier 境界規則 (Row 3+4 compound / core path 境界例)
-- [references/detailed-workflow.md](references/detailed-workflow.md) — Quick Start で解決しない場合 (配置・依存方向・パターン選択)
-- [references/rails-patterns.md](references/rails-patterns.md) — Rails 配置の第一候補表 (anti-pattern-checker の判定や detailed-workflow の配置決定で参照)
-- Reviewer specs: `agents/anti-pattern-checker.md`, `agents/ddd-reviewer.md`, `agents/hexagonal-reviewer.md`, `agents/clean-architecture-reviewer.md`, `agents/deep-module-reviewer.md` (各 reviewer の quickref / 詳細 references は agent 定義から辿る)
-
-## Companion skills
-
-- `/define-acceptance-criteria` — define AC after design review, before implementation.
+Rails の配置判断が必要な場合だけ [references/rails-patterns.md](references/rails-patterns.md) を読む。
