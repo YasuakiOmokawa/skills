@@ -1,22 +1,11 @@
 ---
 name: define-acceptance-criteria
-description: Fills a matrix of 3 required categories (normal, error, edge) by controlled-vocabulary perspectives, plus a conditionally-required invariant category derived from the domain, to enumerate acceptance criteria and technical risks into the analysis file, then appends a one-line summary to the plan file. Use when in plan mode before /mece-plan-review, when the user asks to write AC for a plan ("受け入れ条件を定義して" / "AC を書いて"), when an AC matrix is needed as MECE input, or when delegated to a subagent (Task tool) for the same purpose. Not typically invoked during PoC / throwaway-validation phases (the assumption ledger substitutes there).
+description: Use when a plan needs acceptance criteria before MECE review; skip throwaway PoC validation.
 ---
 
-# define-acceptance-criteria
+3 必須カテゴリ × tier 固有の controlled vocabulary 観点を埋める。詳細は `<plan>.analysis.md`、品質検証サマリーはプラン末尾へ書く。
 
-3 必須カテゴリ × controlled vocabulary 観点 (軸数は tier で決まる) のマトリクスを埋めて AC を書き出す。詳細は `<plan>.analysis.md` に、サマリーのみプランファイル末尾に追記する。
-
-```
-              │ 観点A    │ 観点B    │ 観点C
-──────────────┼──────────┼──────────┼──────────
-正常系        │ 具体I/O  │ 具体I/O  │ 具体I/O    ← 必須 (全セル ≥1 項目)
-異常系        │ Err+HTTP │ Err+HTTP │ Err+HTTP   ← 必須 (全セル ≥1 項目)
-エッジケース  │ 境界値   │ 境界値   │ 境界値     ← 必須 (全セル ≥1 項目)
-──────────────┴──────────┴──────────┴──────────
-不変条件      │ ドメインが保証する関係 (軸に紐づかない)  ← 条件付き必須 (トリガー該当時)
-非影響確認    │ 既存A / 既存B / 既存C                    ← 推奨 (a/b/c から選択)
-```
+使い捨て PoC の実現性検証だけが目的なら、AC を生成せず skip を報告して停止する。
 
 - 必須 3 カテゴリの全セル ≥1 項目 (空セル = 検討不足)
 - **不変条件と非影響確認は観点軸に紐づかないため、必須セル数にカウントしない** (マトリクスの下段。件数は tier 表で別に決まる)
@@ -32,7 +21,7 @@ description: Fills a matrix of 3 required categories (normal, error, edge) by co
 | AC 行頭 | 正常系 / 異常系 / エッジケースは `- [ ] <controlled label>: ...` ([references/perspectives.md](references/perspectives.md))。不変条件は `- [ ] [不変条件: <パターン>]: ...`、非影響確認は `- [ ] [既存機能名]が...` で controlled label 不要 |
 | プラン末尾 | `## 品質検証` 1 行サマリー |
 
-`/mece-plan-review` が AC を `- [ ]` 単位で enumerate するため必須。(auto-compaction では各 skill の先頭 5,000 トークンのみ再添付されるため、この節は本文前方から動かさない)
+`/mece-plan-review` は AC を `- [ ]` 単位で enumerate する。
 
 ## Task complexity tier
 
@@ -44,11 +33,11 @@ description: Fills a matrix of 3 required categories (normal, error, edge) by co
 | **standard** (default) | 2-5 ファイル / 中規模 feature / 単一 domain |
 | **deep** | 6+ ファイル / multi-domain / auth・billing・payment・DB migration・security config |
 
-各 tier の観点軸数 / 必須セル数 / 技術リスク件数は下の **Quantitative scaffolding 表 (SSOT)** を参照。
-
 **リスク領域** (auth / billing / payment / DB migration / security config) は LoC によらず強制的に **deep** — lite 条件と同時に該当する場合も deep を選ぶ (例: 1 ファイル <50 LoC の pure UI copy 変更でも auth 領域なら deep)。判定不能なら **standard**。推測に基づく変更ファイル一覧 (Step 1 のフォールバック 3 段目の自然言語類推。プラン本文の「変更ファイル予定」記述は推測ではない) は tier を引き上げる根拠にしない — **standard** 固定とし、再判定条件を Tier 行に併記する。`<plan>.analysis.md` 冒頭に `### Tier` 見出しを置き、判定結果と理由を独立した 1 行として記録する (見出し行に結合しない。見出し直後の空行は可。例: `Tier: standard (推定 3 files / index 追加が入るなら deep へ再判定)`)。
 
 **DB migration の範囲**: 既存本番テーブルの schema 変更 (column 追加・型変更・NOT NULL 制約追加・index 追加・rename 等) と data migration が対象。新規テーブル作成のみで既存テーブルへの schema 影響が無く、かつ他機能への副作用も無い場合は **standard で可** (schema 影響が新規テーブル内に閉じる。ただし新規テーブルが既存 domain の canonical テーブルを置き換える migration を伴う場合は既存 schema 変更に準じて **deep**)。
+
+file 数は test/doc を含むタスク変更ファイル全体で数える。multi-domain は複数レイヤではなく、独立した業務境界を 2 つ以上変更する場合を指す。
 
 ## Quantitative scaffolding (SSOT)
 
@@ -64,26 +53,11 @@ description: Fills a matrix of 3 required categories (normal, error, edge) by co
 
 **不変条件件数は上限であって下限ではない**。実際の件数は該当トリガー ([references/invariant-checklist.md](references/invariant-checklist.md) の「適用トリガー」表) から導く: 導ける関係が上限より**多い**ならドメインへの影響が大きい順に上限まで、**少ない**なら導けた分だけ書く (上限に届かせるために発明しない)。上限と実件数が食い違う場合はその理由を `### 検討観点` に 1 文残す。トリガーがいずれも観測できなければ 0 件で通し、見送り理由を同じく 1 文残す。リスク領域 (auth / billing / payment / DB migration) はトリガー該当有無によらず最低 1 件。不変条件は観点軸に紐づかないため必須セル数には加算せず、Step 6 の N にも数えない。
 
-## Quick start
-
-シナリオ: 「users API に表示名 (display_name) の更新を追加」。変更ファイル予定は `app/controllers/api/users_controller.rb` / `app/controllers/api/base_controller.rb` / `spec/requests/api/users_spec.rb`。
-
-1. プランファイル読込 → 変更ファイル抽出 ([references/perspectives.md](references/perspectives.md) Step A で `api_change` 単一主種別と判定、テスト/docs/メタは除外) → tier standard (2 ファイル・単一 domain)
-2. 観点 3 軸選定: inline 表 api_change 行から `req_form` / `permission` / `compat`、追加候補で `observability`
-3. 必須 3 カテゴリ × 主軸 3 = 9 セル充填 (observability のセルは任意加算):
-   ```markdown
-   - [ ] req_form: PATCH /api/users/123 に {"display_name": "山田"} → 200 OK + 更新後の値を返す
-   - [ ] req_form: PATCH /api/users/:id without body → 400 Bad Request
-   - [ ] permission [境界値: 未ログイン]: PATCH /api/users/:id → 401 Unauthorized
-   ```
-4. 技術リスクを tier 表の件数 (standard = 3 件) だけ 3 点セットで記述
-5. 分析ファイル (`<plan>.analysis.md`) に詳細出力 → プランファイル末尾に 1 行サマリー
-
 ## Workflow
 
 ### Step 1: 初期化 + プランファイル読込
 
-[references/init-common.md](references/init-common.md) に従って初期化 (プランファイル特定 / 分析ファイルパス導出。同ファイルのリポジトリ名取得は `/mece-plan-review` 専用の手順で本 skill に消費先が無いため省略可)。加えて変更概要・変更ファイル一覧・既存設計内容を抽出。変更ファイル抽出のフォールバック順: プラン本文記述 → `git diff --name-only $(git merge-base HEAD main)..HEAD` → 自然言語類推 → AskUserQuestion。
+[references/init-common.md](references/init-common.md) に従って初期化 (プランファイル特定 / 分析ファイルパス導出。同ファイルのリポジトリ名取得は `/mece-plan-review` 専用の手順で本 skill に消費先が無いため省略可)。加えて変更概要・変更ファイル一覧・既存設計内容を抽出。変更ファイル抽出のフォールバック順: プラン本文記述 → `git diff --name-only $(git merge-base HEAD main)..HEAD` → 自然言語類推 → 同期的に質問できる場合のみ確認。
 
 ### Step 1.5: 変更種別の機械判定
 
@@ -96,7 +70,8 @@ description: Fills a matrix of 3 required categories (normal, error, edge) by co
 | 変更種別 | 既定 controlled label (上から優先) |
 |---|---|
 | api_change | `req_form` / `permission` / `compat` |
-| db_change / db_or_model_change | `data_compat` / `migration` / `data_volume` |
+| db_change | `data_compat` / `migration` / `data_volume` |
+| db_or_model_change | `data_compat` / `data_volume`。不足軸は selection-rules の Step B から補充 |
 | auth_change | `permission` / `auth_state` / `user_type` |
 | ui_change | `device` / `a11y` / `browser` |
 | batch_change | `idempotency` / `data_volume` / `runtime` |
@@ -130,7 +105,7 @@ description: Fills a matrix of 3 required categories (normal, error, edge) by co
 
 分析ファイル (パスは上の contract 表) へ書き出す。既存なら末尾追記。フォーマット (`/mece-plan-review` との contract、変更禁止) は [references/output-template.md](references/output-template.md) を参照。
 
-### Step 6: プランファイル末尾サマリー
+### Step 6: プランファイル末尾の品質検証サマリー
 
 プランファイル末尾の `## 品質検証` セクションに 1 行サマリーを追記 (既存内容は変更しない)。**セクションが存在しない場合**は `---` 区切り + `## 品質検証` ヘッダから新規作成:
 
@@ -154,19 +129,9 @@ description: Fills a matrix of 3 required categories (normal, error, edge) by co
 ## 委譲実行 (subagent として起動された場合)
 
 - **入力解決**: プランファイルパスは [references/init-common.md](references/init-common.md) の「プランファイル特定」の優先順位で解決する (起動プロンプト本文の明示指定を `$ARGUMENTS` 相当として優先し、`Plan File Info:` は単独起動時のみ参照)。
-- **変更ファイル抽出フォールバック (Step 1)**: 末尾の AskUserQuestion が利用可能ツールに無い場合、自然言語類推による最善推測を `(推定)` 付きで採用し AC 生成を継続する。回答を待って停止しない。
+- **変更ファイル抽出フォールバック (Step 1)**: 同期的に質問できない場合、自然言語類推による最善推測を `(推定)` 付きで採用し AC 生成を継続する。回答を待って停止しない。
 - **完了報告**: Step 6 完了後の最終メッセージに次を含める。
   1. 分析ファイルの絶対パス
   2. `### Tier` の判定結果
   3. Step 6 の M 値 (AC 件数サマリー1行)
   4. 変更ファイル一覧が `(推定)` に基づく場合、その旨を要人間判断項目として明記する
-
-## Gotchas
-
-- perspectives.md の Step A パスパターン表は Rails 慣例 (`app/controllers/` 等) 想定のため、TS/Node バックエンド (`src/controllers/` 等) には literal 一致せず毎回手動補正が発生する。エンドポイント記述からの類推補正とその理由を `### 検討観点` に明記すれば AC 品質への影響はない
-- 1 つの変更種別 (type) に主軸候補 label が複数あり、ドロップ規則の適用でそのうち一部が空セル化する場合、type ごとに主軸を均等配分する必要はない (残った実質的な label をそのまま採用してよい)
-
-## 併用推奨 skill
-
-- `/mece-plan-review` — 本 skill 出力の AC を 3 視点で MECE 検証
-- `/finalize-plan` — AC + MECE 結果から QA 手順を起こす

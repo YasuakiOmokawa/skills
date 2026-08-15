@@ -1,7 +1,7 @@
 {
   "name": "mece-plan-review",
-  "description": "分析ファイル内の受け入れ条件（AC）を BB (仕様) / WB (コード) の 2 視点 + Fresh Red Team で MECE 検証し、ユースケース漏れ・技術的対応漏れ・お見合いを検出して分析ファイルに記録する。既定は main agent の inline 実行、リスク領域・大規模 AC のみ並列 subagent + Red Team 必須。分析ファイルに AC が定義済みで実装前に MECE 検証が必要な時に使用。事前に /define-acceptance-criteria で AC を定義しておくこと。",
-  "version": "1.35.0",
+  "description": "Use after acceptance criteria exist to check specification and code coverage, update the analysis, and update one plan quality-summary line before implementation. Trigger on MECE 検証して or AC の網羅性を検証して.",
+  "version": "1.36.0",
   "author": {
     "name": "Yasuaki Omokawa",
     "url": "https://github.com/YasuakiOmokawa"

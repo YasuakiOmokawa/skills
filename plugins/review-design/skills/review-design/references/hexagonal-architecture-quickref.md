@@ -1,6 +1,6 @@
 # Hexagonal Architecture 早見表 (Quick Reference)
 
-reviewer 起動時はこのファイルのみ Read する。判定で迷ったら `hexagonal-architecture.md` 本体を Read する。
+reviewer はこのファイルを SSOT として使う。
 
 ## 本質
 
@@ -46,11 +46,3 @@ reviewer 起動時はこのファイルのみ Read する。判定で迷った�
 | Secondary Port 未定義 | `<file>:<line> の <外部 SDK> を <app/adapters/<name>.rb> に分離` |
 | Adapter ロジック漏れ | `<adapter>:<line> のビジネスルール判定を <Service or Model> に移動` |
 | 過剰適用 | `<interface> は実装 1 つのみ。具体実装に統合し YAGNI` |
-
-## 詳細を Read する条件 (観測可能トリガー)
-
-以下のいずれかに該当する場合のみ `hexagonal-architecture.md` 本体を Read する:
-
-- ユーザーへの出力に Port/Adapter のディレクトリ構造提案を含める必要がある
-- 対象プロジェクトが TypeScript/React で、Rails 例と照合できない
-- 設計判断が Clean Architecture との境界に跨る (両者の関係性を説明する必要がある)

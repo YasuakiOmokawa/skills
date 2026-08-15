@@ -28,7 +28,7 @@ omokawa-skills は **monorepo + N plugins** 構造。各 skill / command は `pl
 
 ## AC（受け入れ条件）
 
-**AC** = Acceptance Criteria。分析ファイル (`<plan>.analysis.md`) 内の `## 受け入れ条件` セクション。`define-acceptance-criteria` スキルで「正常系/異常系/エッジケース」の必須 3 カテゴリ (+ 推奨カテゴリ「非影響確認」) × 観点列のマトリクス形式で定義する。プランファイル末尾の `## 品質検証` には 1 行サマリーだけが追記される。
+**AC** = Acceptance Criteria。分析ファイル (`<plan>.analysis.md`) 内の `## 受け入れ条件` セクション。`define-acceptance-criteria` スキルで「正常系/異常系/エッジケース」の必須 3 カテゴリ (+ 推奨カテゴリ「非影響確認」) × 観点列のマトリクス形式で定義する。プランファイル末尾の `## 品質検証` にはサマリーだけが追記される。
 
 `mece-plan-review` の検証ターゲット、`finalize-plan` の QA 計画の入力になる。
 

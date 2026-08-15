@@ -1,6 +1,6 @@
 # DDD 戦術パターン 早見表 (Quick Reference)
 
-reviewer 起動時はこのファイルのみ Read する。判定で迷ったら `domain-driven-design.md` 本体を Read する。
+reviewer はこのファイルを SSOT として使う。
 
 **Rails 前提**: ActiveRecord モデルを Domain Model として使うのは正当。PORO 分離が常に正しいわけではない。
 
@@ -54,11 +54,3 @@ reviewer 起動時はこのファイルのみ Read する。判定で迷った�
 | Aggregate 境界違反 | `<file>:<line> で内部 Entity を直接操作。<Root>#<method> 経由に変更` |
 | コールバック過多 | `<model>:<line> の <after_save 副作用> を Service から明示呼び出しに移行 (Domain Event パターン候補)` |
 | Model 間越境 | `<model>:<line> で他 Model を直接 create/update。Domain Service に分離` |
-
-## 詳細を Read する条件 (観測可能トリガー)
-
-以下のいずれかに該当する場合のみ `domain-driven-design.md` 本体を Read する:
-
-- ユーザーへの出力に Entity / Value Object の具体実装例 (Ruby / TypeScript) を含める必要がある
-- 設計判断が Rails ActiveRecord アプローチ 1 (AR-as-Entity) と 2 (PORO + 永続化分離) の境界にある
-- ユーザーへの出力に Aggregate / Domain Service / Domain Event の Ruby 実装パターンを含める必要がある

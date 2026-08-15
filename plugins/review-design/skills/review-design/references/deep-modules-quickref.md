@@ -1,6 +1,6 @@
 # Deep Module 早見表 (Quick Reference)
 
-reviewer 起動時はこのファイルのみ Read する。判定で迷ったら `deep-modules.md` 本体を Read する。
+reviewer はこのファイルを SSOT として使う。
 
 ## 本質
 
@@ -44,10 +44,6 @@ reviewer 起動時はこのファイルのみ Read する。判定で迷った�
 | 不要 seam | `<seam> は adapter 1 つのみ。抽象を外し具体に統合 (2 つ目が現れるまで待つ)` |
 | Testability | `<file> の <内部生成依存> を引数注入に変更 / <副作用> を結果返却に変更` |
 
-## 詳細を Read する条件 (観測可能トリガー)
+## Design It Twice
 
-以下のいずれかに該当する場合のみ `deep-modules.md` 本体を Read する:
-
-- 依存の性質ごとに deepening 手順/テスト戦略を出し分ける必要がある (依存 4 分類)
-- shallow と判定し、親が再設計のため複数 interface 案の発散生成 (Design It Twice) を要求した
-- 用語 (depth / leverage / seam / adapter) の厳密定義や 深い/浅いの図を出力に含める必要がある
+shallow module または配置・interface に複数の妥当案がある場合、interface burden・隠蔽する複雑さ・testability が異なる案を最低2つ作り、比較して1案を選ぶ。名前だけ違う同型案は数えない。

@@ -1,7 +1,7 @@
 {
   "name": "finalize-plan",
-  "description": "プランモードで設計が確定した後、実装に移る直前に使用。分析ファイルからAC・MECE結果を読み込み、プランファイルにQA手順を追記する。",
-  "version": "2.14.0",
+  "description": "Use after a plan's acceptance criteria and MECE analysis are complete, immediately before implementation.",
+  "version": "2.15.0",
   "author": {
     "name": "Yasuaki Omokawa",
     "url": "https://github.com/YasuakiOmokawa"

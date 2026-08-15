@@ -1,137 +1,63 @@
 ---
 name: extract-figma-spec
-description: Figma デザインをコードへ反映・適用する実装の前後、figma-dev-mode MCP で design-to-code を行うとき、または「Figma 通りに実装して」「デザインを反映して」「Figma の指定どおりに直して」と頼まれたときに使用。スクショ目視と人間が挙げた「指定 N 点」だけで反映すると、hex の微差・font weight(Bold)・アイコンや枠の有無・要素まるごとの欠落 といった Figma 指定を取りこぼす——この反映漏れ (デザイン崩れ・Figma 不一致) を防ぐ。差分は通常 /define-acceptance-criteria で AC 化し /qa-ui で検証する（PoC 等の使い捨て検証では省略可）。チェックリスト全行は atom ID 付きで `## 正本抽出結果` として分析ファイルに書き出し、/finalize-plan の正本カバレッジ・ゲートの入力になる。
-argument-hint: "[対象 Figma ノード / URL（省略可）] [出力先プランファイルパス（省略可）]"
+description: Use before or during Figma-driven implementation to extract returned design properties into atomized checks, compare them with code, and write a canonical results table.
+argument-hint: "[Figma node or URL] [plan path]"
 ---
 
-# Extract Figma Spec
+Structured Figma metadata is the value source; screenshots are orientation evidence only. Figma review comments are out of scope when the available metadata capability cannot retrieve them.
 
-## 目的
+## Resolve inputs
 
-Figma デザインをコードへ反映するとき、対象ノードごとに**全プロパティを構造化データから抽出してチェックリスト化**し、実装と 1 行ずつ照合することで反映漏れを防ぐ。スクショ目視と「人間が挙げた変更点」だけに頼ると、正確な hex の微差・font weight・アイコンや枠の有無・要素まるごとの欠落 を取りこぼす。これを抽出フェーズで構造的に潰す。
+Use an explicitly supplied node/URL and plan path first, then values present in the current non-delegated session. Normalize URL `node-id=1-234` to `1:234`. A delegated run does not infer files from its working directory. Without an output path, return the results table in the final response.
 
-## 使うべきとき
+Until node selection and extraction succeed, every supplied output path is metadata only: never create, replace, or append to it, including diagnostics or evaluation reports. Early-stop reporting goes only to the final response.
 
-- Figma デザインをコードへ反映 / 適用する実装の前、または実装中の差分確認
-- 「Figma 通りに」「デザインを反映」「Figma の指定どおりに直して」と頼まれたとき
-- figma-dev-mode MCP を使った design-to-code 作業全般
-- `/finalize-plan` の正本カバレッジ・ゲート（Step 3.5）が読む `## 正本抽出結果` を作る upstream としても使う
+Resolve a Figma metadata capability and list accessible pages. If no tool exists, report that and stop. Retry one transient call failure; do not retry a missing node, missing tool, or ambiguous selection.
 
-使わないとき:
-- Figma を参照しない実装 / バックエンドのみの変更
-- 既に AC に全プロパティが落ちていて /qa-ui で検証するだけの段階（このスキルはその AC を作る上流）
-- Figma 上のレビュー注釈・変更点コメントの内容確認（figma-dev-mode MCP にコメント取得手段が無い）
+If no node was supplied, compare page/node names with the request's concrete keywords and inspect enough descendants to select safely. Choose only a unique match. Generic labels such as `v0`/`v1` are not evidence. If synchronous clarification is unavailable, return candidates and stop. Report `正本抽出結果: 未生成`, the unresolved reason, and for unreachable metadata ask the user to open the target file in the Figma desktop app; do not fabricate rows.
 
-## Arguments
+## Extract
 
-- `$ARGUMENTS`: 対象 Figma ノード / URL（省略可）。省略時は Step 1 でノードを特定する。
-- 出力先プランファイルパス（省略可）。指定時は Step 5 の書き出し先とする。省略時の扱いは「委譲実行」節を参照。
+For each selected node, obtain the available equivalents of:
 
-## 委譲実行 (subagent として起動された場合)
+- metadata tree: elements, names, types, positions, sizes;
+- design context: component code and applicable properties;
+- variable definitions: tokens and exact values;
+- screenshot: visual orientation only.
 
-Task で委譲実行される場合、以下を本文の既定手順に優先して適用する。単独起動（ユーザーがメイン会話で直接起動）の動作は変えない。
+Process multiple nodes individually. Inspect descendants adaptively until the metadata coverage is sufficient for the requested component. A missing child is definitive only when returned metadata is known to cover that subtree; otherwise record the coverage gap as unresolved.
 
-- **入力解決の順位**: 対象ノード・出力先プランファイルパスとも、① 起動プロンプト本文の明示指定（= `$ARGUMENTS` 相当）を一次経路とする。② 「プラン / セッションに既出」は単独起動時のみ有効で、委譲実行では起動プロンプトに転記されていない限り参照できない。作業ディレクトリ内で見つかったファイル（run dir 配下の既存ファイル等）も、起動プロンプトに明記されていない限り同様に採用しない。③ 対象ノードが①②で決まらない場合は Step 1-2 のドリルダウンに進む。出力先プランファイルパスが①②で決まらない場合は、Step 5 でファイルへ書き込まず `## 正本抽出結果` の全行を最終メッセージにそのまま返す（縮退動作）。
-- **ドリルダウンの選定基準**: Step 1-2 のドリルダウンで、`get_metadata`（nodeId なし）が返すページ一覧を起動プロンプトの URL・背景説明のキーワードと照合する。一致するページが 1 件のみなら採用して先に進む。0 件、または複数件で一意に決まらない場合は、AskUserQuestion が利用可能ツール一覧に無いため質問せず、候補一覧（または該当なしの事実）を最終メッセージに含めて Step 1 で停止する。
-- **完了報告**: Step 5 完了時・Step 1 で停止した場合のいずれも、最終メッセージに次を含める。(a) 書き出し先ファイルの絶対パス（書き込みを行った場合。未書き込みなら「未書き込み」と縮退理由）、(b) `## 正本抽出結果` テーブル全行、(c) 要確認 / 未解決の atom 一覧。
+## Atomize
 
-## ワークフロー
+Create one `FIG-NN` atom per returned applicable property or element fact. Number continuously across nodes and renumber from `FIG-01` on a full re-extraction. Apply [references/checklist-building-details.md](references/checklist-building-details.md) to avoid duplicate atoms and handle unresolved values.
 
-### Step 1: Figma MCP 接続確認 + 対象ノード列挙
+Consider element presence, color, border, icon, typography, dimensions/spacing, alignment, text, and interactive states when applicable.
 
-依頼文が Figma 上のコメント・注釈の洗い出しを指す場合、「本スキルの対象外（figma-dev-mode MCP にコメント取得手段が無い）」と報告して停止する。
+- Explicit `none`/absence becomes an atom such as `枠なし`.
+- Tool silence is not absence. Deepen coverage or mark unresolved; do not invent a value or atom.
+- Omit structurally inapplicable categories.
+- Record the exact value and node/token source for each atom.
 
-1. まず `mcp__figma-dev-mode-mcp-server__get_metadata`（nodeId なし）を呼ぶ。これが接続確認そのものであり、対象ノード指定の有無に関わらず最初に行う。ツールが deferred 扱い（ToolSearch で解決するまでスキーマが無い）のハーネスでは、呼び出し前に ToolSearch で固定名を解決してから呼ぶ。「利用可能ツール一覧に見えるか」ではなく「呼べるか」を判定基準にする。
-   - ToolSearch でも固定名 `mcp__figma-dev-mode-mcp-server__get_metadata` および類似名が見つからない → 「figma-dev-mode MCP のツールが利用できません」と報告して停止する。
-   - ツールは解決できたが呼び出し自体が失敗する → 「Figma Dev Mode MCP に接続できません。」と原因を報告して**停止**（対処法は 3 の共通対処法）。
-2. 対象ノードを確定する:
-   - `$ARGUMENTS`（起動プロンプト本文の明示指定を含む）に node-id / URL がある → そこから node-id を抽出（URL `...?node-id=1-2` → `1:2`）
-   - 単独起動でプラン / セッションに対象ノードが既出 → それを採用
-   - 不明 → 1 のページ一覧から辿り、対象ページ → 対象ノードへドリルダウンする（委譲実行時の選定基準は前節を参照）
-3. 確定した対象ノードで `get_metadata`(nodeId) を呼ぶ（診断目的の呼び出しであり、Step 2 の 1 つ目の呼び出しを兼ねる。結果は Step 2 でそのまま使い、再呼び出しは不要）。
-   - 失敗する → 「Figma Dev Mode MCP 経由で対象ノードに接続できません。」と報告して**停止**（1 で取得したページ一覧に対象ファイル名と対応するページが見当たらない場合は、ファイル取り違えの可能性を診断メッセージに書き添える。1 との原因文の違いは、1 が MCP 自体への接続失敗、こちらは接続済みだが対象ノードが見つからない失敗という点にある）。
-   - 共通対処法（1・3 いずれの停止でも末尾に付与する）: 「Figma デスクトップアプリが起動し、対象ファイルが開いているか確認してください。」
-4. 反映対象が複数ノードに跨る場合は node-id を**全て列挙**してから Step 2 へ。1 ノードずつ処理する（3 は最初の 1 ノードにのみ行う診断であり、複数ノード全件には行わない）。
+## Compare with implementation
 
-### Step 2: ノードごとに構造化データを抽出（スクショは補助）
+Read the corresponding code and classify each atom as `一致`, `差分`, or `未実装`. Measure computed style when source code cannot determine a rendered value. Do not use visual similarity as proof. Record differences as `Figma value → current value`.
 
-各対象ノードについて、次の 4 つを取得する:
+Check every atom returned by the extraction, not only differences named by the requester.
 
-1. `get_metadata`(nodeId) — ノード木（子要素・レイヤー種別・名前・位置・サイズ）。**子要素を列挙して「要素まるごとの欠落」を防ぐ**起点。最初の対象ノードは Step 1-3 で呼んだ結果をそのまま使う（再呼び出し不要）。2 ノード目以降は改めて呼ぶ。
-2. `get_design_context`(nodeId) — 参照コードとプロパティ。design-to-code の主情報源。
-3. `get_variable_defs`(nodeId) — デザイントークン（色 hex・font・size・spacing 等）。**正確な値の正本**。
-4. `get_screenshot`(nodeId) — 当たりを付ける補助。
+## Persist
 
-> ⚠️ **スクショを値の正本にしない。** 正確な hex・1〜2px 差・font weight・アイコンや枠の「有無」はスクショでは判別できない。値は必ず `get_variable_defs` / `get_design_context` から取る。スクショは「何があるか」の確認用途に留める。
+Transfer `差分` and `未実装` atoms to acceptance criteria by running `/define-acceptance-criteria` in the normal planning pipeline; for a PoC, add them to the plan checklist. If the context does not establish a PoC, use the normal pipeline and state why. Do not duplicate them in both after AC is actually generated.
 
-### Step 3: プロパティ・チェックリスト化（固定カテゴリで漏れを潰す）
+Write or replace this section in `<plan>.analysis.md`, or in the plan when no analysis file exists:
 
-ノード単位 × 子要素単位で、下記の固定カテゴリ行を埋める。各行に **Figma 値** と **出典**（変数名 or node-id）を書く。**「無」も明示行にする**（枠なし・影なし・アイコンなしも 1 行）。ただし **「明示 none」と「沈黙」を腑分けする**: ツールが明示的に `none` / 不在を返したときだけ「無」を確定差分にし（実装に値があれば撤去対象）、プロパティ自体が出力に現れない『沈黙』は「無」と断定せず保留（[references/checklist-building-details.md](references/checklist-building-details.md) の「値が構造化データから確定できないとき」）に回す。両者を取り違えると、沈黙を「無」と誤確定して誤差分を積むか、本来の「無」差分を見落とす。指定が見当たらないカテゴリは「Figma 指定なし」と書いて空欄のまま放置しない。ただし対象要素に構造的に存在し得ないカテゴリ（例: テキストを持たない icon-only 要素のタイポグラフィ/テキスト内容）は行ごと省略してよい — 保留に回すのは「該当し得るのに値が出力に現れない」沈黙だけ（例: トークン名は見えるのに hex が解決しない）。該当し得るがカテゴリへの徴候が出力に一切ない場合は、まず当該ノードで 1 段深掘りし、深掘りできない環境では根拠のない atom を作らず省略する。
+```markdown
+## 正本抽出結果
 
-各行には `FIG-01` 形式の atom ID を付与する。採番はノードをまたいだ通し番号とし、ノードごとにリセットしない（複数ノードを 1 ノードずつ処理する順で、既に振った最大値の続きから採番する）。1 行 = 1 atom として一意に参照できるようにする（Step 5 の `## 正本抽出結果` と `/finalize-plan` の正本カバレッジ・ゲートが atom ID を参照する）。再抽出時は旧テーブルを廃棄し FIG-01 から採番し直す（全置換の趣旨。AC 側の既存参照はゲート再実行で追従を確認する）。
-
-子要素の重複 atom を 1 行へ統合する基準（アイコン行への畳み込み・複合「状態」行の省略可否・サブ属性ごとの atom 化）は [references/checklist-building-details.md](references/checklist-building-details.md) の「重複 atom を作らない」を参照。
-
-| カテゴリ | 確認する点 | 取りこぼしやすい例 |
+| atom ID | 期待値 | 状態 |
 |---|---|---|
-| 要素の有無 | 各子要素がそもそも実装に存在するか | 「添付ファイル 任意」見出しが要素ごと欠落 |
-| 色 | 背景 / 文字 / 枠線 の hex またはトークン名 | `#525659` ←→ `#464343` の微差 |
-| 枠線 | 有無 / 太さ / 色 / 角丸 | IconOnlyButton = **枠なし**（「無」指定の見落とし） |
-| アイコン | 有無 / 種類 / 位置(left/right) | ↑「未入力項目へ」/ ›「入力して進む」の付与漏れ |
-| タイポグラフィ | font-weight / size / line-height / 字間 | **Bold** 指定の見落とし |
-| 寸法・余白 | 固定幅 / padding / margin / gap | タブ固定幅 92px / gap |
-| 配置 | 整列 / 中央寄せ / 方向 | 中央寄せの未反映 |
-| テキスト内容 | 文言の正確一致（修飾の有無含む） | バナー文言の前半修飾差分 |
-| 状態 | hover / active / selected / disabled の差分 | 選択タブ = YG2 背景 + GY7 文字 + Bold |
+| FIG-05 | 左ペイン背景色 #464343 | 差分 (現状 #525659) |
+```
 
-値が構造化データから確定できないとき（ツールの沈黙を「指定なし」と断定しない・引き直し先の選び方・要素の不在とスタイルの沈黙の腑分け・沈黙の終端処理など）の保留表記と引き直し手順は [references/checklist-building-details.md](references/checklist-building-details.md) の「値が構造化データから確定できないとき（保留表記し、断定しない）」を参照。
+The first column contains only the atom ID. Include all resolved rows, including matches, plus a separate unresolved list. After re-extraction, replace the whole table and rerun downstream coverage gates; do not rewrite a QA ledger keyed by QA-ID.
 
-### Step 4: 実装と 1 行ずつ照合
-
-各チェックリスト行を実装の該当箇所と突き合わせ、**一致 / 差分 / 未実装** を判定する:
-
-1. コード（`.scss` / `.css` / `.tsx` の className・style・トークン）を `Read` で確認する。
-2. 値がコードから一意に確定できない（共有トークン経由・継承・算出値）→ ChromeDevTools MCP で computed style を実測する（`getComputedStyle` / 寸法測定）。**「目視で同じ」を判定根拠にしない。**
-3. 差分・未実装の行は「**Figma 値 → 現状値**」で記録する。
-
-> ⚠️ **人間が挙げた「指定 N 点」は部分集合。** 指定外の行も全部確認する。指定点だけ直して閉じると、未指定差異を後工程の QA で 1 件ずつ後追いする羽目になる。
-
-### Step 5: 差分を AC / プランへ転記 + 正本抽出結果の書き出し
-
-1. 差分・未実装の行を AC（またはプランの反映チェックリスト）へ転記する。転記時は atom ID（`FIG-NN`）を併記する。
-2. AC/MECE/finalize 等の計画装備を通常伴う文脈では、ここで `/define-acceptance-criteria` を実行し受け入れ条件化する（`/qa-ui` による pass/fail 検証は実装完了後の別フェーズであり、本 Step では呼ばない）。PoC・使い捨て検証など計画装備を省略する文脈では `/define-acceptance-criteria` を呼ばず、1 点目の「プランの反映チェックリスト」への転記のみで留める（`/qa-ui` の検証は AC が無くてもこのチェックリストに対して行える）。**文脈からどちらか判定できない場合は通常経路（`/define-acceptance-criteria` を実行）をデフォルトとし、判定根拠（PoC を示す語が無かった、等）を成果物または報告に明記する。** `/define-acceptance-criteria` を実際に実行して AC が生成された後は AC が正本になり、1 点目の「プランの反映チェックリスト」への重複転記は不要である（AC 化を決めただけで未生成のうちは転記を省略しない。省略すると差分がどこにも記録されない空白期間ができるため）。
-3. チェックリストの全行（一致を含む）を `<plan>.analysis.md` の `## 正本抽出結果` セクションに書き出す。2 で `/define-acceptance-criteria` を実行し分析ファイルが既に作られていればそこに追記し、実行していない・分析ファイルが無ければプランファイル末尾に同セクションを追記する。出力先パス（プラン / 分析ファイル）が未確定の場合は「委譲実行」節の縮退動作に従う。列は atom ID・期待値・状態（`一致` / `差分` / `未実装`）の 3 列（カテゴリは期待値の文言に含めて書く。例: 「左ペイン背景色 #464343」「IconOnlyButton は枠なし」）。フォーマット:
-
-   ```markdown
-   ## 正本抽出結果
-
-   | atom ID | 期待値 | 状態 |
-   |---------|--------|------|
-   | FIG-05  | 左ペイン背景色 #464343 | 差分 (現状 #525659) |
-   | FIG-07  | IconOnlyButton は枠なし | 未実装 |
-   | FIG-10  | タブ固定幅 92px | 一致 |
-   ```
-
-   `/finalize-plan` の正本カバレッジ・ゲート（Step 3.5）はこのテーブルの `差分` / `未実装` 行の atom ID（1 列目）を grep して AC 転記漏れを検出する。1 列目は atom ID のみを書き、他の文字列を混ぜない。
-4. 正本（Figma ノード）を再抽出したときは `## 正本抽出結果` を全置換し、`/finalize-plan` のゲートを再実行する。`<plan>.qa-ledger.md` は QA-ID を主キーとするため、FIG-NN が振り直されても既存行は変更しない。
-5. 「目視 OK」で閉じず、チェックリストの全行が一致するまで反映を続ける。
-
-## Pitfalls
-
-- **スクショ目視を正本にする**: hex 微差・font weight・1〜2px・アイコン/枠の有無 はスクショで見えない。値は `get_variable_defs` / `get_design_context` から取る。
-- **「無」の指定を行にしない**: 枠なし・影なし・アイコンなしは明示行にしないと見落とす。
-- **子要素を列挙しない**: `get_metadata` で子要素を展開しないと「要素まるごと欠落」を取りこぼす。
-- **ツールの沈黙を「指定なし」と断定する**: `get_variable_defs` が値を返さない ≠ Figma 指定なし。共有 collection / 親ノードを引き直す。断定するとそのプロパティが照合対象から落ちて反映漏れになる。
-- **指定点だけ直す**: 人間が挙げた点は部分集合。指定外プロパティも全行確認する。
-- **Figma MCP の切断**: セッション中に切れることがある。再接続して node 単位でリトライする。
-
-## Gotchas（観測済みの罠 — 実測で判明したものを 1 件 1 行で追記）
-
-- Step 1-3 の診断呼び出し (`get_metadata`(nodeId)) が失敗したとき、Pitfalls の「再接続してリトライする」を適用して 1 回リトライしてから停止する executor と、即座に停止する executor の両方を観測した。checklist の合否には影響しないが (`No node could be found` は一過性でなく再試行しても結果は変わらない)、挙動の揺れそのものは把握しておく。
-- 委譲実行のドリルダウン選定基準（ページ一覧とキーワードの照合）は、`v0` / `v1` のような汎用バージョンラベルを「一致」と楽観視せず、背景キーワードの文字列が直接含まれるページ名だけを一致とみなすと判定がぶれない。
-
-## 併用推奨 skill
-
-- `/define-acceptance-criteria` — 抽出した差分行を受け入れ条件化する
-- `/qa-ui` — チェックリストを実装後に 1 行ずつ検証する
-- `/finalize-plan` — QA 手順と AC の参照元プランを準備する
+Final reporting includes the written absolute path or `未書き込み` reason, the full results table only when generated, and unresolved atoms/reasons.

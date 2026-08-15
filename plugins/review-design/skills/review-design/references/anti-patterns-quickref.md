@@ -1,6 +1,6 @@
 # Anti-Patterns 早見表 (Quick Reference)
 
-reviewer 起動時はこのファイルのみ Read する。判定で迷ったら `anti-patterns.md` 本体を Read する。
+reviewer はこのファイルを SSOT として使う。
 
 | # | アンチパターン | 一行症状 | Grep ヒント | 改善方向 |
 |---|---|---|---|---|
@@ -12,11 +12,11 @@ reviewer 起動時はこのファイルのみ Read する。判定で迷った�
 | 6 | Shotgun Surgery | 1 変更が多ファイルに波及 | 概念名 (例: `:active`) の散在ファイル数 | 関連ロジックを 1 箇所に集約 |
 | 7 | Premature Abstraction | 使われない抽象化 / 1 実装しかない interface | `NotImplementedError` / `class.*<.*Base` | YAGNI、削除して具体実装に戻す |
 | 8 | Feature Envy | 他オブジェクトのデータを 5 回以上連続参照 | `target\.` の同一メソッド内出現回数 | ロジックをデータ持ち主のクラスへ |
-| 9 | Reinventing Platform Primitives | 標準機能があるのに数値/日付/URL/deep copy/ID/後始末を手書き | —（grep 不可・知識ベース判定） | 言語/ランタイム/framework の組込みに置換 |
+| 9 | Reinventing Platform Primitives | 標準機能があるのに数値/日付/URL/deep copy/ID/後始末を手書き | —（grep 不可・知識ベース判定） | 組込みに置換し、自前実装とそれだけを検証する専用テストを削除 |
 
 ## 早見判定基準 (3 値表)
 
-各観点について、以下の閾値で判定する。詳細な例は `anti-patterns.md` を参照。
+各観点について、以下の閾値で判定する。
 
 | # | ✅ | ⚠️ | ❌ |
 |---|---|---|---|
@@ -29,12 +29,3 @@ reviewer 起動時はこのファイルのみ Read する。判定で迷った�
 | 7 Premature | 抽象化に 2+ 実装 or 拡張予定明確 | 1 実装だがテストモック有用 | 1 実装かつテスト用途なし |
 | 8 Feature Envy | 同一メソッド内アクセス 2 回以下 | 3-4 回 | 5 回以上 or getter 連鎖 |
 | 9 Reinventing Primitives | 標準機能を使用 | 環境制約（設定と照合して実在確認済み）で自前実装 + 置換先を実装イメージ付き TODO コメントで明記 | 標準機能が存在するのに黙って自前実装（設定と照合して成立しない制約主張もここ） |
-
-## 詳細を Read する条件 (観測可能トリガー)
-
-以下のいずれかに該当する場合のみ `anti-patterns.md` 本体を Read する:
-
-- Grep ヒット数が ⚠️ と ❌ の境界 ±1 にある (例: Fat Controller のアクションが 15-17 行)
-- 検出対象が ActiveRecord callback / association / scope を含む (Rails 固有の例外確認が必要)
-- ユーザーへの出力に改善コード例を含める必要がある (推奨修正の雛形が必要)
-- 判定が ⚠️ で具体例の参照なしには ✅ か ❌ かを決定できない場合

@@ -1,15 +1,13 @@
 ---
 name: finalize-plan
-description: Use when acceptance criteria and MECE review are complete and a plan needs implementation-ready QA preparation immediately before coding, or when asked to add implementation preparation or QA steps to a plan.
+description: Use after a plan's acceptance criteria and MECE analysis are complete, immediately before implementation.
 ---
-
-# finalize-plan
 
 `$ARGUMENTS` はプランファイルパス。`<plan>.analysis.md` の AC・MECE からプラン、`<plan>.qa-ledger.md`、`<plan>.preflight.md` を生成する。
 
 ## Tier
 
-分析ファイルの `### Tier` を継承する。未記載は standard。件数は `[MECE追加]` を含む enumerate 対象 AC の総数。auth / billing / payment / migration は件数によらず deep。
+優先順は auth/billing/payment/migration → deep、分析ファイルの `### Tier`、未記載時は `[MECE追加]` を含む AC 件数。件数でも決まらなければ standard。
 
 | Tier | AC | Manual planner | Auto planner |
 |---|---:|---|---|
@@ -32,11 +30,11 @@ PR 分割・ブランチ設計は行わない。
 先に /define-acceptance-criteria → /mece-plan-review を実行してください。
 ```
 
-経路や PoC 文脈による例外はない。分析ファイルの `## 正本抽出結果` は任意入力。プランまたは Read 済み参照先に Figma URL があるのに分析ファイルへ同節がなければ `/extract-figma-spec` を提案し、単独実行では採否を待つ。委譲実行では要人間確認へ加えて続行する。
+PoC 例外はない。`## 正本抽出結果` は任意。プランが参照するローカル Markdown を1 hop読み、Figma URLがあるのに同節がなければ `/extract-figma-spec` を提案する。単独実行では採否を待ち、委譲実行では要人間確認へ加えて続行する。
 
 ### 2. QA-ID
 
-main agent が [references/qa-id-enumeration.md](references/qa-id-enumeration.md) に従い AC を一度だけ enumerate する。
+[references/qa-id-enumeration.md](references/qa-id-enumeration.md) に従い AC を一度だけ enumerate し、`mktemp -d` で作る `RUN_DIR/enumerated_qa_ids.txt` に全 QA-ID を1行1件で保存する。Step 6 後に削除する。
 
 ### 3. QA planning
 
@@ -44,21 +42,21 @@ tier 表を実行する。lite は main agent が `agents/manual-qa-planner.md` 
 
 ### 4. プラン追記
 
-planner 出力を統合し、プラン末尾へ `## 実装準備` を追記する。書式は [references/output-template.md](references/output-template.md)。
+planner 出力を統合し、プランの `## 実装準備` を作成または置換する。書式は [references/output-template.md](references/output-template.md)。
 
 manual の各 `出典:` は enumerate 元 AC 原文を保持する。対応しない QA-ID は統合せず要人間確認へ加える。
 
 ### 5. 正本カバレッジ
 
-Step 4 の Write 後、分析ファイルに `## 正本抽出結果` 見出しがなければ [references/output-template.md](references/output-template.md) の skip 行を記録する。見出しがあれば内容が空でも [references/coverage-gate-bash.md](references/coverage-gate-bash.md) をプラン自体へ実行する。
+Step 4 の Write 後、`## 正本抽出結果` がなければ [references/output-template.md](references/output-template.md) の skip 行を記録する。見出しがあれば空でも [references/coverage-gate-bash.md](references/coverage-gate-bash.md) をプラン自体へ実行する。
 
-未カバー atom の期待値を既存 manual 項目の確認本文が完全に検証していれば、AC原文を残したまま `出典: <atom ID>` を追加する (`出典: <AC原文> / 出典: <atom ID>`。atom ごとにラベルを繰り返す)。それ以外は enumerate 済み ID とプラン内 ID の最大 QA-M 連番を継続し、期待値原文と `出典: <atom ID>` を持つ新規 QA-M を manual へ追加する。補完後は再実行して差分ゼロを確認する。
+未カバー atom を既存 manual の確認本文が完全に検証していれば、AC原文を残して atom ごとに `出典: <atom ID>` を追加する。それ以外は enumerate 済み ID とプラン内 ID の最大 QA-M 連番を継続し、期待値原文と atom 出典を持つ QA-M を追加する。補完後に再実行して差分ゼロを確認する。
 
-記録書式と位置は output template に従う。既存行は置換する。補完 QA-M は ledger 対象へ加えるが、Step 2 由来の `対象AC` 件数には加えず coverage 行だけに計上する。
+記録位置・書式は output template に従い既存行を置換する。補完 QA-M は ledger に加えるが、Step 2 の `対象AC` 件数には加えず coverage 行だけに計上する。
 
 ### 6. QA ledger
 
-Step 2 の全 QA-ID と Step 5 の補完 ID の和集合から [references/qa-ledger.md](references/qa-ledger.md) を初期化する。
+Step 2 の全 QA-ID と Step 5 の補完 ID の和集合から [references/qa-ledger.md](references/qa-ledger.md) を作る。既存 ledger があれば履歴を保持し、新規 `(QA-ID, 手段)` の初期行だけ追記する。その後 `RUN_DIR` を削除する。
 
 ### 7. Preflight
 
@@ -66,16 +64,14 @@ Step 2 の全 QA-ID と Step 5 の補完 ID の和集合から [references/qa-le
 
 ## 委譲実行
 
-AskUserQuestion の有無と Task の有無で判定し、実行主体名では推測しない。
+同期的な質問と独立 executor dispatch の可否で判定する。
 
-- プランパス: `$ARGUMENTS` → 起動 prompt の明示パス。`Plan File Info:` は単独実行だけで使う。解決不能なら探索・推測・Write をせず `不足入力: プランファイルパス` で即終了。
-- AskUserQuestion 不可: 分類不能、preflight 未定、要人間確認を質問せず最終報告へ列挙。
-- Task 不可: [references/agent-orchestration.md](references/agent-orchestration.md) の in-context fallback。subagent であること自体は fallback 条件ではない。
-- `${CLAUDE_PLUGIN_ROOT}`: この SKILL.md の所在から skill root の絶対パスへ解決してから nested prompt / Read に渡す。
+- パスは `$ARGUMENTS` → 起動 prompt。`Plan File Info:` は単独実行だけで使い、未解決なら探索・推測・Write なしで `不足入力: プランファイルパス` と終了する。
+- 同期質問不可なら分類不能・preflight 未定・要人間確認を最終報告へ列挙する。
+- dispatch 不可なら [references/agent-orchestration.md](references/agent-orchestration.md) の in-context fallback を使う。実行主体名は判定材料にしない。
+- nested prompt / Read の skill root は、この SKILL.md の所在から絶対パスへ解決する。
 
 ## 完了報告
-
-次を列挙する。
 
 - Write したプラン、ledger、preflight の絶対パス
 - coverage gate 結果

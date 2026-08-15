@@ -1,57 +1,11 @@
-# ラベル付与 (Step 7) とマイルストーン (Step 8)
+# Labels and milestone
 
-## ラベル定義の取得元
+Read the configured release-label definitions when available; use their exact names and criteria. If unavailable, omit labels without blocking PR creation.
 
-`~/.claude/skills-config/release-labels.md` を Read で取得して使用。同ファイルには以下が定義されている前提:
-- `productivity_labels`: 開発生産性カテゴリのラベル一覧と判定基準
-- `ai_contribution_labels`: AI貢献度のラベル一覧（4 段階推奨）と判定基準
-- `release_level_labels`: リリースレベルのラベル一覧（4 段階推奨）と判定基準
-- `core_features`: プロジェクトの根幹機能リスト（ReleaseLevel 高レベル判定に使用）
+Choose at most one label in each configured group:
 
-**フォールバック**: `release-labels.md` が見つからない場合、`bash scripts/setup.sh` の実行をユーザーに促し、ラベル付与をスキップしてドラフト PR を作成。
+- productivity: classify by the PR's largest user/developer value, ignoring incidental test parity;
+- AI contribution: honor an explicit user level; otherwise use observed authorship of the diff, not the fact that this PR-writing skill ran. If provenance is uncertain, report that uncertainty in the completion message, not the PR body;
+- release level: use the shipped/default-state behavior visible to existing users. Schema changes are highest; core-flow behavior changes are high; backward-compatible/internal changes are middle; wording/typo/patch-only changes are lowest. Prefer configured `core_features`; otherwise use repository project documentation.
 
-## a. Productivity ラベル (1 つ選択)
-
-`productivity_labels` から 1 つ選択。一般的な判定優先順位（実環境のラベル名は `release-labels.md` を参照）:
-- ユーザーが体感する変化がある（新機能・UX 改善）
-- バグ修正・依存ライブラリ更新・責務分割リファクタ（性能最適化・クエリ改善も、ユーザー体感の変化が主目的でなければここに含める）
-- 共通基盤・CI 改善・計測基盤・docs
-- 既存コードへの spec 追加・品質向上のためのリファクタ
-- 上記いずれにも当てはまらない、または Bot 生成 PR
-
-複数カテゴリに該当する PR は、最も大きな価値変化を生む 1 つで決める（タイトル type の優先順位と同じ考え方。parity spec 追加のような副次成果物はラベル判定に反映しない）。上の一般優先順位と `release-labels.md` の定義文言が食い違う場合は**環境側の定義文言を優先**し、どちらにも該当が立たなければ「上記いずれにも当てはまらない」枠に倒す。
-
-## b. AI Contribution ラベル (1 つ選択)
-
-`ai_contribution_labels` から 1 つ選択。判定フローチャート（上から順に適用、最初にマッチしたもの採用）:
-
-1. ユーザーがセッション冒頭で level を明示指定した → その指定を優先
-2. 本セッション内で Claude（または他の AI コード生成コマンド）が **本 PR の差分コードを生成・変更**した（新規ファイル作成・既存コードへの Edit/Write）→ 推奨デフォルト（4 段階の最高レベル）
-   - 注意: 本 skill 自体は PR 作成補助であり「コード生成」には該当しない。判定対象は **PR の diff に含まれるソースコードの成立経緯**
-3. AI 生成がほぼ無く人間主体で書いた変更（typo 修正、手動 rename のみ、手動で書いた後に AI は PR 作成補助のみ使用）→ 4 段階の最低レベル
-4. それ以外で判断に迷う → 推奨デフォルトを採用し、PR 本文「やったこと」末尾に「(AI contribution 実測困難のため推定)」と 1 行添える（この 1 行は 60 字制限から除外）
-
-## c. Release Level ラベル (1 つ選択)
-
-`release_level_labels` から 1 つ選択。判定軸は**既存ユーザーが観測できる挙動変化の有無**（コードが根幹機能の領域にあるかではない。`release-labels.md` の定義文言にある「影響あり/なし」もこの軸で読む。feature flag 付き変更は**出荷時点の既定状態 (flag OFF 等) で観測される挙動**が基準）。判定ショートカット（上から順に適用、最初にマッチしたもの採用）:
-
-1. `db/migrate/` 配下の差分がある → 最高レベル（スキーマ変更は常に最高、不可逆扱い）
-2. 「根幹機能」に挙動を追加・変更し、**既存ユーザーが体感できる挙動変化**（既存フロー後の追加メール送信、既存画面の操作結果変化、外部連携の挙動変化など）を伴う → 高レベル
-   - 例: 注文確定フローに通知メーラーを追加（確定後の挙動が変わる）
-   - 例: 既存 API のレスポンス内容を変更
-3. 「根幹機能」エリアでも既存ユーザーの体感に影響しない後方互換変更（裏側のリファクタ、内部メソッド追加、既定無効の新機能フラグなど）、または「根幹機能」以外の後方互換変更（UI 調整、API への後方互換フィールド追加など）→ 中レベル
-4. 表示文言のみ・タイポ・パッチアップデートのみ → 最低レベル
-
-### プロジェクトの根幹機能の判定
-
-- `release-labels.md` の `core_features` リストに挙がっているドメインに触れるなら「根幹機能への影響あり」
-- `core_features` が空の場合は対象リポジトリの `CLAUDE.md` / `README.md` 冒頭の「主要機能」「プロジェクト概要」記述から推定
-- 原則として認証・認可・決済・データ永続化・外部公開 API は「根幹機能」扱い
-
-## Step 8: マイルストーン
-
-- 関連 Issue がありマイルストーンがあればそれを使用
-- それ以外の場合は `Untracked` を設定
-- **事前確認必須**: `gh api repos/{owner}/{repo}/milestones --paginate --jq '.[].title'` で `Untracked` の存在を確認し、**無ければ `--milestone` オプション自体を省略**する（存在しない値を指定すると `gh pr create` が失敗するため）
-- **`--paginate` 必須**（推奨ではない）: `per_page=100` でも 100 件超リポジトリでは末尾が漏れ、実在する `Untracked` を「無い」と誤判定して `--milestone` を不要に省略する事故が起きるため。100 件超が確実なら id 直接確認でも可
-- **確認コマンド自体が失敗した場合**（GitHub ホストを解決できない等）も「無い」と同様に扱い、`--milestone` を省略する。空リストとコマンドエラーを区別しない（どちらも「確認できた事実がない」以上の情報を持たないため、安全側は同一の省略判断でよい）
+For milestones, inherit a related issue's verified milestone. Otherwise query all milestone pages for `Untracked`; use it only when confirmed. If listing fails or no configured value exists, omit the milestone option.

@@ -1,20 +1,9 @@
 ---
 name: create-pr
-description: Creates a Conventional-Commits PR (draft by default; ready for review when the user explicitly requests it) from the current branch with generated title, body, labels, and milestone, without confirmation. Use when the user says "PR を作って" / "draft PR" / "PR 作成して" / "ready for review で PR を作って", optionally with `[base-branch]` and per-section detail-expansion instructions (e.g. "設計判断は詳しく") as arguments.
-disallowed-tools: AskUserQuestion
+description: Use to create or update a Conventional-Commits PR from the current branch; draft by default, ready only when explicitly requested.
 ---
 
-# create-pr
-
-カレントブランチから Conventional Commits 形式の PR を作成する。**ユーザー確認は一切行わず、分析完了後は直接 PR 作成を実行** (frontmatter の `disallowed-tools: AskUserQuestion` で構造的にも強制)。既定は `--draft`(呼び出し側が ready for review・出荷用等を明示指定した場合のみ付けない)、positional argument は `[base-branch]` のみ。
-
-## 現在の git 状態 (skill 読み込み時に自動取得)
-
-!`git status -sb`
-
-!`git log --oneline -15`
-
-> 上 2 行は Claude Code が skill 読み込み時に実行し結果へ置換する (読み取り専用・冪等)。バッククォート付きの生コマンド文字列のまま見えている場合 (注入非対応環境) は、Step 1 で同コマンドを Bash 実行して取得する。
+カレントブランチの Conventional Commits PR を作成または更新する。ユーザー確認は行わない。新規 PR は既定 `--draft` で、ready 明示時だけ外す。既存 PR は状態を保持し、ready 明示時だけ draft から昇格する。
 
 ## Task complexity tier
 
@@ -22,12 +11,11 @@ disallowed-tools: AskUserQuestion
 |---|---|---|---|
 | **lite** | 1 commit, <50 LoC, single domain, 既存 pattern 踏襲 | [A] 斜め読み + [D] AI 臭 の 2 観点 | Step 4b (周辺コード比較) 省略可。Pre-work 本質リストは 1-2 点 |
 | **standard** (default) | 2-5 commits, multi-file, single domain | [A] + [B] + [C] + [D] の 4 観点 (現状) | Step 1-10 を順次実行。Pre-work 本質リストは 2-3 点 |
-| **deep** | multi-domain / breaking change / 6+ commits / migration | 4 観点 + 関連 PR 検索 + 既存 issue リンク | Step 4c で plan 全展開、Pre-work 本質リストを **最低 5 点・上限 7 点** に拡張 (5 に届かない場合は domain ごと / PR チェーン段階ごと / migration / observability / rollout / rollback の観点で分解して 5 点まで埋める) |
+| **deep** | multi-domain / breaking change / 6+ commits / migration | 4 観点 + 関連 PR 検索 + 既存 issue リンク | Step 4c で plan 全展開。Pre-work は重要事実を漏れなく列挙 |
 
-リスク領域 (auth / billing / payment / migration / security config) は LoC・commit 数によらず **deep**。draft/ready の判定は tier に依存しない (lite でも既定は `--draft`、呼び出し側の明示指定時のみ ready)。**tier 判定の評価時点は Step 1 の `git log [base-branch]..HEAD` 時点** — Step 2 で未コミット分から作る commit は commit 数に数えない (数えると未コミット 1 ファイルの軽微変更が lite から外れてしまうため)。
+リスク領域 (auth / billing / payment / migration / security config) は常に deep。draft/ready は tier に依存しない。tier の commit 数は Step 1 の `git log [base-branch]..HEAD` で数え、Step 2 の commit は含めない。
 
 **deep tier の追加規約**:
-- **本質リスト 5+ の解釈**: standard tier では scope 過大の兆候、deep tier では正常な分解結果。読み分けの詳細は `references/description-style.md`「Pre-work: 本質リスト」末尾を SSOT とする (本 tier 表は点数の SSOT)。
 - **BREAKING CHANGE footer 位置**: PR テンプレに専用 footer 見出しがあればそこ。無ければ本文末尾の独立 footer として `BREAKING CHANGE: <description>` を「Revert 手順」見出しの**直前**に配置 (Conventional Commits の footer 慣例。`## やらなかったこと` の直後・本文セクション群の外側)。テンプレ内の `<!-- ... -->` コメントは削除しない。
 
 ## Arguments
@@ -37,23 +25,21 @@ disallowed-tools: AskUserQuestion
   - 残り（または全体）は**詳細展開指示**として解釈する（例: `/create-pr develop 設計判断は詳しく`）。詳細展開指示はセッション中のユーザー発話でも受け付ける（Step 6 参照）
   - draft/ready 指定（例: 「ready for review で」「出荷用」）も詳細展開指示と同様、`$ARGUMENTS` またはセッション中の発話で自然文として受け付ける（Step 10 参照。既定は draft）
 
-## 委譲実行 (subagent として起動された場合)
+## 会話履歴を持たない委譲実行
 
-**`Task` ツールで委譲された場合は、まず [references/delegated-execution.md](references/delegated-execution.md) を読み**、既定手順への読み替え (Step 4c/6 の情報源・AI Contribution 判定・ブランチ状態が複雑な場合・`gh` ホスト解決失敗時の縮退) を適用する。単独起動時の現行動作は変えない (この節はスキップしてよい)。
+**委譲実行では、まず [references/delegated-execution.md](references/delegated-execution.md) を読み**、情報源・AI Contribution・複雑なブランチ状態・`gh` 失敗時の読み替えを適用する。
 
 ## Quick start
 
 最短経路:
 1. **Step 0**: PR テンプレートを動的検索 ([references/template-discovery.md](references/template-discovery.md)) → ベースブランチ確定
-2. **Step 1**: 冒頭の自動取得結果 (status -sb = ブランチ + 未コミット / log) を使い、base-branch 依存の `git log [base-branch]..HEAD --oneline` / `git diff [base-branch]...HEAD --stat` のみ実行 (自動取得が生コマンド文字列のままなら `git status -sb` / `git log --oneline -15` も Bash 実行)。ローカルに `[base-branch]` ref が無ければ `git fetch origin [base-branch]` 後に `origin/[base-branch]` で比較する
+2. **Step 1**: `git status -sb`、`git log --oneline -15`、`git log [base-branch]..HEAD --oneline`、`git diff [base-branch]...HEAD --stat` を実行する。ローカルに base ref がなければ fetch 後に `origin/[base-branch]` で比較する
 3. **Step 1.5**: ブランチ妥当性検証 ([references/branch-validation.md](references/branch-validation.md))。違反なら **コミット前** に `git switch -c` で新ブランチ切替 (コミット後 rename は GitHub API 副作用で PR が CLOSED されるため不可)
-4. **Step 2**: 未コミットファイルがあれば 1 コミット = 1〜3 ファイル粒度で `<type>(<scope>): <日本語要約>` 形式コミット
+4. **Step 2**: 未コミットのうち本タスク関連ファイルだけを意味的に一貫した単位で `<type>(<scope>): <日本語要約>` 形式コミット
 5. **Step 3**: `git push -u origin <branch>`
 6. **Step 4-8**: タイトル / 本文 / ラベル生成 (後述)
 7. **Step 9 (必須)**: [references/description-style.md](references/description-style.md) のセルフチェックを **tier 表の観点セット**で必ず実施 (tier が指定する観点の省略禁止。観点セットと deep の関連 PR 検索は下記 Workflows Step 9)
 8. **Step 10**: 対象ブランチに open PR が無ければ `gh pr create` (既定 `--draft`)、既に open PR があれば `gh pr create` はスキップし push 後 `gh pr edit --body-file` で本文更新 (コマンド全文と draft/ready 判定は下記 Workflows Step 10)
-
-PR URL を表示して完了。
 
 ## Workflows
 
@@ -73,7 +59,7 @@ PR URL を表示して完了。
 
 ### Step 6: 本文生成
 
-検出した PR テンプレートのセクション構成に従う。下記の要点で書ける lite-tier は inline 完結でよい。**standard / deep tier、または初めて本 skill を使う場合は [references/description-style.md](references/description-style.md) を Read**（NG/OK 例対比・Pre-work の具体手順・1 行サマリーの書き方が必要になるため）。要点:
+検出した PR テンプレートに従う。lite は下記で完結してよい。standard / deep は [references/description-style.md](references/description-style.md) を Read する。
 
 - **Pre-work (mandatory)**: 本文を書く前に PR の本質を **bullet リスト** (点数は tier 表が SSOT) として scratch 出力 → 「このPRでやること」型の本質列挙系セクションがあればそこへ番号リストで貼る。**無ければ tier によらず「やったこと」1 文に畳み込む** (番号リスト格上げは本質列挙系セクション実在時のみ。分岐の詳細は description-style.md「Pre-work」節が SSOT)
 - **6 文体鉄則**: コードから読めることは書かない / 斜め読み構造 / 重複禁止 / 常体 / 書かない勇気 / 読み直し
@@ -87,7 +73,7 @@ PR URL を表示して完了。
 
 ### Step 7-8: ラベル・マイルストーン
 
-詳細は [references/labels-and-milestones.md](references/labels-and-milestones.md) を参照。`~/.claude/skills-config/release-labels.md` を Read し以下 3 種を 1 つずつ選択:
+新規 PR にだけ適用する。既存 PR の title / labels / milestone は保持し、本文だけを更新する。詳細は [references/labels-and-milestones.md](references/labels-and-milestones.md) を参照。`~/.claude/skills-config/release-labels.md` を Read し以下 3 種を 1 つずつ選択:
 
 1. **Productivity ラベル** (`productivity_labels`)
 2. **AI Contribution ラベル** (`ai_contribution_labels`): セッション内で AI が PR 差分コードを生成・変更したか
@@ -97,15 +83,11 @@ PR URL を表示して完了。
 
 ### Step 9: セルフチェック (投稿前必須)
 
-[references/description-style.md](references/description-style.md) の「Step 9 セルフチェック」を **tier 表の観点セット** (lite = [A]+[D] のみ / standard = 4 観点 / deep = 4 観点 + 関連 PR 検索) で実施。deep の関連 PR 検索は `gh pr list --state all --search "<検索語>"` / `gh issue list --state all --search "<検索語>"` で行う (検索語 2 語 = scope の英語名 + タイトル主要名詞の日本語 × pr / issue の 2 コマンド = 計 4 回)。ヒットしたら「関連 Issue」セクションの `related -` を 1 行リンクで**置換** (併記しない)、0 件なら本文変更なし。1 つでも該当があれば修正:
-- **[A] 斜め読みテスト**: 各セクション 1 行目だけで PR 意図再構築可能か / 本質リスト (点数は tier 表) と一致か (判定基準は description-style.md「Pre-work」節が SSOT — 各点が分配先セクション込みで復元可能か) / plan 由来 internal 語彙 (`α 層` / `AC-9` / `Critical-A` 等) が残っていないか
-- **[B] コードから読める情報の混入**: ファイル名・関数名・パラメータ追加・import 等が簡潔セクションに残っていないか
-- **[C] 分量・重複 + 「やらなかったこと」事実整合**: 「やったこと」と「なぜやるのか」の事実重複 / 各セクションが 1 行サマリーを超えていないか (bullet 化・複数文段落・表・コードブロックの混入) / 詳細展開がユーザー指示なしに行われていないか (指示があったセクションは逆に 1〜2 行で済まされていないか) / 動作確認結果のケース列挙 / **「やらなかったこと」各項目が最終 diff と整合するか** (スコープ外として正しいか・先送りが本 PR で確定すべきものでないか。詳細は description-style.md「投稿前の事実整合チェック」)
-- **[D] AI 臭**: 「以下に〜を示す」「具体的には」「適切に」等の生成検出語 / 太字 bullet 3 つ以上 / 機械的絵文字 / 「〜のため」段落内 2 回以上 / 「特になし」埋め文 / 矢印チェーン等の作業中 shorthand (詳細は description-style.md [D])
+[references/description-style.md](references/description-style.md) の Step 9 を tier 表の観点セットで実施する。deep は scope とタイトル語で関連 PR/issue を検索し、十分な結果が得られたら止める。ヒット時は「関連 Issue」の `related -` をリンクで置換する。
 
 ### Step 10: PR 作成 (新規 / 既存更新)
 
-**既存 PR の確認**: `gh pr list --head <branch> --state open --json number,url` で対象ブランチの open PR を確認する。1 件あれば `gh pr create` をスキップし、push 後に `gh pr edit --body-file` で本文を更新する (本文更新が不要なら push のみで終える。手順は [references/post-create-edit.md](references/post-create-edit.md) の `gh pr edit --body-file` → 失敗時のみ REST API フォールバックに従う)。0 件なら新規作成に進む。完了報告には作成 / 更新した PR の URL を含める。
+**既存 PR の確認**: `gh pr list --head <branch> --state open --json number,url,isDraft` を実行する。1件なら create をスキップし、push 後に本文だけを更新する。ready 指定かつ draft なら `gh pr ready <number>` を実行し、それ以外は既存 draft/ready 状態と metadata を保持する。0件なら新規作成する。完了報告には PR URL を含める。
 
 **draft / ready の判定**: 既定は `--draft`。呼び出し側が「ready for review」「出荷用」等を明示指定した場合のみ `--draft` を付けずに作成する。
 
@@ -127,26 +109,10 @@ rm -f "$PR_BODY_FILE"
 
 ready 指定時は上記コマンドから `--draft` を省く。既存 PR を更新する場合は `gh pr create` の代わりに `gh pr edit <number> --body-file "$PR_BODY_FILE"` を使う。
 
-## Advanced
-
-- [references/template-discovery.md](references/template-discovery.md) — PR テンプレート 7 段階優先順位 / ベースブランチ 3 段階フォールバック
-- [references/branch-validation.md](references/branch-validation.md) — ブランチ妥当性検証 (同名禁止 / conventional prefix / プロジェクト規約) と自動切替
-- [references/description-style.md](references/description-style.md) — 文体 6 鉄則 / 1 行サマリー既定と詳細展開指示 / Pre-work 本質リスト / Step 9 セルフチェック [A]-[D]
-- [references/labels-and-milestones.md](references/labels-and-milestones.md) — ラベル 3 種判定基準 / Untracked マイルストーン事前確認
-- [references/post-create-edit.md](references/post-create-edit.md) — 作成後の description 更新 (`gh pr edit --body` 失敗回避) / `mktemp` 規約
-- [references/delegated-execution.md](references/delegated-execution.md) — `Task` 委譲実行時の手順読み替え (情報源 / AI Contribution 判定 / `gh` ホスト解決失敗時の縮退)
-- [references/stacked-pr-base.md](references/stacked-pr-base.md) — 積み PR の base 選定と後始末 (retarget 確認 / reopen / rebase)
-
 ## 注意事項
 
-全内容を日本語で記述 / 既存コミット全てを考慮 (最新だけでない) / セキュリティ・パフォーマンス影響を考慮 / 完了時に PR URL を表示し、詳細展開できる素材が残るセクションがあれば「設計判断: 棄却案 2 件を展開可能」のように列挙する (展開はユーザー指示後、[references/post-create-edit.md](references/post-create-edit.md) の手順で本文更新)。
+全内容を日本語で記述し、既存コミット全てを考慮する。完了時に PR URL と、詳細展開できる素材が残るセクションを列挙する。展開依頼後は [references/post-create-edit.md](references/post-create-edit.md) で更新する。
 
 ## Gotchas（観測済みの罠 — 実測で判明したものを 1 件 1 行で追記）
 
 - **積み PR (open PR を持つ前段ブランチから派生したブランチ) の base**: base をデフォルトブランチでなく前段ブランチにすると diff が自タスク分に絞れる。ただし前段 merge 後の base 自動付け替え確認・close 時の reopen・squash merge 時の rebase が必要 (詳細は [references/stacked-pr-base.md](references/stacked-pr-base.md))
-
-## 併用推奨 skill
-
-- `/apply-findings` — コミット前に /code-review 指摘と規約・パターン逸脱を適用してから本 skill を起動
-- `/finalize-plan` — プランを実装可能形式に変換し、その流れで本 skill を呼ぶ
-- `/purge-private-vocab` — PR description 生成後に plan 内造語を点検

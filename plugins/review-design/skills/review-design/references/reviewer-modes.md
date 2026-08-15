@@ -7,14 +7,14 @@ This reference fills in the three execution modes, the inline / subagent DA prom
 | Mode | Meaning | Typical case |
 |---|---|---|
 | **inline default** (normal) | main agent runs DA itself | default; few critical candidates, low self-bias risk |
-| **subagent dispatch** (escalated) | `Task` tool spawns a fresh subagent for DA | complex critical signals; fresh viewpoint required |
-| **in-context fallback** (env-constraint) | `Task` dispatch permanently unusable, main agent substitutes | tool absent / no dispatch permission / spawn budget exhausted |
+| **subagent dispatch** (escalated) | independent-executor capability provides a fresh DA | complex critical signals; fresh viewpoint required |
+| **in-context fallback** (env-constraint) | independent dispatch is permanently unavailable, main agent substitutes | no capability / no permission / exhausted budget |
 
 `inline default` and `in-context fallback` are **different concepts**. The final report tag `(in-context fallback mode: …)` is ONLY for the latter.
 
 ## Parallel Review fallback (Step 3)
 
-If `Task` dispatch is **permanently** unavailable (classification: escalation-rules.md "Permanent vs temporary dispatch failure" — a temporary concurrency/rate limit is retried, not fallen back):
+If independent dispatch is **permanently** unavailable (classification: escalation-rules.md "Permanent vs temporary dispatch failure" — a temporary concurrency/rate limit is retried, not fallen back):
 
 1. Read each selected `agents/*.md` directly.
 2. The main agent applies the reviewer's criteria itself and feeds the per-reviewer verdicts into DA **as internal state** (do not emit intermediate output).
@@ -27,10 +27,10 @@ The main agent runs the following critique against itself:
 ```
 You are the Devil's Advocate against the Parallel Review output. Rules:
 
-1. Produce 3 critiques from angles NOT covered in the Parallel Review (Step 3) output.
+1. Produce up to 3 grounded critiques from angles NOT covered in the Parallel Review output. Zero is valid.
    Repeating existing points is forbidden — new viewpoints required.
 2. Label each critique "fatal / acceptable" (criteria below).
-3. Surface 1-2 hidden assumptions.
+3. Surface up to 2 grounded hidden assumptions. Zero is valid.
 4. Self-bias countermeasure: do NOT critique from the same lens reviewers used. Attack from:
    - Operational failure scenarios (just after deploy / just before retirement / during incidents)
    - Scale expansion (100x traffic / 100x data)
@@ -45,22 +45,21 @@ Canonical list is in references/escalation-rules.md ("DA escalation conditions /
 ## subagent dispatch prompt (escalation only)
 
 ```
-Task(subagent_type="general-purpose", prompt="""
-You are a fresh subagent acting as Devil's Advocate. Produce 3 critiques against
+Dispatch an independent executor with this prompt:
+You are a fresh subagent acting as Devil's Advocate. Produce up to 3 grounded critiques against
 the Parallel Review output, label each fatal/acceptable, and avoid restating any
-existing points. Surface 1-2 hidden assumptions.
+existing points. Surface up to 2 grounded hidden assumptions. Zero is valid.
 
 ## Parallel Review output:
 ${PARALLEL_REVIEW_RESULT}
 
 ## Fatal criteria:
 [Copy the "Single-trigger escalators" + `anti-pattern-checker ❌` rule from references/escalation-rules.md verbatim. That file is the SSOT.]
-""")
 ```
 
 ## Feedback loop
 
-When DA flags any "fatal" finding (inline or subagent — procedure is identical):
+After any Step 4 edit, re-run the selected Parallel Review and DA. When DA flags any "fatal" finding (inline or subagent — procedure is identical):
 
 1. `Edit` the plan file to fix the offending design.
 2. Re-run Parallel Review (Step 3-4) against the fixed plan.

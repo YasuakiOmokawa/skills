@@ -1,10 +1,10 @@
 # 観点 Controlled Vocabulary と変更種別検出
 
-`/define-acceptance-criteria` で使う AC 観点ラベルは、ここで定義された **controlled vocabulary** から選択する。自由形式のラベルは禁止 (mece-plan-review の `area` タグと対応させ、機械的に集約可能にするため)。
+`/define-acceptance-criteria` の AC 観点ラベルはこの controlled vocabulary から選ぶ。
 
 ## Step A: 変更種別の機械的判定 (Step 2 の前段)
 
-プランファイルから抽出した変更ファイルパスを以下のマッピングに照合し、変更種別候補を機械的に列挙する。LLM はその候補から最終 3-5 個を選定するだけで済む (種別推論の負荷削減)。
+プランから抽出した変更ファイルパスを以下へ照合し、候補から SKILL.md の tier 軸数だけ選ぶ。
 
 ### パスパターン → 変更種別マッピング
 
@@ -50,7 +50,7 @@
 | api_change | 後方互換性 | `compat` |
 | db_change / db_or_model_change | データ量 | `data_volume` |
 | db_change | マイグレーション | `migration` |
-| db_change | 既存データ互換 | `data_compat` |
+| db_change / db_or_model_change | 既存データ互換 | `data_compat` |
 | ui_change | デバイス | `device` |
 | ui_change | ブラウザ | `browser` |
 | ui_change | アクセシビリティ | `a11y` |
@@ -88,9 +88,9 @@
 
 **ui_change の copy / 文言のみ変更時の主軸**: `device` を主軸に採る (ラベル長・文字列の変化による truncation / overflow / 折り返しが唯一の実観測点のため)。`a11y` は読み上げ名・ARIA に踏み込む変更がある時のみ、`browser` はブラウザ依存描画が絡む時のみ採用する。
 
-**req_context (リクエスト文脈) の適用対象**: 機能と直交して全リクエストへ自動付与される条件 (マルチテナント / OEM 識別クエリ・サブドメイン・ロケール等) を持つプロダクトで、URL の生成・結合・リダイレクトに触れる変更に採用する。フレームワークが生成 URL へ自動でクエリを載せる機構 (Rails の `default_url_options` 等) があると「クエリなしパス」前提の文字列結合契約が壊れるため、直交条件が付与された状態の AC を最低 1 本置く (理由: OEM 識別クエリが URL パス断片へ混入し、後置結合した URL が 404 になる regression を、AC 化されていなかったためにコードレビュー複数パスが素通しし、実機操作で発覚した実測)。
+**req_context**: 全リクエストへ自動付与される条件があるプロダクトで URL の生成・結合・リダイレクトに触れる変更へ採用し、その条件付き AC を最低1本置く。
 
-**unsent_keys (部分更新時の未送信キー挙動) の適用対象**: 既存レコードを PATCH/POST で部分更新する変更で、参照実装 (旧 UI / 旧経路) からキーを間引いた場合に採用する。nested attributes (`*_attributes=`) や汎用 setter は未送信キーを無条件代入 (nil 上書き) することがあり既存値保持とは挙動が分かれるため、サーバ側の代入処理まで読んで確認する AC を最低 1 本置く (理由: payload を id と value に絞った結果 `document_items_attributes=` が未送信キーを無条件代入し、保存済みマイ印鑑が最終送信で消える regression を作った事例。品質レビュー 6 パスは素通りし、サーバ往復を追跡した最終レビューで検出)。
+**unsent_keys**: PATCH/POST の参照実装からキーを間引く変更へ採用し、サーバ側の nested attributes / setter まで確認する AC を最低1本置く。
 
 ### area タグ対応 (mece-plan-review との接続)
 
@@ -119,12 +119,14 @@
 
 ## Step B: 表に該当する変更種別がない場合
 
-裁量判断として、以下の汎用候補軸から 3-5 個を選び、分析ファイルの `### 検討観点` に「裁量判断 (理由: ...)」と 1 文で明記する。汎用候補軸は controlled vocabulary に既存ラベルがなければ追加する PR を出す:
+次の上から、plan・変更ファイルで条件を観測できる軸だけを選び、`### 検討観点` に根拠を書く。既存ラベルがなければ controlled vocabulary に追加する:
 
-- `dep_loc` — 外部依存の所在 (Service 内 / Adapter 内 / Model 内)
-- `layer` — レイヤー / チャネル
-- `non_invasive` — 失敗時の非侵襲性
-- `contract` — 既存契約との境界
+- `dep_loc` — 外部 API・SDK・永続化 adapter の所在を変更する
+- `layer` — Service–Model、controller–service、UI–API 等のレイヤ境界を越える
+- `non_invasive` — 失敗・timeout・部分成功時に既存状態を保つ必要がある
+- `contract` — 呼び出し元、公開 API、event、保存形式の契約を変更または維持する
+
+必要数に足りなければ、変更の入出力または状態遷移から新しい controlled label を作る。観測できない軸で数を埋めない。
 
 ## ラベル運用ルール (厳守)
 

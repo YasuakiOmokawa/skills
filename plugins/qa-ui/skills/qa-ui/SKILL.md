@@ -1,309 +1,71 @@
 ---
 name: qa-ui
-description: 実装完了後の UI を検証したいとき、または「UI を確認して」「QA して」「画面の動作確認」と頼まれたときに使用。既定は人間委譲 — QA-ID 台帳の manual 項目ごとに前提・操作手順・確認点をまとめた実行手順書を組み立てて人間に依頼し、返答（PASS / FAIL+内容 / 検証不能）を台帳に記帳する（ChromeDevTools MCP は使わずトークン浪費を避ける。台帳が無い場合の AC 直接読込みフォールバック・正本抽出結果直接読込みフォールバック（`/extract-figma-spec` が PoC 等でプラン末尾に書き出す反映チェックリストを検証項目として採用する）・AC 無しモードは現行どおり automation で検証する）。ブラウザ automation（独立コンテキストの ui-evaluator による画面操作）は「automation で実行して」「ブラウザで検証して」等の明示指示があるときだけのオプション。いずれのモードでも Major/Minor 不合格は最小修正し、該当 QA-ID だけ再確認を依頼するループを回す (原則最大3ラウンド、root cause が1行で確定する場合のみ+1、Critical と未カタログの検証不能は即エスカレート、真の制約による検証不能は記帳のうえ他項目を止めない)。台帳がある場合は修正ループを抜けた後に auto 判定の再実行ゲートを1回はさみ、台帳の機械集計で完了判定する。
-argument-hint: [確認したい画面やURL（省略可）]
+description: Use to verify implemented UI. Manual handoff is default; browser automation requires explicit opt-in. Without a QA-ID ledger, use automation fallback.
+argument-hint: "[screen or URL]"
 ---
 
-# UI QA Loop
+## Mode
 
-## Arguments
+- Explicit `automation`, browser execution, or `ui-evaluator` request: automation.
+- Otherwise: manual handoff. Do not call browser tools.
+- Orchestrated behavior applies only when the caller explicitly supplies an escalation ledger; use [references/orchestrated-mode.md](references/orchestrated-mode.md).
+- Delegated execution uses [references/delegated-execution.md](references/delegated-execution.md), including split manual handoff and missing-input termination.
 
-- `$ARGUMENTS`: 検証対象の画面 / URL (省略可)。解決は Step 2、優先付けは Step 3 が SSOT。
+## Resolve inputs
 
-## Orchestrated モード
+Resolve the URL in order: complete argument URL; non-placeholder preflight base URL plus argument path; concrete plan URL. If only a path or no base remains, ask once; a noninteractive run returns `不足入力: ベース URL` without later steps. Never hardcode or auto-login. Use preflight login guidance and ask once for unresolved role-specific accounts.
 
-ファイル存在からの推測では判定しない。呼び出し側（将来のオーケストレータ）が Task 起動プロンプトで「orchestrated モードで実行。escalation は `<path>` に記帳して続行せよ」のように明示指示した場合のみ発動する。指示が無い単独起動（現行のスラッシュコマンド実行を含む）では以下の差分を参照せず、本 SKILL.md の現行動作（該当時は停止）のまま進む（後方互換）。
+Resolve the current plan from an explicit path, then current non-delegated session. Read `## 実装準備 > 手動QA手順` as the QA-ID source. If absent, warn and fall back in this order:
 
-差分の集約: Step 5 の停止系 3 分岐（Critical 即エスカレート / ラウンド上限超過 / 要人間確認による検証不能エスカレート）と、Step 6 の完了判定表示・残存 `要人間確認`/`FAIL(Critical)` の扱いは、いずれも本 SKILL.md 本文の「停止する」を「escalation ledger に記帳して続行する」に読み替える。Step 5.5 の起動条件の読み替えも同様。対象 QA-ID・記帳規則・完了判定への集計反映（escalated N 件・Critical 併存時は「部分完了」を上限）は [references/orchestrated-mode.md](references/orchestrated-mode.md) が正。以下の Step 本文では各分岐に個別の Orchestrated 注記を置かず、この集約に従う。
+1. UI-related AC from `<plan>.analysis.md`;
+2. `差分`/`未実装` rows in `## 正本抽出結果` (`一致` is excluded);
+3. UI files in the branch diff, with minimum render and console-error checks.
 
-## 委譲実行 (subagent として起動された場合)
+All three fallbacks have no ledger and use automation regardless of the default mode. If no UI target exists, report that QA is unnecessary.
 
-発動条件は「AskUserQuestion が利用可能ツールに無いこと」（= 返答を待つことが構造的にできないこと）とし、subagent であること自体を理由にしない。発動時は Step 実行前に [references/delegated-execution.md](references/delegated-execution.md) を必ず Read し、その読み替え（入力解決の優先順位、Step 4 の分割実行契約 = 手順書を最終メッセージで返して終了し呼び出し元が台帳から再開、automation の Task 不可時の縮退）を適用する。読み替え対象は Step 2・Step 3 の「停止して尋ねる」と Step 4 の「待って停止」である。単独起動（ユーザーがメイン会話で直接起動）の現行動作は変えない（後方互換）。
+Before execution, prepare only test data commands explicitly documented in preflight, plan, README, or tests. Do not invent commands. Ask once for remaining QA-ID-specific states/data; unavailable items become unverifiable.
 
-## ワークフロー
+## Ledger
 
-### Step 1: 実行モードの判定
+When QA-ID instructions exist, use `<plan>.qa-ledger.md`. Initialize or evaluate it with [references/ledger-gates.md](references/ledger-gates.md). Preserve all history; the latest row for `(QA-ID, 手段)` wins. Allowed states are:
 
-manual 割当の QA-ID をどちらの手段で実行するかを決める。判定はユーザーの指示文言のみで行い、ファイル存在などから推測しない。
+`pending`, `PASS`, `FAIL(Critical|Major|Minor|exit=N)`, `検証不能(真の制約)`, `要人間確認`, `対象外(N/A)`.
 
-- ユーザーの指示に「automation で」「ブラウザで実行して」「ui-evaluator を使って」など、ブラウザ automation の使用を明示する語がある → **automation モード**
-- 上記が無い（「UI を確認して」「QA して」等、通常の依頼を含む）→ **人間委譲モード（既定）**
+Do not infer result-to-ID mappings or change an existing method. Record only results explicitly mapped to a QA-ID; ask for missing mappings.
 
-**PoC / 使い捨て検証での運用目安**: 人間委譲（既定）はラウンドトリップが発生するため、検証を何度も回す PoC・使い捨てプロトタイプでは負荷になりやすい。そのようなケースでは「automation で実行して」と明示指定し automation モードを使う運用が向く（Step 1 の判定基準・既定モード自体は変えない）。
+## Execute
 
-**人間委譲モード（既定）**: ChromeDevTools MCP は一切使用しない（ログイン・文書作成等で agent が試行錯誤するとトークンを浪費するため、agent は手順の提示にとどめ実行は人間に委ねる）。ChromeDevTools MCP 接続確認は行わず、そのまま Step 2 へ進む。
+### Manual default
 
-**automation モードのみ**の手順（Step 1 の ChromeDevTools MCP 接続確認・Step 2 の自動操作・Step 4 の ui-evaluator 起動・Step 5 判定 2. の Gotchas 判定）は [references/automation-mode.md](references/automation-mode.md) を該当時点で読んで実行する。
+For each nonterminal `manual` QA-ID, return one block containing source, URL/login/data prerequisites, numbered operations, and checkbox expectations. Then request `PASS`, `FAIL + observed behavior`, or `検証不能 + reason` per QA-ID and stop. On later rounds, include only Major/Minor IDs fixed after the preceding result. A delegated run returns the complete handout and exits so the parent can obtain the human answer and resume from the ledger.
 
-### Step 2: 検証対象 URL の決定 + (automation モードのみ) 開発サーバー確認・ログイン
+### Automation
 
-1. **検証対象 URL の決定**（両モード共通。URL のハードコード禁止。以下を上から順に判定し、最初に一致した条件を採用する）:
-   - `$ARGUMENTS` に完全な URL が含まれる → そのまま採用
-   - `<プラン名>.preflight.md` が存在し `Read` できてベース URL 欄が埋まっている（`未定` でない）→ それをベース URL として採用する。`$ARGUMENTS` がパスのみならそのパスと結合する
-   - `$ARGUMENTS` がパスのみ（`/teams/123/foo` 等） → ベース URL をユーザーに尋ねて結合
-   - `$ARGUMENTS` が空でも、プランファイルに具体的 URL（「環境: http://...」等）が既記載されている場合はそれを採用してよい（プランに書かれた値をそのまま使うだけで、多段の自動解決・自動ログインは導入しない）
-   - 上記のいずれにも該当しない → 以下を表示して**停止し、ユーザーの返答を待つ**:
-     「検証対象のベース URL を教えてください（例: `http://localhost:3000` / staging URL 等）。」
+Use [references/automation-mode.md](references/automation-mode.md) and the `ui-evaluator` contract. Evidence—not intuition—determines status:
 
-**人間委譲モード（既定）はここで Step 3 へ進む。** 決定した URL は Step 4 の実行手順書にそのまま転記する。以下 2〜4（画面遷移・ログイン確認の自動操作）はブラウザ automation を使わないため行わない。ログイン手段は preflight のログイン手段欄（あれば）を手順書に転記し、実際のログイン操作は人間が Step 4 の QA 実行時に行う。
+- PASS: the expected outcome is observed with required evidence;
+- FAIL: contrary behavior is observed;
+- unverifiable: required evidence cannot be obtained.
 
-**automation モードのみ**、URL 決定後に画面遷移・ログイン確認の自動操作（続行手順 2〜4）を実施する。手順は [references/automation-mode.md](references/automation-mode.md) の Step 2 節に従う。
+## Judge and iterate
 
-⚠️ **URL・認証情報のハードコード禁止**。検証対象 URL は `$ARGUMENTS` / `<プラン名>.preflight.md` 記載値 / プランファイル記載値 / ユーザーへの質問のいずれかで動的決定する（両モード共通）。ログイン操作とテストユーザー選択はユーザーの責任で、エージェントは自動ログインを行わない（automation モードでもブラウザ上のログイン操作自体は人間が行い、エージェントは待機するだけ）。権限分岐 (admin / 一般等) の AC がある場合は、QA 開始時に「どの権限のアカウントで検証しますか？」と尋ねる（Step 3 Phase B の権限アカウント確認に統合する）。
+Apply results to the explicitly named IDs and process in this order:
 
-### Step 3: QA検証項目の特定
+1. Critical FAIL: report all concurrent failures and escalate without editing.
+2. Unverifiable: known workaround evidence is retried normally; a true external/environment constraint becomes terminal `検証不能(真の制約)`; unclear evidence becomes `要人間確認` and escalates. Human-delegated reasons use the same distinction without automation gotchas.
+3. Automation-only unplanned differences: add every observed item as `QA-G-NN`, with source and evaluator severity, to ledger and manual-QA plan section. A Critical item escalates; Major/Minor joins the normal loop. Without a ledger, report it as an ordinary failure.
+4. Major/Minor: make only the smallest failure-scoped fix, then rerun that QA-ID. Before a repeated fix, verify whether the previous change disappeared or was not built. Per QA-ID, run at most two fixes and three QA rounds. One extra round is allowed only for a single proven one-line root cause with measured confirmation; otherwise escalate.
 
-#### QA プランがある場合
+Never refactor outside the failed behavior. Record each round by appending. Restore QA-created data when possible and report anything left behind.
 
-1. **プランファイルパスの特定**（単独起動時はセッションコンテキスト優先）:
-   - 現在のセッションコンテキストに既出のプランファイルパス（典型的には `~/.claude/plans/*.md`、`/finalize-plan` 等で作成されたもの）があれば、それを採用する
-   - セッション内に見当たらない → 以下を表示して**停止し、ユーザーに尋ねる**:
-     「対応するプランファイルのパスを教えてください（プランが無ければ「無し」と返答 → AC 無しモードへ）。」
-   - `git checkout -b` 文字列マッチによる自動探索は行わない（誤マッチ・古いプランへの誤紐付けを避けるため）
-2. **QA-ID 台帳を第一入力として読み込む**: プランファイルの `## 実装準備 > 手動QA手順` セクションを `Read` し、QA-ID 見出し（`**QA-H-01 | 出典: ...**` 形式）・出典・操作手順を抽出する
-3. セクションが無い場合 → **AC 直接読込みの旧動作にフォールバック**する: プランファイルに対応する分析ファイルを `Read` で読み込み（導出規則: プランファイルの拡張子前に `.analysis` を挿入。例 `feature-xxx.md` → `feature-xxx.analysis.md`）、UI関連のAC項目を抽出する（「画面」「表示」「クリック」「遷移」「フォーム」等のキーワード）。フォールバック発動時は出力の**冒頭**に次の警告を1行表示する:
-   ```
-   ⚠️ QA プラン/台帳なし: AC 直接読込みの旧動作 (台帳・ゲート無効)
-   ```
-   このフォールバック（AC 直接読込み・後続の正本抽出結果直接読込み・AC 無しモードも同様）は QA-ID 台帳を前提とする Step 1 の人間委譲/automation 分岐の対象外とし、現行どおり automation（ui-evaluator）で検証する。Step 1 で人間委譲モード（既定）と判定し ChromeDevTools MCP 接続確認・Step 2 の画面遷移/ログイン確認をスキップ済みの場合は、このフォールバック判明時点で Step 1 の接続確認と Step 2 の自動操作手順を実施してから Step 4 の automation 分岐に進む。
-4. 3 で分析ファイルが存在しない、または抽出0件の場合 → プランファイル自体の `## 正本抽出結果` セクション（`/extract-figma-spec` が PoC 等の計画装備省略時にプラン末尾へ直接書き出す反映チェックリスト。書式は `| atom ID | 期待値 | 状態 |`）を `Read` する。存在すれば `差分` / `未実装` 行を検証項目として採用する（atom ID を QA-ID 相当として扱う。`一致` 行は突き合わせ済みのため対象外）。フォールバック発動時は出力の**冒頭**に次の警告を1行表示する:
-   ```
-   ⚠️ QA プラン/台帳なし: 正本抽出結果直接読込み (台帳・ゲート無効)
-   ```
-   このフォールバックの automation 検証の扱いは 3 の末尾に集約（3 が「後続の正本抽出結果直接読込み・AC 無しモードも同様」として明記）。判定基準（`一致` 行は対象外）も 3 と同一。
-5. 抽出した項目（QA-ID 台帳の項目、3 のAC項目、または 4 の正本抽出結果の差分/未実装行）が0件 → AC無しモードにフォールバック
+## Automatic gate and completion
 
-#### AC無しモード
+After manual/automation failures are resolved, run the auto commands once using [references/ledger-gates.md](references/ledger-gates.md). The coverage matrix has exactly six columns; QA-ID is awk `$2` and command is `$7`. A zero-test result is not PASS.
 
-1. `git diff --name-only origin/develop...HEAD` で変更ファイル取得
-2. 変更ファイルが0件 → 以下を表示して**完了**:
-   「UI検証対象の変更ファイルがありません。フロントエンド変更を含むブランチで実行してください。」
-3. `.tsx`, `.jsx`, `.slim`, `.erb`, `.scss`, `.css` の変更を特定
-4. フロントエンド関連の変更が0件 → 以下を表示して**完了**:
-   「フロントエンド関連の変更がありません。UI検証は不要です。」
-5. 変更されたView/Componentから対象画面URLを推論
-6. 最低限の検証項目: 「画面が正常に表示されるか」「JSエラーが出ていないか」
+Then use the same reference to aggregate latest ledger rows:
 
-#### $ARGUMENTS が指定された場合
+- all `PASS`/`対象外(N/A)`: complete;
+- any `検証不能(真の制約)`: partial completion with those rows listed;
+- any pending, `要人間確認`, or FAIL: not complete; report remaining rows and follow the matching judgment above.
 
-上記のいずれかで特定した検証項目に加え、指定されたURLや画面を優先的に検証対象に含める。
-
-#### テストデータの事前確認（Step 4 の前に必ず実施、2段階）
-
-特定した UI 関連の QA-ID / AC 項目を走査し、検証に**固有のテストデータ / 状態**を要する項目を列挙する（例: 対面署名・転送署名・特定 locale・他社データ・特定権限のアカウント等）。
-
-**Phase A（自動準備の試行）**: `<プラン名>.preflight.md` が存在すれば `Read` し、テストデータ準備手順欄に記載（`未定` でない）があればドキュメント化済みコマンドと同列に扱い実行する。それ以外の列挙項目は、プランファイル・README・既存 spec 等に**ドキュメント化済みの seed / factory コマンド**が明記されているものだけを実行して用意する。コマンドが明記されていない項目について、内容から推測して新規にデータ作成コマンドを組み立てることはしない（誤ったデータで的外れな検証をする方が、素直に人間へ聞くより高くつくため）。
-
-**Phase B（残余の一括確認）**: preflight の権限アカウント一覧欄に記載（`未定` でない）があればそれを採用し権限分岐アカウント確認を省略する。Phase A・上記で埋まらなかった項目だけをまとめてユーザーに1度尋ねる（Step 2 の権限分岐アカウント確認はこの Phase B に統合する）:
-
-```
-以下の QA-ID/AC はそれぞれ固有のテストデータ/状態が必要です。検証可能なものを準備して返答してください（準備できない項目はそのまま検証不能として扱います）:
-- [QA-ID/AC]: [必要なデータ/状態]
-```
-
-理由: データが無いと検証可能な項目まで「検証不能」に倒れ、修正ループに乗らずラウンドだけ消費する。上流でデータを手当てするほど loop の有効打率が上がる。GTM 疎通・multipart アップロードのような本質的に外部 / automation 制約の項目は、データを手当てしても検証不能のまま残る点は区別する。
-
-### Step 3.5: QA 実行台帳の特定/初期化
-
-Step 3 で QA-ID 台帳を読み込めた場合のみ実施する（AC 直接読込みフォールバック時・正本抽出結果直接読込みフォールバック時・AC無しモードは台帳・ゲートが無効なため skip）。
-
-台帳ファイルパス: プランファイルの拡張子前に `.qa-ledger` を挿入する（例: `design_fix.md` → `design_fix.qa-ledger.md`）。
-
-1. 台帳ファイルを `Read` する
-2. 存在する → そのまま使用する。以後の記帳は追記のみ行い、同一 (QA-ID, 手段) の組は最後の行が現在状態になる（「最新行が勝つ」）
-3. 存在しない → Step 3 で読み込んだ QA-ID から初期化する。[references/ledger-gates.md](references/ledger-gates.md) の Step 3.5 節の検証済み Bash をそのまま実行する（担当手段の割当順は auto 優先・dual coverage は auto が正。孤児 QA-ID の `対象外(N/A)` 検出は行わない — 詳細は同節）
-
-台帳の状態語彙は以下のみを使う: `pending`（初期値） / `PASS` / `FAIL(<重大度orexit>)` / `検証不能(真の制約)` / `要人間確認` / `対象外(N/A)`。
-
-### Step 4: 検証の実行（ラウンドN、実行モードにより分岐）
-
-Step 1 で判定したモードにより以下のいずれかを実施する。この分岐は台帳（Step 3.5）の `手段 = manual` QA-ID に適用される。台帳が無い場合（AC 直接読込みフォールバック・正本抽出結果直接読込みフォールバック・AC 無しモード）は Step 3 の記述のとおり常に automation（ui-evaluator）を使う。
-
-#### 人間委譲（既定）
-
-台帳のうち `手段 = manual` の QA-ID を対象に、人間向けの**実行手順書**を組み立てて提示する。ChromeDevTools MCP は使用しない。
-
-1. **対象 QA-ID を決める**:
-   - ラウンド1: `手段 = manual` かつ未終端（`pending` 等。`検証不能(真の制約)` / `対象外(N/A)` は除く）の全 QA-ID
-   - ラウンド2以降: 直前ラウンドで Step 5 により FAIL(Major/Minor) と判定され修正した QA-ID **だけ**（PASS 済み・`検証不能(真の制約)` で決着済みの QA-ID は再提示しない）
-2. QA-ID ごとに、Step 3 で読み込んだ QA-ID 台帳の出典・操作手順、Step 2 で決定した URL、Step 3 の Phase A/B で確認したテストデータ・権限アカウントの準備状況を突き合わせ、次の 1 ブロックにまとめる（コピペで追える具体性にする）:
-
-   ```
-   #### {QA-ID} | 出典: {出典}
-
-   **前提**
-   - URL: {Step 2 で決定した URL}
-   - ログイン: {preflight のログイン手段欄の記載。無ければ「ブラウザで対象環境にログインしてから確認してください」}
-   - テストデータ: {Phase A で自動準備済みの内容 / Phase B でユーザーが用意した内容。該当なければ「不要」}
-
-   **操作手順**
-   {QA-ID 台帳の操作手順を番号付きでそのまま転記}
-
-   **確認点**
-   - [ ] {期待される結果 1}
-   - [ ] {期待される結果 2（あれば、以下同様）}
-   ```
-
-3. 全ブロックを1通のメッセージにまとめ、末尾に次を付して提示し、**人間の返答を待って停止する**:
-
-   ```
-   上記 QA-ID ごとに結果を返答してください（PASS / FAIL + 具体的な現象 / 検証不能 + 理由。検証のために作成した実データがあれば併記してください）。
-   ```
-
-4. 人間の返答を受け取ったら、QA-ID ごとの回答を Step 5 の判定入力として扱う（ui-evaluator の構造化出力の代わりに人間の回答を使う。判定ロジックはモード共通）。
-
-#### automation（オプション）
-
-ユーザーが「automation で実行して」「ブラウザで検証して」「ui-evaluator を使って」等、ブラウザ automation の使用を明示指示した場合のみ実施する（Step 1 参照）。[references/automation-mode.md](references/automation-mode.md) の Step 4 節（`ui-evaluator` の Task 起動テンプレートと、報告が返らないときの fallback）に従って実行し、ui-evaluator の構造化出力を Step 5 の判定入力に使う。
-
-### Step 5: 結果判定とラウンド処理
-
-判定対象の結果は Step 4 の実行主体により異なる: automation（ui-evaluator）の構造化出力、または人間委譲（Step 4 で提示した実行手順書に対する人間の QA-ID ごとの回答 — PASS / FAIL+内容 / 検証不能+理由）。判定ロジックは共通で、以下のテンプレート中「QAエージェントの〜」という表記は、人間委譲の場合「人間が回答した〜」と読み替える。以下の優先順位で判定する（台帳がある場合は各判定を台帳にも記帳する。**AC 直接読込みフォールバック時・正本抽出結果直接読込みフォールバック時・AC無しモードは台帳記帳を行わず、各分岐の「フォールバック時」の記述に従う**）。
-
-1. **Critical FAIL → 即エスカレート**（変更なし。テンプレートは後述）
-2. **検証不能**:
-   - automation（ui-evaluator）の場合 → [references/automation-mode.md](references/automation-mode.md) の「Step 5 判定 2.」の検証不能判定に従う（`workaround既知` は再検証して通常判定へ、`真の制約` は `検証不能(真の制約)` 記帳で非ブロッキング終端、Gotchas 未カタログの初見はデフォルト `要人間確認` で「検証不能エスカレート」に従い停止）
-   - 人間委譲の場合 → Gotchas テーブルは automation 固有の罠のため参照しない。人間が申告した理由が環境未整備・外部要因待ちなど明確な制約であれば `検証不能(真の制約)` として記帳し非ブロッキングで終端させる（Step 4 の対象からも自動的に除外される）。理由が不明瞭・判断がつかない場合はデフォルト `要人間確認`（安全側）として記帳し、後述の「検証不能エスカレート」に従い**停止する**（Orchestrated モード時の例外は [references/orchestrated-mode.md](references/orchestrated-mode.md) を参照）
-3. **計画外差異（QA-G）**: ui-evaluator の「計画外差異の詳細」節を確認する。台帳がある場合、ラウンド内で見つかった**全件**（1件で打ち切らない）を対象に QA-G-NN として台帳 + プランファイルの手動QA手順へ追記し、ui-evaluator が付した重大度に従って `FAIL(重大度)` を記帳する（台帳が無いフォールバック時は QA-G 追記を行わず、通常の FAIL 項目として 4. の扱いに合流する）。QA-G は発見された時点で既に判定（重大度）が確定しているため、Step 3.5 の `pending` 初期化を経由しない — 台帳への初出行から直接 `FAIL(重大度)` として記帳する。台帳の手段列は ui-evaluator が実際に検証した手段に合わせる（ブラウザ操作で発見した差異は `manual`）。プランへの追記は既存カテゴリへ押し込まず、手動QA手順内に専用小節（例:「計画外差異検証」）を新設してよい。見出しは `**QA-G-NN | [計画外差異] 出典: ラウンドN ui-evaluator 報告**` の形式にする:
-   - Critical相当 → 1. の即エスカレート群へ合流
-   - Major/Minor相当 → 次ラウンドの 4. の修正ループへ自動編入する（既存のラウンド上限をそのまま適用し、QA-G 専用の別上限は新設しない）
-4. **Major/Minor FAIL → 現行どおり最小修正 → 再検証**（後述の手順どおり。台帳がある場合は各ラウンドの結果を該当 QA-ID の行として台帳に追記する。同一 QA-ID が複数ラウンドで再記帳された場合は最新行が勝つ）
-
-記帳の共通規則: QA-G は AC 由来でないため「対象AC」件数には算入しない（専用小節とゲート/台帳側にのみ計上）。台帳のラウンド列は手段に揃える — manual 由来は実測ラウンド番号、auto 由来は `-`（`検証不能(真の制約)` 等へ遷移した後も同じ）。
-
-**検証用実データの後始末 (完了・エスカレートに共通)**: 評価エージェントの結果（人間委譲の場合は人間の回答）に「作成データ」の記載があれば、QA 終了時に親エージェント (main agent) が原状回復する (soft-delete 等、環境の削除手段に従う)。回復できないものは残存データとしてユーザーに 1 行報告する。
-
-#### 総合PASSの場合
-
-全項目が PASS（検証不能・計画外差異なし）の場合:
-- 台帳がある場合 → 判定した QA-ID を `PASS` として台帳に記帳し、Step 5.5 へ進む
-- フォールバック時（台帳なし）→ 以下を表示して**完了**:
-
-```
-## UI QA 完了
-
-全AC項目がPASSしました。
-
-### スクリーンショット
-[QAエージェントが撮影したスクリーンショット一覧]
-```
-
-#### 検証不能が1件でも含まれる場合（`検証不能(真の制約)` を除く）→ 修正ループに入れずエスカレート
-
-検証不能は実装の欠陥ではなく証跡が取れない状態。修正対象が無いままラウンドを消費しないため、自動修正せず以下を表示して**停止する** (FAIL 項目が併存する場合もまとめて表示。`検証不能(真の制約)` として台帳記帳済みの項目はここに含めない — 2. のとおり非ブロッキングでループを継続する):
-
-```
-## UI QA エスカレート
-
-検証不能な項目があります。人間の確認が必要です。
-
-### 検証不能項目
-[QAエージェントの検証不能詳細をそのまま表示]
-
-### 不合格項目（あれば）
-[QAエージェントの不合格詳細をそのまま表示]
-```
-
-**再開手順**: ユーザーが検証不能項目の手動確認結果を返答したら、該当項目を「手動確認済み」として検証対象から除外し、残りの FAIL のみで通常の Step 5 判定 (Critical 即エスカレート / Major・Minor は修正して Step 4 再起動) を続行する (ラウンド番号はリセットせず、修正後の再起動で通常通りインクリメントする)。除外した項目は以後の Step 4 プロンプトの検証対象・不合格理由から除き、テンプレートの `手動確認済み:` 欄に 1 行で注記する。台帳がある場合は当該 QA-ID を `要人間確認` のまま残し、ユーザー返答内容を備考に追記する。（Orchestrated モード時の読み替えは冒頭「## Orchestrated モード」節に集約）
-
-#### 総合FAILの場合
-
-不合格項目の重大度を確認:
-
-**Critical が1件でも含まれる → 即エスカレート:**
-```
-## UI QA エスカレート
-
-Criticalな不合格が検出されました。人間の判断が必要です。
-
-### 不合格項目
-[QAエージェントの不合格詳細をそのまま表示 — Critical に Major/Minor が併存する場合も不合格全件を併記する (Minor の修正には着手しない)]
-```
-
-（Orchestrated モード時は停止せず記帳して続行する。冒頭「## Orchestrated モード」節に集約）
-
-**Major/Minor のみ、かつ現在のラウンド番号が 3 未満 (= ラウンド 1 or 2 の FAIL。修正後に起動する再検証が最終のラウンド 3) → 自動修正:**
-1. **同一項目が前回と同一内容で再 FAIL した場合は、追加のコード修正より先に前回修正の巻き戻りを疑う**: 修正したはずの値を実ファイルで Read し、ビルド未反映 / 生成物の自己マージ / キャッシュで巻き戻っていれば同じ修正を再適用する（巻き戻りに気づかず別修正を重ねるとラウンドだけ消費する）。巻き戻っていなければ（値が正しく残っていれば）2. の最小限修正へ進む
-2. QAエージェントの「修正の示唆」（人間委譲の場合は人間が報告した具体的な現象から該当箇所を自分で特定する）に基づき、**該当項目を pass させる最小限の修正だけ**を行う（最小限とは失敗項目のスコープに閉じることで、必要なら複数ファイルに跨ってよい。スコープを越えたリファクタ・抽象化・余分なファイル生成を持ち込むと、再検証ラウンドの pass/fail と修正の対応が崩れ、差分が検証対象外まで膨らむため）
-3. Step 4 に戻り、ラウンド番号をインクリメントして再度QAエージェント起動（人間委譲の場合は Step 4 人間委譲サブセクションに戻り、実行手順書を再提示する）
-
-ラウンド2以降のAgent起動時は `前回の不合格理由` にQAエージェントの不合格詳細を含め、加えて `適用した修正` (変更ファイルごとに修正概要 1 行) を併記する（QA エージェントが修正箇所を重点検証でき、pass/fail と修正の対応を追跡できるため）。`変更ファイル一覧` はブランチ全体の diff を維持し、今回の修正ファイルは `適用した修正` 欄で別掲する。人間委譲の場合、この記録は Step 4 人間委譲サブセクションの「対象 QA-ID を決める」ロジック（直前ラウンドで FAIL と判定され修正した QA-ID だけを再提示する）が同じ役割を果たす。
-
-Major/Minor の修正・再検証ループ中、ユーザー向けの進捗表示は必須ではない（任意の 1 行メモで足りる）。
-
-#### ラウンド3でもFAIL → エスカレート:
-
-(修正はラウンド 1・2 の FAIL 後にのみ行うため最大 2 回。ラウンド 3 は最終再検証で、後続の修正は行わない)
-
-**狭い例外（cap 超過を許す唯一の条件）**: 残り FAIL の root cause が**単一かつ 1 行レベルで確定**しており、修正後の再測定で pass を実証できる場合に限り、もう 1 回だけ修正 + 再検証してよい。その際は cap を超える理由を 1 行記録する（例: `ラウンド4: root cause が index.json の文言 1 箇所と確定、修正後 take_snapshot で実測 pass`）。root cause が未確定 / 複数原因なら従来どおりエスカレートする（cap は churn 防止のために残す。原因が読み切れていない状態での追加修正は差分を膨らませるだけ）。QA-G-NN として編入された Major/Minor もこの同じ cap の対象になる（別カウントにしない）。
-
-```
-## UI QA エスカレート
-
-2回修正しましたが解消できません（ラウンド3の再検証でも不合格）。
-
-### 解消できなかった項目
-[残りの不合格項目]
-
-### 修正履歴
-- 修正1（ラウンド1の不合格後）: [何を修正したか]
-- 修正2（ラウンド2の不合格後）: [何を修正したか]
-```
-
-（Orchestrated モード時は停止せず、ラウンド上限超過の QA-ID を記帳して続行する。冒頭「## Orchestrated モード」節に集約）
-
-### Step 5.5: auto 判定の再実行ゲート
-
-台帳がある場合のみ実施する（フォールバック時・AC無しモードは skip）。Step 5 の修正ループを完全に抜けた後（総合 PASS に達し、Critical / 未解消エスカレートも無い状態になった後）に**1回だけ**実行する。
-
-審判 (qa-ui 本体) がプランファイルの「QA-ID カバレッジマトリクス」（$2=QA-ID、$7=実行コマンド）から実行コマンドを取り、その場で実行し、exit code で台帳に追記する（実装者が記帳した自己申告を上書きはせず追記する。後続の完了判定は「最新行が勝つ」規則により審判の再実行結果を優先する）。
-
-**列レイアウトは 6 列固定**（`| QA-ID | 出典 | カテゴリ | テストファイル | テストケース | 実行コマンド |`）。契約として効くのは列位置で、`QA-ID` が第 1 列 = awk `$2`、`実行コマンド` が最終列 = awk `$7` に来ること（`|` 区切りでは先頭にダミー欄が入るため実質列は `$2` から始まる）。列がずれると審判は `実行コマンド未定義` と誤検出し全 auto 行が `要人間確認` に落ちる。finalize-plan Step 3 の自動 QA planner はこの列順で出力する。**検証済み Bash と注意点**（テスト0件は `PASS` にしない・`bash -c` への `</dev/null` を削らない・0 件検出の正規表現 `(^|[^0-9])0 examples` を維持する等）は [references/ledger-gates.md](references/ledger-gates.md) の Step 5.5 節を読み、そのまま実行する。
-
-### Step 6: 完了判定
-
-台帳がある場合のみ実施する（フォールバック時・AC無しモードは Step 5 の総合PASS分岐で既に完了表示済み）。台帳の最新行（同一 QA-ID・手段は最後の行）を集計し、全行が終端状態（`PASS` / `検証不能(真の制約)` / `対象外(N/A)`）かどうかで判定する。集計 bash は [references/ledger-gates.md](references/ledger-gates.md) の Step 6 節をそのまま実行する（exit 1 = 未完了行あり / exit 0 かつ `検証不能(真の制約)` 残存なし = 完了 / exit 0 かつ `検証不能(真の制約)` 残存あり = 部分完了）。
-
-判定結果ごとの表示:
-
-- **exit 1** → 集計 bash が出力する見出し `## UI QA 部分完了 (人間確認事項あり) または未完了` と残存行を報告へそのまま転記する（自前の見出しに言い換えない）。完了と表示せず、残存状態ごとに次のとおり扱う:
-  - `pending`（auto）残存 → Step 5.5 未実施のサイン。未実施なら実施する（実施済みでコマンド未定義なら該当行は `要人間確認` になっているはず）
-  - `pending`（manual）残存 → Step 4 へ該当 QA-ID を絞って再投入するか、人間へ確認する（台帳生成後に一度も検証されていない状態のため、完了と誤認しない）
-  - `要人間確認` 残存 → 重大度判定を経ていないため修正ループには入れない。「検証不能エスカレート」文面の検証不能項目に列挙して停止する（備考に原因切り分け先 — プランのマトリクス修正かテストコード側修正か — を 1 行添える）
-  - `FAIL(exit=N)`（審判再実行由来）残存 → 同エスカレート文面の不合格項目に併記する（Step 5.5 は 1 回だけ。自動修正ループは再発火させない）
-  - manual 由来の `FAIL(Critical)` 残存 → 修正ループには戻さず、Step 5 の Critical 即エスカレート判定と同様に扱う
-  - manual 由来の `FAIL(Major)` / `FAIL(Minor)` 残存 → Step 5 の通常の修正ループ判定（ラウンド上限・重大度規則）に戻る
-
-  Step 6 由来のエスカレートでは評価エージェントの出力は存在しないため、エスカレート文面のプレースホルダには台帳の残存行 (QA-ID・状態・備考) と原因切り分けメモをそのまま列挙する。原因切り分けメモはエスカレート出力側にのみ書き、台帳は Step 5.5 の追記以外変更しない (審判の記帳を後から改変しない)。（Orchestrated モード時の完了判定表示 — escalated N 件の集計と Critical 併存時「部分完了」上限 — は冒頭「## Orchestrated モード」節に集約）
-- **exit 0・検証不能(真の制約) 残存なし** → 以下を表示して完了する:
-  ```
-  ## UI QA 完了
-
-  台帳の全 QA-ID が終端状態（PASS）に達しました。
-
-  | QA-ID | 手段 | 結果 |
-  |-------|------|------|
-  [台帳の最新行から QA-ID・手段・状態を転記]
-
-  ### スクリーンショット（automation で検証した QA-ID がある場合のみ）
-  [ui-evaluator が撮影したスクリーンショット一覧。全QA-IDが人間委譲で検証された場合はこの節を省略する]
-  ```
-- **exit 0・検証不能(真の制約) 残存あり** → 「完了」とは呼ばず、以下を表示して**部分完了**として停止する:
-  ```
-  ## UI QA 部分完了 (人間確認事項あり)
-
-  以下の QA-ID は真の制約により自動検証できません。人間が代替手段で確認してください。
-
-  | QA-ID | 手段 | 状態 | 備考 |
-  |-------|------|------|------|
-  [検証不能(真の制約) の行を転記]
-
-  ### 完了済み項目
-  | QA-ID | 手段 | 結果 |
-  |-------|------|------|
-  [PASS / 対象外(N/A) の行を転記]
-  ```
-
-## 併用推奨 skill
-
-- `/finalize-plan` — QA 手順（QA-ID 台帳・preflight 契約を含む）と AC の参照元となるプランを準備する
+Include screenshots only for automation-verified IDs. In orchestrated mode, replace eligible stops with escalation-ledger append/continue and cap the final status at partial completion when Critical escalation remains.

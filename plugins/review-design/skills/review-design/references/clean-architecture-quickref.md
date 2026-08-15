@@ -1,6 +1,6 @@
 # Clean Architecture 早見表 (Quick Reference)
 
-reviewer 起動時はこのファイルのみ Read する。判定で迷ったら `clean-architecture.md` 本体を Read する。
+reviewer はこのファイルを SSOT として使う。
 
 ## 本質 (2 原則)
 
@@ -42,11 +42,3 @@ Frameworks/Drivers → Interface Adapters → Application Business → Enterpris
 | 依存方向違反 | `<file>:<line> で <外側 SDK> を直接参照。<Service or Adapter> 経由に分離` |
 | レイヤー混在 | `<file>:<line> の <where/joins> を <scope or Service> に移動` |
 | 循環依存 | `<service A> と <service B> を共通インターフェース <I> 経由に変更` |
-
-## 詳細を Read する条件 (観測可能トリガー)
-
-以下のいずれかに該当する場合のみ `clean-architecture.md` 本体を Read する:
-
-- 検出対象が 3 レイヤー以上を跨ぐ (4 層構造の理解が必要)
-- ユーザーへの出力に依存逆転 (DIP) の具体実装例を含める必要がある
-- 対象プロジェクトが Effect-TS / 純 TypeScript (Rails 以外) で、参考例の照合が必要

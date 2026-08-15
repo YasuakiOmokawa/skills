@@ -36,6 +36,7 @@ tools:
 3. 確認項目:
    - [ ] <AC の期待値>
 
+<UI QA の場合のみ>
 **スクリーンショット取得**: `.llm/screenshots/<feature>-<case>.png` (`take_screenshot`)
 **クリーンアップ**: browser を閉じる (`close_page`)
 ```
