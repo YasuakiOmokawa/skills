@@ -5,6 +5,14 @@ All notable changes to omokawa-skills will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v7.0.0 - 2026-08-16
+
+### Changed
+
+- **`qa-ui` 2.0.0 (BREAKING):** 利用者が選ぶ Manual / Automation / Orchestrated モードを廃止。QA-ID source がある場合は `finalize-plan` の `manual` / `auto` 手段をそのまま実行し、QA-ID source がない場合だけ browser fallback を使う。
+- Orchestrated 用 escalation ledger、held ID、browser 生成 QA-ID を削除し、QA ledger は初期化・auto command gate・完了集計に限定。QA-ID なし fallback と委譲時の handoff 境界は維持した。
+- ルートの agent 指示を Claude Code と Codex で共有するため、`AGENTS.md` を `CLAUDE.md` への相対 symlink として追加した。
+
 ## v6.3.0 - 2026-08-15
 
 ### Changed

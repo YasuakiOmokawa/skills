@@ -10,7 +10,7 @@ QA 実行台帳の初期化、auto 判定の再実行、完了集計に使う Ba
 
 ## 台帳初期化
 
-毎回 plan の QA source marker と ledger の最新 generation を比較する。不在・不一致ならプランから読んだ QA-ID で新 generation を追記し、一致なら継続する。auto を優先し、dual coverage は auto のみを作る。この初期化ではプランから拾える QA-ID だけを扱い、孤児 QA-ID の `対象外(N/A)` 検出は行わない。Automation が生成した QA-G は plan source へ書き戻さず、current generation の `### Generated QA` 非 table bullet + `generated` 状態行として追記するため、fallback SHA-256 と generation を変えない。同じ source の再起動ではその行と round / fix 履歴を継続する。`generated` は browser/evidence 再検証用で、下の auto command gate は `auto` だけを選ぶ。
+毎回 plan の QA source marker と ledger の最新 generation を比較する。不在・不一致ならプランから読んだ QA-ID で新 generation を追記し、一致なら継続する。auto を優先し、dual coverage は auto のみを作る。この初期化ではプランから拾える QA-ID だけを扱い、孤児 QA-ID の `対象外(N/A)` 検出は行わない。
 
 ```bash
 LEDGER="<plan>.qa-ledger.md"
@@ -104,7 +104,7 @@ fi
 **マトリクス列レイアウト (canonical)**: `| QA-ID | 出典 | カテゴリ | テストファイル | テストケース | 実行コマンド |` の6列固定。Markdown-escaped `\|` を一時退避してから分割した cell では QA-ID が2、実行コマンドが7。command の pipe は復元する。追加・並べ替えは禁止する。
 
 ```bash
-LEDGER="<plan>.qa-ledger.md"; PLAN_FILE="<plan>.md"; ESCALATION_LEDGER="<plan>.escalation-ledger.md"
+LEDGER="<plan>.qa-ledger.md"; PLAN_FILE="<plan>.md"
 
 if [ ! -s "$LEDGER" ] || [ ! -s "$PLAN_FILE" ]; then
   echo "⚠️ 入力が空/不存在: LEDGER=$LEDGER PLAN_FILE=$PLAN_FILE — 再実行ゲートを実行不可。" >&2
@@ -120,8 +120,6 @@ trap 'exit 143' TERM
 CURRENT_LEDGER="$RUN_DIR/current_ledger.md"
 PLAN_QA="$RUN_DIR/plan_implementation_ready.md"
 AUTO_LATEST="$RUN_DIR/auto_latest.tsv"
-ESCALATION_CURRENT="$RUN_DIR/escalation_current.md"
-HELD_IDS="$RUN_DIR/held_ids.txt"
 AUTO_IDS="$RUN_DIR/auto_ids.txt"
 RUN_LOG="$RUN_DIR/reexec.log"
 SOURCE_LINE=$(grep -nE '^## QA source [0-9a-f]+$' "$LEDGER" | tail -1 | cut -d: -f1)
@@ -129,7 +127,6 @@ if [ -z "$SOURCE_LINE" ]; then
   echo "⚠️ current QA source generation がありません。台帳初期化を先に実行してください。" >&2; exit 2
 fi
 tail -n "+$SOURCE_LINE" "$LEDGER" > "$CURRENT_LEDGER"
-CURRENT_SOURCE=$(sed -n '1p' "$CURRENT_LEDGER")
 awk '
   /^## 実装準備[[:space:]]*$/ { active = 1 }
   active && seen && /^## / { exit }
@@ -145,21 +142,8 @@ awk -F'|' '/^\|/ && $2 !~ /QA-ID/ && $2 !~ /^[ \t]*-+[ \t]*$/{
   for (id in latest) print id "\t" latest[id]
 }' "$CURRENT_LEDGER" | sort > "$AUTO_LATEST"
 
-if [ -s "$ESCALATION_LEDGER" ]; then
-  ESCALATION_LINE=$(grep -nFx "$CURRENT_SOURCE" "$ESCALATION_LEDGER" | tail -1 | cut -d: -f1)
-  if [ -n "$ESCALATION_LINE" ]; then
-    tail -n "+$ESCALATION_LINE" "$ESCALATION_LEDGER" | awk 'NR > 1 && /^## QA source [0-9a-f]+$/ { exit } { print }' > "$ESCALATION_CURRENT"
-  else
-    : > "$ESCALATION_CURRENT"
-  fi
-  awk -F'|' '/^\| *[0-9]+ *\|/{id=$3; gsub(/^[ \t]+|[ \t]+$/,"",id); print id}' "$ESCALATION_CURRENT" | sort -u > "$HELD_IDS"
-else
-  : > "$HELD_IDS"
-fi
-
-awk -F'\t' 'FILENAME==ARGV[1] { held[$1]=1; next }
-  $2!="対象外(N/A)" && $2!="検証不能(真の制約)" && $2!="要人間確認" && !($2=="FAIL(Critical)" && held[$1]) { print $1 }
-' "$HELD_IDS" "$AUTO_LATEST" | sort -u > "$AUTO_IDS"
+awk -F'\t' '$2!="対象外(N/A)" && $2!="検証不能(真の制約)" && $2!="要人間確認" { print $1 }' \
+  "$AUTO_LATEST" | sort -u > "$AUTO_IDS"
 
 if [ ! -s "$AUTO_IDS" ]; then
   echo "再実行ゲート: auto 行なし (skip)"; exit 0
@@ -199,7 +183,7 @@ done < "$AUTO_IDS"
 ```
 
 **注意点**:
-- 対象は current generation の各 auto QA-ID の最新行だけ。`対象外(N/A)` / `検証不能(真の制約)` / `要人間確認` と、current state が `FAIL(Critical)` のまま escalation ledger に保留された ID は再実行しない。新 generation の `pending` は同じ QA-ID の旧 escalation 記録で除外しない
+- 対象は current generation の各 auto QA-ID の最新行だけ。`対象外(N/A)` / `検証不能(真の制約)` / `要人間確認` は再実行しない
 - 実行出力に `0 examples`（RSpec）/ `No test files found`・`no tests`（Vitest）のいずれかを検出したら、exit 0 でも `PASS` にはせず `要人間確認` を記帳する（コマンドの `-e`/`-t` 指定が QA-ID と一致していない疑いのため）
 - `bash -c` への `</dev/null` は削らない（理由: docker/dip 等 stdin を消費するコマンドが while ループの ID リストを飲み込み、2 件目以降を実行しないまま正常終了する — 実測で 23 件中 1 件だけ実行されるループ早期終了が発生した）。テストコマンドを環境に合わせて読み替える場合もこの構造は維持する
 - 0 件検出の正規表現は `(^|[^0-9])0 examples` の形を維持する（理由: `0 examples` 単体は「10 examples」「20 examples」にも部分一致し、正常 pass を `要人間確認` へ誤判定する — 10 examples 全 pass の QA-ID が誤判定された実測あり）
