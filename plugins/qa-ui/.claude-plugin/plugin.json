@@ -1,7 +1,7 @@
 {
   "name": "qa-ui",
-  "description": "Use to verify implemented UI. With QA-ID instructions, manual handoff is default and a missing ledger file is initialized. Browser automation requires explicit opt-in unless no QA-ID source exists and fallback is required.",
-  "version": "1.31.0",
+  "description": "Use to verify implemented UI from finalized QA-ID instructions, or through browser fallback when no QA-ID source exists.",
+  "version": "2.0.0",
   "author": {
     "name": "Yasuaki Omokawa",
     "url": "https://github.com/YasuakiOmokawa"

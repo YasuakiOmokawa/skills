@@ -56,7 +56,7 @@ clone せずに、`examples/skills-config/*.example.md` を `~/.claude/skills-co
 | Plugin | 役割 |
 |---|---|
 | [`extract-figma-spec`](./plugins/extract-figma-spec/skills/extract-figma-spec/SKILL.md) | Figma 指定を全プロパティ抽出しチェックリスト照合して反映漏れを防ぐ |
-| [`qa-ui`](./plugins/qa-ui/skills/qa-ui/SKILL.md) | QA-ID 台帳から実行手順書を組み立て人間に検証委譲 (browser automation は明示指定時のみ) |
+| [`qa-ui`](./plugins/qa-ui/skills/qa-ui/SKILL.md) | QA-ID の manual/auto 手段に従って検証し、QA-ID がない場合だけ browser fallback |
 | [`express-intent-in-code`](./plugins/express-intent-in-code/skills/express-intent-in-code/SKILL.md) | 機構名/形状名を目的(why)表明形へ変換し why コメント依存を減らす |
 | [`create-pr`](./plugins/create-pr/skills/create-pr/SKILL.md) | カレントブランチから PR 作成 (既定 draft、明示指示で ready for review) |
 | [`dry-ssot-text`](./plugins/dry-ssot-text/skills/dry-ssot-text/SKILL.md) | AI-generated document を SSOT に統合 |

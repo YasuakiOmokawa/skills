@@ -4,7 +4,7 @@
 
 ## 構成とファイル配置
 
-Claude Code の plugin loader が `${CLAUDE_PLUGIN_ROOT}/skills/` 直下を探すため、`plugins/<name>/skills/<name>/` の 2 階層構造を厳守する。
+`plugins/<name>/skills/<name>/` の 2 階層構造を厳守する。
 
 | 種別 | 配置 | discovery |
 |---|---|---|
@@ -14,10 +14,6 @@ Claude Code の plugin loader が `${CLAUDE_PLUGIN_ROOT}/skills/` 直下を探�
 
 - `plugin.json` に `skills/commands/agents` 配列を書かない (ファイル構造から自動 discovery)
 - agent 定義から skill 内ファイルは `${CLAUDE_PLUGIN_ROOT}/skills/<name>/<file>` で参照する (絶対パスを書かない)
-
-### agents は skill 内サブ配置で維持する
-
-agent は plugin top-level (`plugins/<name>/agents/`) に置かない。主 install 経路の `npx skills add` が top-level `agents/` を install 対象に含まず、`Task(subagent_type="<plugin>:<agent>")` が `Agent not found` になるため。`subagent_type="general-purpose"` + agent ファイルを `Read` で inline 読込みが本リポの標準。top-level 移動は PR #30/#32 で試し npx skills add 互換が壊れ PR #33 で revert 済み。
 
 ## バケット分類 (説明上のみ)
 
@@ -39,18 +35,8 @@ patch bump は使わない (typo 修正等は次の minor まで貯める)。破
 
 tag / GitHub Release は release-on-version-bump.yml が marketplace.json の push から自動生成する。手動 `git tag` / `gh release create` は auto-tag とレースして失敗するので実行しない。「tag が抜けている」症状は常に marketplace.json bump 漏れのサイン。
 
-## 命名規約
-
-- **動詞ベース**で命名する (`define-acceptance-criteria`, `qa-ui`)。`self-*` プレフィックスは使わない (誰が使うかではなく何をするかを名前で示す)
-- 1 plugin 1 skill (または 1 command)。混在させない
-
 ## 検証
 
-- skill 変更後は `python3 scripts/validate_skills.py` をローカル実行 (CI でも PR ごとに実行)。frontmatter・参照実在・絶対パス混入・marketplace 整合を機械検証する
+- skill 変更後は `python3 scripts/validate_skills.py` をローカル実行 (CI でも PR ごとに実行)
 - 新規 plugin 追加・改名時、機械検証外の 2 点を grep で確認: 他 plugin / README 本文の `/<旧名>` 言及、README のバケット行とリンク
 - 公開前に機密情報 (Cloud ID, API キー等) と組織固有名 (ラベル・環境・リポジトリ名) の残存を grep でスキャン
-
-## 失敗知見の還流と regression 検証
-
-- **Gotchas 還流**: empirical 検証・実利用で executor の失敗を観測したら、該当 SKILL.md (または agent 定義) の `## Gotchas` 節に 1 件 1 行で追記。point-of-use の inline 規則に既にある知見は転記しない (Gotchas は決定表や手順に組み込めなかった罠の置き場)
-- **evals/ regression suite**: empirical 検証が収束したら検証シナリオ + requirements checklist を `plugins/<name>/evals/` に保存。skill 変更 PR では該当シナリオを fresh executor で再実行し全 [critical] PASS を確認してから merge。100% pass に飽和したシナリオも劣化検出器として維持する

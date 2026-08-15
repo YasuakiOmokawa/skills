@@ -43,7 +43,7 @@ omokawa-skills は **monorepo + N plugins** 構造。各 skill / command は `pl
 - `finalize-plan`: Manual-QA / Auto-QA の 2 並列
 - `mece-plan-review`: 既定 (standard) は subagent 0 で main agent が inline 実行。deep のみ BB / WB 2 並列 → Fresh Red Team の統合判定
 - `model-data`: パイプライン式（Requirements → Conceptual → Conceptual-Review (FAIL 時 Conceptual へ差し戻し、最大 3 回) → Logical → DBML）
-- `qa-ui`: automation モード時のみ ui-evaluator を独立コンテキストで起動
+- `qa-ui`: QA-ID source がない browser fallback で ui-evaluator を独立コンテキストで起動
 
 ## ~/.claude/skills-config/*.md
 
@@ -77,4 +77,4 @@ Atlassian MCP / Jira MCP のツール名は環境によってプレフィック�
 
 ## Generator-Evaluator 分離
 
-`qa-ui` / `mece-plan-review` で採用するパターン：**実装したエージェント自身では評価しない**。別コンテキストの evaluator エージェントが画面/プランを見て判定する。バイアスを避けるため。(ただし qa-ui の既定は人間委譲で、evaluator エージェントによる判定は automation モード時のみ。mece-plan-review の独立コンテキスト担保は Fresh Red Team で、standard tier で Critical 候補 0 のときは skip される。いずれも「実装者自身が判定しない」原則は同じ)
+`qa-ui` / `mece-plan-review` で採用するパターン：**実装したエージェント自身では評価しない**。別コンテキストの evaluator エージェントが画面/プランを見て判定する。バイアスを避けるため。(qa-ui は QA-ID source がない browser fallback のみ evaluator を使う。mece-plan-review の独立コンテキスト担保は Fresh Red Team で、standard tier で Critical 候補 0 のときは skip される。いずれも「実装者自身が判定しない」原則は同じ)
