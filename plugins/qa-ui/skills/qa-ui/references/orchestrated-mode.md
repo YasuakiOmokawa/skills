@@ -6,10 +6,14 @@
 
 ## escalation ledger 形式
 
-ファイル名: `<プラン名>.escalation-ledger.md`（プランファイルと同じディレクトリに置く）。1 行 = 1 項目、追記のみ（既存行は書き換えない）。
+ファイル名: `<プラン名>.escalation-ledger.md`（プランファイルと同じディレクトリに置く）。追記のみ（既存行は書き換えない）。記帳前に QA ledger の最新 `## QA source <digest>` を読み、escalation ledger の最新見出しと異なれば同じ見出しと表 header を追記する。同じなら現行節を継続する。これにより旧 generation の保留を現行 QA へ継承しない。
+
+```markdown
+## QA source <digest>
 
 | 番号 | 出所 | 深刻度 (Critical/Major/Minor) | 内容 | 根拠 | 推奨アクション |
 |---|---|---|---|---|---|
+```
 
 - 「番号」は記帳前に ledger を Read し、既存の最終番号 +1 から採番する (ファイルが無ければ 1 から)。
 - 「出所」には QA-ID を書く（QA-G-NN もそのまま QA-ID として扱う）
@@ -17,35 +21,49 @@
 
 ## qa-ui 固有の記帳規則
 
-Orchestrated モード時、以下の 3 つの状況は SKILL.md 本文の「停止する」を「escalation ledger に記帳して続行する」に読み替える。該当 QA-ID は qa-ledger 側で保留し (Step 5 由来は `要人間確認`、Step 6 の審判再実行由来は `FAIL(Critical)` のまま — 状態語彙は SKILL.md 本文を正とする)、以後のラウンドの検証対象・修正対象からは除外するが、**他の独立した QA-ID の検証・修正ループは止めない**（全項目の検証が終わるまで完了とは呼ばない）。
+Orchestrated モード時、以下の状況は `SKILL.md` の「停止する」を「escalation ledger に記帳して続行する」に読み替える。該当 QA-ID は qa-ledger 側で `要人間確認`（審判再実行由来の Critical は `FAIL(Critical)`）のまま保留し、以後の検証・修正対象から除外する。他の QA-ID は継続する。
 
-1. **Critical FAIL** — Step 5「Critical が1件でも含まれる → 即エスカレート」
-2. **ラウンド上限超過**（cap 超過の狭い例外に該当しない）— Step 5「ラウンド3でもFAIL → エスカレート」
-3. **要人間確認**（Gotchas テーブル未カタログの検証不能）— Step 5 の判定 2. および「検証不能が1件でも含まれる場合」
+1. **Critical FAIL**
+2. **ラウンド上限超過**（狭い追加ラウンド条件を満たさない）
+3. **要人間確認**（Gotchas テーブル未カタログの検証不能）
 
 `検証不能(真の制約)` は元々非ブロッキングであり、Orchestrated モードの有無に関わらず記帳のうえループを継続する（SKILL.md 本文どおり、上記 3 状況とは別扱い）。
 
-**人間委譲モードの QA 依頼（Step 4）は記帳対象外**: 人間委譲モード（既定）の Step 4 で実行手順書を提示し人間の回答を待つことは、上記の「停止する」を「記帳して続行する」に読み替える対象に含まれない。QA 実行を人間に委譲する設計（利用者決定3・4）であり、調整コスト由来の同期待ちではなく判断価値由来の工程だからである。Orchestrated モードであっても Step 4 の人間からの回答待ちはそのまま維持し、escalation ledger には記帳しない。委譲実行（subagent 起動）では「待つ」こと自体が構造的にできないため、SKILL.md の「## 委譲実行」節が定める分割実行契約（手順書を返して終了 → 呼び出し元が回答を得て台帳から再開）に従う。この往復は escalation ledger と無関係であり、記帳対象外の扱いを変えない。
+**初回の手動 QA 依頼は記帳対象外**: 通常実行は人間の回答を待つ。委譲実行は手順書を返して終了し、呼び出し元が回答を得た後に台帳から再開する。
 
-Step 5.5 (auto 判定の再実行ゲート) の起動条件「Critical / 未解消エスカレートも無い状態」は、Orchestrated モード時は「escalation ledger へ記帳済みの保留 QA-ID を除いた残り全項目が修正ループを抜けた状態」と読み替える (保留 Critical があっても他項目の審判・完了集計を止めない)。
+auto 判定の再実行は、escalation ledger へ記帳済みの保留 QA-ID を除いた残り全項目が修正ループを抜けた時点で行う。
 
-## Step 6 完了判定への反映
+## 完了判定への反映
 
 完了判定の表示に、escalation ledger の集計結果を追記する: 「escalated N 件（うち Critical M 件）」。**Critical が 1 件でも含まれる場合、判定は「完了」を名乗らず「部分完了」を上限とする**（Critical 項目が保留のままである限り、機械集計が exit 0 を返しても「完了」表示はしない）。
 
-**検証済み Bash**（`/tmp` fixture で $4=深刻度 の列位置を確認済み）:
+**検証済み Bash**（現行 QA source 節だけを集計し、表では $4=深刻度）:
 
 ```bash
 LEDGER="<plan>.escalation-ledger.md"
+QA_LEDGER="<plan>.qa-ledger.md"
+RUN_DIR=$(mktemp -d) || { echo "⚠️ 一時ディレクトリを作成できません。" >&2; exit 2; }
+cleanup() { [ -d "$RUN_DIR" ] && rm -r -- "$RUN_DIR"; }
+trap cleanup EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
+CURRENT_ESCALATION="$RUN_DIR/current_escalation.md"
 
-if [ ! -s "$LEDGER" ]; then
+CURRENT_SOURCE=$(awk '/^## QA source [0-9a-f]+$/ { line=$0 } END { print line }' "$QA_LEDGER" 2>/dev/null)
+if [ -z "$CURRENT_SOURCE" ]; then
+  echo "⚠️ current QA source generation がありません。" >&2; exit 2
+fi
+SOURCE_LINE=$(grep -nFx "$CURRENT_SOURCE" "$LEDGER" 2>/dev/null | tail -1 | cut -d: -f1)
+if [ -z "$SOURCE_LINE" ]; then
   echo "escalated 0件"
 else
-  TOTAL=$(awk -F'|' '/^\| *[0-9]+ *\|/{c++} END{print c+0}' "$LEDGER")
+  tail -n "+$SOURCE_LINE" "$LEDGER" | awk 'NR > 1 && /^## QA source [0-9a-f]+$/ { exit } { print }' > "$CURRENT_ESCALATION"
+  TOTAL=$(awk -F'|' '/^\| *[0-9]+ *\|/{c++} END{print c+0}' "$CURRENT_ESCALATION")
   CRITICAL=$(awk -F'|' '/^\| *[0-9]+ *\|/{
     sev=$4; gsub(/^[ \t]+|[ \t]+$/,"",sev)
     if (sev=="Critical") c++
-  } END{print c+0}' "$LEDGER")
+  } END{print c+0}' "$CURRENT_ESCALATION")
   echo "escalated ${TOTAL}件（うち Critical ${CRITICAL}件）"
 fi
 ```
@@ -53,5 +71,9 @@ fi
 ## 記帳の追記例
 
 ```
+## QA source 0123456789abcdef
+
+| 番号 | 出所 | 深刻度 (Critical/Major/Minor) | 内容 | 根拠 | 推奨アクション |
+|---|---|---|---|---|---|
 | 4 | QA-H-02 | Critical | ボタン押下後に決済が二重送信される | ui-evaluator ラウンド1報告 | 実装修正後に再検証。他QA-IDの検証は継続 |
 ```

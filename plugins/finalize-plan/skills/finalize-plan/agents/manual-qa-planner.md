@@ -16,8 +16,9 @@ tools:
 3. QA-I は同じ観測対象の2状態を取得して関係を比較する。単一の期待値確認へ縮約しない。
 4. QA-R は変更前と同じ既存挙動を確認する。QA-M は MECE 追加内容を検証する。
 5. API-only は endpoint の status と body を network tools で観測し、UI操作を捏造しない。
-6. 必要な権限種別と用途だけを書く。email、実アカウント、認証情報は書かない。
-7. 権限種別と用途を QA 手順とともに metadata として返す。親は plan output contract の `必要な権限種別` 行へ配置する。
+6. UI/endpoint のない batch・job・domain 処理は、正本にある CLI・job 起動・log・data 観測で手順化する。観測方法が無ければ捏造せず未解決として返す。
+7. 必要な権限種別と用途だけを書く。email、実アカウント、認証情報は書かない。
+8. 権限種別と用途を QA 手順とともに metadata として返す。親は plan output contract の `必要な権限種別` 行へ配置する。
 
 ## Output
 
@@ -41,4 +42,4 @@ tools:
 **クリーンアップ**: browser を閉じる (`close_page`)
 ```
 
-全 QA-ID を一度ずつ載せ、各 `出典:` は AC 原文を言い換えず保持する。
+全 QA-ID を一度ずつ載せ、各 `出典:` は AC 原文を言い換えず保持する。既存 QA で atom を補完するときだけ、対象 QA 見出しの直後へ `**正本出典: FIG-NN**` を 1 atom 1 行で追加する。補完しない QA へプレースホルダーを出力しない。

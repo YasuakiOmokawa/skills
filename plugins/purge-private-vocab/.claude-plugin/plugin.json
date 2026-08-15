@@ -1,7 +1,7 @@
 {
   "name": "purge-private-vocab",
-  "description": "Review or rewrite plan-local coinages, abbreviations, layer labels, and finding IDs in reader-facing text or plans, subject to source availability and explicit edit authority.",
-  "version": "0.19.0",
+  "description": "Use when reader-facing text or plans contain plan-local coinages, abbreviations, layer labels, or finding IDs that may be opaque without their source plan.",
+  "version": "0.20.0",
   "author": {
     "name": "Yasuaki Omokawa",
     "url": "https://github.com/YasuakiOmokawa"

@@ -23,8 +23,8 @@ reviewer はこのファイルを SSOT として使う。
 |---|---|---|---|---|
 | 1 | Shallow module 検出 | 小さな interface の背後に隠れた実質的振る舞いがある (深い) | 一部 method が pass-through だが全体は振る舞いを足す | 全/大半の method が 1:1 委譲の pass-through。interface ≈ 実装で leverage なし |
 | 2 | Deletion test | 消すと複雑さが N 個の呼び出し側に再出現する | — | 消すと複雑さが消えるだけ (呼び出し側はほぼ同じコードを直接書く) = pass-through |
-| 3 | Seam discipline | seam は 2+ adapter が正当化される箇所のみ。internal seam は interface に漏れない | 1 adapter だが本番 + テスト mock で 2 つ目が妥当 | 1 adapter のみ (差し替え予定なし) の seam = 不要な indirection / internal seam が interface に漏出 |
-| 4 | Testability | 依存注入 + 結果返却 + 小さい表面積で interface 越しにテスト可 | 1 点で依存内部生成 or 副作用だが移行容易 | 依存を内部生成し interface 越しにテスト不可 / 表面積過大 |
+| 3 | Seam discipline | 現存する差し替え、外部境界の隔離、または確定した拡張が seam を正当化する。internal seam は interface に漏れない | production は固定でも、外部境界やテスト差し替えに実在する価値がある | 将来仮説だけの seam / internal seam が interface に漏出 |
+| 4 | Testability | 依存注入 + 結果返却 + 小さい表面積で interface 越しにテスト可 | 依存内部生成や副作用が局所化され、境界へ移行しやすい | 依存を内部生成し interface 越しにテスト不可 / 表面積過大 |
 
 ## 反例検索ヒント
 
@@ -32,7 +32,7 @@ reviewer はこのファイルを SSOT として使う。
 |---|---|
 | Shallow module | 各 public method が他オブジェクトへの 1 行 1:1 委譲だけ (`@x.foo(...)` を返すだけ)。隠す分岐/計算/状態がゼロ |
 | Deletion test | module を消した場合に呼び出し側へ再出現する複雑さの量を見積もる。ゼロなら pass-through |
-| Seam discipline | 注入点/抽象に対し現存 or 確実予定の adapter が 2 つ未満 (本番のみ・テスト mock も無い) / テストのためだけに internal seam を public 露出 |
+| Seam discipline | 注入点/抽象に現存する差し替え・外部境界の隔離・確定した拡張の根拠がない / テストのためだけに internal seam を public 露出 |
 | Testability | 内部での依存生成 (`new XxxGateway()` 等) / 戻り値 `void` で内部状態書き換え |
 
 ## 推奨修正の雛形 (短文テンプレ)
@@ -41,7 +41,7 @@ reviewer はこのファイルを SSOT として使う。
 |---|---|
 | Shallow module | `<file> は全 method が pass-through。呼び出し側へ inline、または <隠すべき方針> を内部に隠して深くする` |
 | Deletion test fail | `<file> は消しても複雑さが再出現しない。中間層を除去` |
-| 不要 seam | `<seam> は adapter 1 つのみ。抽象を外し具体に統合 (2 つ目が現れるまで待つ)` |
+| 不要 seam | `<seam> に差し替え・隔離・確定拡張の根拠がない。抽象を外し具体に統合` |
 | Testability | `<file> の <内部生成依存> を引数注入に変更 / <副作用> を結果返却に変更` |
 
 ## Design It Twice

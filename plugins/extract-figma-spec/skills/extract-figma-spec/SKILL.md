@@ -1,7 +1,6 @@
 ---
 name: extract-figma-spec
 description: Use before or during Figma-driven implementation to extract returned design properties into atomized checks, compare them with code, and write a canonical results table.
-argument-hint: "[Figma node or URL] [plan path]"
 ---
 
 Structured Figma metadata is the value source; screenshots are orientation evidence only. Figma review comments are out of scope when the available metadata capability cannot retrieve them.
@@ -46,9 +45,7 @@ Check every atom returned by the extraction, not only differences named by the r
 
 ## Persist
 
-Transfer `差分` and `未実装` atoms to acceptance criteria by running `/define-acceptance-criteria` in the normal planning pipeline; for a PoC, add them to the plan checklist. If the context does not establish a PoC, use the normal pipeline and state why. Do not duplicate them in both after AC is actually generated.
-
-Write or replace this section in `<plan>.analysis.md`, or in the plan when no analysis file exists:
+When a plan path is resolved, create `<plan>.analysis.md` if needed and write or replace this section there. Never move it to the plan file. Without a plan path, return the table with `未書き込み: プランパス未指定`.
 
 ```markdown
 ## 正本抽出結果
@@ -57,6 +54,8 @@ Write or replace this section in `<plan>.analysis.md`, or in the plan when no an
 |---|---|---|
 | FIG-05 | 左ペイン背景色 #464343 | 差分 (現状 #525659) |
 ```
+
+After persisting the table, transfer `差分` and `未実装` atoms to acceptance criteria by running `/define-acceptance-criteria` in the normal planning pipeline; for a PoC, add them to the plan checklist. If the context does not establish a PoC, use the normal pipeline and state why. Do not duplicate them in both after AC is actually generated. If define stops because MECE already exists, do not auto-reset it; report the required explicit `--reset-mece` and subsequent MECE rerun.
 
 The first column contains only the atom ID. Include all resolved rows, including matches, plus a separate unresolved list. After re-extraction, replace the whole table and rerun downstream coverage gates; do not rewrite a QA ledger keyed by QA-ID.
 

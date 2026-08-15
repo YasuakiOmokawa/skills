@@ -16,8 +16,8 @@ Frameworks/Drivers → Interface Adapters → Application Business → Enterpris
 
 | # | 観点 | ✅ | ⚠️ | ❌ |
 |---|---|---|---|---|
-| 1 | 依存方向 | 内側レイヤーが外側を一切参照しない | 軽微違反 1-2 箇所 (Rails.logger 等は許容) | Model/Service が Controller/View/外部 SDK を直接参照 |
-| 2 | レイヤー分離 | 各レイヤー責務が明確に分離 | 1 レイヤー責務の漏れ少 (Controller の where 1 箇所等) | Controller に複雑クエリ / Model にプレゼンテーション |
+| 1 | 依存方向 | 内側レイヤーが外側を参照しない | framework convenience への依存が境界内に閉じ、業務規則へ影響しない | Model/Service が Controller/View/外部 SDK を直接参照 |
+| 2 | レイヤー分離 | 各レイヤー責務が明確に分離 | query・表示整形の詳細が残るが、業務判断は所有しない | Controller に複雑クエリ / Model にプレゼンテーション |
 | 3 | 循環依存 | 一方向 | AR association の双方向 (Rails 標準) | Service 間の相互呼び出し / Model ビジネス論理の循環 |
 
 ## 反例検索 Grep ヒント

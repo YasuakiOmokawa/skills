@@ -2,13 +2,13 @@
 
 ## A: authorized rewrite
 
-Target contains code identifiers `Billing::Client` and `XPROJ-663`, plan-only labels `Critical-A`, `AC-12`, `α 層`, and repeated `Single Switch`. The source defines all except the concrete component behind α; the target is file-backed and the user explicitly requests edits.
+Target contains code identifiers `Billing::Client` and `XPROJ-663`, plan-only labels `Critical-A`, `AC-12`, `α 層`, and the same concept spelled `Single Switch` / `single-switch`. The source defines all except the concrete component behind α; the target is file-backed and the user explicitly requests edits.
 
 Checklist:
 1. [critical] preserves the real code/Jira identifiers;
 2. [critical] expands the numbered labels from source without adding decisions;
 3. [critical] rewrites α relationally without inventing a component;
-4. defines repeated useful shorthand only at first use and applies the authorized edit.
+4. counts the spelling variants as one concept, defines it only at first use, and applies the authorized edit.
 
 ## B: source unavailable, review-only
 
@@ -29,3 +29,12 @@ Checklist:
 2. [critical] expands upstream finding IDs from the analysis text while preserving unresolved choices as choices;
 3. [critical] preserves locally defined QA IDs and the feature flag;
 4. applies the edit only after the required report and leaves readable sentences.
+
+## D: target unresolved
+
+A delegated request says only “先ほどの文章を直して” and supplies neither a path nor inline text. No non-delegated session context is available.
+
+Checklist:
+1. [critical] returns `不足入力: 対象` and stops;
+2. [critical] does not search the repository for a substitute target;
+3. makes no edit and invents no source or path.

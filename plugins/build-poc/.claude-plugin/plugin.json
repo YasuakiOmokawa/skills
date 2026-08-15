@@ -1,7 +1,7 @@
 {
   "name": "build-poc",
   "description": "PoC、実現可能性の検証、技術比較、gdocs 案件の初期化または PRD 凍結を依頼されたときに使用。",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "author": {
     "name": "Yasuaki Omokawa",
     "url": "https://github.com/YasuakiOmokawa"

@@ -8,4 +8,4 @@ SKILL.md "Task complexity tier" の表と Row 1/Row 4 precedence を補完する
 
 ## Row 4 territory の境界例
 
-territory は「支払実行 / 認証判定 / 権限判定 / 本番 DB 変更 / 秘密情報取扱」の **core path** を指す (= 誤りが金銭的損害・認証境界破壊・データ破損に直結する経路)。周辺・派生機能は Row 4 に含めず Row 3 として扱う: (a) 領収書 / 請求書 / invoice の入力・OCR・表示は billing 領域だが charge / refund / 決済ゲートウェイ呼び出しの core path ではない、(b) ログイン UI のレイアウト調整は auth 領域だが認証判定ロジックの変更ではない、(c) 認可される権限を UI に描画する read-only 表示は permission 領域だが認可判定の追加ではない。判定に迷ったら「この変更で誤ると金銭・認証境界に直接影響するか」を問い、間接的なら Row 3。
+territory は「支払実行 / 認証判定 / 権限判定 / 本番 DB 変更 / 秘密情報取扱」の **core path** を指す (= 誤りが金銭的損害・認証境界破壊・データ破損に直結する経路)。領収書表示、ログイン UI の配置、権限の read-only 表示などの周辺機能は Row 4 にせず、Rows 1–3 の実際の規模・seam で分類する。

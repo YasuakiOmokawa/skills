@@ -18,7 +18,7 @@ reviewer はこのファイルを SSOT として使う。
 | 外部 API + テストでモック必要 | 採用推奨 |
 | 複数チャネル (Web/CLI/Batch) で同じロジック | 採用推奨 |
 | 単純 CRUD + ActiveRecord | 不要 (Rails Way) |
-| 外部依存 1 つ + 差し替え予定なし | 不要 (YAGNI) |
+| 固定された外部依存で、隔離・差し替え価値なし | 不要 (YAGNI) |
 
 ## 早見判定基準
 
@@ -26,8 +26,8 @@ reviewer はこのファイルを SSOT として使う。
 |---|---|---|---|---|
 | 1 | 必要性判断 | 適切な採用/不採用判断 | 微妙な判断 (将来差し替え可能性低いのに導入) | 明らかな過剰適用 or 明らかに必要なのに未適用 |
 | 2 | Primary Port 設計 | Service がフレームワーク非依存 | `params` hash 直受け取りあるが内部は独立 | Service が `ActionController::Parameters` 直受け / `render` 呼び出し |
-| 3 | Secondary Port 設計 | 外部 SDK が Adapter 内に閉じる | Service が外部 SDK を 1 箇所参照、Adapter 移行容易 | Model が外部 SDK 直参照 / Service 複数箇所で外部 SDK |
-| 4 | Adapter 実装 | Adapter は変換のみ | 軽微な変換以外 1 箇所 | Adapter にビジネスルール / 状態遷移 / 計算ロジック |
+| 3 | Secondary Port 設計 | 外部 SDK が Adapter 内に閉じる | Service の外部 SDK 参照が局所化され、Adapter へ移行容易 | Model が外部 SDK を直接参照 / Service の業務規則が SDK へ分散 |
+| 4 | Adapter 実装 | Adapter は変換のみ | transport 固有の正規化はあるが業務判断を持たない | Adapter にビジネスルール / 状態遷移 / 計算ロジック |
 
 ## 反例検索 Grep ヒント
 

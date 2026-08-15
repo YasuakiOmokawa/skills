@@ -28,13 +28,13 @@ omokawa-skills は **monorepo + N plugins** 構造。各 skill / command は `pl
 
 ## AC（受け入れ条件）
 
-**AC** = Acceptance Criteria。分析ファイル (`<plan>.analysis.md`) 内の `## 受け入れ条件` セクション。`define-acceptance-criteria` スキルで「正常系/異常系/エッジケース」の必須 3 カテゴリ (+ 推奨カテゴリ「非影響確認」) × 観点列のマトリクス形式で定義する。プランファイル末尾の `## 品質検証` にはサマリーだけが追記される。
+**AC** = Acceptance Criteria。分析ファイル (`<plan>.analysis.md`) 内の `## 受け入れ条件` セクション。`define-acceptance-criteria` スキルで「正常系/異常系/エッジケース」の必須 3 カテゴリ、条件付きの「不変条件」、推奨の「非影響確認」を定義する。プランファイル末尾の `## 品質検証` にはサマリーだけが追記される。
 
 `mece-plan-review` の検証ターゲット、`finalize-plan` の QA 計画の入力になる。
 
 ## MECE 検証
 
-**MECE** = Mutually Exclusive, Collectively Exhaustive。AC の網羅性を BB (仕様) / WB (コード) の 2 視点 + Fresh Red Team で検証する。既定 (standard tier) は main agent が BB+WB を inline 実行し、Critical 候補が出たときだけ Fresh Red Team を dispatch。リスク領域・AC >15 件 (deep tier) は BB / WB を並列 subagent 起動し Red Team 必須。`mece-plan-review` の主目的。
+**MECE** = Mutually Exclusive, Collectively Exhaustive。AC の網羅性を BB (仕様) / WB (コード) の 2 視点 + Fresh Red Team で検証する。既定 (standard tier) は main agent が BB+WB を inline 実行し、Critical 候補が出たときだけ Fresh Red Team を dispatch。auth / billing / payment / migration は deep tier として BB / WB を並列起動し、Red Team も実行する。`mece-plan-review` の主目的。
 
 ## サブエージェント / 並列起動
 
