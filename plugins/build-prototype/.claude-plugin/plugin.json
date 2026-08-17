@@ -1,7 +1,7 @@
 {
   "name": "build-prototype",
-  "description": "PoC を既存コードベースの慣習に合わせたプロトタイプへ書き直すときに使用。",
-  "version": "0.5.0",
+  "description": "承認済みのPoCまたは同等の検証根拠を、対象リポジトリの慣習に沿うプロトタイプへ移す。対象コードと期待する振る舞いが示され、既存アプリへのプロトタイプ化を求められたときに使う。",
+  "version": "1.0.0",
   "author": {
     "name": "Yasuaki Omokawa",
     "url": "https://github.com/YasuakiOmokawa"

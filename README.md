@@ -1,123 +1,61 @@
 # YasuakiOmokawa/skills
 
-開発効率化スキル群。提供する開発スタイルは2つ：
+独立して導入できる agent skills の marketplace。
 
-- 上流開発 ... AIでプロトタイプを高速で作って、コード設計とデザインドキュメントを成果物として作成するスキル
-- 下流開発 ... デザインドキュメントを基にタスクを切ってコード実装し、プルリクエストを成果物として作成するスキル
-
-## クイックスタート
+## Install
 
 ```bash
 npx skills add YasuakiOmokawa/skills
 ```
 
-対話で必要な skill を選んで install。
-
-### 設定値の生成
-
-`npx skills add` ではリポジトリ本体は手元に落ちないため、設定生成スクリプトは clone して実行:
-
-```bash
-git clone https://github.com/YasuakiOmokawa/skills && bash skills/scripts/setup.sh
-```
-
-これで `~/.claude/skills-config/jira.md` などが生成される。**全プロジェクト横断で参照されるグローバル設定**で、プロジェクトを切り替えても同じ設定が効く。
-
-clone せずに、`examples/skills-config/*.example.md` を `~/.claude/skills-config/` へ手動でコピーして編集する方法でもよい。
-
 ## Plugins
 
-### engineering 系 (設定不要で動く)
+### Engineering
 
-日常の開発作業で使う汎用 plugin。プロジェクト非依存で、追加設定なしに動く。
+設定なしで動作する。利用可能な根拠と現在のリポジトリ規約を使い、不足情報は未検証または未解決として返す。
 
-#### プラン駆動
-
-| Plugin | 役割 |
+| Plugin | Purpose |
 |---|---|
-| [`model-data`](./plugins/model-data/skills/model-data/SKILL.md) | 要求文書から DBML 形式の ER 図を生成 |
-| [`map-user-stories`](./plugins/map-user-stories/skills/map-user-stories/SKILL.md) | 設計書から UserStory/Task を分解 |
-| [`define-acceptance-criteria`](./plugins/define-acceptance-criteria/skills/define-acceptance-criteria/SKILL.md) | 分析ファイルに受け入れ条件を定義 (プランには 1 行サマリー) |
-| [`mece-plan-review`](./plugins/mece-plan-review/skills/mece-plan-review/SKILL.md) | 受け入れ条件を BB/WB 2 視点 + Red Team で MECE 検証 (既定 inline、リスク領域は並列 deep) |
-| [`review-design`](./plugins/review-design/skills/review-design/SKILL.md) | 「どこに・どう作るか」を判定 |
-| [`finalize-plan`](./plugins/finalize-plan/skills/finalize-plan/SKILL.md) | プラン→実装可能形式へ変換 |
-| [`apply-findings`](./plugins/apply-findings/skills/apply-findings/SKILL.md) | /code-review 指摘と規約・パターン逸脱の自動適用 + 判断集約 |
+| [`apply-findings`](./plugins/apply-findings/skills/apply-findings/SKILL.md) | Applies review findings when a request authorizes mechanically safe edits or asks for concrete edit candidates without changing files. |
+| [`build-poc`](./plugins/build-poc/skills/build-poc/SKILL.md) | 一つの実現可能性の問いを局所的な最小測定で判断する。成功基準と実行可能な環境があり、PoCや最小実験による可否判断を求められたときに使う。 |
+| [`build-prototype`](./plugins/build-prototype/skills/build-prototype/SKILL.md) | 承認済みのPoCまたは同等の検証根拠を、対象リポジトリの慣習に沿うプロトタイプへ移す。対象コードと期待する振る舞いが示され、既存アプリへのプロトタイプ化を求められたときに使う。 |
+| [`create-design-doc`](./plugins/create-design-doc/skills/create-design-doc/SKILL.md) | 承認済み計画と取得可能なプロトタイプまたは検証根拠からDesign Docを作る。計画が合意済みで、実装判断に使う設計文書と保存先を求められたときに使う。 |
+| [`create-pr`](./plugins/create-pr/skills/create-pr/SKILL.md) | Create or update the pull request associated with the current branch when the user asks to open it, revise its content, or explicitly make it reviewable. |
+| [`define-acceptance-criteria`](./plugins/define-acceptance-criteria/skills/define-acceptance-criteria/SKILL.md) | Convert an existing plan or specification into observable acceptance criteria when success, failure, boundary, or non-impact behavior must be made decidable. |
+| [`dry-ssot-text`](./plugins/dry-ssot-text/skills/dry-ssot-text/SKILL.md) | Consolidates duplicated reader-facing procedures when a canonical document and in-scope documents are identified, while preserving audience-specific differences. |
+| [`express-intent-in-code`](./plugins/express-intent-in-code/skills/express-intent-in-code/SKILL.md) | Clarifies intent in existing code when unclear names, responsibilities, comments, or lint suppressions need behavior-preserving cleanup. |
+| [`extract-figma-spec`](./plugins/extract-figma-spec/skills/extract-figma-spec/SKILL.md) | 提供または取得できるFigmaの根拠を原子的な確認項目へ分解し、実装の観測値と比較する。対象フレーム、状態、部品と比較対象の実装が示され、デザイン差分の判定表を求められたときに使う。 |
+| [`finalize-plan`](./plugins/finalize-plan/skills/finalize-plan/SKILL.md) | Finalize an implementation-ready plan from acceptance criteria and coverage evidence when work order, dependencies, change targets, and necessary QA material must be settled before implementation. |
+| [`map-user-stories`](./plugins/map-user-stories/skills/map-user-stories/SKILL.md) | Turn supplied product evidence into a user story map when user value, stories, executable tasks, and delivery order must be made traceable. |
+| [`mece-plan-review`](./plugins/mece-plan-review/skills/mece-plan-review/SKILL.md) | Compare a plan and acceptance criteria with specification and code evidence when a MECE coverage review or an explicitly authorized review update is requested. |
+| [`model-data`](./plugins/model-data/skills/model-data/SKILL.md) | 業務要求と取得可能な既存スキーマやSQLから一貫したデータモデルを導き、必要に応じてDBMLを作り、SQLアンチパターンを指摘する。データ設計、ER相当の関係整理、既存スキーマの整合性確認を求められたときに使う。 |
+| [`purge-private-vocab`](./plugins/purge-private-vocab/skills/purge-private-vocab/SKILL.md) | Replaces private vocabulary in authorized reader-facing documents when supplied definitions make the intended meaning checkable for the target audience. |
+| [`qa-ui`](./plugins/qa-ui/skills/qa-ui/SKILL.md) | Verifies an implemented UI when the request provides observable checks, expected states, an accessible rendered page, and permitted interactions. |
+| [`review-design`](./plugins/review-design/skills/review-design/SKILL.md) | Reviews a proposed design boundary before implementation when relevant specifications and existing code can provide concrete evidence about responsibilities and risk. |
 
-#### プロトタイプ駆動 (PoC → プロトタイプ → DD の 3 段連鎖)
+`create-design-doc` は、存在する場合だけ `~/.claude/skills-config/create-design-doc/` のテンプレートと参考文書を使い、なければ取得済み根拠へ縮退する。
 
-| Plugin | 役割 |
+### Personal
+
+`~/.claude/skills-config/jira.md` に利用者のJira設定を置く。
+
+| Plugin | Purpose |
 |---|---|
-| [`build-poc`](./plugins/build-poc/skills/build-poc/SKILL.md) | やりたいことを技術調査 → 星取表 → 最小実装で裏どりして PoC 化 |
-| [`build-prototype`](./plugins/build-prototype/skills/build-prototype/SKILL.md) | PoC を既存コードベース慣習に合わせ DD を起こせる水準のプロトタイプへ実装 |
-| [`create-design-doc`](./plugins/create-design-doc/skills/create-design-doc/SKILL.md) | プロトタイプと申し送りから DD (Design Doc) を作成 |
+| [`create-jira-issues`](./plugins/create-jira-issues/skills/create-jira-issues/SKILL.md) | Create Jira issues when the user explicitly asks to file listed, approved stories or tasks in a specified project and issue type, with per-item keys and failures. |
+| [`set-jira-story-points`](./plugins/set-jira-story-points/skills/set-jira-story-points/SKILL.md) | Set Jira Story Points when the user provides explicit issue-key-to-point mappings and asks to update those issues, with requested and confirmed values reported per issue. |
 
-#### 単独動作
+### Career
 
-| Plugin | 役割 |
+`~/.claude/skills-config/vision.md` が必須。
+
+| Plugin | Purpose |
 |---|---|
-| [`extract-figma-spec`](./plugins/extract-figma-spec/skills/extract-figma-spec/SKILL.md) | Figma 指定を全プロパティ抽出しチェックリスト照合して反映漏れを防ぐ |
-| [`qa-ui`](./plugins/qa-ui/skills/qa-ui/SKILL.md) | QA-ID の manual/auto 手段に従って検証し、QA-ID がない場合だけ browser fallback |
-| [`express-intent-in-code`](./plugins/express-intent-in-code/skills/express-intent-in-code/SKILL.md) | 機構名/形状名を目的(why)表明形へ変換し why コメント依存を減らす |
-| [`create-pr`](./plugins/create-pr/skills/create-pr/SKILL.md) | カレントブランチから PR 作成 (既定 draft、明示指示で ready for review) |
-| [`dry-ssot-text`](./plugins/dry-ssot-text/skills/dry-ssot-text/SKILL.md) | AI-generated document を SSOT に統合 |
-| [`purge-private-vocab`](./plugins/purge-private-vocab/skills/purge-private-vocab/SKILL.md) | plan 由来の固有語を対外文書から除染 |
+| [`translate-to-vision-story`](./plugins/translate-to-vision-story/skills/translate-to-vision-story/SKILL.md) | プロジェクト活動の証拠を、提供されたビジョンとの関係が明確な記事草稿へ変換する。ビジョン、活動記録、対象読者、記事の目的が示された初稿作成、または承認済み方針による改稿を求められたときに使う。 |
 
-### personal 系 (環境・組織依存の設定が必要)
+## Configuration
 
-利用者が自社の Jira 設定を `~/.claude/skills-config/jira.md` に置いて使う前提の plugin。
+`bash scripts/setup.sh` で非機密のグローバル設定を生成できる。サンプルは [`examples/skills-config/`](./examples/skills-config/) にある。
 
-| Plugin | 役割 |
-|---|---|
-| [`create-jira-issues`](./plugins/create-jira-issues/skills/create-jira-issues/SKILL.md) | プランから Jira チケット一括作成 |
-| [`set-jira-story-points`](./plugins/set-jira-story-points/skills/set-jira-story-points/SKILL.md) | Story Points 一括設定 |
+## License
 
-### career 系 (ユーザー個人設定が必須)
-
-`~/.claude/skills-config/vision.md` に自分のビジョン要素を書かないと動かない。
-
-| Plugin | 役割 |
-|---|---|
-| [`translate-to-vision-story`](./plugins/translate-to-vision-story/skills/translate-to-vision-story/SKILL.md) | プロジェクト活動を Zenn 記事下書きに翻訳 |
-
-## 設定値の保管 (グローバル)
-
-設定値は `~/.claude/skills-config/*.md` に保管される。**ユーザーマシンに 1 セット**だけあれば、全プロジェクトから同じ設定が読まれる。
-
-## 開発ワークフローの推奨例
-
-### プロトタイプ駆動で、DDまで作成
-
-```
-/build-poc
-/build-prototype
-/create-design-doc
-```
-
-### 単発の設計 => 実装
-
-```
-設計して /grill-with-docs を実行
-
-/review-design
-/define-acceptance-criteria => /mece-plan-review => /finalize-plan
-
-カレントブランチからあたらしくきって実装し、検証。ui検証が必要なら /qa-ui で検証。コミットは指示まで禁止
-/ponytail-review => /simplify => /vercel-react-best-practices => /vercel-composition-patterns => /react-doctor => コードコメントと md ファイルに /dry-ssot-text => /purge-private-vocab => /cognitive-rhythm-writing
-
-/code-review を実行 => /apply-findings
-
-/create-pr
-```
-
-## 出典
-
-上のワークフロー例には、このリポジトリに含まれない外部配布 skill も混ざっている。`npx skills add YasuakiOmokawa/skills` では install されないため、必要なら各配布元から個別に入れる。
-
-- grill-with-docs ... https://github.com/mattpocock/skills
-- cognitive-rhythm-writing ... https://gist.github.com/k16shikano/eb2929f13ed19c97188393d297be8432
-- vercel-react-best-practices / vercel-composition-patterns ... https://github.com/vercel-labs/skills
-- react-doctor ... 外部配布 skill (本リポには含まれない)
-
-## ライセンス
-
-MIT。詳細は [`LICENSE`](./LICENSE) を参照。
+[MIT](./LICENSE)

@@ -1,7 +1,7 @@
 {
   "name": "express-intent-in-code",
-  "description": "Use when a redundancy guard reports comments, suppressions, or sibling files; before adding a helper; or when reviewing abstraction names and cohesion after a substantial change.",
-  "version": "0.27.0",
+  "description": "Clarifies intent in existing code when unclear names, responsibilities, comments, or lint suppressions need behavior-preserving cleanup.",
+  "version": "1.0.0",
   "author": {
     "name": "Yasuaki Omokawa",
     "url": "https://github.com/YasuakiOmokawa"

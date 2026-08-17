@@ -1,7 +1,7 @@
 {
   "name": "apply-findings",
-  "description": "Use after code review or before committing to apply mechanically safe findings and report judgment calls; use review-only when the user asks for no edits or for another PR to be inspected.",
-  "version": "1.3.0",
+  "description": "Applies review findings when a request authorizes mechanically safe edits or asks for concrete edit candidates without changing files.",
+  "version": "2.0.0",
   "author": {
     "name": "Yasuaki Omokawa",
     "url": "https://github.com/YasuakiOmokawa"

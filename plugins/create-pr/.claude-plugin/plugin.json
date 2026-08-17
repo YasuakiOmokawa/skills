@@ -1,7 +1,7 @@
 {
   "name": "create-pr",
-  "description": "Use to create or update a Conventional-Commits PR from the current branch; draft by default, ready only when explicitly requested.",
-  "version": "0.31.0",
+  "description": "Create or update the pull request associated with the current branch when the user asks to open it, revise its content, or explicitly make it reviewable.",
+  "version": "1.0.0",
   "author": {
     "name": "Yasuaki Omokawa",
     "url": "https://github.com/YasuakiOmokawa"

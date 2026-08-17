@@ -1,7 +1,7 @@
 {
   "name": "create-jira-issues",
-  "description": "ユーザーストーリーマップやタスク分解プランからJiraチケットを一括作成する場合に使用。ストーリーマップ完成後のチケット化、プランファイルからの一括作成、計画済みストーリー・タスクのJiraへの移行が必要な場合にトリガーされる。",
-  "version": "0.3.0",
+  "description": "Create Jira issues when the user explicitly asks to file listed, approved stories or tasks in a specified project and issue type, with per-item keys and failures.",
+  "version": "1.0.0",
   "author": {
     "name": "Yasuaki Omokawa",
     "url": "https://github.com/YasuakiOmokawa"

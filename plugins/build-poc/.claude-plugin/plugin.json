@@ -1,7 +1,7 @@
 {
   "name": "build-poc",
-  "description": "PoC、実現可能性の検証、技術比較、gdocs 案件の初期化または PRD 凍結を依頼されたときに使用。",
-  "version": "0.8.0",
+  "description": "一つの実現可能性の問いを局所的な最小測定で判断する。成功基準と実行可能な環境があり、PoCや最小実験による可否判断を求められたときに使う。",
+  "version": "1.0.0",
   "author": {
     "name": "Yasuaki Omokawa",
     "url": "https://github.com/YasuakiOmokawa"
