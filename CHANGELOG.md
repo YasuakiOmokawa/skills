@@ -5,6 +5,16 @@ All notable changes to omokawa-skills will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v8.0.0 - 2026-08-18
+
+### Changed
+
+- 19 skillsをobservable outcome、authorization boundary、failure handlingだけからclean-room再実装した。
+- `apply-findings`のreview-onlyを除くnamed mode、skill固有argument、暗黙のcross-skill起動、agent/reference topologyを削除した。
+- fixed regressionをoutcome evaluationとfresh executor / blind judge / hold-out検証へ置換し、validatorを構造契約へ限定した。
+- Jira、任意のDesign Doc template、必須のcareer visionという現行config contractだけを保持した。
+- 未参照のGoogle Docs export wrapperと、暗黙起動を促すredundancy hook一式を削除した。
+
 ## v7.0.0 - 2026-08-16
 
 ### Changed

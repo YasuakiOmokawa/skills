@@ -1,7 +1,7 @@
 {
   "name": "purge-private-vocab",
-  "description": "Use when reader-facing text or plans contain plan-local coinages, abbreviations, layer labels, or finding IDs that may be opaque without their source plan.",
-  "version": "0.20.0",
+  "description": "Replaces private vocabulary in authorized reader-facing documents when supplied definitions make the intended meaning checkable for the target audience.",
+  "version": "1.0.0",
   "author": {
     "name": "Yasuaki Omokawa",
     "url": "https://github.com/YasuakiOmokawa"

@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "omokawa-skills",
-  "version": "7.0.0",
+  "version": "8.0.0",
   "description": "Plan-driven development workflow を構成する個別 skill 群。必要なものだけ install 可能",
   "owner": {
     "name": "Yasuaki Omokawa",
@@ -13,8 +13,8 @@
   "plugins": [
     {
       "name": "define-acceptance-criteria",
-      "description": "Use when a plan needs acceptance criteria before MECE review; skip throwaway PoC validation.",
-      "version": "0.35.0",
+      "description": "Convert an existing plan or specification into observable acceptance criteria when success, failure, boundary, or non-impact behavior must be made decidable.",
+      "version": "1.0.0",
       "source": "./plugins/define-acceptance-criteria",
       "skills": [
         "./skills/define-acceptance-criteria"
@@ -25,8 +25,8 @@
     },
     {
       "name": "mece-plan-review",
-      "description": "Use after acceptance criteria exist to check specification and code coverage, update the analysis, and update one plan quality-summary line before implementation.",
-      "version": "1.37.0",
+      "description": "Compare a plan and acceptance criteria with specification and code evidence when a MECE coverage review or an explicitly authorized review update is requested.",
+      "version": "2.0.0",
       "source": "./plugins/mece-plan-review",
       "skills": [
         "./skills/mece-plan-review"
@@ -37,8 +37,8 @@
     },
     {
       "name": "finalize-plan",
-      "description": "Use after a plan's acceptance criteria and MECE analysis are complete, immediately before implementation.",
-      "version": "2.16.0",
+      "description": "Finalize an implementation-ready plan from acceptance criteria and coverage evidence when work order, dependencies, change targets, and necessary QA material must be settled before implementation.",
+      "version": "3.0.0",
       "source": "./plugins/finalize-plan",
       "skills": [
         "./skills/finalize-plan"
@@ -49,8 +49,8 @@
     },
     {
       "name": "review-design",
-      "description": "Use before adding a feature, file, module, interface, or seam, or when deciding where code should live; always use for auth, billing, payment, migration, or security changes.",
-      "version": "1.33.0",
+      "description": "Reviews a proposed design boundary before implementation when relevant specifications and existing code can provide concrete evidence about responsibilities and risk.",
+      "version": "2.0.0",
       "source": "./plugins/review-design",
       "skills": [
         "./skills/review-design"
@@ -61,8 +61,8 @@
     },
     {
       "name": "apply-findings",
-      "description": "Use after code review or before committing to apply mechanically safe findings and report judgment calls; use review-only for no-edit or another-PR inspection.",
-      "version": "1.3.0",
+      "description": "Applies review findings when a request authorizes mechanically safe edits or asks for concrete edit candidates without changing files.",
+      "version": "2.0.0",
       "source": "./plugins/apply-findings",
       "skills": [
         "./skills/apply-findings"
@@ -73,8 +73,8 @@
     },
     {
       "name": "model-data",
-      "description": "要求文書からDBML形式のER図を生成し、SQLアンチパターンを検出。",
-      "version": "0.1.0",
+      "description": "業務要求と取得可能な既存スキーマやSQLから一貫したデータモデルを導き、必要に応じてDBMLを作り、SQLアンチパターンを指摘する。データ設計、ER相当の関係整理、既存スキーマの整合性確認を求められたときに使う。",
+      "version": "1.0.0",
       "source": "./plugins/model-data",
       "skills": [
         "./skills/model-data"
@@ -85,8 +85,8 @@
     },
     {
       "name": "map-user-stories",
-      "description": "Use when a design, specification, Jira epic, page, or supplied text must become an implementation-ready user story map and delivery plan.",
-      "version": "0.12.0",
+      "description": "Turn supplied product evidence into a user story map when user value, stories, executable tasks, and delivery order must be made traceable.",
+      "version": "1.0.0",
       "source": "./plugins/map-user-stories",
       "skills": [
         "./skills/map-user-stories"
@@ -97,8 +97,8 @@
     },
     {
       "name": "qa-ui",
-      "description": "Use to verify implemented UI from finalized QA-ID instructions, or through browser fallback when no QA-ID source exists.",
-      "version": "2.0.0",
+      "description": "Verifies an implemented UI when the request provides observable checks, expected states, an accessible rendered page, and permitted interactions.",
+      "version": "3.0.0",
       "source": "./plugins/qa-ui",
       "skills": [
         "./skills/qa-ui"
@@ -109,8 +109,8 @@
     },
     {
       "name": "create-jira-issues",
-      "description": "ユーザーストーリーマップやタスク分解プランからJiraチケットを一括作成。",
-      "version": "0.3.0",
+      "description": "Create Jira issues when the user explicitly asks to file listed, approved stories or tasks in a specified project and issue type, with per-item keys and failures.",
+      "version": "1.0.0",
       "source": "./plugins/create-jira-issues",
       "skills": [
         "./skills/create-jira-issues"
@@ -121,8 +121,8 @@
     },
     {
       "name": "set-jira-story-points",
-      "description": "JiraキーとStory Pointsのマップから一括でStory Pointsを設定する。",
-      "version": "0.1.0",
+      "description": "Set Jira Story Points when the user provides explicit issue-key-to-point mappings and asks to update those issues, with requested and confirmed values reported per issue.",
+      "version": "1.0.0",
       "source": "./plugins/set-jira-story-points",
       "skills": [
         "./skills/set-jira-story-points"
@@ -133,8 +133,8 @@
     },
     {
       "name": "translate-to-vision-story",
-      "description": "プロジェクト活動をビジョン整合した Zenn 記事下書きに翻訳。",
-      "version": "0.2.0",
+      "description": "プロジェクト活動の証拠を、提供されたビジョンとの関係が明確な記事草稿へ変換する。ビジョン、活動記録、対象読者、記事の目的が示された初稿作成、または承認済み方針による改稿を求められたときに使う。",
+      "version": "1.0.0",
       "source": "./plugins/translate-to-vision-story",
       "skills": [
         "./skills/translate-to-vision-story"
@@ -145,8 +145,8 @@
     },
     {
       "name": "dry-ssot-text",
-      "description": "Use when reader-facing prose or code-comment explanations repeat across a document or change set; not for code structure or logic duplication.",
-      "version": "0.19.0",
+      "description": "Consolidates duplicated reader-facing procedures when a canonical document and in-scope documents are identified, while preserving audience-specific differences.",
+      "version": "1.0.0",
       "source": "./plugins/dry-ssot-text",
       "skills": [
         "./skills/dry-ssot-text"
@@ -157,8 +157,8 @@
     },
     {
       "name": "create-pr",
-      "description": "カレントブランチのConventional Commits PRを作成・更新する。既定draft、明示時のみready。",
-      "version": "0.31.0",
+      "description": "Create or update the pull request associated with the current branch when the user asks to open it, revise its content, or explicitly make it reviewable.",
+      "version": "1.0.0",
       "source": "./plugins/create-pr",
       "skills": [
         "./skills/create-pr"
@@ -169,8 +169,8 @@
     },
     {
       "name": "purge-private-vocab",
-      "description": "Use when reader-facing text or plans contain plan-local coinages, abbreviations, layer labels, or finding IDs that may be opaque without their source plan.",
-      "version": "0.20.0",
+      "description": "Replaces private vocabulary in authorized reader-facing documents when supplied definitions make the intended meaning checkable for the target audience.",
+      "version": "1.0.0",
       "source": "./plugins/purge-private-vocab",
       "skills": [
         "./skills/purge-private-vocab"
@@ -181,8 +181,8 @@
     },
     {
       "name": "express-intent-in-code",
-      "description": "Use when a redundancy guard reports comments, suppressions, or sibling files; before adding a helper; or when reviewing abstraction names and cohesion.",
-      "version": "0.27.0",
+      "description": "Clarifies intent in existing code when unclear names, responsibilities, comments, or lint suppressions need behavior-preserving cleanup.",
+      "version": "1.0.0",
       "source": "./plugins/express-intent-in-code",
       "skills": [
         "./skills/express-intent-in-code"
@@ -193,8 +193,8 @@
     },
     {
       "name": "extract-figma-spec",
-      "description": "Use before or during Figma-driven implementation to extract returned design properties into atomized checks, compare them with code, and write a canonical results table.",
-      "version": "0.8.0",
+      "description": "提供または取得できるFigmaの根拠を原子的な確認項目へ分解し、実装の観測値と比較する。対象フレーム、状態、部品と比較対象の実装が示され、デザイン差分の判定表を求められたときに使う。",
+      "version": "1.0.0",
       "source": "./plugins/extract-figma-spec",
       "skills": [
         "./skills/extract-figma-spec"
@@ -205,8 +205,8 @@
     },
     {
       "name": "build-poc",
-      "description": "PoC、実現可能性の検証、技術比較、gdocs 案件の初期化または PRD 凍結を依頼されたときに使用。",
-      "version": "0.8.0",
+      "description": "一つの実現可能性の問いを局所的な最小測定で判断する。成功基準と実行可能な環境があり、PoCや最小実験による可否判断を求められたときに使う。",
+      "version": "1.0.0",
       "source": "./plugins/build-poc",
       "skills": [
         "./skills/build-poc"
@@ -217,8 +217,8 @@
     },
     {
       "name": "build-prototype",
-      "description": "PoC を既存コードベースの慣習に合わせたプロトタイプへ書き直すときに使用。",
-      "version": "0.5.0",
+      "description": "承認済みのPoCまたは同等の検証根拠を、対象リポジトリの慣習に沿うプロトタイプへ移す。対象コードと期待する振る舞いが示され、既存アプリへのプロトタイプ化を求められたときに使う。",
+      "version": "1.0.0",
       "source": "./plugins/build-prototype",
       "skills": [
         "./skills/build-prototype"
@@ -229,8 +229,8 @@
     },
     {
       "name": "create-design-doc",
-      "description": "案件プランと取得可能なプロトタイプから DD (Design Doc) を作るときに使用。",
-      "version": "0.4.0",
+      "description": "承認済み計画と取得可能なプロトタイプまたは検証根拠からDesign Docを作る。計画が合意済みで、実装判断に使う設計文書と保存先を求められたときに使う。",
+      "version": "1.0.0",
       "source": "./plugins/create-design-doc",
       "skills": [
         "./skills/create-design-doc"

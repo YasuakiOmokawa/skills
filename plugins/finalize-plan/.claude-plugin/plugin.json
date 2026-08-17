@@ -1,7 +1,7 @@
 {
   "name": "finalize-plan",
-  "description": "Use after a plan's acceptance criteria and MECE analysis are complete, immediately before implementation.",
-  "version": "2.16.0",
+  "description": "Finalize an implementation-ready plan from acceptance criteria and coverage evidence when work order, dependencies, change targets, and necessary QA material must be settled before implementation.",
+  "version": "3.0.0",
   "author": {
     "name": "Yasuaki Omokawa",
     "url": "https://github.com/YasuakiOmokawa"

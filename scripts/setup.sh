@@ -209,17 +209,6 @@ else
 fi
 
 # -----------------------------------------------------------------------------
-# Section E: redundancy-guard hook (express-intent-in-code)
-# -----------------------------------------------------------------------------
-echo ""
-echo "─── Section E: redundancy-guard hook ───"
-if prompt_yes_no "express-intent-in-code の redundancy-guard hook を ~/.claude/settings.json に登録しますか？（Edit/Write ごとにコメント追加・lint-suppression・新規ファイルを検知してスキル適用を促す）"; then
-  bash "$(dirname "$0")/register-redundancy-guard-hook.sh"
-else
-  echo "  → スキップ（後から scripts/register-redundancy-guard-hook.sh を単体実行しても登録できます）"
-fi
-
-# -----------------------------------------------------------------------------
 # 完了報告
 # -----------------------------------------------------------------------------
 echo ""

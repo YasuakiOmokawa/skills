@@ -1,7 +1,7 @@
 {
   "name": "map-user-stories",
-  "description": "Use when a design, specification, Jira epic, page, or supplied text must become an implementation-ready user story map and delivery plan.",
-  "version": "0.12.0",
+  "description": "Turn supplied product evidence into a user story map when user value, stories, executable tasks, and delivery order must be made traceable.",
+  "version": "1.0.0",
   "author": {
     "name": "Yasuaki Omokawa",
     "url": "https://github.com/YasuakiOmokawa"

@@ -1,7 +1,7 @@
 {
   "name": "mece-plan-review",
-  "description": "Use after acceptance criteria exist to check specification and code coverage, update the analysis, and update one plan quality-summary line before implementation. Trigger on MECE 検証して or AC の網羅性を検証して.",
-  "version": "1.37.0",
+  "description": "Compare a plan and acceptance criteria with specification and code evidence when a MECE coverage review or an explicitly authorized review update is requested.",
+  "version": "2.0.0",
   "author": {
     "name": "Yasuaki Omokawa",
     "url": "https://github.com/YasuakiOmokawa"

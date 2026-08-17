@@ -1,7 +1,7 @@
 {
   "name": "dry-ssot-text",
-  "description": "Use when reader-facing prose or code-comment explanations repeat across a document or change set; not for code structure or logic duplication.",
-  "version": "0.19.0",
+  "description": "Consolidates duplicated reader-facing procedures when a canonical document and in-scope documents are identified, while preserving audience-specific differences.",
+  "version": "1.0.0",
   "author": {
     "name": "Yasuaki Omokawa",
     "url": "https://github.com/YasuakiOmokawa"
