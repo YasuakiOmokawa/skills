@@ -6,10 +6,12 @@ description: Create or update the pull request associated with the current branc
 # Workflow
 
 1. Resolve the current repository and branch from available context; for creation, also resolve the base branch, title, and information needed for the body.
-2. Hold creation only when required creation information is missing or ambiguous, and state each blocker.
-3. Locate any pull request associated with the current branch and carry out the authorized creation or update rather than stopping at its description, using any explicitly supplied mock interface, fixed response, or local fixture as the observable task environment; record the operation as submitted separately from any result verified by the supplied evidence, and never infer success from an absent response.
-4. Create a new pull request as a draft unless the user explicitly requests a reviewable state, and preserve an existing state unless its change is explicitly requested.
-5. Limit updates to the current branch's pull request and the requested fields; keep all other pull requests, merge state, close state, and branches unchanged.
-6. Verify each requested operation only from returned or subsequently observed state, including the base branch, title, affected content, and final draft or reviewable state.
-7. Pair any observed pull request number with its exact returned URL without reconstructing absent values, and record partial results and permission failures without claiming unsupported changes.
-8. Report the submitted operations, supported final state, applied changes, failures with reasons, and unresolved outcomes.
+2. Before creating a new pull request, inspect the worktree, the complete change set against the base, and every commit's diff. Define each commit by one reviewable purpose and its dependencies, keep an implementation with its tests or fixtures, separate authorized but independent in-scope changes, exclude unauthorized or out-of-scope changes, and order dependent commits coherently. Use one commit only when the authorized change is genuinely indivisible, and record that reason.
+3. Make the authorized local history match those boundaries before publishing it. Rebuild unpublished commits only when that rewrite is explicitly authorized; never rewrite published or shared history or force-push without explicit authorization. Otherwise hold creation and report the proposed boundaries and missing authorization.
+4. Hold creation only when required creation information or authorization is missing or ambiguous, and state each blocker.
+5. Locate any pull request associated with the current branch and carry out the authorized creation or update rather than stopping at its description, using any explicitly supplied mock interface, fixed response, or local fixture as the observable task environment; record the operation as submitted separately from any result verified by the supplied evidence, and never infer success from an absent response.
+6. Create a new pull request as a draft unless the user explicitly requests a reviewable state, and preserve an existing state unless its change is explicitly requested.
+7. Limit updates to the current branch's pull request and the requested fields; keep all other pull requests, merge state, close state, and branches unchanged.
+8. Before push or creation, verify the resulting commit order and each commit's diff; verify each pull request operation only from returned or subsequently observed state, including the base branch, title, affected content, and final draft or reviewable state.
+9. Pair any observed pull request number with its exact returned URL without reconstructing absent values, and record partial results and permission failures without claiming unsupported changes.
+10. Report the verified commit boundaries, submitted operations, supported final state, applied changes, failures with reasons, and unresolved outcomes.
