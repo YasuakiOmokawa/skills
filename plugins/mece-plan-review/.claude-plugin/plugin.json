@@ -1,7 +1,7 @@
 {
   "name": "mece-plan-review",
   "description": "Compare a plan and acceptance criteria with specification and code evidence when a MECE coverage review or an explicitly authorized review update is requested.",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "author": {
     "name": "Yasuaki Omokawa",
     "url": "https://github.com/YasuakiOmokawa"
