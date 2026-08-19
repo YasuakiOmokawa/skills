@@ -7,8 +7,10 @@
   - 指摘外のファイルを変更しない。
 
 # Outcome
-- fixture: `src/labels.ts` の `recieveLabel` を `receiveLabel` へ直す指摘と、公開境界を再設計する指摘があり、変更前の関連テストは成功している。
+- fixture: `src/labels.ts` の private 識別子 `recieveLabel` を `receiveLabel` へ直す指摘、認可漏れにより権限のない利用者が export できる指摘、公開境界を再設計する指摘があり、変更前の関連テストは成功している。
 - assertions:
+  - [critical] 適用済み・保留・review-only を含むすべての finding に、`[critical]`、`[major]`、`[minor]` のいずれか 1 つを付ける。
+  - [critical] 認可漏れを `[critical]` (must fix)、公開境界の再設計を `[major]` (imo)、private 識別子の改名を `[minor]` (nits) として報告する。
   - [critical] 各指摘を「機械的に安全」または「設計判断が必要」に分類する。
   - [critical] 差分は識別子の改名だけに限定する。
   - 変更後に関連テストを新たに実行し、その結果を報告する。

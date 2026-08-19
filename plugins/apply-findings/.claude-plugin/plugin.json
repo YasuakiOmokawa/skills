@@ -1,7 +1,7 @@
 {
   "name": "apply-findings",
   "description": "Applies review findings when a request authorizes mechanically safe edits or asks for concrete edit candidates without changing files.",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "author": {
     "name": "Yasuaki Omokawa",
     "url": "https://github.com/YasuakiOmokawa"
