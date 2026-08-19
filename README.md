@@ -32,6 +32,7 @@ npx skills add YasuakiOmokawa/skills
 | [`purge-private-vocab`](./plugins/purge-private-vocab/skills/purge-private-vocab/SKILL.md) | Replaces private vocabulary in authorized reader-facing documents when supplied definitions make the intended meaning checkable for the target audience. |
 | [`qa-ui`](./plugins/qa-ui/skills/qa-ui/SKILL.md) | Verifies an implemented UI when the request provides observable checks, expected states, an accessible rendered page, and permitted interactions. |
 | [`review-design`](./plugins/review-design/skills/review-design/SKILL.md) | Reviews a proposed design boundary before implementation when relevant specifications and existing code can provide concrete evidence about responsibilities and risk. |
+| [`verify-plan`](./plugins/verify-plan/skills/verify-plan/SKILL.md) | Use when an implemented change must be verified against a plan or acceptance criteria before it can be considered complete. |
 
 `create-design-doc` は、存在する場合だけ `~/.claude/skills-config/create-design-doc/` のテンプレートと参考文書を使い、なければ取得済み根拠へ縮退する。
 
