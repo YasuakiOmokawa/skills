@@ -1,0 +1,18 @@
+{
+  "name": "verify-plan",
+  "description": "Use when an implemented change must be verified against a plan or acceptance criteria before it can be considered complete.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Yasuaki Omokawa",
+    "url": "https://github.com/YasuakiOmokawa"
+  },
+  "homepage": "https://github.com/YasuakiOmokawa/skills",
+  "repository": "https://github.com/YasuakiOmokawa/skills",
+  "license": "MIT",
+  "keywords": [
+    "verification",
+    "acceptance-criteria",
+    "plan-driven",
+    "qa"
+  ]
+}
