@@ -5,13 +5,13 @@ description: Convert an existing plan or specification into observable acceptanc
 
 ## Workflow
 
-1. Resolve the source plan or specification, intended scope, expected user-visible result, and authorized destination from the request and available context.
+1. Resolve the current plan or specification, intended scope, expected user-visible result, and authorized destination from the request and available context. When a writable current plan is supplied and the request asks to add or create that plan's acceptance criteria, use that plan as the exact destination.
 2. Enumerate every stated success, failure, boundary, and non-impact condition before drafting.
 3. Convert each condition into independent criteria that pair one initiating state or action with one directly observable result; split a criterion whenever either side can vary.
 4. Make each boundary decidable with observations immediately on both sides. If the source does not define the exact boundary point, leave that point unresolved rather than infer it. When two cases must appear identical, require the relevant observations from both cases to be compared.
 5. Map every source condition to one or more criteria, then identify uncovered conditions and duplicate coverage.
-6. Observe the destination state before writing. If it is a supplied template, retain its headings and fields unless structural change was authorized; express required distinctions within those fields and report coverage mappings in the response when the template has no field for them. Create only the exact authorized artifact, and preserve existing material unless replacement was explicitly authorized.
-7. Re-read the destination after writing and confirm that the intended criteria are present. If access, writing, or confirmation fails, report the artifact as not created or unverified instead of claiming completion.
+6. Observe the destination before writing and preserve all unrelated content. If a current plan contains multiple `## Acceptance Criteria` sections or duplicate AC-IDs, stop without choosing or merging them. Otherwise upsert exactly one section. Write each criterion as `- [ ] AC-NNN: ...`, keep each AC-ID immutable for its initiating state or action and observable result, and allocate new IDs in ascending order. A semantic change replaces the old criterion with a new ID instead of reusing its ID; do not renumber or remove criteria unless that change was authorized. For another supplied template, retain its headings and fields unless structural change was authorized.
+7. Re-read the destination after writing and confirm the section, AC-ID uniqueness, criteria, and unrelated content. If access, writing, or confirmation fails, report the artifact as not created or unverified instead of claiming completion.
 
 ## Completion
 

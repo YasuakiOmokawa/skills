@@ -1,7 +1,7 @@
 {
   "name": "define-acceptance-criteria",
   "description": "Convert an existing plan or specification into observable acceptance criteria when success, failure, boundary, or non-impact behavior must be made decidable.",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "author": {
     "name": "Yasuaki Omokawa",
     "url": "https://github.com/YasuakiOmokawa"
