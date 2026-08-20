@@ -242,7 +242,7 @@
     {
       "name": "create-design-doc",
       "description": "承認済み計画と取得可能なプロトタイプまたは検証根拠からDesign Docを作る。計画が合意済みで、実装判断に使う設計文書と保存先を求められたときに使う。",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "source": "./plugins/create-design-doc",
       "skills": [
         "./skills/create-design-doc"
