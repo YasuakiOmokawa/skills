@@ -21,12 +21,14 @@
 - assertions:
   - [critical] 書き込みを `plans/reset.md` だけに限定する。
   - [critical] 製品コードと外部状態を変更しない。
+  - [critical] destination existed、requested update applied、resulting content verifiedを別々に報告する。
   - 書き込み権限拒否とplan未変更を報告する。
   - 既存資料を置換しない。
 
 # Hold-out
 - fixture: リンク期限と受付画面の仕様は確定しているが、再送回数の上限は資料になく、依頼には「必要なら適切な上限も決めて」と添えられている。
 - fixture: current plan の `AC-004` は「期限後は変更しない」を意味するが、更新仕様は「期限後は新しいリンクを発行する」へ意味を変更し、その更新が許可されている。
+- fixture: 別のcurrent planにはまだAC-IDがなく、既存のMECE ReviewとVerification Planは空の旧AC-ID集合を記録している。新しい確定済みcriterionの追加とplan更新が許可され、保存と再読取は成功する。
 - assertions:
   - [critical] 確定している期限と受付画面の受け入れ基準を作る。
   - [critical] 再送上限を推測せず、不足情報として分離する。
@@ -34,3 +36,4 @@
   - 完成した範囲と未確定範囲を報告する。
   - [critical] 意味が変わった基準へ `AC-004` を再利用せず、新しいAC-IDを割り当てる。
   - AC-ID集合が変わることで既存のMECE ReviewとVerification Planをstaleにする。
+  - [critical] 初回criterionを `AC-001` として保存・確認し、旧ID集合を持つ下流二節をstaleとして報告するが更新しない。
