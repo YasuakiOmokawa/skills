@@ -26,7 +26,7 @@
     {
       "name": "mece-plan-review",
       "description": "Compare a plan and acceptance criteria with specification and code evidence when a MECE coverage review or an explicitly authorized review update is requested.",
-      "version": "2.1.0",
+      "version": "2.2.0",
       "source": "./plugins/mece-plan-review",
       "skills": [
         "./skills/mece-plan-review"

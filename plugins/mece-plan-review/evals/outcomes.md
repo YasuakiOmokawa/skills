@@ -28,6 +28,7 @@
 # Hold-out
 - fixture: 仕様、受け入れ基準、計画は確認でき、請求作成の対応は判断できるが、再試行を担うコードだけアクセス拒否となる。
 - fixture: 別のcurrent planには `## Acceptance Criteria` が二つあるか、同じAC-IDが二行に使われている。
+- fixture: さらに別のvalid planには明示された仕様sourceが二件、code sourceが一件あり、codeのcriterion関連branchはrepo内helperを呼ぶ。更新interfaceはtimeoutし、別readbackは同じexact destinationの完全だが送信内容と異なる文書を返す。
 - assertions:
   - [critical] 確認できる請求作成の対応を評価する。
   - [critical] 再試行とコードの対応を未検証とする。
@@ -35,3 +36,5 @@
   - [critical] duplicate sectionまたはduplicate AC-IDをmalformedとして扱い、reviewやGateを作らない。
   - アクセス拒否を適合または不適合の根拠にしない。
   - 確認済み結果と未検証範囲を分けて報告する。
+  - [critical] 明示category sourceを全件manifest化し、criterion関連calleeを有限closureで確認するか未検証として残す。
+  - [critical] timeout後もsubmittedはyes、operationはunverifiedとし、exact destinationの完全readback差分をcontent mismatchとして独立報告する。
