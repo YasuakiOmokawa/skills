@@ -110,7 +110,7 @@
     {
       "name": "verify-plan",
       "description": "Use when an implemented change must be verified against a plan or acceptance criteria before it can be considered complete.",
-      "version": "2.0.0",
+      "version": "2.1.0",
       "source": "./plugins/verify-plan",
       "skills": [
         "./skills/verify-plan"

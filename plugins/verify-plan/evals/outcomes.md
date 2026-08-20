@@ -30,9 +30,13 @@
 - fixture: planのACは四件あるが、Verification PlanはAPIと権限の二件だけを対応付け、監査ログとUIの対応項目がない。
 - fixture: 別の構造が完全なplanではAPI、権限、監査ログを検証できるが、UIだけはローカルDBへ接続できず実画面を開けない。同じ接続試行を繰り返しても結果は変わらない。
 - fixture: さらに別のplanにはduplicate section、duplicate AC-ID、stale AC-ID集合、duplicate verification entry、または空のrequired fieldのいずれかがある。
+- fixture: もう一つのplanは正しいAC行と非literalなcriterion-like rowを混在させるか、正しい4 required rowsとmalformed field-like rowを同じentryに置くか、current AC集合にないextra verification entryを持つ。
+- fixture: 単一MECE Reviewにcanonical行と競合する複数の `- AC IDs:` または `- Gate:` rowがある。
 - assertions:
   - [critical] 対応項目が欠けるplanでは検証を一件も実行せず、監査ログとUIのmissing mappingを報告する。
   - [critical] 構造が完全なplanでは検証できるAPI、権限、監査ログの結果を保持し、UIだけを未検証として全体をPASSとしない。
   - 接続不能を製品コード修正で回避せず、必要なDB接続条件を示す。
   - 同じ失敗を無制限に再試行せず、確認した不足条件と残項目を報告する。
   - [critical] malformed planを消費せず、実装後にmappingを推測して補わない。
+  - [critical] valid rowとmalformed rowの混在、required field-like rowの追加、またはextra/stale verification entryをmalformedとして扱い、verificationを開始しない。
+  - [critical] 予約machine rowの重複または競合をmalformedとして扱い、canonical行が一つ存在してもverificationを開始しない。
