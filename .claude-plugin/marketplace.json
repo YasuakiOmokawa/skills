@@ -170,7 +170,7 @@
     {
       "name": "create-pr",
       "description": "Create or update the pull request associated with the current branch when the user asks to open it, revise its content, or explicitly make it reviewable.",
-      "version": "1.1.0",
+      "version": "1.2.0",
       "source": "./plugins/create-pr",
       "skills": [
         "./skills/create-pr"
