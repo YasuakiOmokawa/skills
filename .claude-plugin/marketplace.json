@@ -98,7 +98,7 @@
     {
       "name": "qa-ui",
       "description": "Verifies an implemented UI when the request provides observable checks, expected states, an accessible rendered page, and permitted interactions.",
-      "version": "3.0.0",
+      "version": "3.1.0",
       "source": "./plugins/qa-ui",
       "skills": [
         "./skills/qa-ui"
