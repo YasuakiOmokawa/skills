@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "omokawa-skills",
-  "version": "9.2.0",
+  "version": "9.3.0",
   "description": "Plan-driven development workflow を構成する個別 skill 群。必要なものだけ install 可能",
   "owner": {
     "name": "Yasuaki Omokawa",
@@ -217,8 +217,8 @@
     },
     {
       "name": "build-poc",
-      "description": "一つの実現可能性の問いを局所的な最小測定で判断する。成功基準と実行可能な環境があり、PoCや最小実験による可否判断を求められたときに使う。",
-      "version": "1.0.0",
+      "description": "技術候補の選定または実現可能性を、成功基準と実行環境に基づくPoCや最小実験で判断する必要があるときに使う。",
+      "version": "1.1.0",
       "source": "./plugins/build-poc",
       "skills": [
         "./skills/build-poc"
@@ -229,8 +229,8 @@
     },
     {
       "name": "build-prototype",
-      "description": "承認済みのPoCまたは同等の検証根拠を、対象リポジトリの慣習に沿うプロトタイプへ移す。対象コードと期待する振る舞いが示され、既存アプリへのプロトタイプ化を求められたときに使う。",
-      "version": "1.0.0",
+      "description": "承認済みのPoCまたは同等の根拠があり、選定方式と既存コードベースの責務、慣習、契約との適合性を実コードで確かめる必要があるときに使う。",
+      "version": "1.1.0",
       "source": "./plugins/build-prototype",
       "skills": [
         "./skills/build-prototype"
@@ -241,8 +241,8 @@
     },
     {
       "name": "create-design-doc",
-      "description": "承認済み計画と取得可能なプロトタイプまたは検証根拠からDesign Docを作る。計画が合意済みで、実装判断に使う設計文書と保存先を求められたときに使う。",
-      "version": "1.1.0",
+      "description": "承認済み計画とPoC、プロトタイプまたは同等の根拠があり、実装判断に使うDesign Docと保存先が必要なときに使う。",
+      "version": "1.2.0",
       "source": "./plugins/create-design-doc",
       "skills": [
         "./skills/create-design-doc"
