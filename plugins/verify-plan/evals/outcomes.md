@@ -32,6 +32,9 @@
 - fixture: さらに別のplanにはduplicate section、duplicate AC-ID、stale AC-ID集合、duplicate verification entry、または空のrequired fieldのいずれかがある。
 - fixture: もう一つのplanは正しいAC行と非literalなcriterion-like rowを混在させるか、正しい4 required rowsとmalformed field-like rowを同じentryに置くか、current AC集合にないextra verification entryを持つ。
 - fixture: 単一MECE Reviewにcanonical行と競合する複数の `- AC IDs:` または `- Gate:` rowがある。
+- fixture: 構造が完全な別planではprior reportがPASS、fresh AC checkも全件PASSだが、finding ledgerにdeferred majorとdirect affected-use checkのないapplied criticalがあり、開始fingerprintはP1/T1、終了はP1/T2である。対照runはP2/T3で一致し、全findingがfresh direct check済みである。
+- fixture: review-only runにはunresolved major、apply-only runにはdirect affected-use checkのないapplied criticalがある。neither-in-scope runにはfinding outputがなく、他のcompletion gateはすべて満たされる。
+- fixture: partially staged fileは開始時と終了時のstatusが同じ`MM`でworking-tree contentも同じだが、index blobだけが変化する。untracked directory内にもfileがある。
 - assertions:
   - [critical] 対応項目が欠けるplanでは検証を一件も実行せず、監査ログとUIのmissing mappingを報告する。
   - [critical] 構造が完全なplanでは検証できるAPI、権限、監査ログの結果を保持し、UIだけを未検証として全体をPASSとしない。
@@ -40,3 +43,9 @@
   - [critical] malformed planを消費せず、実装後にmappingを推測して補わない。
   - [critical] valid rowとmalformed rowの混在、required field-like rowの追加、またはextra/stale verification entryをmalformedとして扱い、verificationを開始しない。
   - [critical] 予約machine rowの重複または競合をmalformedとして扱い、canonical行が一つ存在してもverificationを開始しない。
+  - [critical] prior PASSをcurrent resultとして再利用せず、current plan、HEAD、staged・unstaged・untracked pathのstatusとcontent digestを開始時と終了時に比較する。
+  - [critical] fingerprint mismatchでもfresh AC PASSを保持し、runをstaleとしてcompleteにしない。
+  - [critical] unresolved、deferred、またはfresh direct affected-use checkのないapplied critical/majorをfinding gateのblockerにする。
+  - [critical] fingerprintが一致し、全fresh ACがPASSで、finding blockerがない対照runだけcompleteにする。
+  - [critical] review-onlyとapply-onlyではfinding gateを適用し、neither-in-scopeではledgerを要求も報告もしない。
+  - [critical] staged indexとworking-treeを別recordにし、file-level untracked entryを含め、同じ`MM` statusとworking-tree digestでもindex blobの変化をstaleとして検出する。

@@ -29,6 +29,7 @@
 - fixture: 仕様、受け入れ基準、計画は確認でき、請求作成の対応は判断できるが、再試行を担うコードだけアクセス拒否となる。
 - fixture: 別のcurrent planには `## Acceptance Criteria` が二つあるか、同じAC-IDが二行に使われている。
 - fixture: さらに別のvalid planには明示された仕様sourceが二件、code sourceが一件あり、codeのcriterion関連branchはrepo内helperを呼ぶ。更新interfaceはtimeoutし、別readbackは同じexact destinationの完全だが送信内容と異なる文書を返す。
+- fixture: shared async helperのplanはresolveと一つのconsumerだけを扱い、reject、abort/unmount、terminal/exhaustiveness boundaryを欠く。別のdirect consumerはplan、AC、明示sourceにないrepository-local sibling fileだけに存在する。shared definitionはcriterion branchからclosure-addedされるvariantと、明示sourceとして最初からmanifestにあるvariantがある。負命題の根拠は固定時間待って何も起きないことだけである。対照planは全outcome、全direct consumer、boundary、completed-path witnessとcontrolled seamを明示する。
 - assertions:
   - [critical] 確認できる請求作成の対応を評価する。
   - [critical] 再試行とコードの対応を未検証とする。
@@ -38,3 +39,6 @@
   - 確認済み結果と未検証範囲を分けて報告する。
   - [critical] 明示category sourceを全件manifest化し、criterion関連calleeを有限closureで確認するか未検証として残す。
   - [critical] timeout後もsubmittedはyes、operationはunverifiedとし、exact destinationの完全readback差分をcontent mismatchとして独立報告する。
+  - [critical] manifested obligationからACへ逆照合し、async lifecycle、direct consumer、terminal/exhaustiveness、負命題のanti-vacuityという四familyを各最大一つのgapへ集約し、具体的な不足をfamily内に列挙してblockedにする。
+  - [critical] shared definitionがinitial manifestまたはclosure-addedのどちらでもrepository-local direct referenceをfreeze前に解決し、planにないsibling consumerを発見する。
+  - [critical] 全obligationとcompleted-path witnessおよびcontrolled seamを覆う対照planはreadyとし、all-clear checklistを追加しない。
