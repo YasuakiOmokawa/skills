@@ -1,6 +1,6 @@
 ---
 name: build-poc
-description: 技術候補の選定または実現可能性を、成功基準と実行環境に基づくPoCや最小実験で判断する必要があるときに使う。
+description: Use when a technical choice or feasibility must be decided through a PoC or minimal experiment against success criteria in an executable environment.
 ---
 
 # Workflow

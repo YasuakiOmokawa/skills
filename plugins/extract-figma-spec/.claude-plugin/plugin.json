@@ -1,7 +1,7 @@
 {
   "name": "extract-figma-spec",
   "description": "提供または取得できるFigmaの根拠を原子的な確認項目へ分解し、実装の観測値と比較する。対象フレーム、状態、部品と比較対象の実装が示され、デザイン差分の判定表を求められたときに使う。",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "author": {
     "name": "Yasuaki Omokawa",
     "url": "https://github.com/YasuakiOmokawa"

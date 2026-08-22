@@ -1,6 +1,6 @@
 ---
 name: create-design-doc
-description: 承認済み計画とPoC、プロトタイプまたは同等の根拠があり、実装判断に使うDesign Docと保存先が必要なときに使う。
+description: Use when an approved plan and evidence of both feasibility and codebase fit—from a PoC and prototype or equivalent evidence—must become a Design Doc at a specified destination for implementation decisions.
 ---
 
 # Workflow

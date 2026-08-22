@@ -1,6 +1,6 @@
 ---
 name: model-data
-description: 業務要求と取得可能な既存スキーマやSQLから一貫したデータモデルを導き、必要に応じてDBMLを作り、SQLアンチパターンを指摘する。データ設計、ER相当の関係整理、既存スキーマの整合性確認を求められたときに使う。
+description: Use when business requirements must be modeled against available schema or SQL to produce a consistent data model, optional DBML, and evidence-backed findings on data design, entity relationships, schema consistency, or SQL anti-patterns.
 ---
 
 # Workflow

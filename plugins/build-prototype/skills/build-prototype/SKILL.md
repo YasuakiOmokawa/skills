@@ -1,6 +1,6 @@
 ---
 name: build-prototype
-description: 承認済みのPoCまたは同等の根拠があり、選定方式と既存コードベースの責務、慣習、契約との適合性を実コードで確かめる必要があるときに使う。
+description: Use when an approved PoC or equivalent evidence exists and real code must test whether the selected approach fits the codebase's responsibilities, conventions, and contracts.
 ---
 
 # Workflow

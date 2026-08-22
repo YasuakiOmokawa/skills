@@ -1,7 +1,7 @@
 {
   "name": "create-design-doc",
   "description": "承認済み計画とPoC、プロトタイプまたは同等の根拠があり、実装判断に使うDesign Docと保存先が必要なときに使う。",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "author": {
     "name": "Yasuaki Omokawa",
     "url": "https://github.com/YasuakiOmokawa"
