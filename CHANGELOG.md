@@ -5,6 +5,12 @@ All notable changes to omokawa-skills will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v9.7.0 - 2026-08-22
+
+### Changed
+
+- **`create-pr` skill: レビュー物語の合成 (presentation commits) を導入 (1.2.0 → 1.3.0)**: commit 境界の作り方を「時系列履歴の救出」から「最終 tree からレビュー用の物語を合成する」方式へ変更。現行プランの commit-level change map を分割仕様として消費し、未 commit worktree や blended な未公開履歴では soft-reset + selective staging で commit を積み直す (境界を跨ぐファイルは `git diff` から切り出した hunk patch を `git apply --cached`、interactive tool は禁止)。push 前に最終 commit の tree が検証済み tree と bit 一致すること (`git diff <verified-ref>` が空) を必須化し、中間 commit の green は個別 commit が main に残る merge 戦略 (rebase / merge commit) の場合のみ要求 — squash 運用では endpoint 一致で足り、PR 本文に読み順を書く。「真に不可分なら 1 commit」の逃げ道条項は「plan にも変更自体にも分割線が無い場合のみ・分割コスト単独では不成立」へ絞り込み。evals/outcomes.md に blended worktree + change map + squash 運用の合成シナリオを追加。
+
 ## v8.0.0 - 2026-08-18
 
 ### Changed
