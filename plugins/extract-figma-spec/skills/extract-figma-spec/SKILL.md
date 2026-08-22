@@ -1,6 +1,6 @@
 ---
 name: extract-figma-spec
-description: 提供または取得できるFigmaの根拠を原子的な確認項目へ分解し、実装の観測値と比較する。対象フレーム、状態、部品と比較対象の実装が示され、デザイン差分の判定表を求められたときに使う。
+description: Use when supplied or retrievable Figma evidence must be decomposed into atomic checks and compared with an identified implementation for specified frames, states, or components in a design-difference table.
 ---
 
 # Workflow
