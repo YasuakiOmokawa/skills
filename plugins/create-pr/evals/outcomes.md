@@ -6,6 +6,13 @@
   - 依頼Aでは指定された基点、題名、本文を作成要求に使う。
   - 他ブランチの PR を対象にしない。
 
+- fixture: 別のローカルの使い捨てリポジトリの現在ブランチは `feature/mfa-rollout`、基点は `main`、リポジトリは squash merge で PR を取り込む。worktree は未 commit のまま、2 つの変更セット (セット1: 認証フローの実装と対応テスト、セット2: 設定画面の実装と対応テスト) とレビュー修正が混ざっており、1 ファイルが両セットに跨る。現行プランは commit 単位の change map (Commit 1 = セット1 / Commit 2 = セット2) を記録している。検証済み tree は現在の worktree と一致する。未公開履歴の再構成、commit、push は承認済みである。固定された PR 応答だけを使う。依頼は「下書き PR を作成して」である。実在する外部状態は変更してはならない。
+- assertions:
+  - [critical] プランの change map を分割仕様として使い、worktree から 2 つの commit を合成する。
+  - [critical] 両セットに跨るファイルは `git diff` から切り出した hunk patch を `git apply --cached` で分割し、interactive tool (`git add -p` / `-i`) を使わない。
+  - [critical] push 前に最終 commit の tree が検証済み tree と bit 一致すること (`git diff <verified-ref>` が空) を確認する。
+  - squash merge 運用のため中間 commit ごとの green 検証を要求せず、PR 本文に読み順を記す。
+
 # Outcome
 - fixture: ローカルの使い捨てリポジトリと固定応答を使う。作成応答は PR `#42` と URL `https://github.example.test/acme/web/pull/42`、確認応答は下書き状態、題名「請求書再試行と開発者ガイドを更新」、基点 `main` を返す。実在する外部状態は変更してはならない。
 - assertions:
