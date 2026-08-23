@@ -22,6 +22,7 @@ npx skills add YasuakiOmokawa/skills
 | [`create-design-doc`](./plugins/create-design-doc/skills/create-design-doc/SKILL.md) | 承認済み計画とPoC、プロトタイプまたは同等の根拠があり、実装判断に使うDesign Docと保存先が必要なときに使う。 |
 | [`create-pr`](./plugins/create-pr/skills/create-pr/SKILL.md) | Create or update the pull request associated with the current branch when the user asks to open it, revise its content, or explicitly make it reviewable. |
 | [`define-acceptance-criteria`](./plugins/define-acceptance-criteria/skills/define-acceptance-criteria/SKILL.md) | Convert an existing plan or specification into observable acceptance criteria when success, failure, boundary, or non-impact behavior must be made decidable. |
+| [`domain-tour`](./plugins/domain-tour/skills/domain-tour/SKILL.md) | Use when a newcomer needs a visual explanation of the business domain represented by the current repository. |
 | [`dry-ssot-text`](./plugins/dry-ssot-text/skills/dry-ssot-text/SKILL.md) | Consolidates duplicated reader-facing procedures when a canonical document and in-scope documents are identified, while preserving audience-specific differences. |
 | [`express-intent-in-code`](./plugins/express-intent-in-code/skills/express-intent-in-code/SKILL.md) | Clarifies intent in existing code when unclear names, responsibilities, comments, or lint suppressions need behavior-preserving cleanup. |
 | [`extract-figma-spec`](./plugins/extract-figma-spec/skills/extract-figma-spec/SKILL.md) | 提供または取得できるFigmaの根拠を原子的な確認項目へ分解し、実装の観測値と比較する。対象フレーム、状態、部品と比較対象の実装が示され、デザイン差分の判定表を求められたときに使う。 |
