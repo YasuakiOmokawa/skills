@@ -1,5 +1,5 @@
 ---
-name: review-design
+name: ground-design-in-codebase
 description: Reviews a proposed design boundary before implementation when relevant specifications and existing code can provide concrete evidence about responsibilities and risk.
 ---
 
