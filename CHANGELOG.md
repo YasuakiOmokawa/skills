@@ -5,6 +5,12 @@ All notable changes to omokawa-skills will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v10.0.0 - 2026-08-27
+
+### Changed
+
+- **`finalize-plan` → `prepare-plan-for-implementation` (BREAKING):** ready 済みの Acceptance Criteria と MECE Review から、依存順の実装作業と同一 plan 内の Verification Plan を準備する責務が名前から分かるようにした。Skill の実行契約は変更しない。
+
 ## v9.7.0 - 2026-08-22
 
 ### Changed

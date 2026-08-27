@@ -1,5 +1,5 @@
 # Trigger
-- fixture: current plan `plans/billing-date.md` に AC-ID 付きの `## Acceptance Criteria` と `Gate: ready` の `## MECE Review` があり、plan更新が許可されている。依頼Aは「このプランを着手可能な状態へ確定して」、依頼Bは「確定済み計画を実装して」である。
+- fixture: current plan `plans/billing-date.md` に AC-ID 付きの `## Acceptance Criteria` と `Gate: ready` の `## MECE Review` があり、plan更新が許可されている。依頼Aは「このプランを実装に着手できる状態へ準備して」、依頼Bは「準備済みの計画を実装して」である。
 - assertions:
   - [critical] 依頼Aでは受け入れ基準と網羅性の根拠から実装計画を作る。
   - [critical] 依頼Bでは製品コードを変更しない。
@@ -35,9 +35,9 @@
   - [critical] 戻す判断条件を創作せず、Gateをreadyにするための不足条件として示す。
   - 確認済み範囲だけを根拠に全体をreadyとしない。
   - 製品コードの変更で不足を補わない。
-  - [critical] stale AC-ID集合またはduplicate Verification Planをmalformedとして扱い、finalizeしない。
-  - [critical] 正しいAC行と非literalなcriterion-like rowが混在するplanをmalformedとして扱い、非literal行を無視してfinalizeしない。
-  - [critical] 競合する予約machine rowをmalformedとして扱い、finalizeしない。
+  - [critical] stale AC-ID集合またはduplicate Verification Planをmalformedとして扱い、実装準備しない。
+  - [critical] 正しいAC行と非literalなcriterion-like rowが混在するplanをmalformedとして扱い、非literal行を無視して実装準備しない。
+  - [critical] 競合する予約machine rowをmalformedとして扱い、実装準備しない。
   - [critical] valid planの単一legacy Verification Planは内容全体をcanonical row-only形式へ置換する。
   - [critical] 固定時間のabsenceだけでは負命題mappingをcompleteにせず、pathまたはsettlementのpositive witnessとdeterministic failure signalまたはcontrolled seamを未解決前提として残す。
   - [critical] 201 response captureとdirect DB readbackで十分な対照mappingはcanonicalな四fieldだけで記録する。
