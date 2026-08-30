@@ -24,6 +24,7 @@ API key、access token、passwordはこの領域へ保存しない。
 - Skill入力は自然文と利用可能なtask contextであり、skill固有argument schemaを持たない。
 - `apply-findings` の明示的review-only以外にnamed modeを持たない。
 - Skillは別skillを暗黙起動せず、必要な後続作業を結果として返す。
+- PoC、プロトタイプ、Design Docの受け渡しは、出力先直下の案件ディレクトリ（`<案件slug>/`）にある `poc.md` のパスで行う。`poc.md` の見出し（問い、星取表、結論、PR、申し送り、Prototype）と `design-doc.md` は後続skillが読むmachine contract。
 - 固定見出し、ID、列、状態値は、skill外のconsumerが実際に読む場合だけmachine contractとする。
 - 外部状態の変更と破壊的操作は、正確な対象と変更内容が依頼で承認された場合だけ行う。
 
