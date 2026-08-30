@@ -19,7 +19,7 @@ npx skills add YasuakiOmokawa/skills
 | [`apply-findings`](./plugins/apply-findings/skills/apply-findings/SKILL.md) | Applies review findings when a request authorizes mechanically safe edits or asks for concrete edit candidates without changing files. |
 | [`build-poc`](./plugins/build-poc/skills/build-poc/SKILL.md) | 技術候補の選定または実現可能性を、成功基準と実行環境に基づくPoCや最小実験で判断する必要があるときに使う。 |
 | [`build-prototype`](./plugins/build-prototype/skills/build-prototype/SKILL.md) | 承認済みのPoCまたは同等の根拠があり、選定方式と既存コードベースの責務、慣習、契約との適合性を実コードで確かめる必要があるときに使う。 |
-| [`create-design-doc`](./plugins/create-design-doc/skills/create-design-doc/SKILL.md) | 承認済み計画とPoC、プロトタイプまたは同等の根拠があり、実装判断に使うDesign Docと保存先が必要なときに使う。 |
+| [`create-design-doc`](./plugins/create-design-doc/skills/create-design-doc/SKILL.md) | 承認済み計画とPoC、プロトタイプまたは同等の根拠があり、実装判断に使うDesign Docと保存先(指定または導出)が必要なときに使う。 |
 | [`create-pr`](./plugins/create-pr/skills/create-pr/SKILL.md) | Create or update the pull request associated with the current branch when the user asks to open it, revise its content, or explicitly make it reviewable. |
 | [`define-acceptance-criteria`](./plugins/define-acceptance-criteria/skills/define-acceptance-criteria/SKILL.md) | Convert an existing plan or specification into observable acceptance criteria when success, failure, boundary, or non-impact behavior must be made decidable. |
 | [`domain-tour`](./plugins/domain-tour/skills/domain-tour/SKILL.md) | Use when a newcomer needs a visual explanation of the business domain represented by the current repository. |
