@@ -46,6 +46,14 @@ PR の AI 貢献度を示すラベル。4段階推奨：
 
 このリストが空の場合、`/create-pr` は対象リポジトリの `CLAUDE.md` / `README.md` 冒頭から推定します。
 
+## milestone
+
+PR 作成時に設定する milestone 名。対象リポジトリに実在する milestone と一致させる：
+
+- `Untracked`
+
+この節がない、または milestone が対象リポジトリに存在しない場合、`/create-pr` は milestone 設定をスキップして報告します。
+
 ## 注意
 
 - ラベル名は GitHub Issues / GitLab Issues に**実在するラベル**と一致させること（一致しないと PR 作成時にエラー）
