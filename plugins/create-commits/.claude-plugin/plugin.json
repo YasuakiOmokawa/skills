@@ -1,0 +1,18 @@
+{
+  "name": "create-commits",
+  "description": "Turn the current branch's uncommitted or unpublished changes into commits whose boundaries a reviewer reads in order, when the user asks to commit, split, or restructure local history before publishing it.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Yasuaki Omokawa",
+    "url": "https://github.com/YasuakiOmokawa"
+  },
+  "homepage": "https://github.com/YasuakiOmokawa/skills",
+  "repository": "https://github.com/YasuakiOmokawa/skills",
+  "license": "MIT",
+  "keywords": [
+    "git",
+    "commit",
+    "review",
+    "conventional-commits"
+  ]
+}
