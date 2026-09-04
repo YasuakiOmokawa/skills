@@ -4,7 +4,7 @@
 
 このファイルを `~/.claude/skills-config/release-labels.md` にコピーし、自社の値で書き換えてください。`bash scripts/setup.sh` で対話生成も可能です。
 
-omokawa-skills の `/create-pr` コマンドがこのファイルを Read してラベル定義を取得します。
+omokawa-skills の `create-pr` スキルがこのファイルを Read してラベル定義を取得します。
 
 ## productivity_labels
 
@@ -44,7 +44,7 @@ PR の AI 貢献度を示すラベル。4段階推奨：
 - 外部公開 API
 - （プロダクト固有の主要フロー）
 
-このリストが空の場合、`/create-pr` は対象リポジトリの `CLAUDE.md` / `README.md` 冒頭から推定します。
+このリストが空の場合、`create-pr` は対象リポジトリの `CLAUDE.md` / `README.md` 冒頭から推定します。
 
 ## milestone
 
@@ -52,9 +52,9 @@ PR 作成時に設定する milestone 名。対象リポジトリに実在する
 
 - `Untracked`
 
-この節がない、または milestone が対象リポジトリに存在しない場合、`/create-pr` は milestone 設定をスキップして報告します。
+この節がない、または milestone が対象リポジトリに存在しない場合、`create-pr` は milestone 設定をスキップして報告します。
 
 ## 注意
 
-- ラベル名は GitHub Issues / GitLab Issues に**実在するラベル**と一致させること（一致しないと PR 作成時にエラー）
-- ラベルが存在しない組織なら、`/create-pr` 実行時に「ラベル付与をスキップしてドラフトPRを作成」と動作させる
+- ラベル名は GitHub Issues / GitLab Issues に**実在するラベル**と一致させること（実在しないラベルは付与をスキップして理由を報告する）
+- ラベルが存在しない組織なら、`create-pr` 実行時に「ラベル付与をスキップしてドラフトPRを作成」と動作させる

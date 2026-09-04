@@ -101,7 +101,7 @@ if prompt_yes_no "PR ラベル定義を生成しますか？"; then
     cat > "$CONFIG_DIR/release-labels.md" <<EOF
 # リリースラベル設定
 
-omokawa-skills の create-pr コマンドが参照するラベル定義。
+omokawa-skills の create-pr スキルが参照するラベル定義。
 
 ## productivity_labels
 
