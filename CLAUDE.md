@@ -10,10 +10,9 @@
 |---|---|---|
 | Skill | `plugins/<name>/skills/<name>/SKILL.md` | 自動 |
 | Slash command | `plugins/<name>/commands/<name>.md` | 自動 |
-| Sub-agent | `plugins/<name>/skills/<name>/agents/*.md` | skill 本文から `Task` で呼出 |
 
 - `plugin.json` に `skills/commands/agents` 配列を書かない (ファイル構造から自動 discovery)
-- agent 定義から skill 内ファイルは `${CLAUDE_PLUGIN_ROOT}/skills/<name>/<file>` で参照する (絶対パスを書かない)
+- `agents/*.md` は置かない (validate_skills.py が拒否する)
 
 ## バケット分類 (説明上のみ)
 
@@ -25,7 +24,7 @@ plugin は README の一覧で engineering / personal / career の 3 バケッ�
 
 ## バージョン bump ルール
 
-plugin の中身 (SKILL.md / `commands/` / sub-agents / `references/`) を変更した PR では、同 PR 内で 3 箇所を揃えて bump する:
+plugin の中身 (SKILL.md / `commands/` / `references/`) を変更した PR では、同 PR 内で 3 箇所を揃えて bump する:
 
 1. `plugins/<name>/.claude-plugin/plugin.json` の `version` (minor bump)
 2. `marketplace.json` の該当 entry の `version` (1 と同値)
