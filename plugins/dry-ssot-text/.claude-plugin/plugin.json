@@ -1,7 +1,7 @@
 {
   "name": "dry-ssot-text",
   "description": "Consolidates duplicated reader-facing procedures when a canonical document and in-scope documents are identified, while preserving audience-specific differences.",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "author": {
     "name": "Yasuaki Omokawa",
     "url": "https://github.com/YasuakiOmokawa"

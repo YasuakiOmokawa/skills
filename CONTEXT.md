@@ -7,7 +7,7 @@
 - Plugin manifest: `plugins/<name>/.claude-plugin/plugin.json`
 - Marketplace manifest: `.claude-plugin/marketplace.json`
 
-Skill、command、agentはファイル配置からdiscoveryされる。plugin manifestへdiscovery配列は書かない。
+Skillとcommandはファイル配置からdiscoveryされる。agent定義は置かない。plugin manifestへdiscovery配列は書かない。
 
 ## Global configuration
 

@@ -101,7 +101,7 @@ if prompt_yes_no "PR ラベル定義を生成しますか？"; then
     cat > "$CONFIG_DIR/release-labels.md" <<EOF
 # リリースラベル設定
 
-omokawa-skills の create-pr コマンドが参照するラベル定義。
+omokawa-skills の create-pr スキルが参照するラベル定義。
 
 ## productivity_labels
 
@@ -133,39 +133,6 @@ ${core_features:-（未設定）}
 EOF
     echo "  ✓ $CONFIG_DIR/release-labels.md 作成"
     echo "  → ラベル名を自社のものに変えるなら $CONFIG_DIR/release-labels.md を直接編集"
-  fi
-else
-  echo "  → スキップ"
-fi
-
-# -----------------------------------------------------------------------------
-# Section C: Environments
-# -----------------------------------------------------------------------------
-echo ""
-echo "─── Section C: Integration 環境 ───"
-if prompt_yes_no "production / sandbox / staging 以外の integration 環境がありますか？"; then
-  if confirm_overwrite "$CONFIG_DIR/environments.md"; then
-    echo "  環境名を入力してください（1 行 1 項目、空行で終了）:"
-    echo "  例: dev1 / dev2 / qa-stage"
-    rollback_targets=""
-    while IFS= read -r -p "  > " env; do
-      [ -z "$env" ] && break
-      rollback_targets+="- ${env}"$'\n'
-    done
-
-    cat > "$CONFIG_DIR/environments.md" <<EOF
-# 環境設定
-
-omokawa-skills の create-pr コマンドが Revert 手順に列挙する環境名。
-
-## rollback_targets
-
-production / sandbox / staging に追加して列挙する integration 環境:
-
-${rollback_targets:-（未設定）}
-migration が含まれる PR の Revert 手順に「これらの環境すべてで \`db:migrate:down\` を実行」と展開される。
-EOF
-    echo "  ✓ $CONFIG_DIR/environments.md 作成"
   fi
 else
   echo "  → スキップ"
