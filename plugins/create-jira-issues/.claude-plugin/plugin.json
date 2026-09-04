@@ -1,7 +1,7 @@
 {
   "name": "create-jira-issues",
   "description": "Create Jira issues when the user explicitly asks to file listed, approved stories or tasks in a specified project and issue type, with per-item keys and failures.",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "author": {
     "name": "Yasuaki Omokawa",
     "url": "https://github.com/YasuakiOmokawa"

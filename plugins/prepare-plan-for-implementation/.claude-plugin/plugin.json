@@ -1,7 +1,7 @@
 {
   "name": "prepare-plan-for-implementation",
   "description": "Prepare an existing plan for implementation when it already has valid acceptance criteria and a ready MECE review, by ordering concrete work and writing a same-plan verification mapping; do not use it to implement the plan.",
-  "version": "5.0.0",
+  "version": "5.1.0",
   "author": {
     "name": "Yasuaki Omokawa",
     "url": "https://github.com/YasuakiOmokawa"
