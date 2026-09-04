@@ -139,39 +139,6 @@ else
 fi
 
 # -----------------------------------------------------------------------------
-# Section C: Environments
-# -----------------------------------------------------------------------------
-echo ""
-echo "─── Section C: Integration 環境 ───"
-if prompt_yes_no "production / sandbox / staging 以外の integration 環境がありますか？"; then
-  if confirm_overwrite "$CONFIG_DIR/environments.md"; then
-    echo "  環境名を入力してください（1 行 1 項目、空行で終了）:"
-    echo "  例: dev1 / dev2 / qa-stage"
-    rollback_targets=""
-    while IFS= read -r -p "  > " env; do
-      [ -z "$env" ] && break
-      rollback_targets+="- ${env}"$'\n'
-    done
-
-    cat > "$CONFIG_DIR/environments.md" <<EOF
-# 環境設定
-
-omokawa-skills の create-pr コマンドが Revert 手順に列挙する環境名。
-
-## rollback_targets
-
-production / sandbox / staging に追加して列挙する integration 環境:
-
-${rollback_targets:-（未設定）}
-migration が含まれる PR の Revert 手順に「これらの環境すべてで \`db:migrate:down\` を実行」と展開される。
-EOF
-    echo "  ✓ $CONFIG_DIR/environments.md 作成"
-  fi
-else
-  echo "  → スキップ"
-fi
-
-# -----------------------------------------------------------------------------
 # Section D: create-design-doc の DD 文書
 # -----------------------------------------------------------------------------
 echo ""
