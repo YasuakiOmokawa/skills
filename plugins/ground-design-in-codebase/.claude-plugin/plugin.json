@@ -1,7 +1,7 @@
 {
   "name": "ground-design-in-codebase",
   "description": "Reviews a proposed design boundary before implementation when relevant specifications and existing code can provide concrete evidence about responsibilities and risk.",
-  "version": "3.1.0",
+  "version": "3.2.0",
   "author": {
     "name": "Yasuaki Omokawa",
     "url": "https://github.com/YasuakiOmokawa"
