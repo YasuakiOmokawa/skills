@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "omokawa-skills",
-  "version": "11.8.0",
+  "version": "11.9.0",
   "description": "Plan-driven development workflow を構成する個別 skill 群。必要なものだけ install 可能",
   "owner": {
     "name": "Yasuaki Omokawa",
@@ -26,7 +26,7 @@
     {
       "name": "mece-plan-review",
       "description": "Compare a plan and acceptance criteria with specification and code evidence when a MECE coverage review or an explicitly authorized review update is requested.",
-      "version": "2.3.0",
+      "version": "2.4.0",
       "source": "./plugins/mece-plan-review",
       "skills": [
         "./skills/mece-plan-review"
@@ -254,7 +254,7 @@
     {
       "name": "create-design-doc",
       "description": "承認済み計画とPoC、プロトタイプまたは同等の根拠があり、実装判断に使うDesign Docと保存先(指定または導出)が必要なときに使う。",
-      "version": "1.7.0",
+      "version": "1.8.0",
       "source": "./plugins/create-design-doc",
       "skills": [
         "./skills/create-design-doc"
