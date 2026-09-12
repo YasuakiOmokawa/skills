@@ -8,6 +8,15 @@ runs: 3
 
 ```bash
 mkdir -p plans src/billing
+cat > package.json <<'EOF'
+{
+  "name": "billing-app",
+  "private": true,
+  "dependencies": {
+    "@acme/retry": "^1.4.0"
+  }
+}
+EOF
 cat > plans/billing-v2.md <<'EOF'
 # 請求管理 設計 v2
 
@@ -15,22 +24,21 @@ cat > plans/billing-v2.md <<'EOF'
 請求の作成と、失敗時の再試行を確実にする。
 
 ## 2. 仕様
-- S-1: 請求を作成し、作成できた請求 ID を返す。
-- S-2: 作成に失敗した場合は最大 3 回まで再試行する。
+- S-1: 請求を作成し、作成できた請求 ID を返す。失敗したときは理由付きで失敗を返す。
+- S-2: 失敗した場合、`createInvoice` の呼び出しは初回を含めて最多 3 回になる。再試行は依存パッケージ `@acme/retry` の `withRetry` に委譲する。
 
 ## 3. 変更対象
 | ファイル | 変更 |
 |---|---|
 | src/billing/create.ts | 請求作成 |
-| src/billing/retry.ts | 再試行 |
 
 ## 4. 実装タスク
 - T-1: `src/billing/create.ts` に請求作成 API を実装する。
-- T-2: `src/billing/retry.ts` に最大 3 回の再試行を実装する。
+- T-2: `@acme/retry` の `withRetry` で `createInvoice` を包む呼び出し側を用意する。
 
 ## Acceptance Criteria
-- [ ] AC-001: 請求作成に成功すると `createInvoice` が `{ ok: true }` と請求 ID を返す。
-- [ ] AC-002: 作成に失敗すると `src/billing/retry.ts` の `createWithRetry` が最大 3 回 `createInvoice` を呼ぶ。
+- [ ] AC-001: 請求作成に成功すると `createInvoice` が `{ ok: true }` と請求 ID を返し、失敗すると `{ ok: false }` と理由を返す。
+- [ ] AC-002: 依存パッケージ `@acme/retry` の `withRetry` は、失敗する処理を初回を含めて最多 3 回呼び、打ち切り後は最後の失敗を返す。
 EOF
 cat > src/billing/create.ts <<'EOF'
 import { store } from "./store";
@@ -43,13 +51,18 @@ export async function createInvoice(
   userId: string,
   amount: number,
 ): Promise<CreateResult> {
-  const invoiceId = await store.insert({ userId, amount });
-  return { ok: true, invoiceId };
+  try {
+    const invoiceId = await store.insert({ userId, amount });
+    return { ok: true, invoiceId };
+  } catch (error) {
+    return { ok: false, reason: String(error) };
+  }
 }
 EOF
 cat > src/billing/store.ts <<'EOF'
 export const store = {
   async insert(row: { userId: string; amount: number }): Promise<string> {
+    if (row.amount <= 0) throw new Error("amount must be positive");
     return `inv_${row.userId}_${row.amount}`;
   },
 };
