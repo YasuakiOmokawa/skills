@@ -7,7 +7,7 @@ runs: 3
 まず次のコマンドをそのまま実行して、作業ディレクトリに fixture を用意してください。
 
 ```bash
-mkdir -p plans src/mfa/management src/mfa/shared src/mfa/__tests__
+mkdir -p plans src/mfa/management src/mfa/shared src/mfa/__tests__ src/mfa/recovery src/mfa/session
 cat > plans/mfa-policy.md <<'EOF'
 # MFA 試行回数上限の集約 設計
 
@@ -55,16 +55,93 @@ cat > src/mfa/management/verify.ts <<'EOF'
 import { store } from "./store";
 import { TooManyAttemptsError } from "./errors";
 import { now } from "../shared/clock";
-
-const MAX_ATTEMPTS = 5;
+import { attemptLimitFor } from "./limits-bridge";
 
 export async function verify(userId: string, code: string): Promise<boolean> {
   const attempts = await store.countAttempts(userId);
-  if (attempts >= MAX_ATTEMPTS) {
+  if (attempts >= attemptLimitFor(userId)) {
     throw new TooManyAttemptsError(userId);
   }
   await store.recordAttempt(userId, now());
   return store.matches(userId, code);
+}
+EOF
+cat > src/mfa/management/limits-bridge.ts <<'EOF'
+import { enrollmentLimit } from "../shared/tuning";
+
+export function attemptLimitFor(userId: string): number {
+  return enrollmentLimit(userId);
+}
+EOF
+cat > src/mfa/shared/tuning.ts <<'EOF'
+export function enrollmentLimit(userId: string): number {
+  return userId.startsWith("trial-") ? 3 : 5;
+}
+EOF
+cat > src/mfa/recovery/reset.ts <<'EOF'
+import { recoveryStore } from "./store";
+import { TooManyAttemptsError } from "../management/errors";
+
+// バックアップコードの入力を打ち切る回数。MFA の試行回数上限と同じ値を使う。
+const RESET_ATTEMPT_CAP = 5;
+
+export async function resetWithBackupCode(
+  userId: string,
+  backupCode: string,
+): Promise<boolean> {
+  const attempts = await recoveryStore.countAttempts(userId);
+  if (attempts >= RESET_ATTEMPT_CAP) {
+    throw new TooManyAttemptsError(userId);
+  }
+  return recoveryStore.consume(userId, backupCode);
+}
+EOF
+cat > src/mfa/recovery/store.ts <<'EOF'
+export const recoveryStore = {
+  async countAttempts(userId: string): Promise<number> {
+    return 0;
+  },
+  async consume(userId: string, backupCode: string): Promise<boolean> {
+    return backupCode.length === 10;
+  },
+};
+EOF
+cat > src/mfa/recovery/issue.ts <<'EOF'
+import { recoveryStore } from "./store";
+
+export async function issueBackupCodes(userId: string): Promise<string[]> {
+  const codes = Array.from({ length: 8 }, (_, i) => `bk${userId}${i}`.slice(0, 10));
+  await recoveryStore.consume(userId, "");
+  return codes;
+}
+EOF
+cat > src/mfa/session/challenge.ts <<'EOF'
+import { now } from "../shared/clock";
+
+export type Challenge = { userId: string; issuedAt: number };
+
+export function issueChallenge(userId: string): Challenge {
+  return { userId, issuedAt: now() };
+}
+EOF
+cat > src/mfa/session/expiry.ts <<'EOF'
+import { now } from "../shared/clock";
+import type { Challenge } from "./challenge";
+
+export function isExpired(challenge: Challenge, ttlMs: number): boolean {
+  return challenge.issuedAt + ttlMs <= now();
+}
+EOF
+cat > src/mfa/shared/logger.ts <<'EOF'
+export const logger = {
+  info(message: string): void {
+    console.log(message);
+  },
+};
+EOF
+cat > src/mfa/shared/ids.ts <<'EOF'
+export function shortId(seed: string): string {
+  return seed.slice(0, 8).padEnd(8, "0");
 }
 EOF
 cat > src/mfa/management/store.ts <<'EOF'
