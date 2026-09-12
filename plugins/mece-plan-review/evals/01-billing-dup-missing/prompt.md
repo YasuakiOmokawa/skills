@@ -39,19 +39,20 @@ cat > plans/billing.md <<'EOF'
 - AC IDs: (なし)
 EOF
 cat > src/billing/create.ts <<'EOF'
-import { hasBillingPermission } from "./permission";
+import { checkBillingAccess } from "./access";
 import { store } from "./store";
 
 export type CreateResult =
   | { ok: true; invoiceId: string }
-  | { ok: false; reason: "permission" };
+  | { ok: false; reason: string };
 
 export async function createInvoice(
   userId: string,
   amount: number,
 ): Promise<CreateResult> {
-  if (!(await hasBillingPermission(userId))) {
-    return { ok: false, reason: "permission" };
+  const access = await checkBillingAccess(userId);
+  if (!access.allowed) {
+    return { ok: false, reason: access.reason };
   }
   const invoiceId = await store.insert({ userId, amount });
   return { ok: true, invoiceId };
@@ -71,9 +72,37 @@ export async function createWithRetry(
   throw new Error("retry exhausted");
 }
 EOF
-cat > src/billing/permission.ts <<'EOF'
-export async function hasBillingPermission(userId: string): Promise<boolean> {
-  return userId.startsWith("admin-");
+cat > src/billing/access.ts <<'EOF'
+import { loadPolicy } from "./policy";
+
+export type AccessDecision =
+  | { allowed: true }
+  | { allowed: false; reason: "suspended" | "no-permission" };
+
+export async function checkBillingAccess(
+  userId: string,
+): Promise<AccessDecision> {
+  const policy = await loadPolicy(userId);
+  if (policy.suspended) {
+    return { allowed: false, reason: "suspended" };
+  }
+  if (!policy.scopes.includes("billing:create")) {
+    return { allowed: false, reason: "no-permission" };
+  }
+  return { allowed: true };
+}
+EOF
+cat > src/billing/policy.ts <<'EOF'
+export type Policy = { suspended: boolean; scopes: string[] };
+
+const table: Record<string, Policy> = {
+  "admin-1": { suspended: false, scopes: ["billing:create", "billing:read"] },
+  "user-1": { suspended: false, scopes: ["billing:read"] },
+  "user-2": { suspended: true, scopes: ["billing:create"] },
+};
+
+export async function loadPolicy(userId: string): Promise<Policy> {
+  return table[userId] ?? { suspended: false, scopes: [] };
 }
 EOF
 cat > src/billing/store.ts <<'EOF'
