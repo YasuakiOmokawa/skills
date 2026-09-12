@@ -4,6 +4,8 @@
 
 - Skill: `plugins/<name>/skills/<name>/SKILL.md`
 - Outcome evaluation: `plugins/<name>/evals/outcomes.md`
+- Eval case: `plugins/<name>/evals/<NN-slug>/prompt.md` と `graders/*.md`
+- Chain eval case: `evals-chain/<slug>/`。複数pluginを繋いだ流れを測る。case frontmatter の `plugins:` に対象pluginを列挙し、repository rootを対象にして `--eval-dir evals-chain` で走らせる
 - Plugin manifest: `plugins/<name>/.claude-plugin/plugin.json`
 - Marketplace manifest: `.claude-plugin/marketplace.json`
 
@@ -31,3 +33,42 @@ API key、access token、passwordはこの領域へ保存しない。
 ## Evaluation
 
 `outcomes.md` は `Trigger`、`Outcome`、`Authorization`、`Hold-out` の4節を持つ。構造は `scripts/validate_skills.py`、振る舞いはfresh executorとblind judgeで検証する。
+
+`outcomes.md` が仕様、`evals/<NN-slug>/` が計測器。計測器は `claude plugin eval` が実行し、pluginを有効にしたarmと無効にしたarmを比較する。
+
+### 計測器の作り方
+
+- 入力は実トラフィックから取る。`~/.claude/projects/<repo>/*.jsonl` のskill呼び出し直前のuser promptを読む。SKILL.mdの例文を入力にしない。
+- 実プロンプトは複数skillを連ねたpipeline形である。後続skillはサンドボックスに無いため、対象skillまでで切った部分集合を入力にする。
+- fixtureは各 `prompt.md` 冒頭のbash heredocで作業ディレクトリに生成する。絶対パスと `~/` は使わない。
+- caseは `outcomes.md` のassertionに対応させる。対応の無い振る舞いをcaseにしたら、先に `outcomes.md` へassertionを足す。
+- graderは `outcomes.md` を見て書く。SKILL.mdの語彙を写すと過適合する。仕様の書式リテラルを使うなら `weight: 0.5` の二次判定に留め、一次はoutcome graderにする。
+- 「欠落の無いplan」を意図したfixtureは本当に欠落を無くす。非同期は `await` ごとにreject経路を数える。仕込み損ねると、正しく指摘したarmをgraderが罰する。
+- llm rubricは「1観測 = 1 criterion」で分割された出力をfailにしないよう、複数criterionにまたがる充足を明示的に可とする。
+- suiteにskillが発火してはならない負例を1件以上残す。`tool_used` だけのcaseは作らない。
+
+### 実行
+
+```bash
+cd plugins/<name>
+claude plugin eval . --ablation with-without --judge-model sonnet --allow-tools "Write,Edit,Bash"
+```
+
+`--allow-tools` はSKILL.mdに `allowed-tools` frontmatterが無い場合の運用側付与で、全caseに効く。見る数字はΔ（withスコア引くwithoutスコア）。7 caseで1回およそ$21、85分。
+
+### 改善ルーティン
+
+1. 仕様変更を `outcomes.md` のassertionとして先に書く。
+2. SKILL.mdを触る前にsuiteを回し、caseごとのΔをベースラインにする。suiteは実行ごとにディスク上のpluginを読むため、実行中にSKILL.mdを編集しない。
+3. SKILL.mdを編集するagentには `outcomes.md` とeval結果（スコア、落ちたgrader名、trace抜粋）だけ渡す。`prompt.md` と `graders/` は渡さない。
+4. 編集後にsuiteを回しcaseごとのΔを比較する。1つでも下がれば回帰。負例のwithスコア低下はover-trigger。
+5. 新しい振る舞いを足したときだけ、対応するcaseを1つ追加する。
+
+曖昧さの発見は編集のたびに `empirical-prompt-tuning`、回帰検出はPR前のsuiteが担う。
+
+### runnerのクセ
+
+- pilotは `--runs 1 --no-publish`。`aggregate-result.json` の `suite.plugins` に対象pluginが載り `problem` が無いことを確認する。載っていなければwith armがplugin無しで走っており、pilotは無意味。
+- `--case` を複数回渡しても最後の1つしか効かない。`0[23]-*` のようなbracket globは0件になる。複数caseはループで1つずつ回す。
+- `report.html` と `aggregate-result.json` はjudgeの理由文を保存しない。判定を検証するには `--keep-temp` が残すsandboxの `out/trace.jsonl` の最終assistant textを読む。
+- 負例caseでもagentがBashにturnを使うため、10 turn程度は与える。
