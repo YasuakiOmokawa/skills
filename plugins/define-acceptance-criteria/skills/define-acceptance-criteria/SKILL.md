@@ -6,7 +6,7 @@ description: Convert an existing plan or specification into observable acceptanc
 ## Workflow
 
 1. Resolve the current plan or specification, intended scope, expected user-visible result, and authorized destination from the request and available context. When a writable current plan is supplied and the request asks to add or create that plan's acceptance criteria, use that plan as the exact destination.
-2. Enumerate every stated success, failure, boundary, and non-impact condition before drafting.
+2. Enumerate every stated success, failure, boundary, and non-impact condition before drafting. A value the source leaves undefined is not a source condition even when the request invites deciding it; separate it as missing information and do not create criteria for it.
 3. Convert each condition into independent criteria that pair one initiating state or action with one directly observable result; split a criterion whenever either side can vary.
 4. Make each boundary decidable with observations immediately on both sides. If the source does not define the exact boundary point, leave that point unresolved rather than infer it. When two cases must appear identical, require the relevant observations from both cases to be compared.
 5. Map every source condition to one or more criteria, then identify uncovered conditions and duplicate coverage.
@@ -15,4 +15,4 @@ description: Convert an existing plan or specification into observable acceptanc
 
 ## Completion
 
-Return the criteria, condition coverage, observed destination state, the three write-status fields, downstream stale sections, failures, and unverified items.
+Return the criteria, condition coverage, separated missing information, observed destination state, the three write-status fields, downstream stale sections, failures, and unverified items.
