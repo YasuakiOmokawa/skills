@@ -11,3 +11,4 @@ __pycache__/
 
 # plugin eval の実行結果 (ローカル計測、commit しない)
 plugins/*/evals/results/
+evals-chain/results/
