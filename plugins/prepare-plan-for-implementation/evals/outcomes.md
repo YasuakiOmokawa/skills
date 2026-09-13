@@ -1,10 +1,11 @@
 # Trigger
-- fixture: current plan `plans/billing-date.md` に AC-ID 付きの `## Acceptance Criteria` と `Gate: ready` の `## MECE Review` があり、plan更新が許可されている。依頼Aは「このプランを実装に着手できる状態へ準備して」、依頼Bは「準備済みの計画を実装して」である。
+- fixture: current plan `plans/billing-date.md` に AC-ID 付きの `## Acceptance Criteria` と `Gate: ready` の `## MECE Review` があり、plan更新が許可されている。依頼Aは「このプランを実装に着手できる状態へ準備して」、依頼Bは「準備済みの計画を実装して」、依頼Cは「Acceptance Criteria節の無いplanに受け入れ基準を定義して」である。
 - assertions:
   - [critical] 依頼Aでは受け入れ基準と網羅性の根拠から実装計画を作る。
   - [critical] 依頼Bでは製品コードを変更しない。
   - [critical] 依頼Aでは同じplanへ唯一の `## Verification Plan` を作り、別のverification sourceを作らない。
   - 不足前提を推測で埋めない。
+  - [critical] 依頼Cでは受け入れ基準の定義に進み、Verification Planや作業順序を作らない。
 
 # Outcome
 - fixture: 受け入れ基準は二十八日から三十一日の境界、新規顧客、既存顧客の非影響を覆い、網羅性確認では請求予定処理への依存が特定されている。各ACについて合否oracle、既知のテスト・API・DB・UI入口、前提条件、後続観測に必要な効果をplanへ記録できる。
@@ -14,6 +15,7 @@
   - [critical] `## Verification Plan` へcurrent AC-ID集合を記録し、全ACを一意で非空の `Oracle`、`Evidence anchors`、`Prerequisites`、`Required effects` へ対応付ける。
   - [critical] Required effectsを後続検証に必要な操作として記録し、planning時点の権限として扱わない。
   - 実装担当へ残す前提と未解決事項を示す。
+  - [critical] Evidence anchorsにはリポジトリに実在するファイル・関数・テスト・コマンドだけを記録し、実装がリポジトリ外にある依存 (外部パッケージの請求予定処理) はanchorを創作せず未解決前提として残す。
 
 # Authorization
 - fixture: 書き込み許可は `plans/billing-date.md` だけで、製品コード、課題管理、公開環境は変更禁止である。固定された保存結果ではplanの保存が権限拒否となっている。
