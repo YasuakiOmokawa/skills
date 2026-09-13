@@ -71,4 +71,7 @@ claude plugin eval . --ablation with-without --judge-model sonnet --allow-tools 
 - pilotは `--runs 1 --no-publish`。`aggregate-result.json` の `suite.plugins` に対象pluginが載り `problem` が無いことを確認する。載っていなければwith armがplugin無しで走っており、pilotは無意味。
 - `--case` を複数回渡しても最後の1つしか効かない。`0[23]-*` のようなbracket globは0件になる。複数caseはループで1つずつ回す。
 - `report.html` と `aggregate-result.json` はjudgeの理由文を保存しない。判定を検証するには `--keep-temp` が残すsandboxの `out/trace.jsonl` の最終assistant textを読む。
+- llm graderのjudgeはthinking無効・一語 (PASS/FAIL) 回答・temperature 1の3票多数決で、理由文は生成すらされない。judgeに見せた本文は `aggregate-result.json` の `graders[].evidence` に残るので、判定を検証するにはそれを同じprompt (`You are grading the output of a coding agent against a criterion.` / `Criterion:` / `Agent output (file <path>):` / `Respond with exactly one word: PASS or FAIL.`) でsonnetに投げ直す。
+- 上の性質から、多条項で例外規定の多いrubricは正解にも3票FAILを付け、whitelist照合 (「この一覧に無い名前を挙げていればfail」) は票が割れる。rubricは1 graderにつき1論点で短く書き、実在性の照合はfixtureに無いパスを `not_contains` で検出するregexにする。
+- `--keep-temp` のsandboxで `home/` と `tmp/` はmode 000で封印され、chmodは許可されない。書き込まれたファイルの内容は `out/trace.jsonl` のWrite/Edit入力から復元する。
 - 負例caseでもagentがBashにturnを使うため、10 turn程度は与える。
