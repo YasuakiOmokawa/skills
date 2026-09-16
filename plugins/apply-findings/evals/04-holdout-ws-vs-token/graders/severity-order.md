@@ -1,6 +1,6 @@
 ---
 type: regex
 target: last_message
-match: contains
+match: not_contains
 ---
-\[critical\][\s\S]*\[minor\]
+\[minor\][\s\S]*\[(critical|major)\]
