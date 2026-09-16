@@ -1,7 +1,7 @@
 {
   "name": "express-intent-in-code",
   "description": "Clarifies intent in existing code when unclear names, responsibilities, comments, or lint suppressions need behavior-preserving cleanup.",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "author": {
     "name": "Yasuaki Omokawa",
     "url": "https://github.com/YasuakiOmokawa"
