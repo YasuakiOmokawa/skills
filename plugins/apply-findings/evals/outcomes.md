@@ -11,6 +11,7 @@
 - assertions:
   - [critical] 適用済み・保留・review-only を含むすべての finding に、`[critical]`、`[major]`、`[minor]` のいずれか 1 つを付ける。
   - [critical] 認可漏れを `[critical]` (must fix)、公開境界の再設計を `[major]` (imo)、private 識別子の改名を `[minor]` (nits) として報告する。
+  - [critical] finding を適用状況ではなく重要度で並べ、critical → major → minor の順で報告する。
   - [critical] 各指摘を「機械的に安全」または「設計判断が必要」に分類する。
   - [critical] reviewer が付けた安全性の札より、供給された証拠 (対象ファイルの内容、副作用) を優先して分類する。
   - [critical] 差分は識別子の改名だけに限定する。
