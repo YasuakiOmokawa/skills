@@ -1,7 +1,7 @@
 {
   "name": "express-intent-in-code",
   "description": "Moves intent out of comments, booleans, and nullable returns into names, sum types, total functions, and tests when supplied code needs behavior-preserving cleanup.",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "author": {
     "name": "Yasuaki Omokawa",
     "url": "https://github.com/YasuakiOmokawa"
