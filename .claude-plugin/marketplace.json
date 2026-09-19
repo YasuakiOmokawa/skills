@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "omokawa-skills",
-  "version": "11.16.0",
+  "version": "11.17.0",
   "description": "Plan-driven development workflow を構成する個別 skill 群。必要なものだけ install 可能",
   "owner": {
     "name": "Yasuaki Omokawa",
@@ -194,7 +194,7 @@
     {
       "name": "express-intent-in-code",
       "description": "Moves intent out of comments, booleans, and nullable returns into names, sum types, total functions, and tests when supplied code needs behavior-preserving cleanup.",
-      "version": "1.4.0",
+      "version": "1.5.0",
       "source": "./plugins/express-intent-in-code",
       "skills": [
         "./skills/express-intent-in-code"
