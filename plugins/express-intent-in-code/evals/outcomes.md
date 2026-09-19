@@ -5,6 +5,9 @@
   - [critical] 依頼Bを整理作業として扱わず、コメント削除や改名を行わない。
   - 依頼Aで既に明瞭な名前は改名しない。
   - 注文処理外へ変更を広げない。
+- fixture: `src/company-state.ts` は読み込み状態を `loading` / `unauthorized` / `loadFailed` の 3 つの独立した boolean で持ち、依頼は「意図を型で表して」で、問題箇所も解も指定しない。
+- assertions:
+  - [critical] コメント削減の語が無くても、型・戻り値・引数で意図を表す依頼で発火する。
 
 # Outcome
 - fixture: `src/order.ts` に 4 種のコメントがある。(a) 動作の言い直し (`// 合計を計算する`)、(b) 命名や抽出でコードへ移せる意図 (`// tmp は税抜き小計`)、(c) コードで表せない外部制約 (`// 税率は 2026 年度の法令に従い 10%`)、(d) 不要になった lint 抑制。正常注文、空注文、端数注文の既存テストが成功している。
@@ -14,6 +17,14 @@
   - 整理中に新しいコメントを追加しない。
   - (d) は fresh lint で不要と証明してから除く。
   - 残したコメントごとに、コードで表せない理由を報告する。
+- fixture: `src/company-state.ts` は相互排他の読み込み状態を 3 つの独立 boolean で持ち、`loading && unauthorized` のような不可能な組合せが型上作れる。`src/auth-route.ts` の `resolveMethod` は「対象 route でない」と「provider が未知」の 2 つの意味を同じ `undefined` で返し、呼び手が provider 名を audit に残せない。`src/removal-policy.ts` の `canRemoveTarget(actorRole, isSelf, targetRole)` は同型の引数 2 つに boolean が挟まり、`sweepSignups(opts: { execute: boolean })` は dry-run と実削除の別処理を boolean で分岐する。`src/display-text.ts` の `sanitizeDisplayText(s: string): string` は戻りが `string` のため、招待メールの呼び手が 2 回適用している。すべて既存テストが成功している。
+- assertions:
+  - [critical] 同時に見る boolean の束や片方だけ null になる optional の組を、判別子付きの sum type に置き換え、不可能な組合せを型で作れなくする。
+  - [critical] 1 つの `undefined` / `null` が 2 つ以上の意味を運ぶ戻り値を、意味ごとの枝を持つ sum type にし、呼び手が失っていた情報 (未知の provider 名) を枝に載せる。
+  - [critical] 別処理を分岐させる boolean 引数と、同型の引数に挟まれた位置 boolean を、名前付きの union か関数分割に置き換え、呼び出し側も揃えて更新する。
+  - 「済んでいる」ことを型で言えない値 (sanitize 済み文字列) は、構築点が 1 箇所になるなら branded type にして二重適用を消す。
+  - [critical] 上の置き換え後に既存テストを実行し、観測される出力が変わらないことを検証する。
+  - 型の置き換えで表せた事柄を説明していたコメントは削除する。
 
 # Authorization
 - fixture: 編集許可は `src/order.ts` と対応テストだけで、価格計算の結果変更と外部状態の変更は承認されていない。コメント `// 丸めは pricing.ts と同じ規則` をコードで表すには `src/pricing.ts` の丸め関数を公開する必要がある。
@@ -32,3 +43,8 @@
   - 変更前後の出力同一性を検証する。
   - [critical] 依頼や編集で判明した制約は、理由を名前に持つテストか assertion で固定し、新しいコメントとして書かない。
   - テストにも assertion にもできない制約は、書かずに報告する。
+- fixture: `src/attempt-budget.ts` の `spendBudget` は注入された counter を読んだ直後に 2 行で verdict を決め、その判断は他に使われず、時刻も乱数も読まない。`src/totp.ts` の 6 桁判定は `matchCode` の 1 箇所だけにあり、呼び手 2 箇所に再検査も cast も無い。依頼は「意図をコードで表して」である。
+- assertions:
+  - [critical] 純粋関数への切り出しは、Layer や fake 無しのテストが書ける、同じ判断の 2 回目が消える、時刻や乱数が引数になって決定的になる、のいずれかが成り立つ時だけ行い、3 つとも成り立たない verdict の 2 行は切り出さない。
+  - [critical] 消費する下流が無い proof (6 桁判定済みを表す branded type) は導入しない。
+  - 切り出さなかった候補と理由を報告する。
