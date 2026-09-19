@@ -1,7 +1,7 @@
 {
   "name": "express-intent-in-code",
-  "description": "Clarifies intent in existing code when unclear names, responsibilities, comments, or lint suppressions need behavior-preserving cleanup.",
-  "version": "1.3.0",
+  "description": "Moves intent out of comments, booleans, and nullable returns into names, sum types, total functions, and tests when supplied code needs behavior-preserving cleanup.",
+  "version": "1.4.0",
   "author": {
     "name": "Yasuaki Omokawa",
     "url": "https://github.com/YasuakiOmokawa"
