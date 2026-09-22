@@ -104,4 +104,4 @@ EOF
 
 `node --test` が 6 件すべて成功することを確認してから、次の依頼に取りかかってください。
 
-src/removal-policy.ts と src/sweep-signups.ts の意図をコードで表して。テストは合わせて直してよいが、判定結果と削除される対象は変えないで。
+src/removal-policy.ts と src/sweep-signups.ts の意図をコードで表して。呼び出し側の src/removal-guard.ts も直してよい。テストは合わせて直してよいが、判定結果と削除される対象は変えないで。
