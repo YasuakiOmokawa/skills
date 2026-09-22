@@ -1,5 +1,7 @@
 ---
-type: llm
-focus: {source: file, path: src/session.ts}
+type: regex
+target: {source: file, path: src/session.ts}
+match: not_contains
+flags: m
 ---
-src/session.ts を評価する。行頭が `//` または `/*` で始まる行 (空白を除く) を数える。元のファイルは 21 行あった。7 行以下なら pass、8 行以上なら fail。
+^(?:[\s\S]*?^[ \t]*(?://|/\*)){8}
