@@ -9,12 +9,14 @@
 
 # Outcome
 - fixture: 受け入れ基準は二十八日から三十一日の境界、新規顧客、既存顧客の非影響を覆い、網羅性確認では請求予定処理への依存が特定されている。各ACについて合否oracle、既知のテスト・API・DB・UI入口、前提条件、後続観測に必要な効果をplanへ記録できる。
+- fixture: 別のready planのACは「作成・招待受諾・切替・除名の後で、セッションの所属チームは所属するチームのどれか、0件なら空」という不変条件を、列挙した4経路で確かめる。所属とcurrent teamを書く経路はrepo内で関数呼び出しとして列挙できる。
 - assertions:
   - [critical] 変更対象、作業順序、請求予定処理への依存を明確にした計画を作る。
   - [critical] 各作業を対応する受け入れ基準と検証方法へ結び付ける。
   - [critical] `## Verification Plan` へcurrent AC-ID集合を記録し、全ACを一意で非空の `Oracle`、`Evidence anchors`、`Prerequisites`、`Required effects` へ対応付ける。
   - [critical] Required effectsを後続検証に必要な操作として記録し、planning時点の権限として扱わない。
   - 実装担当へ残す前提と未解決事項を示す。
+  - [critical] 列挙した経路で不変条件を確かめるACは、列挙の外に書き手が増えたときに決定的に失敗する観測をRequired effectsに含めるか、その観測が無いことを未解決前提として残す。列挙した経路ごとの確認だけでmappingをcompleteにしない。
   - [critical] Evidence anchorsにはリポジトリに実在するファイル・関数・テスト・コマンドだけを記録し、実装がリポジトリ外にある依存 (外部パッケージの請求予定処理) はanchorを創作せず未解決前提として残す。
 
 # Authorization
