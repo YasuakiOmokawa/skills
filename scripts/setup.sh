@@ -3,7 +3,6 @@ set -euo pipefail
 
 # omokawa-skills のグローバル設定値を ~/.claude/skills-config/*.md に書き出す対話セットアップ。
 # Claude を介さず bash の read で値を受け取り、ファイルに直接書き込む。
-# 機密性のある値（Jira Cloud ID 等）が AI のコンテキストに乗らない設計。
 
 CONFIG_DIR="$HOME/.claude/skills-config"
 mkdir -p "$CONFIG_DIR"
@@ -14,9 +13,8 @@ cat <<'BANNER'
 このスクリプトは ~/.claude/skills-config/ 配下に設定ファイルを生成します。
 Claude には値を渡しません。すべての入力は bash 内で完結し、ファイルに直接書き込まれます。
 
-対話で生成するのは 4 セクション（Jira / Release labels / Environments / create-design-doc の
-DD 文書）です。順番に質問し、各セクション冒頭で「使う/使わない」を聞き、使わなければ
-スキップします。
+対話で生成するのは 2 セクション（Release labels / create-design-doc の DD 文書）です。
+順番に質問し、各セクション冒頭で「使う/使わない」を聞き、使わなければスキップします。
 
 BANNER
 
@@ -43,45 +41,10 @@ confirm_overwrite() {
 }
 
 # -----------------------------------------------------------------------------
-# Section A: Jira
+# Section A: Release labels
 # -----------------------------------------------------------------------------
 echo ""
-echo "─── Section A: Jira 設定 ───"
-if prompt_yes_no "Jira を使いますか？"; then
-  if confirm_overwrite "$CONFIG_DIR/jira.md"; then
-    read -r -p "Jira Cloud ID (UUID 36 文字、例: 00000000-0000-0000-0000-000000000000): " cloud_id
-    read -r -p "Jira プロジェクトキー (例: PROJ): " project_key
-    read -r -p "Jira MCP プレフィックス (例: atlassian): " jira_mcp
-    read -r -p "Atlassian MCP プレフィックス (例: atlassian): " atlassian_mcp
-
-    cat > "$CONFIG_DIR/jira.md" <<EOF
-# Jira 設定
-
-omokawa-skills の create-jira-issues / set-jira-story-points が参照する設定値。
-
-## 設定値
-
-- cloud_id: ${cloud_id}
-- project_key: ${project_key}
-- jira_mcp: ${jira_mcp}
-- atlassian_mcp: ${atlassian_mcp}
-- story_points_field: customfield_10005  # Jira 標準
-
-## 使い方
-
-スキル本体は \`<atlassian-mcp>\` / \`<jira-mcp>\` プレースホルダーを使う。実行時に上記の値で展開すること。
-EOF
-    echo "  ✓ $CONFIG_DIR/jira.md 作成"
-  fi
-else
-  echo "  → スキップ"
-fi
-
-# -----------------------------------------------------------------------------
-# Section B: Release labels
-# -----------------------------------------------------------------------------
-echo ""
-echo "─── Section B: リリースラベル ───"
+echo "─── Section A: リリースラベル ───"
 if prompt_yes_no "PR ラベル定義を生成しますか？"; then
   if confirm_overwrite "$CONFIG_DIR/release-labels.md"; then
     echo "  推奨デフォルト（Productivity / AI Contribution / Release Level）を使用します。"
@@ -136,10 +99,10 @@ else
 fi
 
 # -----------------------------------------------------------------------------
-# Section D: create-design-doc の DD 文書
+# Section B: create-design-doc の DD 文書
 # -----------------------------------------------------------------------------
 echo ""
-echo "─── Section D: create-design-doc の DD 文書 ───"
+echo "─── Section B: create-design-doc の DD 文書 ───"
 if prompt_yes_no "create-design-doc を使いますか？（自組織の DD 文書を配置します）"; then
   DD_DIR="$CONFIG_DIR/create-design-doc"
   mkdir -p "$DD_DIR"
@@ -184,4 +147,4 @@ echo ""
 echo "次のアクション:"
 echo "  - 値を変更したい場合は $CONFIG_DIR/*.md を直接編集"
 echo "  - dotfiles で管理する場合は symlink 化を検討"
-echo "  - Claude Code から /create-pr / /create-jira-issues などを呼ぶと、これらの値が透過的に使われます"
+echo "  - Claude Code から /create-pr / /create-design-doc などを呼ぶと、これらの値が透過的に使われます"

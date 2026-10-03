@@ -38,15 +38,6 @@ npx skills add YasuakiOmokawa/skills
 
 `create-design-doc` は、存在する場合だけ `~/.claude/skills-config/create-design-doc/` のテンプレートと参考文書を使い、なければ取得済み根拠へ縮退する。
 
-### Personal
-
-`~/.claude/skills-config/jira.md` に利用者のJira設定を置く。
-
-| Plugin | Purpose |
-|---|---|
-| [`create-jira-issues`](./plugins/create-jira-issues/skills/create-jira-issues/SKILL.md) | Create Jira issues when the user explicitly asks to file listed, approved stories or tasks in a specified project and issue type, with per-item keys and failures. |
-| [`set-jira-story-points`](./plugins/set-jira-story-points/skills/set-jira-story-points/SKILL.md) | Set Jira Story Points when the user provides explicit issue-key-to-point mappings and asks to update those issues, with requested and confirmed values reported per issue. |
-
 ## Configuration
 
 `bash scripts/setup.sh` で非機密のグローバル設定を生成できる。サンプルは [`examples/skills-config/`](./examples/skills-config/) にある。

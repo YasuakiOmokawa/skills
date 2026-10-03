@@ -120,30 +120,6 @@
       "license": "MIT"
     },
     {
-      "name": "create-jira-issues",
-      "description": "Create Jira issues when the user explicitly asks to file listed, approved stories or tasks in a specified project and issue type, with per-item keys and failures.",
-      "version": "1.1.0",
-      "source": "./plugins/create-jira-issues",
-      "skills": [
-        "./skills/create-jira-issues"
-      ],
-      "category": "personal",
-      "homepage": "https://github.com/YasuakiOmokawa/skills",
-      "license": "MIT"
-    },
-    {
-      "name": "set-jira-story-points",
-      "description": "Set Jira Story Points when the user provides explicit issue-key-to-point mappings and asks to update those issues, with requested and confirmed values reported per issue.",
-      "version": "1.1.0",
-      "source": "./plugins/set-jira-story-points",
-      "skills": [
-        "./skills/set-jira-story-points"
-      ],
-      "category": "personal",
-      "homepage": "https://github.com/YasuakiOmokawa/skills",
-      "license": "MIT"
-    },
-    {
       "name": "dry-ssot-text",
       "description": "Consolidates duplicated reader-facing procedures when a canonical document and in-scope documents are identified, while preserving audience-specific differences.",
       "version": "1.1.0",
