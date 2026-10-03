@@ -13,10 +13,11 @@
 
 - `plugin.json` に `skills/commands/agents` 配列を書かない (ファイル構造から自動 discovery)
 - `agents/*.md` は置かない (validate_skills.py が拒否する)
+- README の plugin 一覧はカテゴリ分けせず 1 つの表にまとめる
 
-## バケット分類 (説明上のみ)
+## 設定への依存
 
-plugin は README の一覧で engineering / personal の 2 バケットに分類する (物理ディレクトリでは分けない。定義は README)。engineering 系は**設定不要で動く**ことを目標にし、設定が必要なら `~/.claude/skills-config/*.md` から読み、なければエラーで止めず**フォールバック**を提示する。
+plugin は**設定不要で動く**ことを目標にし、設定が必要なら `~/.claude/skills-config/*.md` から読み、なければエラーで止めず**フォールバック**を提示する。
 
 ## 設定値の保管 (グローバル)
 
@@ -37,5 +38,5 @@ tag / GitHub Release は release-on-version-bump.yml が marketplace.json の pu
 ## 検証
 
 - skill 変更後は `python3 scripts/validate_skills.py` をローカル実行 (CI でも PR ごとに実行)
-- 新規 plugin 追加・改名時、機械検証外の 2 点を grep で確認: 他 plugin / README 本文の `/<旧名>` 言及、README のバケット行とリンク
+- 新規 plugin 追加・改名時、機械検証外の 2 点を grep で確認: 他 plugin / README 本文の `/<旧名>` 言及、README の一覧行とリンク
 - 公開前に機密情報 (Cloud ID, API キー等) と組織固有名 (ラベル・環境・リポジトリ名) の残存を grep でスキャン

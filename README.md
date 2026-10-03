@@ -10,10 +10,6 @@ npx skills add YasuakiOmokawa/skills
 
 ## Plugins
 
-### Engineering
-
-設定なしで動作する。利用可能な根拠と現在のリポジトリ規約を使い、不足情報は未検証または未解決として返す。
-
 | Plugin | Purpose |
 |---|---|
 | [`apply-findings`](./plugins/apply-findings/skills/apply-findings/SKILL.md) | Applies review findings when a request authorizes mechanically safe edits or asks for concrete edit candidates without changing files. |
