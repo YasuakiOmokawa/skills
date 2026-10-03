@@ -1,7 +1,7 @@
 {
   "name": "implement-plan",
   "description": "Implement a prepared plan whose Verification Plan maps every acceptance criterion, driving each test-observable criterion through red, green, and refactor in the plan's dependency order.",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "author": {
     "name": "Yasuaki Omokawa",
     "url": "https://github.com/YasuakiOmokawa"
