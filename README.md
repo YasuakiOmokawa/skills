@@ -47,14 +47,6 @@ npx skills add YasuakiOmokawa/skills
 | [`create-jira-issues`](./plugins/create-jira-issues/skills/create-jira-issues/SKILL.md) | Create Jira issues when the user explicitly asks to file listed, approved stories or tasks in a specified project and issue type, with per-item keys and failures. |
 | [`set-jira-story-points`](./plugins/set-jira-story-points/skills/set-jira-story-points/SKILL.md) | Set Jira Story Points when the user provides explicit issue-key-to-point mappings and asks to update those issues, with requested and confirmed values reported per issue. |
 
-### Career
-
-`~/.claude/skills-config/vision.md` が必須。
-
-| Plugin | Purpose |
-|---|---|
-| [`translate-to-vision-story`](./plugins/translate-to-vision-story/skills/translate-to-vision-story/SKILL.md) | プロジェクト活動の証拠を、提供されたビジョンとの関係が明確な記事草稿へ変換する。ビジョン、活動記録、対象読者、記事の目的が示された初稿作成、または承認済み方針による改稿を求められたときに使う。 |
-
 ## Configuration
 
 `bash scripts/setup.sh` で非機密のグローバル設定を生成できる。サンプルは [`examples/skills-config/`](./examples/skills-config/) にある。

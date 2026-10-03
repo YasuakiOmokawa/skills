@@ -18,9 +18,6 @@ Claude には値を渡しません。すべての入力は bash 内で完結し�
 DD 文書）です。順番に質問し、各セクション冒頭で「使う/使わない」を聞き、使わなければ
 スキップします。
 
-translate-to-vision-story を使う場合は ~/.claude/skills-config/vision.md も必要です
-(plugin 内の references/vision-config-template.md をコピーして編集)。
-
 BANNER
 
 prompt_yes_no() {

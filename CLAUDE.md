@@ -16,7 +16,7 @@
 
 ## バケット分類 (説明上のみ)
 
-plugin は README の一覧で engineering / personal / career の 3 バケットに分類する (物理ディレクトリでは分けない。定義は README)。engineering 系は**設定不要で動く**ことを目標にし、設定が必要なら `~/.claude/skills-config/*.md` から読み、なければエラーで止めず**フォールバック**を提示する。career 系はユーザー個人設定が必須。
+plugin は README の一覧で engineering / personal の 2 バケットに分類する (物理ディレクトリでは分けない。定義は README)。engineering 系は**設定不要で動く**ことを目標にし、設定が必要なら `~/.claude/skills-config/*.md` から読み、なければエラーで止めず**フォールバック**を提示する。
 
 ## 設定値の保管 (グローバル)
 
