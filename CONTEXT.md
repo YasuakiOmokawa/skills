@@ -71,5 +71,6 @@ claude plugin eval . --ablation with-without --judge-model sonnet --allow-tools 
 - `report.html` と `aggregate-result.json` はjudgeの理由文を保存しない。判定を検証するには `--keep-temp` が残すsandboxの `out/trace.jsonl` の最終assistant textを読む。
 - llm graderのjudgeはthinking無効・一語 (PASS/FAIL) 回答・temperature 1の3票多数決で、理由文は生成すらされない。judgeに見せた本文は `aggregate-result.json` の `graders[].evidence` に残るので、判定を検証するにはそれを同じprompt (`You are grading the output of a coding agent against a criterion.` / `Criterion:` / `Agent output (file <path>):` / `Respond with exactly one word: PASS or FAIL.`) でsonnetに投げ直す。
 - 上の性質から、多条項で例外規定の多いrubricは正解にも3票FAILを付け、whitelist照合 (「この一覧に無い名前を挙げていればfail」) は票が割れる。rubricは1 graderにつき1論点で短く書き、実在性の照合はfixtureに無いパスを `not_contains` で検出するregexにする。
+- `focus: trace` のllm graderに渡るevidenceは約33KBで切られ、traceの途中のメッセージが落ちる (80KBのtraceでassistant 37件中11件しか残らない)。途中で起きた手順 (refactorの編集、一時違反によるred) は正解でも3票FAILになり、逆に最終報告から推測したPASSも出る。手順の有無は `type: regex`、`target: trace`、`flags: s` で全traceを照合する。tool_useの順序は `"name":"(?:Write|Edit)","input":\{[^{}]*?"file_path":"[^"]*<path>"` を区切りにしたtempered regexで書く。テスト失敗は `"type":"tool_result","content":"` の内側に限る。agentのgrepコマンド文字列 (`not ok`、`✖`) にも一致するため。
 - `--keep-temp` のsandboxで `home/` と `tmp/` はmode 000で封印され、chmodは許可されない。書き込まれたファイルの内容は `out/trace.jsonl` のWrite/Edit入力から復元する。
 - 負例caseでもagentがBashにturnを使うため、10 turn程度は与える。
