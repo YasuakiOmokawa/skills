@@ -15,9 +15,7 @@ Skillとcommandはファイル配置からdiscoveryされる。agent定義は置
 
 非機密のマシン設定は `~/.claude/skills-config/` に置く。
 
-- `jira.md`: personal Jira plugins
 - `create-design-doc/dd_template.md` と `dd_reference.md`: 任意。存在しなければ取得済み根拠へ縮退する
-- `vision.md`: career pluginに必須
 
 API key、access token、passwordはこの領域へ保存しない。
 

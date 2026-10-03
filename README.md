@@ -10,10 +10,6 @@ npx skills add YasuakiOmokawa/skills
 
 ## Plugins
 
-### Engineering
-
-設定なしで動作する。利用可能な根拠と現在のリポジトリ規約を使い、不足情報は未検証または未解決として返す。
-
 | Plugin | Purpose |
 |---|---|
 | [`apply-findings`](./plugins/apply-findings/skills/apply-findings/SKILL.md) | Applies review findings when a request authorizes mechanically safe edits or asks for concrete edit candidates without changing files. |
@@ -37,23 +33,6 @@ npx skills add YasuakiOmokawa/skills
 | [`verify-plan`](./plugins/verify-plan/skills/verify-plan/SKILL.md) | Use when an implemented change must be verified against a plan or acceptance criteria before it can be considered complete. |
 
 `create-design-doc` は、存在する場合だけ `~/.claude/skills-config/create-design-doc/` のテンプレートと参考文書を使い、なければ取得済み根拠へ縮退する。
-
-### Personal
-
-`~/.claude/skills-config/jira.md` に利用者のJira設定を置く。
-
-| Plugin | Purpose |
-|---|---|
-| [`create-jira-issues`](./plugins/create-jira-issues/skills/create-jira-issues/SKILL.md) | Create Jira issues when the user explicitly asks to file listed, approved stories or tasks in a specified project and issue type, with per-item keys and failures. |
-| [`set-jira-story-points`](./plugins/set-jira-story-points/skills/set-jira-story-points/SKILL.md) | Set Jira Story Points when the user provides explicit issue-key-to-point mappings and asks to update those issues, with requested and confirmed values reported per issue. |
-
-### Career
-
-`~/.claude/skills-config/vision.md` が必須。
-
-| Plugin | Purpose |
-|---|---|
-| [`translate-to-vision-story`](./plugins/translate-to-vision-story/skills/translate-to-vision-story/SKILL.md) | プロジェクト活動の証拠を、提供されたビジョンとの関係が明確な記事草稿へ変換する。ビジョン、活動記録、対象読者、記事の目的が示された初稿作成、または承認済み方針による改稿を求められたときに使う。 |
 
 ## Configuration
 
