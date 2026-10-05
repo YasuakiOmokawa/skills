@@ -1,11 +1,11 @@
 ---
 name: purge-private-vocab
-description: Replaces private vocabulary in authorized reader-facing documents when supplied definitions make the intended meaning checkable for the target audience.
+description: 渡された定義により対象読者にとっての意味を確認できるとき、依頼で許可された読み手向け文書の内輪の用語を置き換える。
 ---
 
-- Use the supplied definitions and document contents to identify every occurrence of every confirmed private term in scope, then submit all authorized replacements through the supplied document interface instead of stopping at replacement suggestions.
-- Leave a term without a confirmed definition unchanged and report it as unverified rather than inferring its meaning.
-- Verify each replacement in its surrounding sentence so the actor, condition, action, and domain meaning remain unchanged.
-- Distinguish a write submitted from content verified by its response or readback; a rejected or unobserved write is not a successful replacement.
-- Limit replacements to authorized reader-facing documents. Leave code identifiers, public APIs, and other documents unchanged unless separately authorized.
-- Report verified replacements, confirmed terms retained unchanged, undefined terms left unverified, and failed or unverified writes.
+- 提供された定義と文書の内容を使って、範囲内にある確認済みの内輪の用語すべてについて出現箇所をすべて特定し、置き換え案の提示で止まらず、依頼で許可された置き換えをすべて、提供された文書インターフェースを通じて送信する。
+- 確認済みの定義が無い用語は変更せず、意味を推測せずに未検証として報告する。
+- 各置き換えを前後の文の中で確認し、行為者、条件、行為、ドメイン上の意味が変わらないようにする。定義をそのまま入れると前後の語と重複する場合は、この四つが変わらない範囲で重複を畳み、語尾を整えてよい。
+- 送信した書き込みと、応答または再読取で確認した内容を区別する。拒否された書き込みや観測していない書き込みは、置き換えの成功ではない。
+- 置き換えは依頼で許可された読み手向けの文書に限定する。コード識別子、公開 API、その他の文書は、別途許可されない限り変更しない。
+- 確認した置き換え、変更せず残した確認済みの用語、未検証のまま残した定義の無い用語、失敗した書き込みまたは未検証の書き込みを報告する。

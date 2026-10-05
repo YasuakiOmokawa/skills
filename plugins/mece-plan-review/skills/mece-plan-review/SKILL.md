@@ -1,34 +1,34 @@
 ---
 name: mece-plan-review
-description: Compare a plan and acceptance criteria with specification and code evidence when a MECE coverage review or an explicitly authorized review update is requested.
+description: 計画と受け入れ基準を仕様とコードの根拠と比較する。MECEな網羅性レビュー、または明示的に承認されたレビュー更新を求められたときに使う。
 ---
 
-## Purpose
+## 目的
 
-Decide whether one current plan and its acceptance criteria cover the specification and the code without omission, duplication, or contradiction, and record that decision as a gate the next stage can trust. The review is only as good as the evidence it actually read, so every conclusion names the evidence behind it and every comparison it could not make is reported as unverified rather than silently assumed.
+一つの現在の計画とその受け入れ基準が、仕様とコードを欠落、重複、矛盾なくカバーしているかを判断し、その判断を次の段階が信頼できる gate として記録する。レビューの質は実際に読んだ根拠の質を超えないため、すべての結論はその背後の根拠を名指しし、実施できなかった比較はすべて、黙って仮定せず未検証として報告する。
 
-## Preconditions
+## 前提条件
 
-- The current plan is exactly one readable resource supplied inline or through an authorized read. A whole-resource read counts as complete unless the tool marks it truncated or paginated; a range, snippet, or unfinished pagination is partial. A missing, partial, unreadable, or ambiguous plan is an upstream defect: report it and produce no review.
-- A `##` section runs from its heading to the next `##` heading or end of document. The plan must contain exactly one `## Acceptance Criteria` section consisting, apart from blank lines, only of rows `- [ ] AC-NNN: <criterion text>` with unique IDs. Duplicate sections, duplicate IDs, or rows of any other shape are upstream defects: report every defect found and produce no gate or review.
-- An update is requested only when the request asks to write the review into the current plan. It is authorized only when that same plan is the exact named destination and a write interface exists. Prior `## MECE Review` sections and anything labeled as a prior review are never evidence.
+- 現在の計画は、インラインで渡されたか承認された読み取りで得た、読み取り可能なちょうど一つのリソースである。リソース全体の読み取りは、ツールが切り詰めまたはページ分割を示さない限り完全とみなす。範囲指定、抜粋、未完了のページ分割は部分的である。欠けた、部分的な、読み取れない、または曖昧な計画は上流の欠陥であり、それを報告してレビューを作らない。
+- `##` 節はその見出しから次の `##` 見出しまたは文書末尾までである。計画は、空行を除けば一意な ID を持つ `- [ ] AC-NNN: <criterion text>` 行だけで構成される `## Acceptance Criteria` 節をちょうど一つ含まなければならない。重複する節、重複する ID、それ以外の形の行は上流の欠陥であり、見つけた欠陥をすべて報告して gate もレビューも作らない。
+- 更新が依頼されたとみなすのは、依頼がレビューを現在の計画へ書き込むよう求めている場合だけである。承認されたとみなすのは、その同じ計画が名指しされた厳密な保存先であり、かつ書き込みインターフェースが存在する場合だけである。過去の `## MECE Review` 節と過去のレビューと表示されたものは、決して根拠にしない。
 
-## What the review must establish
+## レビューが確定すべきこと
 
-Compare every current criterion, in both directions, against every specification source and every code source the request, plan, or criteria explicitly name. A source is an exact artifact, link target, path, code span, or symbol; a bare domain term, directory, or scalar is not one. Both categories must be represented, and the evidence set is fixed before any evidence is read so that later reads cannot quietly widen or narrow it.
+現在のすべての基準を、依頼、計画、または基準が明示的に名指しするすべての仕様ソースとすべてのコードソースに対して、双方向に比較する。ソースとは厳密な成果物、リンク先、パス、コード範囲、またはシンボルであり、単なるドメイン用語、ディレクトリ、スカラー値はソースではない。両カテゴリが揃っていなければならず、後の読み取りで根拠集合が黙って広がったり狭まったりしないよう、根拠を読む前に根拠集合を固定する。
 
-Because omissions hide in code the plan never mentions, extend the code evidence inside the current repository to the definitions that criterion-relevant branches call, and, for any definition whose behavior is shared, to every repository-local site that calls or references it, even sites the plan does not name. Stop at repository boundaries and cycles. Anything absent, external, or ambiguous is an inaccessible required comparison, not a non-finding.
+欠落は計画が一度も言及しないコードに潜むため、現在のリポジトリ内のコード根拠を、基準に関係する分岐が呼び出す定義まで広げ、振る舞いが共有される定義については、計画が名指ししない箇所も含め、それを呼び出すか参照するリポジトリ内のすべての箇所まで広げる。リポジトリ境界と循環で止める。存在しないもの、外部のもの、曖昧なものは、指摘なしではなく、アクセスできない必須の比較である。
 
-For each criterion, record whether each source and plan item shows presence, absence, contradiction, or inaccessibility. Then check the obligations the evidence itself imposes back against the criteria: reachable async lifecycle outcomes, direct consumers of shared behavior, boundary ownership and exhaustiveness, and evidence that rests on absence, time, count, concurrency, or non-impact. A negative claim is supported only when a positive witness shows the path and observation boundary completed and a deterministic failure signal or controlled seam exists; otherwise it is an omission when the evidence supports that, and unverified when it does not. Report reverse-check gaps by those four families, at most one gap per family with every concrete omission named inside it, and say nothing about families that are covered. Never declare a source non-applicable unless the source itself excludes the criterion. Finish every comparison that inaccessible evidence does not block.
+各基準について、各ソースと計画の各項目が存在、不在、矛盾、アクセス不能のいずれを示すかを記録する。その上で、根拠自体が課す義務を基準に照らして逆方向に確認する: 到達可能な非同期ライフサイクルの結果、共有された振る舞いの直接の利用者、境界の所有と網羅性、そして不在、時間、件数、並行性、非影響に依拠する根拠である。否定の主張が支持されるのは、経路と観測境界が完了したことを示す肯定的証跡があり、かつ決定的な失敗シグナルまたは制御された seam が存在する場合だけである。そうでなければ、根拠がそれを支持するなら欠落、支持しないなら未検証とする。逆方向確認の不足はこの四つの系統ごとに報告し、系統ごとに不足は最大一件とし、その中に具体的な欠落をすべて名指しし、カバーされている系統については何も述べない。ソース自体がその基準を除外していない限り、ソースを適用外と宣言しない。アクセス不能な根拠に妨げられないすべての比較を完了させる。
 
 ## Gate
 
-Derive one gate from the evidence comparison alone: `blocked` when a supported omission, duplication, or contradiction remains; otherwise `unverified` when any required comparison lacked evidence; otherwise `ready`. Update-destination problems never change the gate.
+根拠の比較だけから一つの gate を導く: 支持された欠落、重複、矛盾が残る場合は `blocked`、そうでなく必須の比較のいずれかに根拠が欠けた場合は `unverified`、それ以外は `ready`。更新先の問題は決して gate を変えない。
 
-## Output
+## 出力
 
-Return a review containing item-level correspondence, supported findings, the upstream corrections required, and the unverified comparisons with their scope. When the review is embedded in the plan it uses only `###` or deeper headings and contains no line beginning `- AC IDs:` or `- Gate:`.
+項目単位の対応、支持された指摘、必要な上流の修正、未検証の比較とその範囲を含むレビューを返す。レビューを計画に埋め込む場合は `###` 以下の見出しだけを使い、`- AC IDs:` または `- Gate:` で始まる行を含めない。
 
-When an update was requested and authorized and the plan holds at most one `## MECE Review`, replace that section (or insert one) immediately after the Acceptance Criteria section and before the next `##` section, containing exactly one `- AC IDs: <ascending IDs joined by ", ">` row, exactly one `- Gate: ready|blocked|unverified` row, and the review; leave every other line of the plan untouched. When an update was requested but not authorized, or more than one review section exists, write nothing, report the destination defect, and still return the review if the input was valid.
+更新が依頼かつ承認され、計画が持つ `## MECE Review` が最大一つである場合は、その節を置き換え (または一つ挿入し)、Acceptance Criteria 節の直後かつ次の `##` 節の前に置く。節はちょうど一つの `- AC IDs: <ascending IDs joined by ", ">` 行、ちょうど一つの `- Gate: ready|blocked|unverified` 行、そしてレビューを含む。計画の他の行には一切触れない。更新が依頼されたが承認されていない場合、またはレビュー節が二つ以上存在する場合は、何も書き込まず、保存先の欠陥を報告し、入力が有効ならレビューは返す。
 
-Report the write honestly: `review-update submitted: yes|no` records whether the write was issued at all; `review-update operation: succeeded|failed|unverified|not-submitted` records only what the interface's final, unambiguous response established, so a timeout, error, missing, or partial response is `unverified`; `review-update content: verified|mismatch|unverified|not-submitted` comes only from a separate authorized readback of the exact destination compared against the submitted text, never from the write response itself. Issue the write and the readback once each; a repeat cannot add evidence and can add damage. Leave product code and all other external state unchanged.
+書き込みは正直に報告する: `review-update submitted: yes|no` は書き込みをそもそも発行したかを記録する。`review-update operation: succeeded|failed|unverified|not-submitted` はインターフェースの最終的で曖昧さのない応答が確定させたことだけを記録するため、タイムアウト、エラー、欠けた応答、部分的な応答は `unverified` とする。`review-update content: verified|mismatch|unverified|not-submitted` は、厳密な保存先を別途承認された再読取で送信したテキストと比較した結果だけから得て、書き込み応答自体からは決して得ない。書き込みと再読取はそれぞれ一回だけ発行する。繰り返しは根拠を増やせず、損害を増やし得る。プロダクトコードとその他すべての外部状態は変更しない。

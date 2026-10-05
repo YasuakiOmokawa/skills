@@ -1,7 +1,7 @@
 {
   "name": "map-user-stories",
-  "description": "Turn supplied product evidence into a user story map when user value, stories, executable tasks, and delivery order must be made traceable.",
-  "version": "1.0.0",
+  "description": "渡されたプロダクトの根拠をユーザーストーリーマップにする。ユーザー価値、ストーリー、実行可能なタスク、提供順序を追跡可能にする必要があるときに使う。",
+  "version": "1.1.0",
   "author": {
     "name": "Yasuaki Omokawa",
     "url": "https://github.com/YasuakiOmokawa"

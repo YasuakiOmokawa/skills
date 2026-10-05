@@ -12,25 +12,25 @@ npx skills add YasuakiOmokawa/skills
 
 | Plugin | Purpose |
 |---|---|
-| [`apply-findings`](./plugins/apply-findings/skills/apply-findings/SKILL.md) | Applies review findings when a request authorizes mechanically safe edits or asks for concrete edit candidates without changing files. |
-| [`build-poc`](./plugins/build-poc/skills/build-poc/SKILL.md) | 技術候補の選定または実現可能性を、成功基準と実行環境に基づくPoCや最小実験で判断する必要があるときに使う。 |
-| [`build-prototype`](./plugins/build-prototype/skills/build-prototype/SKILL.md) | 承認済みのPoCまたは同等の根拠があり、選定方式と既存コードベースの責務、慣習、契約との適合性を実コードで確かめる必要があるときに使う。 |
-| [`create-commits`](./plugins/create-commits/skills/create-commits/SKILL.md) | Turn the current branch's uncommitted or unpublished changes into commits whose boundaries a reviewer reads in order, when the user asks to commit, split, or restructure local history before publishing it. |
-| [`create-design-doc`](./plugins/create-design-doc/skills/create-design-doc/SKILL.md) | 承認済み計画とPoC、プロトタイプまたは同等の根拠があり、実装判断に使うDesign Docと保存先(指定または導出)が必要なときに使う。 |
-| [`create-pr`](./plugins/create-pr/skills/create-pr/SKILL.md) | Create or update the pull request associated with the current branch when the user asks to open it, revise its content, or explicitly make it reviewable. |
-| [`define-acceptance-criteria`](./plugins/define-acceptance-criteria/skills/define-acceptance-criteria/SKILL.md) | Convert an existing plan or specification into observable acceptance criteria when success, failure, boundary, or non-impact behavior must be made decidable. |
-| [`dry-ssot-text`](./plugins/dry-ssot-text/skills/dry-ssot-text/SKILL.md) | Consolidates duplicated reader-facing procedures when a canonical document and in-scope documents are identified, while preserving audience-specific differences. |
-| [`express-intent-in-code`](./plugins/express-intent-in-code/skills/express-intent-in-code/SKILL.md) | Moves intent out of comments, booleans, and nullable returns into names, sum types, total functions, and tests when supplied code needs behavior-preserving cleanup. |
-| [`extract-figma-spec`](./plugins/extract-figma-spec/skills/extract-figma-spec/SKILL.md) | 提供または取得できるFigmaの根拠を原子的な確認項目へ分解し、実装の観測値と比較する。対象フレーム、状態、部品と比較対象の実装が示され、デザイン差分の判定表を求められたときに使う。 |
-| [`ground-design-in-codebase`](./plugins/ground-design-in-codebase/skills/ground-design-in-codebase/SKILL.md) | Reviews a proposed design boundary before implementation when relevant specifications and existing code can provide concrete evidence about responsibilities and risk. |
-| [`implement-plan`](./plugins/implement-plan/skills/implement-plan/SKILL.md) | Implement a prepared plan whose Verification Plan maps every acceptance criterion, driving each test-observable criterion through red, green, and refactor in the plan's dependency order. |
-| [`map-user-stories`](./plugins/map-user-stories/skills/map-user-stories/SKILL.md) | Turn supplied product evidence into a user story map when user value, stories, executable tasks, and delivery order must be made traceable. |
-| [`mece-plan-review`](./plugins/mece-plan-review/skills/mece-plan-review/SKILL.md) | Compare a plan and acceptance criteria with specification and code evidence when a MECE coverage review or an explicitly authorized review update is requested. |
-| [`model-data`](./plugins/model-data/skills/model-data/SKILL.md) | 業務要求と取得可能な既存スキーマやSQLから一貫したデータモデルを導き、必要に応じてDBMLを作り、SQLアンチパターンを指摘する。データ設計、ER相当の関係整理、既存スキーマの整合性確認を求められたときに使う。 |
-| [`prepare-plan-for-implementation`](./plugins/prepare-plan-for-implementation/skills/prepare-plan-for-implementation/SKILL.md) | Prepare an existing plan for implementation when it already has valid acceptance criteria and a ready MECE review, by ordering concrete work and writing a same-plan verification mapping; do not use it to implement the plan. |
-| [`purge-private-vocab`](./plugins/purge-private-vocab/skills/purge-private-vocab/SKILL.md) | Replaces private vocabulary in authorized reader-facing documents when supplied definitions make the intended meaning checkable for the target audience. |
-| [`qa-ui`](./plugins/qa-ui/skills/qa-ui/SKILL.md) | Verifies an implemented UI when the request provides observable checks, expected states, an accessible rendered page, and permitted interactions. |
-| [`verify-plan`](./plugins/verify-plan/skills/verify-plan/SKILL.md) | Use when an implemented change must be verified against a plan or acceptance criteria before it can be considered complete. |
+| [`apply-findings`](./plugins/apply-findings/skills/apply-findings/SKILL.md) | レビュー指摘を適用する。依頼が機械的に安全な編集を承認しているとき、またはファイルを変更せずに具体的な編集候補を求めているときに使う。 |
+| [`build-poc`](./plugins/build-poc/skills/build-poc/SKILL.md) | 技術選定または実現可能性を、実行可能な環境で成功基準に照らしたPoCや最小実験によって判断する必要があるときに使う。 |
+| [`build-prototype`](./plugins/build-prototype/skills/build-prototype/SKILL.md) | 承認済みのPoCまたは同等の根拠があり、選定方式がコードベースの責務、慣習、契約に適合するかを実コードで確かめる必要があるときに使う。 |
+| [`create-commits`](./plugins/create-commits/skills/create-commits/SKILL.md) | 現在のブランチの未commitまたは未公開の変更を、レビュアーが順に読める境界のcommitにまとめる。公開前のcommit、分割、ローカル履歴の再構成を求められたときに使う。 |
+| [`create-design-doc`](./plugins/create-design-doc/skills/create-design-doc/SKILL.md) | 承認済み計画と、PoCとプロトタイプまたは同等の根拠による実現可能性とコードベース適合性の根拠から、実装判断に使うDesign Docを指定または導出した保存先に作る必要があるときに使う。 |
+| [`create-pr`](./plugins/create-pr/skills/create-pr/SKILL.md) | 現在のブランチに対応するPRを作成または更新する。PRを開く、内容を改める、明示的にレビュー可能な状態にすることを求められたときに使う。 |
+| [`define-acceptance-criteria`](./plugins/define-acceptance-criteria/skills/define-acceptance-criteria/SKILL.md) | 既存の計画や仕様を観測可能な受け入れ基準に変換する。成功、失敗、境界、非影響の振る舞いを判定可能にする必要があるときに使う。 |
+| [`dry-ssot-text`](./plugins/dry-ssot-text/skills/dry-ssot-text/SKILL.md) | 正本文書と対象範囲の文書が特定されているとき、重複した読み手向けの手順を、読み手ごとの差異を保ったまま集約する。 |
+| [`express-intent-in-code`](./plugins/express-intent-in-code/skills/express-intent-in-code/SKILL.md) | コメント、boolean、nullableな戻り値に置かれた意図を、名前、直和型、全域関数、テストへ移す。コードで言えることを言い直すコメント、ありえない状態を許すbooleanやoptionalの組み合わせ、2つの意味を持つ1つのnull、振る舞いを選ぶboolean引数、I/Oに埋もれた判断を含むコードが渡されたときに使う。 |
+| [`extract-figma-spec`](./plugins/extract-figma-spec/skills/extract-figma-spec/SKILL.md) | 提供または取得できるFigmaの根拠を原子的な確認項目に分解し、指定されたフレーム、状態、部品について特定された実装とデザイン差分表で比較する必要があるときに使う。 |
+| [`ground-design-in-codebase`](./plugins/ground-design-in-codebase/skills/ground-design-in-codebase/SKILL.md) | 関連する仕様と既存コードが責務とリスクについて具体的な根拠を示せるとき、提案された設計境界を実装前にレビューする。 |
+| [`implement-plan`](./plugins/implement-plan/skills/implement-plan/SKILL.md) | Verification Planが全受け入れ基準を対応付けている準備済みの計画を実装する。テストで観測できる各基準を、計画の依存順にred、green、refactorで進める。 |
+| [`map-user-stories`](./plugins/map-user-stories/skills/map-user-stories/SKILL.md) | 渡されたプロダクトの根拠をユーザーストーリーマップにする。ユーザー価値、ストーリー、実行可能なタスク、提供順序を追跡可能にする必要があるときに使う。 |
+| [`mece-plan-review`](./plugins/mece-plan-review/skills/mece-plan-review/SKILL.md) | 計画と受け入れ基準を仕様とコードの根拠と比較する。MECEな網羅性レビュー、または明示的に承認されたレビュー更新を求められたときに使う。 |
+| [`model-data`](./plugins/model-data/skills/model-data/SKILL.md) | 業務要求を既存のスキーマやSQLに照らしてモデル化し、一貫したデータモデル、必要に応じたDBML、データ設計、エンティティ関係、スキーマ整合性、SQLアンチパターンについての根拠付きの指摘を作る必要があるときに使う。 |
+| [`prepare-plan-for-implementation`](./plugins/prepare-plan-for-implementation/skills/prepare-plan-for-implementation/SKILL.md) | 有効な受け入れ基準とreadyのMECE Reviewを持つ既存の計画を、具体的な作業の順序付けと同じ計画内の検証対応付けによって実装に備えさせる。計画の実装には使わない。 |
+| [`purge-private-vocab`](./plugins/purge-private-vocab/skills/purge-private-vocab/SKILL.md) | 渡された定義により対象読者にとっての意味を確認できるとき、依頼で許可された読み手向け文書の内輪の用語を置き換える。 |
+| [`qa-ui`](./plugins/qa-ui/skills/qa-ui/SKILL.md) | 観測可能な確認項目、期待状態、アクセス可能な描画済みページ、許可された操作が依頼で示されているとき、実装済みUIを検証する。 |
+| [`verify-plan`](./plugins/verify-plan/skills/verify-plan/SKILL.md) | 実装済みの変更を、完了とみなす前に計画または受け入れ基準に照らして検証する必要があるときに使う。 |
 
 `create-design-doc` は、存在する場合だけ `~/.claude/skills-config/create-design-doc/` のテンプレートと参考文書を使い、なければ取得済み根拠へ縮退する。
 

@@ -1,7 +1,7 @@
 {
   "name": "model-data",
-  "description": "業務要求と取得可能な既存スキーマやSQLから一貫したデータモデルを導き、必要に応じてDBMLを作り、SQLアンチパターンを指摘する。データ設計、ER相当の関係整理、既存スキーマの整合性確認を求められたときに使う。",
-  "version": "1.2.0",
+  "description": "業務要求を既存のスキーマやSQLに照らしてモデル化し、一貫したデータモデル、必要に応じたDBML、データ設計、エンティティ関係、スキーマ整合性、SQLアンチパターンについての根拠付きの指摘を作る必要があるときに使う。",
+  "version": "1.3.0",
   "author": {
     "name": "Yasuaki Omokawa",
     "url": "https://github.com/YasuakiOmokawa"

@@ -1,18 +1,18 @@
 ---
 name: define-acceptance-criteria
-description: Convert an existing plan or specification into observable acceptance criteria when success, failure, boundary, or non-impact behavior must be made decidable.
+description: 既存の計画や仕様を観測可能な受け入れ基準に変換する。成功、失敗、境界、非影響の振る舞いを判定可能にする必要があるときに使う。
 ---
 
-## Workflow
+## 手順
 
-1. Resolve the current plan or specification, intended scope, expected user-visible result, and authorized destination from the request and available context. When a writable current plan is supplied and the request asks to add or create that plan's acceptance criteria, use that plan as the exact destination.
-2. Enumerate every stated success, failure, boundary, and non-impact condition before drafting. A value the source leaves undefined is not a source condition even when the request invites deciding it; separate it as missing information and do not create criteria for it.
-3. Convert each condition into independent criteria that pair one initiating state or action with one directly observable result; split a criterion whenever either side can vary.
-4. Make each boundary decidable with observations immediately on both sides. If the source does not define the exact boundary point, leave that point unresolved rather than infer it. When two cases must appear identical, require the relevant observations from both cases to be compared.
-5. Map every source condition to one or more criteria, then identify uncovered conditions and duplicate coverage.
-6. Observe the destination before writing and preserve all unrelated content. If a current plan contains multiple `## Acceptance Criteria` sections or duplicate AC-IDs, stop without choosing or merging them. Otherwise upsert exactly one section. Write each criterion as `- [ ] AC-NNN: ...` and keep each AC-ID immutable for its initiating state or action and observable result. If no AC-ID exists, assign `AC-001` first; otherwise assign new IDs above the greatest existing numeric suffix in ascending order without renumbering existing IDs. A semantic change replaces the old criterion with a new ID instead of reusing its ID; do not remove criteria unless that change was authorized. Derive the resulting sorted AC-ID set and compare it with any exact `- AC IDs:` line in existing `## MECE Review` and `## Verification Plan` sections. Report each mismatch as stale and leave both downstream sections unchanged unless their update was separately authorized. For another supplied template, retain its headings and fields unless structural change was authorized.
-7. Re-read the destination after writing and confirm the section, AC-ID uniqueness, criteria, and unrelated content. Report `destination existed: yes|no|unverified`, `requested update applied: yes|no|unverified`, and `resulting content verified: yes|no|unverified` separately. If access, writing, or confirmation fails, report the affected status without claiming completion.
+1. 依頼と利用可能な文脈から、現在の計画または仕様、意図する範囲、期待するユーザーから見える結果、依頼で書き込みを許可された保存先を特定する。書き込み可能な現在の計画が渡され、依頼がその計画の受け入れ基準の追加または作成を求めている場合は、その計画を厳密な保存先とする。
+2. 起草の前に、明示された成功、失敗、境界、非影響の条件をすべて列挙する。元資料が未定義のまま残す値は、依頼がその値を決めるよう求めていても元資料の条件ではない。不足情報として分け、その値に対する基準は作らない。
+3. 各条件を、一つの起点となる状態または操作と、一つの直接観測できる結果を対にした独立の基準へ変換する。起点と結果のどちらかが複数通りに変わり得る場合は基準を分割する。
+4. 各境界を、そのすぐ両側の観測で判定できるようにする。元資料が境界点を厳密に定義していない場合は、推測せずその点を未解決として残す。二つのケースが同一に見える必要がある場合は、両ケースの該当する観測を比較することを求める。
+5. 元資料の全条件を一つ以上の基準に対応付け、その上で未カバーの条件と重複カバーを特定する。
+6. 書き込み前に保存先を観測し、無関係な内容をすべて保持する。現在の計画が複数の `## Acceptance Criteria` 節または重複する AC-ID を含む場合は、どれかを選んだり統合したりせず停止する。そうでなければ、ちょうど一つの節を upsert する。各基準を `- [ ] AC-NNN: ...` として書き、各 AC-ID はその起点となる状態または操作と観測できる結果に対して不変に保つ。AC-ID が一つも無ければ最初に `AC-001` を割り当てる。そうでなければ、既存 ID の番号を振り直さず、既存の最大の数値接尾辞より大きい新 ID を昇順に割り当てる。意味の変更は ID を再利用せず、旧基準を新 ID の基準で置き換える。その変更が承認されていない限り基準を削除しない。結果として得られる整列済みの AC-ID 集合を導き、既存の `## MECE Review` 節と `## Verification Plan` 節にある厳密な `- AC IDs:` 行と比較する。不一致はそれぞれ stale として報告し、下流の両節は、その更新が別途承認されていない限り変更しない。渡された別のテンプレートについては、構造の変更が承認されていない限り、その見出しとフィールドを保持する。
+7. 書き込み後に保存先を再読取し、節、AC-ID の一意性、基準、無関係な内容を確認する。`destination existed: yes|no|unverified`、`requested update applied: yes|no|unverified`、`resulting content verified: yes|no|unverified` を個別に報告する。アクセス、書き込み、確認のいずれかが失敗した場合は、完了を主張せず影響を受けた状態を報告する。
 
-## Completion
+## 完了
 
-Return the criteria, condition coverage, separated missing information, observed destination state, the three write-status fields, downstream stale sections, failures, and unverified items.
+基準、条件のカバー状況、分離した不足情報、観測した保存先の状態、三つの書き込み状態フィールド、下流の stale な節、失敗、未検証事項を返す。

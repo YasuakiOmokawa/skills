@@ -1,7 +1,7 @@
 {
   "name": "purge-private-vocab",
-  "description": "Replaces private vocabulary in authorized reader-facing documents when supplied definitions make the intended meaning checkable for the target audience.",
-  "version": "1.1.0",
+  "description": "渡された定義により対象読者にとっての意味を確認できるとき、依頼で許可された読み手向け文書の内輪の用語を置き換える。",
+  "version": "1.2.0",
   "author": {
     "name": "Yasuaki Omokawa",
     "url": "https://github.com/YasuakiOmokawa"

@@ -1,12 +1,12 @@
 ---
 name: dry-ssot-text
-description: Consolidates duplicated reader-facing procedures when a canonical document and in-scope documents are identified, while preserving audience-specific differences.
+description: 正本文書と対象範囲の文書が特定されているとき、重複した読み手向けの手順を、読み手ごとの差異を保ったまま集約する。
 ---
 
-- Compare the supplied in-scope passages and consolidate only duplicated meaning that the evidence confirms is equivalent, retaining every audience-specific requirement.
-- Perform the authorized saves through the supplied document interface: establish the common procedure in the designated canonical document, then replace each confirmed duplicate with a direct, resolvable reference. Do not stop at presenting proposed content.
-- Remove a duplicate only after the canonical content and that document's route to it can be verified; otherwise leave the duplicate intact.
-- Distinguish a save submitted from content verified by its response or readback, and never report an unobserved save as successful.
-- Re-read every successfully changed document and verify that its readers can reach the canonical procedure, its meaning is unchanged, and its audience-specific requirements remain.
-- Limit mutations to authorized reader-facing documents; leave code and unapproved remote documents unchanged. On a partial write failure, report each document's observed state and leave no broken reference.
-- Report verified canonical content, verified references, retained differences, failed or unverified saves, and the evidence for completion.
+- 提供された範囲内の文章を比較し、根拠から同じ意味だと確認できた重複だけを統合し、読み手ごとの要件はすべて残す。
+- 依頼で許可された保存を、提供された文書インターフェースを通じて実行する。指定された正本文書に共通の手順を置き、その後、確認した各重複を直接たどれる参照に置き換える。内容案の提示で止まらない。
+- 重複を削除するのは、正本の内容と、その文書から正本への経路を確認できた後に限る。確認できなければ、重複をそのまま残す。
+- 送信した保存と、応答または再読取で確認した内容を区別し、観測していない保存を成功として報告しない。
+- 変更に成功したすべての文書を再読取し、その読み手が正本の手順にたどり着けること、意味が変わっていないこと、読み手ごとの要件が残っていることを確認する。
+- 変更は依頼で許可された読み手向けの文書に限定し、コードと許可されていないリモート文書は変えない。書き込みが一部失敗した場合は、各文書の観測した状態を報告し、壊れた参照を残さない。
+- 確認した正本の内容、確認した参照、残した差異、失敗した保存または未検証の保存、完了の根拠を報告する。
