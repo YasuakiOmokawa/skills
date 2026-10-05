@@ -1,7 +1,7 @@
 {
   "name": "verify-plan",
   "description": "実装済みの変更を、完了とみなす前に計画または受け入れ基準に照らして検証する必要があるときに使う。",
-  "version": "2.3.0",
+  "version": "2.4.0",
   "author": {
     "name": "Yasuaki Omokawa",
     "url": "https://github.com/YasuakiOmokawa"
