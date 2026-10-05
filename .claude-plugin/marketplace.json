@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "omokawa-skills",
-  "version": "11.27.0",
+  "version": "11.28.0",
   "description": "Plan-driven development workflow を構成する個別 skill 群。必要なものだけ install 可能",
   "owner": {
     "name": "Yasuaki Omokawa",
@@ -98,7 +98,7 @@
     {
       "name": "qa-ui",
       "description": "観測可能な確認項目、期待状態、アクセス可能な描画済みページ、許可された操作が依頼で示されているとき、実装済みUIを検証する。",
-      "version": "3.4.0",
+      "version": "3.5.0",
       "source": "./plugins/qa-ui",
       "skills": [
         "./skills/qa-ui"
