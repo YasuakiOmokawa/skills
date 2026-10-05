@@ -1,7 +1,7 @@
 {
   "name": "build-poc",
-  "description": "技術候補の選定または実現可能性を、成功基準と実行環境に基づくPoCや最小実験で判断する必要があるときに使う。",
-  "version": "1.7.0",
+  "description": "技術選定または実現可能性を、実行可能な環境で成功基準に照らしたPoCや最小実験によって判断する必要があるときに使う。",
+  "version": "1.8.0",
   "author": {
     "name": "Yasuaki Omokawa",
     "url": "https://github.com/YasuakiOmokawa"

@@ -1,7 +1,7 @@
 {
   "name": "ground-design-in-codebase",
-  "description": "Reviews a proposed design boundary before implementation when relevant specifications and existing code can provide concrete evidence about responsibilities and risk.",
-  "version": "3.2.0",
+  "description": "関連する仕様と既存コードが責務とリスクについて具体的な根拠を示せるとき、提案された設計境界を実装前にレビューする。",
+  "version": "3.3.0",
   "author": {
     "name": "Yasuaki Omokawa",
     "url": "https://github.com/YasuakiOmokawa"

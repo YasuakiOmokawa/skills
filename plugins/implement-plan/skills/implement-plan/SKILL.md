@@ -1,24 +1,24 @@
 ---
 name: implement-plan
-description: Implement a prepared plan whose Verification Plan maps every acceptance criterion, driving each test-observable criterion through red, green, and refactor in the plan's dependency order.
+description: Verification Planが全受け入れ基準を対応付けている準備済みの計画を実装する。テストで観測できる各基準を、計画の依存順にred、green、refactorで進める。
 ---
 
-## Workflow
+## 手順
 
-1. Resolve the current plan. Require exactly one `## Acceptance Criteria` of unique `- [ ] AC-NNN:` rows, exactly one `## MECE Review` with one `- AC IDs:` row and one `- Gate:` row whose value is `ready`, and exactly one `## Verification Plan` with one `- AC IDs:` row. Both ID rows list the current IDs in ascending order joined by `, `, and the Verification Plan has one `### AC-NNN` entry per ID, each carrying `Oracle`, `Evidence anchors`, `Prerequisites`, and `Required effects`. When any part is missing or disagrees, stop before editing code and report every defect; the mapping comes from the plan, never from the implementation.
-2. Run the existing test suite, lint, and type checks once and record the baseline. A check that is already red is reported, and each later red is judged against it.
-3. Take the plan's work items in their dependency order. For each item, handle its linked criteria by the kind of oracle, one criterion at a time.
-4. For an oracle a test can observe, run one cycle per test:
-   - **Red.** Write one test at the seam its `Evidence anchors` name, through the public interface, with the expected value taken from the oracle or a worked literal. Run it and confirm it fails because the behavior is absent; a failure from imports, types, or setup is fixed before the cycle counts as red.
-   - **Green.** Make the smallest change that passes it. Run the new test and every test the change can reach.
-   - **Refactor.** With everything green, remove the duplication and unclear names this cycle's diff introduced, one change at a time, rerunning the tests after each. The step is done when the cycle's diff has no duplicated logic and every new name states its intent. Record smells in pre-existing code as report items instead of editing them.
-   Start the next test only after the refactor step is done.
-5. For an invariant, absence, or static tripwire oracle, write the check, then prove it can go red: introduce one temporary violation, observe the check fail for that violation, revert it, and observe the check pass again.
-6. For an oracle that needs a running system, a rendered UI, or external state, implement the work item, run the tests it reaches, and hand the criterion to verification with its prerequisites. Leave its result open; a prerequisite needed only to observe the oracle does not block implementation.
-7. When an item needs a change outside the plan, an oracle contradicts the code, or an unresolved prerequisite blocks the implementation itself, stop that item and every item that depends on it, and report the conflict; keep the plan and its criteria as written.
-8. Keep refactor changes separable from behavior changes. Commit only when the request authorizes it, and then commit them separately.
-9. Run the full test suite and the repository's lint and type checks at the end.
+1. 現在の計画を特定する。一意な `- [ ] AC-NNN:` 行から成る `## Acceptance Criteria` がちょうど一つ、一つの `- AC IDs:` 行と値が `ready` である一つの `- Gate:` 行を持つ `## MECE Review` がちょうど一つ、一つの `- AC IDs:` 行を持つ `## Verification Plan` がちょうど一つあることを求める。両方の ID 行は現在の ID を `, ` で連結した昇順で列挙し、Verification Plan は ID ごとに一つの `### AC-NNN` エントリを持ち、各エントリは `Oracle`、`Evidence anchors`、`Prerequisites`、`Required effects` を持つ。いずれかが欠けているか食い違う場合は、コードを編集する前に停止してすべての欠陥を報告する。対応付けは計画から得るものであり、決して実装から得ない。
+2. 既存の test suite、lint、type check を一度実行し、baseline を記録する。既に red のチェックは報告し、以降の red はそれぞれ baseline と照らして判断する。
+3. 計画の作業項目を依存関係の順に取り上げる。各項目について、紐づく基準を oracle の種類ごとに、一度に一基準ずつ扱う。
+4. テストで観測できる oracle については、テスト一つにつき一サイクルを回す:
+   - **Red.** `Evidence anchors` が名指しする seam に、公開インターフェースを通して、期待値を oracle または計算済みのリテラルから取ったテストを一つ書く。実行し、振る舞いが存在しないために失敗することを確認する。import、型、セットアップによる失敗は、そのサイクルを red とみなす前に修正する。
+   - **Green.** それを通す最小の変更を行う。新しいテストと、その変更が到達し得るすべてのテストを実行する。
+   - **Refactor.** すべて green の状態で、このサイクルの差分が持ち込んだ重複と不明瞭な名前を一度に一変更ずつ除き、変更ごとにテストを再実行する。サイクルの差分に重複したロジックが無く、すべての新しい名前が意図を述べているとき、このステップは完了である。既存コードの smell は編集せず報告項目として記録する。
+   refactor ステップが完了してから次のテストを始める。
+5. 不変条件、不在、または静的な tripwire の oracle については、チェックを書き、それが red になり得ることを証明する: 一時的な違反を一つ入れ、その違反でチェックが失敗することを観測し、違反を戻し、チェックが再び通ることを観測する。
+6. 稼働中のシステム、描画された UI、または外部状態を必要とする oracle については、作業項目を実装し、それが到達するテストを実行し、基準を前提条件とともに検証へ引き渡す。その結果は未決のまま残す。oracle の観測にだけ必要な前提条件は実装を妨げない。
+7. 項目が計画外の変更を必要とする場合、oracle がコードと矛盾する場合、または未解決の前提条件が実装自体を妨げる場合は、その項目とそれに依存するすべての項目を停止し、衝突を報告する。計画とその基準は書かれたまま保つ。
+8. refactor の変更は振る舞いの変更と分離可能に保つ。commit は依頼が承認した場合だけ行い、その場合も別々に commit する。
+9. 最後に test suite 全体と、リポジトリの lint と type check を実行する。
 
-## Completion
+## 完了
 
-Account for every AC ID in exactly one state: tested, tripwire proved, handed to verification, or stopped; an ID no work item links is stopped with that gap as its conflict. Report, per criterion: the test or check added, the observed red and its reason, green, and the refactors applied; the tripwire red proofs; criteria handed to verification with their prerequisites; stopped items with their conflicts; recorded pre-existing smells; and the final suite, lint, and type-check results against the baseline. Implementation ends here; acceptance of the criteria is the verification step's result.
+すべての AC ID を、tested、tripwire proved、handed to verification、stopped のちょうど一つの状態に割り当てる。どの作業項目にも紐づかない ID は、その欠けを衝突として stopped にする。基準ごとに、追加したテストまたはチェック、観測した red とその理由、green、適用した refactor を報告する。あわせて tripwire の red の証明、前提条件とともに検証へ引き渡した基準、衝突とともに停止した項目、記録した既存の smell、そして最終的な suite、lint、type check の結果を baseline と対比して報告する。実装はここで終わる。基準の受け入れは検証ステップの結果である。

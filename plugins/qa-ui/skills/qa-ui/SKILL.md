@@ -1,14 +1,14 @@
 ---
 name: qa-ui
-description: Verifies an implemented UI when the request provides observable checks, expected states, an accessible rendered page, and permitted interactions.
+description: 観測可能な確認項目、期待状態、アクセス可能な描画済みページ、許可された操作が依頼で示されているとき、実装済みUIを検証する。
 ---
 
-- Set the supplied display conditions and carry out on the supplied page only the permitted interactions needed to establish the supplied checks instead of describing how to test them.
-- Before running checks, establish through the selected interface that the page is reachable and serves the implementation under test. Reachability from another process does not establish interface reachability, and an HTTP response alone does not establish rendered artifact identity; leave affected checks unverified when either cannot be proven.
-- Distinguish an interaction submitted from the state returned or directly observed afterward. Never infer the resulting state or a successful action from submission alone.
-- Mark each check PASS only when its observed state matches the expectation, FAIL when it contradicts the expectation, and unverified when no permitted observation establishes either result.
-- Record reproducible evidence for each check: starting state, display conditions, interaction, resulting observation, and any relevant measurement or captured artifact.
-- When the UI or its evidence contains credentials or one-time secrets, exclude or redact them from snapshots, tool output, and reports. Before using a disposable credential, require a non-disclosing interaction path and an authorized invalidation path; otherwise leave the credential-dependent check unverified. Invalidate it immediately after observing the result.
-- Preserve item-level results when another item fails; do not replace them with only an aggregate status.
-- Perform only authorized interactions. Leave any check requiring a forbidden state change, unavailable credential, or inaccessible page unverified and state the blocker without attempting to bypass it.
-- Report every item's observed result and evidence, failed or unverified interactions, access blockers, and any external-state change.
+- 提供された表示条件を設定し、提供されたページ上で、提供された確認項目を確定するのに必要な許可された操作だけを、テスト方法の説明で済ませずに実際に行う。
+- 確認を実行する前に、選択したインターフェースを通じて、ページに到達でき、テスト対象の実装を配信していることを確定する。別プロセスからの到達は、選択したインターフェースからの到達を確定しない。HTTP 応答だけでは、描画された成果物の同一性を確定しない。どちらかを証明できない場合は、影響を受ける確認項目を未検証のままにする。
+- 送信した操作と、その後に返された状態または直接観測した状態を区別する。送信だけから、結果の状態や操作の成功を推測しない。
+- 各確認項目は、観測した状態が期待と一致する場合だけ PASS、期待と矛盾する場合は FAIL、許可された観測でどちらの結果も確定できない場合は未検証とする。
+- 各確認項目について、再現可能な根拠を記録する。開始状態、表示条件、操作、結果の観測、関連する計測値や取得した成果物である。
+- UI またはその根拠に認証情報やワンタイムシークレットが含まれる場合は、スナップショット、ツール出力、報告から除外するか伏せ字にする。使い捨ての認証情報を使う前に、その認証情報を開示しない操作経路と、許可された無効化の経路を必須とする。どちらかが無ければ、認証情報に依存する確認項目を未検証のままにする。結果を観測したら直ちに無効化する。
+- 他の項目が失敗しても項目ごとの結果を保ち、集計した状態だけに置き換えない。
+- 承認された操作だけを行う。禁止された状態変更、利用できない認証情報、またはアクセスできないページを必要とする確認項目は未検証のままにし、回避を試みずにブロッカーを示す。
+- すべての項目の観測した結果と根拠、失敗した操作または未検証の操作、アクセスのブロッカー、外部状態の変更を報告する。

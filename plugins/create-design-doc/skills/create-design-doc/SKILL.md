@@ -1,9 +1,9 @@
 ---
 name: create-design-doc
-description: Use when an approved plan and evidence of both feasibility and codebase fit—from a PoC and prototype or equivalent evidence—must become a Design Doc at a specified or derived destination for implementation decisions.
+description: 承認済み計画と、PoCとプロトタイプまたは同等の根拠による実現可能性とコードベース適合性の根拠から、実装判断に使うDesign Docを指定または導出した保存先に作る必要があるときに使う。
 ---
 
-# Workflow
+# 手順
 
 1. 依頼から、承認済み計画と範囲、PoCの実現可能性判断、プロトタイプのコードベース適合性判断またはそれらと同等の根拠、設計上の制約、判断すべき論点、各判断の承認状態、指定された文書を特定する。プロトタイプ追記済みのPoC結果ファイル（`poc.md`）のパスが渡されたら読み、`## 問い`、`## 星取表`、`## 結論`、`## PR`、`## Prototype` を根拠として扱う。指定された文書が無くこのファイルが渡されている場合は、同じディレクトリの `design-doc.md` を指定文書として扱い、どちらも無ければ保存先を推測せず指定を求める。前工程を省略していても同等の根拠が各完了条件を満たすなら受け入れ、何が代替したかを記録する。満たさない場合は事実を作らず、実現可能性ならPoC、適合性ならプロトタイプに必要な証拠を示す。
 2. テンプレートが未指定なら `~/.claude/skills-config/create-design-doc/dd_template.md` と `~/.claude/skills-config/create-design-doc/dd_reference.md` を読む。存在しなければ承認済み根拠だけで続行してその縮退を報告し、手順4が列挙する観点を節構成とする。テンプレートの有無にかかわらず節見出しは保持し、根拠が無い節は省略せず1行で対応する未解決判断を参照し、記入欄やチェックボックスは複製しない。適用可能性を根拠から判定できない節は、まとめて一件の未解決判断への参照にしてよい。指定文書が存在する場合は編集前に読み、今回の変更対象と無関係な節を保持対象として特定する。文書の不存在を推測せず、保存先を実際に読み取って不存在を確認した場合だけ新規文書として扱う。

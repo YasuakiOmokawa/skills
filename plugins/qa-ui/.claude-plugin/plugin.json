@@ -1,7 +1,7 @@
 {
   "name": "qa-ui",
-  "description": "Verifies an implemented UI when the request provides observable checks, expected states, an accessible rendered page, and permitted interactions.",
-  "version": "3.3.0",
+  "description": "観測可能な確認項目、期待状態、アクセス可能な描画済みページ、許可された操作が依頼で示されているとき、実装済みUIを検証する。",
+  "version": "3.4.0",
   "author": {
     "name": "Yasuaki Omokawa",
     "url": "https://github.com/YasuakiOmokawa"

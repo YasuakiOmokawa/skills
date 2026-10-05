@@ -1,9 +1,9 @@
 ---
 name: model-data
-description: Use when business requirements must be modeled against available schema or SQL to produce a consistent data model, optional DBML, and evidence-backed findings on data design, entity relationships, schema consistency, or SQL anti-patterns.
+description: 業務要求を既存のスキーマやSQLに照らしてモデル化し、一貫したデータモデル、必要に応じたDBML、データ設計、エンティティ関係、スキーマ整合性、SQLアンチパターンについての根拠付きの指摘を作る必要があるときに使う。
 ---
 
-# Workflow
+# 手順
 
 1. 依頼から、対象業務の要求と用語、モデル化範囲、既存スキーマ、SQL、既知の制約、指定された成果物を特定する。既存スキーマとSQLを実際に読み取り、その具体的な内容を要求と併せて分析する。読取を試みても観測できない資料だけを未検証とし、要求だけから作った暫定モデルを完了扱いにしない。
 2. 要求に現れる全エンティティの属性、明示された関係、確定している多重度、根拠のある制約を既存SQLの実態と照合し、一つの整合したモデルにする。根拠のない物理型や制約は慣例で補わず、DBML上も未確定値として表すか未解決事項として分ける。

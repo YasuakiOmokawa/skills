@@ -1,13 +1,13 @@
 ---
 name: apply-findings
-description: Applies review findings when a request authorizes mechanically safe edits or asks for concrete edit candidates without changing files.
+description: レビュー指摘を適用する。依頼が機械的に安全な編集を承認しているとき、またはファイルを変更せずに具体的な編集候補を求めているときに使う。
 ---
 
-- Classify a finding as mechanically safe only when the supplied evidence shows that it preserves specified behavior, stays within the authorized target, and requires no design or policy choice; treat every other finding as judgment-dependent.
-- When edits are authorized, submit every mechanically safe change through the supplied editing interface instead of stopping at classification or proposed text. Leave judgment-dependent findings unchanged.
-- Distinguish an edit submitted from a change verified by the returned response, readback, or observed diff; never infer success from submission alone.
-- Keep the observed diff limited to the authorized findings. After a rename, verify every affected declaration and reference and confirm that the old name has no unintended occurrence within scope.
-- Grade every reported finding, including applied, deferred, and review-only candidates, with exactly one of `[critical]`, `[major]`, or `[minor]`: critical is must fix (a bug, data loss, or security/authorization failure); major is imo (a design or maintainability improvement with valid alternatives); minor is nits (behavior-preserving naming or style polish). Severity is independent of mechanical safety and edit authorization.
-- Run fresh relevant checks after verified edits and report their observed results; mark any check that cannot run or cover an affected use as unverified.
-- In review-only, make no local or remote mutation; inspect the permitted evidence and report concrete candidates with their safety classification.
-- Report one ledger of every finding ordered critical → major → minor regardless of application status; each entry opens with its `[critical]`/`[major]`/`[minor]` tag, then the file location and finding, then its status (applied and verified / submitted but unverified / deferred with the decision factors needed to proceed / review-only candidate). After the ledger, report check results and any external-state change.
+- 指摘を機械的に安全と分類するのは、提供された根拠が、その指摘が規定された振る舞いを保ち、承認された対象の範囲内に収まり、設計や方針の選択を要しないことを示す場合に限る。それ以外の指摘はすべて判断依存として扱う。
+- 編集が承認されている場合は、分類や修正案の提示で止まらず、機械的に安全な変更をすべて、提供された編集インターフェースを通じて送信する。判断依存の指摘は変更しない。
+- 送信した編集と、返却値、再読取、または観測した diff で確認した変更を区別する。送信だけから成功を推測しない。
+- 観測した diff を承認された指摘に限定する。名前を変更した後は、影響を受ける宣言と参照をすべて確認し、範囲内に旧名の意図しない出現が無いことを確かめる。
+- 報告するすべての指摘（適用済み、先送り、review-only の候補を含む）に、`[critical]`、`[major]`、`[minor]` のいずれか一つだけを付ける。critical は must fix（バグ、データ損失、セキュリティまたは認可の不備）、major は imo（妥当な代替案がある設計または保守性の改善）、minor は nits（振る舞いを保つ命名やスタイルの手直し）である。重大度は、機械的な安全性や編集の承認とは独立である。
+- 確認済みの編集の後に、関連する確認を新たに実行し、観測した結果を報告する。実行できない確認、または影響を受ける使用箇所を網羅できない確認は未検証とする。
+- review-only では、ローカルにもリモートにも変更を加えない。許可された根拠を調べ、具体的な候補を安全性の分類とともに報告する。
+- 適用状況にかかわらず、すべての指摘を critical → major → minor の順に並べた一つの台帳として報告する。各項目は `[critical]`/`[major]`/`[minor]` のタグで始め、次にファイル位置と指摘、その後に状態（適用して確認済み / 送信したが未検証 / 先へ進むのに必要な判断材料を添えて先送り / review-only の候補）を書く。台帳の後に、確認の結果と外部状態の変更を報告する。

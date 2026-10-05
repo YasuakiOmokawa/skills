@@ -1,17 +1,17 @@
 ---
 name: map-user-stories
-description: Turn supplied product evidence into a user story map when user value, stories, executable tasks, and delivery order must be made traceable.
+description: 渡されたプロダクトの根拠をユーザーストーリーマップにする。ユーザー価値、ストーリー、実行可能なタスク、提供順序を追跡可能にする必要があるときに使う。
 ---
 
-## Workflow
+## 手順
 
-1. Resolve the evidence, target users, intended user results, scope, delivery priorities, and authorized map destination from the request and available context.
-2. Build one traceable chain from each user result to its stories, from every story to concrete executable tasks, and from those tasks to delivery order.
-3. Require at least one task for every story and a sourced story and user result for every task; label unsupported details as assumptions or unverified information.
-4. Separate the smallest end-to-end set that delivers the stated user value from all later delivery scope. Keep ordering claims within the priorities supported by the evidence.
-5. Limit mutations to the exact authorized map destination, leaving product code and external issue systems unchanged.
-6. Observe the destination before writing and preserve a supplied template's headings and fields unless structural change was authorized. Re-read it afterward and confirm the intended map is present. If access, writing, or confirmation fails, report the map as not created or unverified instead of substituting an external issue.
+1. 依頼と利用可能な文脈から、根拠、対象ユーザー、意図するユーザー成果、範囲、提供の優先順位、依頼で書き込みを許可されたマップの保存先を特定する。
+2. 各ユーザー成果からそのストーリーへ、全てのストーリーから具体的に実行可能なタスクへ、それらのタスクから提供順序へと、追跡可能な一本の連鎖を組む。
+3. 全てのストーリーに少なくとも1つのタスクを、全てのタスクに出典のあるストーリーとユーザー成果を求める。裏付けのない詳細は仮定または未検証の情報と明示する。
+4. 述べられたユーザー価値を提供する最小のend-to-endの集合を、後続の全ての提供範囲から分ける。順序に関する主張は根拠が裏付ける優先順位の範囲内に留める。
+5. 変更はその保存先そのものに限定し、プロダクトコードと外部のissue管理システムは変更しない。
+6. 書き込む前に保存先を観測し、構造の変更が依頼で許可されていない限り、渡されたテンプレートの見出しとフィールドを保つ。書き込み後に再読取し、意図したマップが存在することを確認する。アクセス、書き込み、または確認が失敗した場合は、外部のissueで代替せず、マップを未作成または未検証として報告する。
 
-## Completion
+## 完了
 
-Return the traceable map, initial value set, later scope, sourced facts, assumptions, destination status, failures, and unverified items.
+追跡可能なマップ、初期の価値集合、後続の範囲、出典のある事実、仮定、保存先の状態、失敗、未検証事項を返す。

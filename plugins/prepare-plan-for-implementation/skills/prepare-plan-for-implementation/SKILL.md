@@ -1,18 +1,18 @@
 ---
 name: prepare-plan-for-implementation
-description: Prepare an existing plan for implementation when it already has valid acceptance criteria and a ready MECE review, by ordering concrete work and writing a same-plan verification mapping; do not use it to implement the plan.
+description: 有効な受け入れ基準とreadyのMECE Reviewを持つ既存の計画を、具体的な作業の順序付けと同じ計画内の検証対応付けによって実装に備えさせる。計画の実装には使わない。
 ---
 
-## Workflow
+## 手順
 
-- Resolve the current plan and whether changing its exact destination is authorized. Require exactly one `## Acceptance Criteria` section that, apart from blank lines, contains only one or more unique exact `- [ ] AC-NNN:` rows with non-whitespace criterion text after the colon. Require exactly one `## MECE Review` containing exactly one `- AC IDs:` row whose value lists the same IDs in ascending order joined by `, ` and exactly one `- Gate:` row whose complete value is `- Gate: ready`, and at most one existing `## Verification Plan`. Inspect every listed structural condition before deciding readiness. If any condition fails, do not prepare the plan; report every detected upstream defect.
-- Build the complete requested plan content from its acceptance criteria and coverage evidence rather than returning category labels or coverage claims. Order concrete plan items by execution dependencies, and in each item state the change target, dependency or predecessor, linked criterion, verification method, and unresolved prerequisite.
-- Create the `## Verification Plan` or replace the entire contents of its sole existing instance. Apart from blank lines, the resulting section contains only one `- AC IDs: <ascending AC-NNN IDs joined by ", ">` row and exactly one `### AC-NNN` entry per current AC. Apart from blank lines, each entry contains only one nonempty `- Oracle:`, `- Evidence anchors:`, `- Prerequisites:`, and `- Required effects:` row. Derive the oracle from the criterion; record only known repository or runtime entry points as evidence anchors; preserve unresolved prerequisites; and record the minimum actions or state changes needed to observe the oracle as required effects. For an oracle based on absence, an upper count, concurrency, elapsed time, non-impact, or an invariant checked along enumerated write paths, treat its mapping as complete only when the required effects name a positive witness that the relevant path and observation boundary completed and a deterministic failure signal or controlled seam, which for enumerated write paths fails when a writer of either related state appears outside the enumeration; a fixed delay, absence, or per-path checks alone leave the prerequisite unresolved. Required effects describe later authorization needs and never grant them.
-- Do not invent missing prerequisites; show their effect on sequencing and leave their resolution as a handoff.
-- Submit the prepared plan only to its exact authorized destination. Keep downstream verification intent exclusively in its `## Verification Plan`; do not create a second verification source. Carry out the authorized submission and distinguish the submitted content from the observed response or readback.
-- Report only what the observed evidence establishes. Do not promote a submission to a verified write, or a verified write to verified content, without evidence for that claim; leave product code and external state unchanged.
-- When no destination change is explicitly authorized, return the content only in the response.
+- 現在の計画と、その厳密な保存先の変更が承認されているかを特定する。空行を除けば、コロンの後に空白以外の基準テキストを持つ、一意で厳密な `- [ ] AC-NNN:` 行を一つ以上だけ含む `## Acceptance Criteria` 節がちょうど一つあることを求める。値が同じ ID を `, ` で連結した昇順で列挙するちょうど一つの `- AC IDs:` 行と、値全体が `- Gate: ready` であるちょうど一つの `- Gate:` 行を含む `## MECE Review` がちょうど一つあること、そして既存の `## Verification Plan` が最大一つであることを求める。準備可否を判断する前に、列挙したすべての構造条件を検査する。いずれかの条件を満たさない場合は計画を準備せず、検出したすべての上流の欠陥を報告する。
+- 分類ラベルやカバー状況の主張を返すのではなく、受け入れ基準とカバー状況の根拠から、依頼された計画の内容を完全に組み立てる。具体的な計画項目を実行上の依存関係の順に並べ、各項目に変更対象、依存先または先行項目、紐づく基準、検証方法、未解決の前提条件を記す。
+- `## Verification Plan` を作成するか、唯一の既存インスタンスの内容全体を置き換える。空行を除けば、結果の節は一つの `- AC IDs: <ascending AC-NNN IDs joined by ", ">` 行と、現在の AC ごとにちょうど一つの `### AC-NNN` エントリだけを含む。空行を除けば、各エントリは空でない `- Oracle:`、`- Evidence anchors:`、`- Prerequisites:`、`- Required effects:` 行をそれぞれ一つだけ含む。oracle は基準から導く。evidence anchors には既知のリポジトリまたはランタイムのエントリポイントだけを記録する。未解決の前提条件は保持する。oracle を観測するのに必要な最小限の操作または状態変化を required effects として記録する。不在、件数の上限、並行性、経過時間、非影響、または列挙した書き込み経路に沿って検査する不変条件に基づく oracle については、関連する経路と観測境界が完了したことの肯定的証跡を required effects が名指しし、かつ決定的な失敗シグナルまたは制御された seam も名指ししている場合に限り、その対応付けを完了とみなす。列挙した書き込み経路の場合、その失敗シグナルまたは seam は、関連するどちらかの状態の書き手が列挙の外に現れたときに失敗するものとする。固定の待ち時間、不在、経路ごとの検査だけでは前提条件は未解決のまま残る。Required effects は後で必要になる承認を記述するものであり、承認を与えるものではない。
+- 欠けている前提条件を創作しない。それらが順序に与える影響を示し、その解決は引き継ぎ事項として残す。
+- 準備した計画は、依頼で書き込みを許可された厳密な保存先にだけ送信する。下流の検証意図はその `## Verification Plan` にだけ置き、二つ目の検証ソースを作らない。承認された送信を実行し、送信した内容と、観測した応答または再読取とを区別する。
+- 観測した根拠が確定させることだけを報告する。その主張の根拠なしに、送信を検証済みの書き込みへ、検証済みの書き込みを検証済みの内容へ格上げしない。プロダクトコードと外部状態は変更しない。
+- 保存先の変更が明示的に承認されていない場合は、内容を回答本文でだけ返す。
 
-## Completion
+## 完了
 
-If structural preflight fails, return only every detected upstream defect and no prepared plan. Otherwise return the complete plan, AC-to-verification correspondence, and evidenced write status. If the plan or any required AC mapping is not verified, report partial completion and the affected criteria or prerequisites.
+構造の事前検査に失敗した場合は、検出したすべての上流の欠陥だけを返し、準備した計画は返さない。そうでなければ、完全な計画、AC と検証の対応、根拠付きの書き込み状態を返す。計画または必要な AC の対応付けのいずれかが検証されていない場合は、部分的な完了と、影響を受けた基準または前提条件を報告する。

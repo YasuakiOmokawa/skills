@@ -1,18 +1,18 @@
 ---
 name: create-pr
-description: Create or update the pull request associated with the current branch when the user asks to open it, revise its content, or explicitly make it reviewable.
+description: 現在のブランチに対応するPRを作成または更新する。PRを開く、内容を改める、明示的にレビュー可能な状態にすることを求められたときに使う。
 ---
 
-# Workflow
+# 手順
 
-1. Resolve the current repository and branch from available context; for creation, also resolve the base branch, title, and information needed for the body.
-2. Before creating a new pull request, inspect the worktree and the unpublished history against the base. Require reviewable commit boundaries as create-commits produces them: no uncommitted changes, each commit one reviewable purpose kept with its tests or fixtures, ordered as a reviewer should read them. When the worktree is uncommitted or the unpublished history blends purposes, hold creation and return the commit restructuring as the required preceding work instead of performing it here. Never rewrite published or shared history, and never force-push without explicit authorization.
-3. Hold creation when required creation information or authorization is missing or ambiguous, or when published or shared history cannot meet the reviewable boundaries without being rewritten. State each blocker and the safe non-rewrite path needed to proceed.
-4. Write the pull request body as one short statement of the pull request's purpose and nothing more. When the repository has `.github/PULL_REQUEST_TEMPLATE.md`, place that statement under the template's structure without expanding it to fill the remaining sections. Add design decisions, background, alternatives, or reading order only after a reviewer or the user asks for that explanation, appending the requested detail to the existing body.
-5. Locate any pull request associated with the current branch and carry out the authorized creation or update rather than stopping at its description; record the operation as submitted separately from any result verified by the returned or observed state, and never infer success from an absent response.
-6. Create a new pull request as a draft unless the user explicitly requests a reviewable state, and preserve an existing state unless its change is explicitly requested.
-7. Read `~/.claude/skills-config/release-labels.md` and select one label per group it defines — the productivity group from the nature of the change, the AI-contribution group from the session's actual share of authorship, the release-level group from impact on the configured core features, inferred from the target repository's CLAUDE.md or README opening when that list is empty — and the milestone it names. Apply only labels and a milestone verified to exist in the target repository; when the config file, a group, a matching label, or the milestone is missing, skip that item, continue the pull request operation, and record the skip with its reason. On creation set all selected items; on update fill only absent labels and an absent milestone, keeping existing ones unchanged unless their change is explicitly requested.
-8. Limit updates to the current branch's pull request and the requested fields; keep all other pull requests, merge state, close state, and branches unchanged.
-9. Before push or creation, verify the commit order and each commit's diff against the boundaries required in step 2; verify each pull request operation only from returned or subsequently observed state, including the base branch, title, affected content, and final draft or reviewable state.
-10. Pair any observed pull request number with its exact returned URL without reconstructing absent values, and record partial results and permission failures without claiming unsupported changes.
-11. Report the verified commit boundaries, submitted operations, supported final state, applied changes, failures with reasons, and unresolved outcomes.
+1. 利用可能な文脈から現在のリポジトリとブランチを特定する。作成時は、base ブランチ、タイトル、本文に必要な情報も特定する。
+2. 新しい PR を作成する前に、worktree と、base に対する未公開履歴を調べる。create-commits が作るようなレビュー可能な commit 境界を必須とする。すなわち、未 commit の変更が無く、各 commit がレビュー可能な一つの目的をそのテストや fixture とともに持ち、レビュアーが読むべき順に並んでいること。worktree が未 commit であるか、未公開履歴が目的を混在させている場合は、作成を保留し、commit の再構成をここで実施せず、必要な先行作業として返す。公開済みまたは共有済みの履歴は決して書き換えず、明示的な承認なしに force-push を決して行わない。
+3. 作成に必要な情報や承認が欠けているか曖昧な場合、または公開済みまたは共有済みの履歴が書き換えなしにはレビュー可能な境界を満たせない場合は、作成を保留する。各ブロッカーと、先へ進むのに必要な、書き換えを伴わない安全な進め方を示す。
+4. PR 本文は、PR の目的を述べる短い一文だけにし、それ以上は書かない。リポジトリに `.github/PULL_REQUEST_TEMPLATE.md` がある場合は、その一文をテンプレートの構造の下に置き、残りの節を埋めるために膨らませない。設計判断、背景、代替案、読む順序は、レビュアーまたはユーザーがその説明を求めた後に限って、求められた詳細を既存の本文に追記する形で加える。
+5. 現在のブランチに対応する PR を探し、説明で止まらずに、承認された作成または更新を実行する。操作を送信したことは、返却値または観測した状態で確認した結果とは分けて記録し、応答が無いことから成功を推測しない。
+6. ユーザーが明示的にレビュー可能な状態を求めない限り、新しい PR は draft として作成する。既存の状態は、その変更が明示的に求められない限り保つ。
+7. `~/.claude/skills-config/release-labels.md` を読み、そこで定義されたグループごとに label を一つずつ選ぶ。生産性グループは変更の性質から、AI 貢献グループはセッションが実際に担った執筆の割合から、リリースレベルグループは設定されたコア機能への影響から選び、そのコア機能の一覧が空なら対象リポジトリの CLAUDE.md または README の冒頭から推定する。あわせて、そこで指定された milestone を選ぶ。対象リポジトリに存在することを確認した label と milestone だけを付ける。設定ファイル、グループ、該当する label、または milestone が無い場合は、その項目を飛ばして PR の操作を続け、飛ばしたことを理由とともに記録する。作成時は選んだ項目をすべて設定する。更新時は未設定の label と未設定の milestone だけを埋め、既存のものは、その変更が明示的に求められない限り変えない。
+8. 更新は、現在のブランチの PR と求められたフィールドに限定する。他のすべての PR、merge 状態、close 状態、ブランチは変えない。
+9. push または作成の前に、commit 順序と各 commit の diff を手順 2 で求めた境界に照らして確認する。各 PR 操作は、base ブランチ、タイトル、影響を受けた内容、最終的な draft またはレビュー可能な状態を含め、返却値またはその後に観測した状態だけから確認する。
+10. 観測した PR 番号は、返却された正確な URL と対にし、欠けている値を組み立て直さない。部分的な結果と権限エラーを記録し、裏付けの無い変更を主張しない。
+11. 確認済みの commit 境界、送信した操作、裏付けのある最終状態、適用した変更、理由付きの失敗、未解決の結果を報告する。
