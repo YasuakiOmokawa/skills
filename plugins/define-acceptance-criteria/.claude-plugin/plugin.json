@@ -1,7 +1,7 @@
 {
   "name": "define-acceptance-criteria",
   "description": "既存の計画や仕様を観測可能な受け入れ基準に変換する。成功、失敗、境界、非影響の振る舞いを判定可能にする必要があるときに使う。",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "author": {
     "name": "Yasuaki Omokawa",
     "url": "https://github.com/YasuakiOmokawa"
