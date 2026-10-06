@@ -26,7 +26,7 @@
     {
       "name": "mece-plan-review",
       "description": "計画と受け入れ基準を仕様とコードの根拠と比較する。MECEな網羅性レビュー、または明示的に承認されたレビュー更新を求められたときに使う。",
-      "version": "2.5.0",
+      "version": "2.6.0",
       "source": "./plugins/mece-plan-review",
       "skills": [
         "./skills/mece-plan-review"
