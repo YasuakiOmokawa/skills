@@ -230,7 +230,7 @@
     {
       "name": "implement-plan",
       "description": "Verification Planが全受け入れ基準を対応付けている準備済みの計画を実装する。テストで観測できる各基準を、計画の依存順にred、green、refactorで進める。",
-      "version": "1.2.0",
+      "version": "1.3.0",
       "source": "./plugins/implement-plan",
       "skills": [
         "./skills/implement-plan"
