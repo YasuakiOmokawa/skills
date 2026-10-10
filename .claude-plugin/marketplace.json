@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "omokawa-skills",
-  "version": "11.31.0",
+  "version": "11.32.0",
   "description": "Plan-driven development workflow を構成する個別 skill 群。必要なものだけ install 可能",
   "owner": {
     "name": "Yasuaki Omokawa",
@@ -110,7 +110,7 @@
     {
       "name": "verify-plan",
       "description": "実装済みの変更を、完了とみなす前に計画または受け入れ基準に照らして検証する必要があるときに使う。",
-      "version": "2.4.0",
+      "version": "2.5.0",
       "source": "./plugins/verify-plan",
       "skills": [
         "./skills/verify-plan"
