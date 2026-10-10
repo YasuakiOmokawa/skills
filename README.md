@@ -13,7 +13,7 @@ npx skills add YasuakiOmokawa/skills
 | Plugin | Purpose |
 |---|---|
 | [`apply-findings`](./plugins/apply-findings/skills/apply-findings/SKILL.md) | レビュー指摘を適用する。依頼が機械的に安全な編集を承認しているとき、またはファイルを変更せずに具体的な編集候補を求めているときに使う。 |
-| [`build-poc`](./plugins/build-poc/skills/build-poc/SKILL.md) | 技術選定または実現可能性を、実行可能な環境で成功基準に照らしたPoCや最小実験によって判断する必要があるときに使う。 |
+| [`build-poc`](./plugins/build-poc/skills/build-poc/SKILL.md) | 技術選定または実現可能性の問いに対し、実装パターンを列挙して候補と評価軸の星取表を作り、実行可能な環境の最小実験でセルを埋めて成功基準を満たす最適な候補を選ぶPoCが必要なときに使う。 |
 | [`build-prototype`](./plugins/build-prototype/skills/build-prototype/SKILL.md) | 承認済みのPoCまたは同等の根拠があり、選定方式がコードベースの責務、慣習、契約に適合するかを実コードで確かめる必要があるときに使う。 |
 | [`create-commits`](./plugins/create-commits/skills/create-commits/SKILL.md) | 現在のブランチの未commitまたは未公開の変更を、レビュアーが順に読める境界のcommitにまとめる。公開前のcommit、分割、ローカル履歴の再構成を求められたときに使う。 |
 | [`create-design-doc`](./plugins/create-design-doc/skills/create-design-doc/SKILL.md) | 承認済み計画と、PoCとプロトタイプまたは同等の根拠による実現可能性とコードベース適合性の根拠から、実装判断に使うDesign Docを指定または導出した保存先に作る必要があるときに使う。 |
