@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "omokawa-skills",
-  "version": "11.31.0",
+  "version": "11.32.0",
   "description": "Plan-driven development workflow を構成する個別 skill 群。必要なものだけ install 可能",
   "owner": {
     "name": "Yasuaki Omokawa",
@@ -84,18 +84,6 @@
       "license": "MIT"
     },
     {
-      "name": "map-user-stories",
-      "description": "渡されたプロダクトの根拠をユーザーストーリーマップにする。ユーザー価値、ストーリー、実行可能なタスク、提供順序を追跡可能にする必要があるときに使う。",
-      "version": "1.1.0",
-      "source": "./plugins/map-user-stories",
-      "skills": [
-        "./skills/map-user-stories"
-      ],
-      "category": "productivity",
-      "homepage": "https://github.com/YasuakiOmokawa/skills",
-      "license": "MIT"
-    },
-    {
       "name": "qa-ui",
       "description": "観測可能な確認項目、期待状態、アクセス可能な描画済みページ、許可された操作が依頼で示されているとき、実装済みUIを検証する。",
       "version": "3.5.0",
@@ -110,7 +98,7 @@
     {
       "name": "verify-plan",
       "description": "実装済みの変更を、完了とみなす前に計画または受け入れ基準に照らして検証する必要があるときに使う。",
-      "version": "2.4.0",
+      "version": "2.5.0",
       "source": "./plugins/verify-plan",
       "skills": [
         "./skills/verify-plan"

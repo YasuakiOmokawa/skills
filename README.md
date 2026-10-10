@@ -24,7 +24,6 @@ npx skills add YasuakiOmokawa/skills
 | [`extract-figma-spec`](./plugins/extract-figma-spec/skills/extract-figma-spec/SKILL.md) | 提供または取得できるFigmaの根拠を原子的な確認項目に分解し、指定されたフレーム、状態、部品について特定された実装とデザイン差分表で比較する必要があるときに使う。 |
 | [`ground-design-in-codebase`](./plugins/ground-design-in-codebase/skills/ground-design-in-codebase/SKILL.md) | 関連する仕様と既存コードが責務とリスクについて具体的な根拠を示せるとき、提案された設計境界を実装前にレビューする。 |
 | [`implement-plan`](./plugins/implement-plan/skills/implement-plan/SKILL.md) | Verification Planが全受け入れ基準を対応付けている準備済みの計画を実装する。テストで観測できる各基準を、計画の依存順にred、green、refactorで進める。 |
-| [`map-user-stories`](./plugins/map-user-stories/skills/map-user-stories/SKILL.md) | 渡されたプロダクトの根拠をユーザーストーリーマップにする。ユーザー価値、ストーリー、実行可能なタスク、提供順序を追跡可能にする必要があるときに使う。 |
 | [`mece-plan-review`](./plugins/mece-plan-review/skills/mece-plan-review/SKILL.md) | 計画と受け入れ基準を仕様とコードの根拠と比較する。MECEな網羅性レビュー、または明示的に承認されたレビュー更新を求められたときに使う。 |
 | [`model-data`](./plugins/model-data/skills/model-data/SKILL.md) | 業務要求を既存のスキーマやSQLに照らしてモデル化し、一貫したデータモデル、必要に応じたDBML、データ設計、エンティティ関係、スキーマ整合性、SQLアンチパターンについての根拠付きの指摘を作る必要があるときに使う。 |
 | [`prepare-plan-for-implementation`](./plugins/prepare-plan-for-implementation/skills/prepare-plan-for-implementation/SKILL.md) | 有効な受け入れ基準とreadyのMECE Reviewを持つ既存の計画を、具体的な作業の順序付けと同じ計画内の検証対応付けによって実装に備えさせる。計画の実装には使わない。 |
