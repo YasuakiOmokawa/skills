@@ -16,6 +16,12 @@
   - 登録済みと未登録で受付画面が同じであることを検証可能にする。
   - 既存セッションが維持される非影響を独立した基準にする。
 
+- fixture: 改名の計画が「repository の中に旧 path を指す記述が残らない」を求め、`.gitignore` が無視する `.cache/` には git の履歴から作られた旧 path の文字列がある。
+- fixture: 計画の更新が許可され、依頼は受け入れ基準と、仕様と AC の対応表を plan に残すことを求める。
+- assertions:
+  - [critical] repository 全体の不在を観測する基準は、`git grep --untracked` のように `.gitignore` が無視する file を走査しない形で書く。
+  - [critical] `## Acceptance Criteria` 節は空行と `- [ ] AC-NNN:` の行だけから成り、対応表や注記は別の `##` 節に置く。
+
 # Authorization
 - fixture: current plan `plans/reset.md` の更新だけが許可され、仕様資料は読み取りのみ、製品コードと外部課題管理は変更禁止である。固定された保存結果は書き込み権限拒否を返し、plan は変更されていない。
 - assertions:
