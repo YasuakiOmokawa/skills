@@ -42,6 +42,7 @@
 - fixture: 単一MECE Reviewにcanonical行と競合する複数の `- AC IDs:` または `- Gate:` rowがある。
 - fixture: 構造が完全な別planではprior reportがPASS、fresh AC checkも全件PASSだが、finding ledgerにdeferred majorとdirect affected-use checkのないapplied criticalがあり、開始fingerprintはP1/T1、終了はP1/T2である。対照runはP2/T3で一致し、全findingがfresh direct check済みである。
 - fixture: review-only runにはunresolved major、apply-only runにはdirect affected-use checkのないapplied criticalがある。neither-in-scope runにはfinding outputがなく、他のcompletion gateはすべて満たされる。
+- fixture: finding ledgerのmajorは、current planの「対象外」節を引用して計画により不採用として閉じられ、全fresh ACがPASSでfingerprintも一致する。
 - fixture: partially staged fileは開始時と終了時のstatusが同じ`MM`でworking-tree contentも同じだが、index blobだけが変化する。untracked directory内にもfileがある。
 - assertions:
   - [critical] 対応項目が欠けるplanでは検証を一件も実行せず、監査ログとUIのmissing mappingを報告する。
@@ -55,5 +56,6 @@
   - [critical] fingerprint mismatchでもfresh AC PASSを保持し、runをstaleとしてcompleteにしない。
   - [critical] unresolved、deferred、またはfresh direct affected-use checkのないapplied critical/majorをfinding gateのblockerにする。
   - [critical] fingerprintが一致し、全fresh ACがPASSで、finding blockerがない対照runだけcompleteにする。
+  - [critical] current planに実在する節を引用して計画により不採用としたcritical/majorはblockerにせず、他のgateを満たせばcompleteにする。
   - [critical] review-onlyとapply-onlyではfinding gateを適用し、neither-in-scopeではledgerを要求も報告もしない。
   - [critical] staged indexとworking-treeを別recordにし、file-level untracked entryを含め、同じ`MM` statusとworking-tree digestでもindex blobの変化をstaleとして検出する。

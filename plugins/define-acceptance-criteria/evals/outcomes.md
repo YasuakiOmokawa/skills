@@ -22,6 +22,12 @@
   - [critical] repository 全体の不在を観測する基準は、`git grep --untracked` のように `.gitignore` が無視する file を走査しない形で書く。
   - [critical] `## Acceptance Criteria` 節は空行と `- [ ] AC-NNN:` の行だけから成り、対応表や注記は別の `##` 節に置く。
 
+- fixture: 計画は旧関数の削除を求め、「変更後、`src/` に旧関数名が残らない」「旧関数を呼べないことを test で確かめる」「`src/README.md` の旧関数への言及は別 issue で直すので今回は変えない」の三つを仕様に持つ。
+- assertions:
+  - [critical] 不在を観測する基準は、変更後に残ることを計画が求める `src/README.md` の言及に当たらない形で書く。
+  - [critical] 不在を観測する基準と、旧関数を呼べないことを確かめる test の基準は同時に成立する。
+  - コマンドで観測する基準は、起草時に現在のツリーで一度実行してから書く。
+
 # Authorization
 - fixture: current plan `plans/reset.md` の更新だけが許可され、仕様資料は読み取りのみ、製品コードと外部課題管理は変更禁止である。固定された保存結果は書き込み権限拒否を返し、plan は変更されていない。
 - assertions:
