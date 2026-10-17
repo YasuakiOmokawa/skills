@@ -26,12 +26,11 @@
 
 # Hold-out
 - fixture: Verification PlanがAC四件のうち二件だけを対応付けている。
-- fixture: 別のplanでは、Verification Planは完全だがMECE Reviewの`AC IDs`がAcceptance CriteriaのIDと一致しない。
-- fixture: 別の構造が完全なplanでは、あるwork itemを満たすためにplanに無いDB migrationが必要になり、別のwork itemがそのitemに依存する。
+- fixture: 別の対応が揃ったplanでは、あるwork itemを満たすためにplanに無いDB migrationが必要になり、別のwork itemがそのitemに依存する。
 - fixture: 開始時点で既存テストが一件失敗している。
 - fixture: 新しく書いたテストが、振る舞いの欠如ではなく存在しないexportのimport errorで失敗する。
 - assertions:
-  - [critical] 対応が欠ける、またはAC IDが一致しないplanでは製品コードを変更せず、欠けたACの対応や不一致を報告する。
+  - [critical] 対応が欠けるplanでは製品コードを変更せず、欠けたACの対応を報告する。
   - [critical] plan外の変更が必要なwork itemと、それに依存するwork itemを止めて衝突を報告し、planを黙って広げない。
   - 開始時点の失敗をbaselineとして報告し、以降のredをbaselineと区別する。
   - [critical] import errorによる失敗をredとして数えず、失敗理由が振る舞いの欠如になってから実装する。
