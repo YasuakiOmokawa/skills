@@ -19,6 +19,7 @@
   - コードの権限失敗が基準と計画で覆われない点を報告する。
   - 各判断に確認できた根拠を結び付ける。
   - [critical] 仕様sourceが段階を明示し計画が一部だけを覆うとき、覆われない段階を名指しし、非目標として宣言されていないことを欠落として報告する。
+  - 計画の目的の外にある項目は、基準の追加ではなく、範囲外の宣言を上流の修正として求める。
   - [critical] 計画が新しい環境変数を導入するとき、repo内の設定サンプル (`.env.example` 等) への伝播がタスクにもACにも無いことを欠落として報告する。
   - [critical] 計画が書く状態に、別の状態との関係を定める仕様がある場合、関係のもう一方の状態を変える既存経路まで辿る。関係を壊す経路が計画・ACに無いことを、経路を名指しして欠落として報告する。
 
@@ -32,7 +33,6 @@
 
 # Hold-out
 - fixture: 仕様、受け入れ基準、計画は確認でき、請求作成の対応は判断できるが、再試行を担うコードだけアクセス拒否となる。
-- fixture: 別のcurrent planには `## Acceptance Criteria` が二つあるか、同じAC-IDが二行に使われている。
 - fixture: さらに別のvalid planには明示された仕様sourceが二件、code sourceが一件あり、codeのcriterion関連branchはrepo内helperを呼ぶ。更新interfaceはtimeoutし、別readbackは同じexact destinationの完全だが送信内容と異なる文書を返す。
 - fixture: さらに別のcurrent planは新しい環境変数を導入し、repo内に設定サンプルが存在するが、計画、受け入れ基準、依頼のいずれもそのファイルを名指ししていない。
 - fixture: shared async helperのplanはresolveと一つのconsumerだけを扱い、reject、abort/unmount、terminal/exhaustiveness boundaryを欠く。別のdirect consumerはplan、AC、明示sourceにないrepository-local sibling fileだけに存在する。shared definitionはcriterion branchからclosure-addedされるvariantと、明示sourceとして最初からmanifestにあるvariantがある。負命題の根拠は固定時間待って何も起きないことだけである。対照planは全outcome、全direct consumer、boundary、completed-path witnessとcontrolled seamを明示する。
@@ -40,12 +40,11 @@
   - [critical] 確認できる請求作成の対応を評価する。
   - [critical] 再試行とコードの対応を未検証とする。
   - [critical] required comparison が未確認であるため `Gate: unverified` とする。
-  - [critical] duplicate sectionまたはduplicate AC-IDをmalformedとして扱い、reviewやGateを作らない。
   - アクセス拒否を適合または不適合の根拠にしない。
   - 確認済み結果と未検証範囲を分けて報告する。
   - [critical] 明示category sourceを全件manifest化し、criterion関連calleeを有限closureで確認するか未検証として残す。
-  - [critical] timeout後もsubmittedはyes、operationはunverifiedとし、exact destinationの完全readback差分をcontent mismatchとして独立報告する。
-  - [critical] manifested obligationからACへ逆照合し、async lifecycle、direct consumer、terminal/exhaustiveness、負命題のanti-vacuityという四familyを各最大一つのgapへ集約し、具体的な不足をfamily内に列挙してblockedにする。
+  - [critical] 書き込みがtimeoutし、再読取した内容が送信内容と異なるときは、保存できたと主張せず、食い違いを報告する。
+  - [critical] 根拠が課す義務 (非同期処理の失敗や中断、共有定義の直接の利用者、境界の網羅、待つだけでは示せない不在) から基準へ逆に照合し、欠けを具体的に名指ししてblockedにする。
   - [critical] shared definitionがinitial manifestまたはclosure-addedのどちらでもrepository-local direct referenceをfreeze前に解決し、planにないsibling consumerを発見する。
   - [critical] 明示sourceが運用面の設定サンプルを指していないとき、その伝播を欠落または未検証として報告するか、突き合わせた証拠の範囲を読み手が判別できる形で示す。範囲を示さずに覆ったと述べない。
   - [critical] 全obligationとcompleted-path witnessおよびcontrolled seamを覆う対照planはreadyとし、all-clear checklistを追加しない。
