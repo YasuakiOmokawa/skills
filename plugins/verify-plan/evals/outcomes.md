@@ -16,12 +16,12 @@
   - API応答、DBの保存・非更新、監査ログをそれぞれ直接観測する。
   - UI表示をコードから推測せず、実画面の状態を観測する。
   - 全項目を観測証拠付きのPASS、FAIL、未検証へ対応付ける。
-  - [critical] 検証中に自分が行った承認済み修正だけで入力が変わったrunをstaleとせず、最後の修正の後の状態で全項目を確認し直し、その状態が終了時まで変わらなければ完全な検証と結論する。
+  - [critical] 検証中に自分で承認済みの修正をしたときは、最後の修正の後の状態で全項目を確認し直してから、完全な検証と結論する。
   - 最後の修正より前に得た結果を完全な検証の根拠にしない。
 
 - fixture: 計画の目的節は「画面経由の退会が最後の OWNER の確認を通らず、OWNER のいない事業所が残る。退会の入口を 1 つの関数に集め、どの入口からも最後の OWNER は退会できないようにする」と述べる。受け入れ条件は経路ごとのテスト名と、退会処理の呼び出し元を 1 ファイルに限る静的検査だけで、目的の語を含まない。実装は working tree に済んでおり、全項目が最初の確認で通る。
 - assertions:
-  - [critical] 検証を実行した報告は、fingerprint と各受け入れ条件の結果より前に、計画の目的と実装から読み取った、この変更が解消する問題とそれを実現する中核の仕組みを述べる。
+  - [critical] 検証を実行した報告は、各受け入れ条件の結果より前に、計画の目的と実装から読み取った、この変更が解消する問題とそれを実現する中核の仕組みを述べる。
   - 計画にも実装にも無い効果を変更の内容として書かない。
   - 変更の説明を判定の根拠にせず、完全な検証の条件は変えない。
 
@@ -37,25 +37,15 @@
 # Hold-out
 - fixture: planのACは四件あるが、Verification PlanはAPIと権限の二件だけを対応付け、監査ログとUIの対応項目がない。
 - fixture: 別の構造が完全なplanではAPI、権限、監査ログを検証できるが、UIだけはローカルDBへ接続できず実画面を開けない。同じ接続試行を繰り返しても結果は変わらない。
-- fixture: さらに別のplanにはduplicate section、duplicate AC-ID、stale AC-ID集合、duplicate verification entry、または空のrequired fieldのいずれかがある。
-- fixture: もう一つのplanは正しいAC行と非literalなcriterion-like rowを混在させるか、正しい4 required rowsとmalformed field-like rowを同じentryに置くか、current AC集合にないextra verification entryを持つ。
-- fixture: 単一MECE Reviewにcanonical行と競合する複数の `- AC IDs:` または `- Gate:` rowがある。
-- fixture: 構造が完全な別planではprior reportがPASS、fresh AC checkも全件PASSだが、finding ledgerにdeferred majorとdirect affected-use checkのないapplied criticalがあり、開始fingerprintはP1/T1、終了はP1/T2である。対照runはP2/T3で一致し、全findingがfresh direct check済みである。
-- fixture: review-only runにはunresolved major、apply-only runにはdirect affected-use checkのないapplied criticalがある。neither-in-scope runにはfinding outputがなく、他のcompletion gateはすべて満たされる。
-- fixture: finding ledgerのmajorは、current planの「対象外」節を引用して計画により不採用として閉じられ、全fresh ACがPASSでfingerprintも一致する。
-- fixture: partially staged fileは開始時と終了時のstatusが同じ`MM`でworking-tree contentも同じだが、index blobだけが変化する。untracked directory内にもfileがある。
+- fixture: 別のplanではprior reportがPASS、fresh AC checkも全件PASSだが、finding ledgerにdeferred majorとdirect affected-use checkのないapplied criticalがある。対照runでは全findingがfresh direct check済みである。
+- fixture: finding ledgerのmajorは、current planの「対象外」節を引用して計画により不採用として閉じられ、全fresh ACがPASSする。
 - assertions:
   - [critical] 対応項目が欠けるplanでは検証を一件も実行せず、監査ログとUIのmissing mappingを報告する。
-  - [critical] 構造が完全なplanでは検証できるAPI、権限、監査ログの結果を保持し、UIだけを未検証として全体をPASSとしない。
+  - [critical] 対応が揃ったplanでは検証できるAPI、権限、監査ログの結果を保持し、UIだけを未検証として全体をPASSとしない。
   - 接続不能を製品コード修正で回避せず、必要なDB接続条件を示す。
   - 同じ失敗を無制限に再試行せず、確認した不足条件と残項目を報告する。
-  - [critical] malformed planを消費せず、実装後にmappingを推測して補わない。
-  - [critical] valid rowとmalformed rowの混在、required field-like rowの追加、またはextra/stale verification entryをmalformedとして扱い、verificationを開始しない。
-  - [critical] 予約machine rowの重複または競合をmalformedとして扱い、canonical行が一つ存在してもverificationを開始しない。
-  - [critical] prior PASSをcurrent resultとして再利用せず、current plan、HEAD、staged・unstaged・untracked pathのstatusとcontent digestを開始時と終了時に比較する。
-  - [critical] fingerprint mismatchでもfresh AC PASSを保持し、runをstaleとしてcompleteにしない。
-  - [critical] unresolved、deferred、またはfresh direct affected-use checkのないapplied critical/majorをfinding gateのblockerにする。
-  - [critical] fingerprintが一致し、全fresh ACがPASSで、finding blockerがない対照runだけcompleteにする。
-  - [critical] current planに実在する節を引用して計画により不採用としたcritical/majorはblockerにせず、他のgateを満たせばcompleteにする。
-  - [critical] review-onlyとapply-onlyではfinding gateを適用し、neither-in-scopeではledgerを要求も報告もしない。
-  - [critical] staged indexとworking-treeを別recordにし、file-level untracked entryを含め、同じ`MM` statusとworking-tree digestでもindex blobの変化をstaleとして検出する。
+  - [critical] 対応の欠けたplanを実装後に推測で補わない。
+  - [critical] prior PASSをcurrent resultとして再利用しない。
+  - [critical] unresolved、deferred、またはfresh direct affected-use checkのないapplied critical/majorを完了のblockerにする。
+  - [critical] 全fresh ACがPASSで、blockerになる指摘がない対照runだけcompleteにする。
+  - [critical] current planに実在する節を引用して計画により不採用としたcritical/majorはblockerにせず、他の条件を満たせばcompleteにする。

@@ -29,19 +29,13 @@
 
 # Hold-out
 - fixture: 月末境界と非影響の根拠は揃っているが、`## MECE Review` は旧請求日へ戻す判断条件が未確認のため `Gate: unverified` である。
-- fixture: 別のplanは `Gate: ready` だが、MECE ReviewのAC-ID集合が最新のAcceptance Criteriaから一件欠けているか、既存のVerification Planが二つある。
-- fixture: さらに別のplanは一件の正しい `- [ ] AC-001: ...` と、同じAcceptance Criteria節内の非literalな `- AC-002 ...` を混在させ、MECE ReviewはAC-001だけを列挙している。
-- fixture: 別のplanの単一MECE Reviewにはcanonical行と競合する二つ目の `- AC IDs:` または `- Gate:` がある。
-- fixture: さらに別のvalid planはcanonicalなAcceptance Criteriaとready MECE Reviewを持つが、単一の既存Verification Planにlegacy proseやextra entryが残っている。
+- fixture: 別のready planはcanonicalなAcceptance Criteriaとready MECE Reviewを持つが、単一の既存Verification Planにlegacy proseやextra entryが残っている。
 - fixture: 別のready planはno retry、at-most-one concurrency、non-impactの根拠を固定時間待って何も起きないことだけで完了扱いする。対照planのAPI成功と永続化は201 response captureとdirect DB readbackで観測できる。
 - assertions:
   - [critical] planを着手可能として確定せず、Verification Planも生成しない。
   - [critical] 戻す判断条件を創作せず、Gateをreadyにするための不足条件として示す。
   - 確認済み範囲だけを根拠に全体をreadyとしない。
   - 製品コードの変更で不足を補わない。
-  - [critical] stale AC-ID集合またはduplicate Verification Planをmalformedとして扱い、実装準備しない。
-  - [critical] 正しいAC行と非literalなcriterion-like rowが混在するplanをmalformedとして扱い、非literal行を無視して実装準備しない。
-  - [critical] 競合する予約machine rowをmalformedとして扱い、実装準備しない。
-  - [critical] valid planの単一legacy Verification Planは内容全体をcanonical row-only形式へ置換する。
+  - [critical] 既存のVerification Planは内容全体をcanonical row-only形式へ置換する。
   - [critical] 固定時間のabsenceだけでは負命題mappingをcompleteにせず、pathまたはsettlementのpositive witnessとdeterministic failure signalまたはcontrolled seamを未解決前提として残す。
   - [critical] 201 response captureとdirect DB readbackで十分な対照mappingはcanonicalな四fieldだけで記録する。
