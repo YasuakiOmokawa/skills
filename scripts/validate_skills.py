@@ -41,7 +41,6 @@ _UNCONVERTED_SKILLS = frozenset(
         "apply-findings",
         "build-poc",
         "build-prototype",
-        "create-commits",
         "create-design-doc",
         "define-acceptance-criteria",
         "dry-ssot-text",
