@@ -9,7 +9,7 @@ runs: 3
 ```bash
 mkdir -p repo
 cd repo
-git init -q
+git init -q --template= --separate-git-dir=../repo.gitdir -b main .
 mkdir -p packages/sdk/src plans
 cat > packages/sdk/src/auth-host.ts <<'EOF'
 export const MAGIC_LINK_EXPIRES_IN_SECONDS = 300;
@@ -75,7 +75,7 @@ consumer が `user.createdAt` と Magic Link の有効期限を自分で比べ�
 user が作られてから、**Magic Link** の有効期限が過ぎるまでの間。
 EOF
 git add -A
-git commit -qm init
+git -c user.name=fixture -c user.email=fixture@example.com commit -qm init
 ```
 
 `repo/plans/just-signed-up.md` 設計を /define-acceptance-criteria して、設計を確定する。
