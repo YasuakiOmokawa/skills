@@ -45,7 +45,6 @@ _UNCONVERTED_SKILLS = frozenset(
         "extract-figma-spec",
         "ground-design-in-codebase",
         "implement-plan",
-        "prepare-plan-for-implementation",
     }
 )
 

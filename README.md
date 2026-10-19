@@ -25,7 +25,7 @@ npx skills add YasuakiOmokawa/skills
 | [`implement-plan`](./plugins/implement-plan/skills/implement-plan/SKILL.md) | Verification Planが全受け入れ基準を対応付けている準備済みの計画を実装する。テストで観測できる各基準を、計画の依存順にred、green、refactorで進める。 |
 | [`mece-plan-review`](./plugins/mece-plan-review/skills/mece-plan-review/SKILL.md) | 計画と受け入れ基準を仕様とコードの根拠と比較する。MECEな網羅性レビュー、または明示的に承認されたレビュー更新を求められたときに使う。 |
 | [`model-data`](./plugins/model-data/skills/model-data/SKILL.md) | 業務要求を既存のスキーマやSQLに照らしてモデル化し、一貫したデータモデル、必要に応じたDBML、データ設計、エンティティ関係、スキーマ整合性についての根拠付きの指摘を作る必要があるときに使う。 |
-| [`prepare-plan-for-implementation`](./plugins/prepare-plan-for-implementation/skills/prepare-plan-for-implementation/SKILL.md) | 有効な受け入れ基準とreadyのMECE Reviewを持つ既存の計画を、具体的な作業の順序付けと同じ計画内の検証対応付けによって実装に備えさせる。計画の実装には使わない。 |
+| [`prepare-plan-for-implementation`](./plugins/prepare-plan-for-implementation/skills/prepare-plan-for-implementation/SKILL.md) | 有効な受け入れ基準とreadyのMECE Reviewを持つ既存の計画に、受け入れ基準ごとの検証の対応付けを書いて実装に備えさせる。計画の実装には使わない。 |
 | [`purge-private-vocab`](./plugins/purge-private-vocab/skills/purge-private-vocab/SKILL.md) | 渡された定義により対象読者にとっての意味を確認できるとき、依頼で許可された読み手向け文書の内輪の用語を置き換える。 |
 | [`qa-ui`](./plugins/qa-ui/skills/qa-ui/SKILL.md) | 観測可能な確認項目、期待状態、アクセス可能な描画済みページ、許可された操作が依頼で示されているとき、実装済みUIを検証する。 |
 | [`verify-plan`](./plugins/verify-plan/skills/verify-plan/SKILL.md) | 実装済みの変更を、完了とみなす前に計画または受け入れ基準に照らして検証する必要があるときに使う。 |

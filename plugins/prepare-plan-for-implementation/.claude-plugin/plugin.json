@@ -1,7 +1,7 @@
 {
   "name": "prepare-plan-for-implementation",
-  "description": "有効な受け入れ基準とreadyのMECE Reviewを持つ既存の計画を、具体的な作業の順序付けと同じ計画内の検証対応付けによって実装に備えさせる。計画の実装には使わない。",
-  "version": "5.4.0",
+  "description": "有効な受け入れ基準とreadyのMECE Reviewを持つ既存の計画に、受け入れ基準ごとの検証の対応付けを書いて実装に備えさせる。計画の実装には使わない。",
+  "version": "5.5.0",
   "author": {
     "name": "Yasuaki Omokawa",
     "url": "https://github.com/YasuakiOmokawa"
