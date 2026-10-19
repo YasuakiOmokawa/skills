@@ -304,7 +304,7 @@ class ValidateSkillsTest(unittest.TestCase):
             "# apply-findings\n\nUse review-only when the user requests no edits.\n"
         )
         with self.repository(
-            plugin_name="apply-findings", body=apply_findings_body
+            plugin_name="apply-findings", body=apply_findings_body + ESSENCE_BODY
         ) as root:
             self.assert_valid(root)
 

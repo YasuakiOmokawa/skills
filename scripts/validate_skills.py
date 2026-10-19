@@ -38,7 +38,6 @@ _SKILL_SECTIONS = ["目的", "原理", "契約", "禁止", "完了条件"]
 _SKILL_BODY_MAX_CHARS = 2000
 _UNCONVERTED_SKILLS = frozenset(
     {
-        "apply-findings",
         "build-poc",
         "build-prototype",
         "create-design-doc",
@@ -53,7 +52,6 @@ _UNCONVERTED_SKILLS = frozenset(
         "prepare-plan-for-implementation",
         "purge-private-vocab",
         "qa-ui",
-        "verify-plan",
     }
 )
 
