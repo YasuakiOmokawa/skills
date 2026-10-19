@@ -42,7 +42,6 @@ _UNCONVERTED_SKILLS = frozenset(
         "build-prototype",
         "create-design-doc",
         "define-acceptance-criteria",
-        "dry-ssot-text",
         "express-intent-in-code",
         "extract-figma-spec",
         "ground-design-in-codebase",
