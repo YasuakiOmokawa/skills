@@ -17,7 +17,6 @@ npx skills add YasuakiOmokawa/skills
 | [`build-prototype`](./plugins/build-prototype/skills/build-prototype/SKILL.md) | 承認済みのPoCまたは同等の根拠があり、選定方式がコードベースの責務、慣習、契約に適合するかを実コードで確かめる必要があるときに使う。 |
 | [`create-commits`](./plugins/create-commits/skills/create-commits/SKILL.md) | 現在のブランチの未commitまたは未公開の変更を、レビュアーが順に読める境界のcommitにまとめる。公開前のcommit、分割、ローカル履歴の再構成を求められたときに使う。 |
 | [`create-design-doc`](./plugins/create-design-doc/skills/create-design-doc/SKILL.md) | 承認済み計画と、PoCとプロトタイプまたは同等の根拠による実現可能性とコードベース適合性の根拠から、実装判断に使うDesign Docを指定または導出した保存先に作る必要があるときに使う。 |
-| [`create-pr`](./plugins/create-pr/skills/create-pr/SKILL.md) | 現在のブランチに対応するPRを作成または更新する。PRを開く、内容を改める、明示的にレビュー可能な状態にすることを求められたときに使う。 |
 | [`define-acceptance-criteria`](./plugins/define-acceptance-criteria/skills/define-acceptance-criteria/SKILL.md) | 既存の計画や仕様を観測可能な受け入れ基準に変換する。成功、失敗、境界、非影響の振る舞いを判定可能にする必要があるときに使う。 |
 | [`dry-ssot-text`](./plugins/dry-ssot-text/skills/dry-ssot-text/SKILL.md) | 正本文書と対象範囲の文書が特定されているとき、重複した読み手向けの手順を、読み手ごとの差異を保ったまま集約する。 |
 | [`express-intent-in-code`](./plugins/express-intent-in-code/skills/express-intent-in-code/SKILL.md) | コメント、boolean、nullableな戻り値に置かれた意図を、名前、直和型、全域関数、テストへ移す。コードで言えることを言い直すコメント、ありえない状態を許すbooleanやoptionalの組み合わせ、2つの意味を持つ1つのnull、振る舞いを選ぶboolean引数、I/Oに埋もれた判断を含むコードが渡されたときに使う。 |
