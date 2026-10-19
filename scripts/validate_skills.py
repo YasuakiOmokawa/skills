@@ -39,7 +39,6 @@ _SKILL_BODY_MAX_CHARS = 2000
 _UNCONVERTED_SKILLS = frozenset(
     {
         "build-poc",
-        "build-prototype",
         "extract-figma-spec",
     }
 )
