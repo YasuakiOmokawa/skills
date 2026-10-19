@@ -49,7 +49,6 @@ _UNCONVERTED_SKILLS = frozenset(
         "mece-plan-review",
         "model-data",
         "prepare-plan-for-implementation",
-        "qa-ui",
     }
 )
 
