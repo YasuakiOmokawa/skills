@@ -1,6 +1,6 @@
 ---
 type: regex
 match: not_contains
-flags: i
+flags: im
 ---
-Gate[:：]\s*`?(ready|blocked|unverified)
+^[ \t]*(?:[-*][ \t]*)?\**Gate\**[:：]
