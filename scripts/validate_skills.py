@@ -37,11 +37,6 @@ _OUTCOME_SECTIONS = ["Trigger", "Outcome", "Authorization", "Hold-out"]
 _SKILL_SECTIONS = ["目的", "原理", "契約", "禁止", "完了条件"]
 _SKILL_BODY_MAX_CHARS = 2000
 _SKILLS_KEEPING_VERIFICATION_BRANCH = {"build-poc": 2344}
-_UNCONVERTED_SKILLS = frozenset(
-    {
-        "extract-figma-spec",
-    }
-)
 
 
 class _ErrorCollector:
@@ -492,8 +487,7 @@ def _validate_skill_file(
         errors.add(path, "frontmatter description must be nonempty and at most 1024 characters")
 
     _validate_instruction_surfaces(path, body, plugin_name, known_skills, errors)
-    if plugin_name not in _UNCONVERTED_SKILLS:
-        _validate_essence_form(path, plugin_name, body, errors)
+    _validate_essence_form(path, plugin_name, body, errors)
     direct_markdown = _validate_links(
         path,
         body,
