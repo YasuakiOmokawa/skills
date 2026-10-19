@@ -41,7 +41,6 @@ _UNCONVERTED_SKILLS = frozenset(
         "build-poc",
         "build-prototype",
         "create-design-doc",
-        "express-intent-in-code",
         "extract-figma-spec",
         "ground-design-in-codebase",
     }
