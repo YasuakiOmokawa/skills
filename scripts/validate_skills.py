@@ -40,7 +40,6 @@ _UNCONVERTED_SKILLS = frozenset(
     {
         "build-poc",
         "build-prototype",
-        "create-design-doc",
         "extract-figma-spec",
     }
 )
