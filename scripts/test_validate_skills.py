@@ -387,7 +387,7 @@ class ValidateSkillsTest(unittest.TestCase):
 
     def test_unconverted_skill_is_exempt_until_removed_from_the_ratchet(self):
         legacy = "## 手順\n\n1. step\n\n## 完了\n\ndone\n"
-        with self.repository(plugin_name="create-commits", body=legacy) as root:
+        with self.repository(plugin_name="extract-figma-spec", body=legacy) as root:
             self.assert_valid(root)
 
     def test_agents_markdown_file_is_rejected(self):

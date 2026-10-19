@@ -62,7 +62,13 @@ claude plugin eval . --ablation with-without --judge-model sonnet --allow-tools 
 4. 編集後にsuiteを回しcaseごとのΔを比較する。1つでも下がれば回帰。負例のwithスコア低下はover-trigger。
 5. 新しい振る舞いを足したときだけ、対応するcaseを1つ追加する。
 
-句を消してよい根拠は、その句を外した版のwith runで回帰が無いことだけである。without armで素のモデルが通っていても、スキルの他の句と組み合わさると要る句がある。教訓の句は位置も保ち、直前・直後に別の文を差し込まない。
+SKILL.mdの本文は `## 目的` / `## 原理` / `## 契約` / `## 禁止` / `## 完了条件` の5節に限る (`scripts/validate_skills.py` が検査する)。新旧の版は `--ablation none` のwith runをgrader単位で比べ、graderを次の5種に分けて合否を決める。
+
+- 契約・禁止・完了条件: 新版が旧版より下がれば不合格。
+- 原理: スキルの原理を観測するgrader。新版は旧版以上を保つ。既存graderで足りなければ足す。
+- 癖対策: 素のモデルの癖を抑える句だけが支えるgrader。参考値とし、下がった分は受け入れた損失としてPRに列挙する。
+
+n=3では2 run以上の差だけを有意とする。without armで素のモデルが通っていても、スキルの他の句と組み合わさると要る句がある。
 
 曖昧さの発見は編集のたびに `empirical-prompt-tuning`、回帰検出はPR前のsuiteが担う。
 
