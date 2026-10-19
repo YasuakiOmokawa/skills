@@ -10,12 +10,11 @@
   - [critical] コメント削減の語が無くても、型・戻り値・引数で意図を表す依頼で発火する。
 
 # Outcome
-- fixture: `src/order.ts` に 4 種のコメントがある。(a) 動作の言い直し (`// 合計を計算する`)、(b) 命名や抽出でコードへ移せる意図 (`// tmp は税抜き小計`)、(c) コードで表せない外部制約 (`// 税率は 2026 年度の法令に従い 10%`)、(d) 不要になった lint 抑制。正常注文、空注文、端数注文の既存テストが成功している。
+- fixture: `src/order.ts` に 3 種のコメントがある。(a) 動作の言い直し (`// 合計を計算する`)、(b) 命名や抽出でコードへ移せる意図 (`// tmp は税抜き小計`)、(c) コードで表せない外部制約 (`// 税率は 2026 年度の法令に従い 10%`)。正常注文、空注文、端数注文の既存テストが成功している。
 - assertions:
   - [critical] (a) を削除し、(b) はコードへ移してから削除し、(c) だけ残す。
   - [critical] 正常、空、端数の出力が変わらないことを変更後に検証する。
   - 整理中に新しいコメントを追加しない。
-  - (d) は fresh lint で不要と証明してから除く。
   - 残したコメントごとに、コードで表せない理由を報告する。
 - fixture: `src/company-state.ts` は相互排他の読み込み状態を 3 つの独立 boolean で持ち、`loading && unauthorized` のような不可能な組合せが型上作れる。`src/auth-route.ts` の `resolveMethod` は「対象 route でない」と「provider が未知」の 2 つの意味を同じ `undefined` で返し、呼び手が provider 名を audit に残せない。`src/removal-policy.ts` の `canRemoveTarget(actorRole, isSelf, targetRole)` は同型の引数 2 つに boolean が挟まり、`sweepSignups(opts: { execute: boolean })` は dry-run と実削除の別処理を boolean で分岐する。`src/display-text.ts` の `sanitizeDisplayText(s: string): string` は戻りが `string` のため、招待メールの呼び手が 2 回適用している。すべて既存テストが成功している。
 - assertions:
