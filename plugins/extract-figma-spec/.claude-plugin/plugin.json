@@ -1,7 +1,7 @@
 {
   "name": "extract-figma-spec",
   "description": "提供または取得できるFigmaの根拠を原子的な確認項目に分解し、指定されたフレーム、状態、部品について特定された実装とデザイン差分表で比較する必要があるときに使う。",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "author": {
     "name": "Yasuaki Omokawa",
     "url": "https://github.com/YasuakiOmokawa"
