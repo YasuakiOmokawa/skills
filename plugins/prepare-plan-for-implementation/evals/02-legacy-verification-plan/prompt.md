@@ -123,4 +123,4 @@ cat > plans/notify.md <<'EOF'
 EOF
 ```
 
-plans/notify.md は受け入れ基準も MECE レビューも済んでいる。実装に着手できるように、作業の順序と各受け入れ基準の検証の対応を plans/notify.md に書き込んで。実装はまだしない。
+plans/notify.md は受け入れ基準も MECE レビューも済んでいる。実装に着手できるように、各受け入れ基準の検証の対応を plans/notify.md に書き込んで。実装はまだしない。

@@ -1,18 +1,18 @@
 # Trigger
 - fixture: current plan `plans/billing-date.md` に AC-ID 付きの `## Acceptance Criteria` と `Gate: ready` の `## MECE Review` があり、plan更新が許可されている。依頼Aは「このプランを実装に着手できる状態へ準備して」、依頼Bは「準備済みの計画を実装して」、依頼Cは「Acceptance Criteria節の無いplanに受け入れ基準を定義して」である。
 - assertions:
-  - [critical] 依頼Aでは受け入れ基準と網羅性の根拠から実装計画を作る。
+  - [critical] 依頼Aでは受け入れ基準と網羅性の根拠から、受け入れ基準ごとの検証の対応付けを作る。
   - [critical] 依頼Bでは製品コードを変更しない。
   - [critical] 依頼Aでは同じplanへ唯一の `## Verification Plan` を作り、別のverification sourceを作らない。
   - 不足前提を推測で埋めない。
-  - [critical] 依頼Cでは受け入れ基準の定義に進み、Verification Planや作業順序を作らない。
+  - [critical] 依頼Cでは受け入れ基準の定義に進み、Verification Planを作らない。
 
 # Outcome
 - fixture: 受け入れ基準は二十八日から三十一日の境界、新規顧客、既存顧客の非影響を覆い、網羅性確認では請求予定処理への依存が特定されている。各ACについて合否oracle、既知のテスト・API・DB・UI入口、前提条件、後続観測に必要な効果をplanへ記録できる。
 - fixture: 別のready planのACは「作成・招待受諾・切替・除名の後で、セッションの所属チームは所属するチームのどれか、0件なら空」という不変条件を、列挙した4経路で確かめる。所属とcurrent teamを書く経路はrepo内で関数呼び出しとして列挙できる。
 - assertions:
-  - [critical] 変更対象、作業順序、請求予定処理への依存を明確にした計画を作る。
-  - [critical] 各作業を対応する受け入れ基準と検証方法へ結び付ける。
+  - [critical] リポジトリ外の請求予定処理に依存するACは、観測方法を確定済みとして書かず、実行環境・呼び出し方・変更前の値の取得方法のいずれかをPrerequisitesに未解決として残す。
+  - [critical] 各ACを、そのACから導いたoracleと検証の入口 (Evidence anchors) へ結び付ける。
   - [critical] `## Verification Plan` へcurrent AC-ID集合を記録し、全ACを一意で非空の `Oracle`、`Evidence anchors`、`Prerequisites`、`Required effects` へ対応付ける。
   - [critical] Required effectsを後続検証に必要な操作として記録し、planning時点の権限として扱わない。
   - 実装担当へ残す前提と未解決事項を示す。
