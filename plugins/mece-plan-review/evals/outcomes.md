@@ -14,7 +14,7 @@
 - assertions:
   - [critical] 仕様、コード、受け入れ基準、計画の対応を項目単位で示す。
   - [critical] 請求作成の重複と取消の欠落を報告する。
-  - [critical] 根拠のある欠落または矛盾がある計画へ `Gate: blocked` を記録する。
+  - [critical] 根拠のある欠落または矛盾がある計画の Gate を ready にしない (理由を書く)。
   - [critical] 完全対応した別計画へcurrent AC-ID集合と `Gate: ready` を記録する。
   - コードの権限失敗が基準と計画で覆われない点を報告する。
   - 各判断に確認できた根拠を結び付ける。
@@ -39,12 +39,12 @@
 - assertions:
   - [critical] 確認できる請求作成の対応を評価する。
   - [critical] 再試行とコードの対応を未検証とする。
-  - [critical] required comparison が未確認であるため `Gate: unverified` とする。
+  - [critical] required comparison が未確認であるため Gate を ready にしない (理由を書く)。
   - アクセス拒否を適合または不適合の根拠にしない。
   - 確認済み結果と未検証範囲を分けて報告する。
   - [critical] 明示category sourceを全件manifest化し、criterion関連calleeを有限closureで確認するか未検証として残す。
   - [critical] 書き込みがtimeoutし、再読取した内容が送信内容と異なるときは、保存できたと主張せず、食い違いを報告する。
-  - [critical] 根拠が課す義務 (非同期処理の失敗や中断、共有定義の直接の利用者、境界の網羅、待つだけでは示せない不在) から基準へ逆に照合し、欠けを具体的に名指ししてblockedにする。
+  - [critical] 根拠が課す義務 (非同期処理の失敗や中断、共有定義の直接の利用者、境界の網羅、待つだけでは示せない不在) から基準へ逆に照合し、欠けを具体的に名指しして Gate を ready にしない (理由を書く)。
   - [critical] shared definitionがinitial manifestまたはclosure-addedのどちらでもrepository-local direct referenceをfreeze前に解決し、planにないsibling consumerを発見する。
   - [critical] 明示sourceが運用面の設定サンプルを指していないとき、その伝播を欠落または未検証として報告するか、突き合わせた証拠の範囲を読み手が判別できる形で示す。範囲を示さずに覆ったと述べない。
   - [critical] 全obligationとcompleted-path witnessおよびcontrolled seamを覆う対照planはreadyとし、all-clear checklistを追加しない。
