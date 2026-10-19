@@ -20,7 +20,7 @@
 - fixture: 計画の更新が許可され、依頼は受け入れ基準と、仕様と AC の対応表を plan に残すことを求める。
 - assertions:
   - [critical] repository 全体の不在を観測する基準は、`git grep --untracked` のように `.gitignore` が無視する file を走査しない形で書く。
-  - [critical] `## Acceptance Criteria` 節は空行と `- [ ] AC-NNN:` の行だけから成り、対応表や注記は別の `##` 節に置く。
+  - [critical] `## Acceptance Criteria` 節は空行と `- AC-NNN:` (または `- [ ] AC-NNN:`) の行だけから成り、対応表や注記は別の `##` 節に置く。
 
 - fixture: 計画は旧関数の削除を求め、「変更後、`src/` に旧関数名が残らない」「旧関数を呼べないことを test で確かめる」「`src/README.md` の旧関数への言及は別 issue で直すので今回は変えない」の三つを仕様に持つ。
 - assertions:

@@ -9,7 +9,7 @@ runs: 3
 ```bash
 mkdir -p repo
 cd repo
-git init -q
+git init -q --template= --separate-git-dir=../repo.gitdir -b main .
 mkdir -p docs plans .cache
 printf '# 旧ガイド\n' > docs/old-guide.md
 printf 'see docs/old-guide.md\n' > README.md

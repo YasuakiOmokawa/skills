@@ -9,7 +9,7 @@ runs: 3
 ```bash
 mkdir -p repo
 cd repo
-git init -q
+git init -q --template= --separate-git-dir=../repo.gitdir -b main .
 mkdir -p src/__tests__ plans
 cat > src/auth.ts <<'EOF'
 export function legacySignIn(email: string): string {
@@ -50,7 +50,7 @@ cat > plans/remove-legacy.md <<'EOF'
 - S-4: `login("a@example.com")` は `session:a@example.com` を返す。
 EOF
 git add -A
-git commit -qm init
+git -c user.name=fixture -c user.email=fixture@example.com commit -qm init
 ```
 
 `repo/plans/remove-legacy.md` に /define-acceptance-criteria で受け入れ基準を作って。plan の更新は許可する。
