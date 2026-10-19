@@ -21,17 +21,11 @@ plugin は**設定不要で動く**ことを目標にし、設定が必要なら
 
 ## 設定値の保管 (グローバル)
 
-機密でないマシンごとのグローバル設定は `~/.claude/skills-config/*.md` (定義は CONTEXT.md)。各 plugin は「このファイルを Read で取得」と SKILL.md に書く。`.env` は使わない (SKILL.md は AI が読む文書なのでシェル変数展開は機能しない)。サンプルは `examples/skills-config/`。
+機密でないマシンごとのグローバル設定は `~/.claude/skills-config/*.md` (定義は CONTEXT.md)。各 plugin は「このファイルを Read で取得」と SKILL.md に書く。`.env` は使わない (SKILL.md は AI が読む文書なのでシェル変数展開は機能しない)。
 
 ## バージョン bump ルール
 
-plugin の中身 (SKILL.md / `commands/` / `references/`) を変更した PR では、同 PR 内で 3 箇所を揃えて bump する:
-
-1. `plugins/<name>/.claude-plugin/plugin.json` の `version` (minor bump)
-2. `marketplace.json` の該当 entry の `version` (1 と同値)
-3. `marketplace.json` のトップレベル `version` (minor bump)
-
-patch bump は使わない (typo 修正等は次の minor まで貯める)。破壊的変更時のみ major。commit メッセージは `chore: <変更概要> (vX.Y.Z)`。
+plugin の中身 (`skills/` / `commands/`) を変えた PR は、plugin.json と marketplace.json の該当 entry とトップレベルの version を minor (破壊的変更なら major) で上げる。CI の `scripts/check_version_bump.py` が検査する。typo 修正も次の minor まで貯める。commit メッセージは `chore: <変更概要> (vX.Y.Z)`。
 
 tag / GitHub Release は release-on-version-bump.yml が marketplace.json の push から自動生成する。手動 `git tag` / `gh release create` は auto-tag とレースして失敗するので実行しない。「tag が抜けている」症状は常に marketplace.json bump 漏れのサイン。
 

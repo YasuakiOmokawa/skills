@@ -8,6 +8,8 @@ on:
       - ".claude-plugin/**"
       - "scripts/validate_skills.py"
       - "scripts/test_validate_skills.py"
+      - "scripts/check_version_bump.py"
+      - "scripts/test_check_version_bump.py"
       - ".github/workflows/validate-skills.yml"
   push:
     branches: [main]
@@ -16,6 +18,8 @@ on:
       - ".claude-plugin/**"
       - "scripts/validate_skills.py"
       - "scripts/test_validate_skills.py"
+      - "scripts/check_version_bump.py"
+      - "scripts/test_check_version_bump.py"
       - ".github/workflows/validate-skills.yml"
 
 jobs:
@@ -23,7 +27,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Test skill validator
-        run: python3 -m unittest scripts/test_validate_skills.py
+        run: python3 -m unittest scripts/test_validate_skills.py scripts/test_check_version_bump.py
+      - name: Check version bumps
+        if: github.event_name == 'pull_request'
+        run: python3 scripts/check_version_bump.py origin/${{ github.base_ref }}
       - name: Validate skill structure
         run: python3 scripts/validate_skills.py
