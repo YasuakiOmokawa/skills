@@ -7,6 +7,15 @@ from pathlib import Path
 from scripts.validate_skills import validate_repository
 
 
+ESSENCE_BODY = (
+    "## 目的\n\nDo one thing.\n\n"
+    "## 原理\n\nOne principle.\n\n"
+    "## 契約\n\nInput and output.\n\n"
+    "## 禁止\n\nNo writes outside the approved target.\n\n"
+    "## 完了条件\n\nThe output exists.\n"
+)
+
+
 class ValidateSkillsTest(unittest.TestCase):
     @staticmethod
     def _write(path, content):
@@ -54,7 +63,7 @@ class ValidateSkillsTest(unittest.TestCase):
             frontmatter.append(f"{key}: {value}")
 
         if body is None:
-            body = f"# {declared_name}\n\nFollow the documented workflow.\n"
+            body = ESSENCE_BODY
         skill_markdown = "---\n" + "\n".join(frontmatter) + "\n---\n\n" + body
         self._write(skill_root / "SKILL.md", skill_markdown)
         self._write(
@@ -214,7 +223,7 @@ class ValidateSkillsTest(unittest.TestCase):
             "See [the hosted guide](https://example.com/docs/root/path) and "
             "https://example.com/another/path.\n"
         )
-        with self.repository(body=allowed_body) as root:
+        with self.repository(body=allowed_body + ESSENCE_BODY) as root:
             self.assert_valid(root)
 
     def test_plugin_and_marketplace_version_mismatch_is_rejected(self):
@@ -316,7 +325,7 @@ class ValidateSkillsTest(unittest.TestCase):
             "# sample-skill\n\n"
             "The editor may remain in its current mode while the check runs.\n"
         )
-        with self.repository(body=ordinary_mode_body) as root:
+        with self.repository(body=ordinary_mode_body + ESSENCE_BODY) as root:
             self.assert_valid(root)
 
     def test_slash_and_dollar_cross_skill_invocations_are_rejected(self):
@@ -352,7 +361,33 @@ class ValidateSkillsTest(unittest.TestCase):
 
         direct_body = "# sample-skill\n\nSee [the guide](references/guide.md).\n"
         direct_files = {"references/guide.md": "# Guide\n\nUse this workflow.\n"}
-        with self.repository(body=direct_body, files=direct_files) as root:
+        with self.repository(body=direct_body + ESSENCE_BODY, files=direct_files) as root:
+            self.assert_valid(root)
+
+    def test_essence_sections_are_required_in_order(self):
+        cases = [
+            ("missing section", ESSENCE_BODY.replace("## 禁止\n\nNo writes outside the approved target.\n\n", "")),
+            ("wrong order", ESSENCE_BODY.replace("## 目的", "## 仮").replace("## 原理", "## 目的").replace("## 仮", "## 原理")),
+            ("legacy procedure heading", "## 手順\n\n1. step\n\n## 完了\n\ndone\n"),
+        ]
+        for label, body in cases:
+            with self.subTest(label=label):
+                with self.repository(body=body) as root:
+                    self.assert_invalid(root, "level-2 sections")
+
+    def test_essence_section_must_not_be_empty(self):
+        body = ESSENCE_BODY.replace("No writes outside the approved target.\n\n", "")
+        with self.repository(body=body) as root:
+            self.assert_invalid(root, "section '禁止' must not be empty")
+
+    def test_essence_body_over_2000_characters_is_rejected(self):
+        body = ESSENCE_BODY + "x" * (2001 - len(ESSENCE_BODY.strip()))
+        with self.repository(body=body) as root:
+            self.assert_invalid(root, "the limit is 2000")
+
+    def test_unconverted_skill_is_exempt_until_removed_from_the_ratchet(self):
+        legacy = "## 手順\n\n1. step\n\n## 完了\n\ndone\n"
+        with self.repository(plugin_name="create-commits", body=legacy) as root:
             self.assert_valid(root)
 
     def test_agents_markdown_file_is_rejected(self):

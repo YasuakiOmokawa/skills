@@ -34,6 +34,29 @@ _SKILLS_CONFIG_PREFIXES = (
     "${HOME}/.claude/skills-config/",
 )
 _OUTCOME_SECTIONS = ["Trigger", "Outcome", "Authorization", "Hold-out"]
+_SKILL_SECTIONS = ["目的", "原理", "契約", "禁止", "完了条件"]
+_SKILL_BODY_MAX_CHARS = 2000
+_UNCONVERTED_SKILLS = frozenset(
+    {
+        "apply-findings",
+        "build-poc",
+        "build-prototype",
+        "create-commits",
+        "create-design-doc",
+        "define-acceptance-criteria",
+        "dry-ssot-text",
+        "express-intent-in-code",
+        "extract-figma-spec",
+        "ground-design-in-codebase",
+        "implement-plan",
+        "mece-plan-review",
+        "model-data",
+        "prepare-plan-for-implementation",
+        "purge-private-vocab",
+        "qa-ui",
+        "verify-plan",
+    }
+)
 
 
 class _ErrorCollector:
@@ -429,6 +452,26 @@ def _validate_instruction_surfaces(
             )
 
 
+def _validate_essence_form(path: Path, body: str, errors: _ErrorCollector) -> None:
+    sections = [heading for level, heading in _headings(body) if level == 2]
+    if sections != _SKILL_SECTIONS:
+        errors.add(
+            path,
+            f"level-2 sections must be exactly {_SKILL_SECTIONS!r} in order",
+        )
+    else:
+        contents = re.split(r"^[ \t]{0,3}##[ \t]+.*$", body, flags=re.MULTILINE)[1:]
+        for heading, content in zip(_SKILL_SECTIONS, contents):
+            if not content.strip():
+                errors.add(path, f"section '{heading}' must not be empty")
+    body_chars = len(body.strip())
+    if body_chars > _SKILL_BODY_MAX_CHARS:
+        errors.add(
+            path,
+            f"body has {body_chars} characters; the limit is {_SKILL_BODY_MAX_CHARS}",
+        )
+
+
 def _validate_skill_file(
     path: Path,
     plugin_name: str,
@@ -464,6 +507,8 @@ def _validate_skill_file(
         errors.add(path, "frontmatter description must be nonempty and at most 1024 characters")
 
     _validate_instruction_surfaces(path, body, plugin_name, known_skills, errors)
+    if plugin_name not in _UNCONVERTED_SKILLS:
+        _validate_essence_form(path, body, errors)
     direct_markdown = _validate_links(
         path,
         body,
