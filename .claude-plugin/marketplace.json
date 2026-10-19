@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "omokawa-skills",
-  "version": "12.11.0",
+  "version": "12.12.0",
   "description": "Plan-driven development workflow を構成する個別 skill 群。必要なものだけ install 可能",
   "owner": {
     "name": "Yasuaki Omokawa",
@@ -50,7 +50,7 @@
     {
       "name": "ground-design-in-codebase",
       "description": "関連する仕様と既存コードが責務とリスクについて具体的な根拠を示せるとき、提案された設計境界を実装前にレビューする。",
-      "version": "3.5.0",
+      "version": "3.6.0",
       "source": "./plugins/ground-design-in-codebase",
       "skills": [
         "./skills/ground-design-in-codebase"
