@@ -54,6 +54,20 @@ claude plugin eval . --ablation with-without --judge-model sonnet --allow-tools 
 
 `--allow-tools` はSKILL.mdに `allowed-tools` frontmatterが無い場合の運用側付与で、全caseに効く。見る数字はΔ（withスコア引くwithoutスコア）。7 caseで1回およそ$21、85分。
 
+### 新旧の比較
+
+`scripts/eval/` の道具で、旧版 (main) と新版を `/tmp` の複製で並列に回し、grader 単位で比べる。
+
+```bash
+python3 scripts/eval/mkvariant.py plugins/<name> plugins/<name>/skills/<name>/SKILL.md /tmp/<name>-old
+python3 scripts/eval/mkvariant.py plugins/<name> <新しい SKILL.md> /tmp/<name>-new
+(cd /tmp/<name>-old && claude plugin eval . --ablation none --judge-model sonnet --allow-tools "Write,Edit,Bash" --no-publish --trust-plugin --json /tmp/<name>-old.json)
+python3 scripts/eval/compare.py old=/tmp/<name>-old.json new=/tmp/<name>-new.json
+python3 scripts/eval/rejudge.py /tmp/<name>-new.json <NN> plugins/<name>/evals/<NN-slug>/graders/<grader>.md
+```
+
+`mkvariant.py` は4番目以降の引数に渡した句を SKILL.md から1箇所ずつ消した版を作る (句を外した版の with run)。`compare.py` はカンマ区切りで複数の結果を1列に合算する (`--case` で再実行した分を足す)。`rejudge.py` は FAIL した run の evidence を同じ criterion で sonnet に3票判定し直す。llm judge が多条項の rubric を誤って FAIL にしたかを確かめるのに使う。
+
 ### 改善ルーティン
 
 1. 仕様変更を `outcomes.md` のassertionとして先に書く。

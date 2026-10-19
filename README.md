@@ -34,7 +34,7 @@ npx skills add YasuakiOmokawa/skills
 
 ## Configuration
 
-`bash scripts/setup.sh` で非機密のグローバル設定を生成できる。サンプルは [`examples/skills-config/`](./examples/skills-config/) にある。
+`bash scripts/setup.sh` で非機密のグローバル設定を生成できる。
 
 ## License
 
