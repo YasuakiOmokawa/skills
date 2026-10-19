@@ -1,0 +1,7 @@
+---
+type: regex
+target: {source: file, path: docs/order-model.dbml}
+match: not_contains
+flags: im
+---
+^(?![ \t]*//)[^\n]*(?:"?\b\w*invoices?\w*"?\."?\w+"?[ \t]*(?:<>|[<>-])[ \t]*(?:"?\w+"?\.)?"?orders"?\."?\w+|"?\borders"?\."?\w+"?[ \t]*(?:<>|[<>-])[ \t]*(?:"?\w+"?\.)?"?\w*invoices?\w*"?\."?\w+)|table[ \t]+(?:"?\w+"?\.)?"?\w*invoices?\w*"?[^\n{]*\{(?:[^{}]|\{[^{}]*\})*?^(?![ \t]*//)[^\n]*\bref:[ \t]*(?:<>|[<>-])[ \t]*(?:"?\w+"?\.)?"?orders"?\.|table[ \t]+(?:"?\w+"?\.)?"?orders"?[^\n{]*\{(?:[^{}]|\{[^{}]*\})*?^(?![ \t]*//)[^\n]*\bref:[ \t]*(?:<>|[<>-])[ \t]*(?:"?\w+"?\.)?"?\w*invoices?\w*"?\.
