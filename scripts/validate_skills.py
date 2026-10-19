@@ -36,9 +36,9 @@ _SKILLS_CONFIG_PREFIXES = (
 _OUTCOME_SECTIONS = ["Trigger", "Outcome", "Authorization", "Hold-out"]
 _SKILL_SECTIONS = ["目的", "原理", "契約", "禁止", "完了条件"]
 _SKILL_BODY_MAX_CHARS = 2000
+_SKILLS_KEEPING_VERIFICATION_BRANCH = {"build-poc": 2344}
 _UNCONVERTED_SKILLS = frozenset(
     {
-        "build-poc",
         "extract-figma-spec",
     }
 )
@@ -437,7 +437,9 @@ def _validate_instruction_surfaces(
             )
 
 
-def _validate_essence_form(path: Path, body: str, errors: _ErrorCollector) -> None:
+def _validate_essence_form(
+    path: Path, plugin_name: str, body: str, errors: _ErrorCollector
+) -> None:
     sections = [heading for level, heading in _headings(body) if level == 2]
     if sections != _SKILL_SECTIONS:
         errors.add(
@@ -450,11 +452,9 @@ def _validate_essence_form(path: Path, body: str, errors: _ErrorCollector) -> No
             if not content.strip():
                 errors.add(path, f"section '{heading}' must not be empty")
     body_chars = len(body.strip())
-    if body_chars > _SKILL_BODY_MAX_CHARS:
-        errors.add(
-            path,
-            f"body has {body_chars} characters; the limit is {_SKILL_BODY_MAX_CHARS}",
-        )
+    limit = _SKILLS_KEEPING_VERIFICATION_BRANCH.get(plugin_name, _SKILL_BODY_MAX_CHARS)
+    if body_chars > limit:
+        errors.add(path, f"body has {body_chars} characters; the limit is {limit}")
 
 
 def _validate_skill_file(
@@ -493,7 +493,7 @@ def _validate_skill_file(
 
     _validate_instruction_surfaces(path, body, plugin_name, known_skills, errors)
     if plugin_name not in _UNCONVERTED_SKILLS:
-        _validate_essence_form(path, body, errors)
+        _validate_essence_form(path, plugin_name, body, errors)
     direct_markdown = _validate_links(
         path,
         body,

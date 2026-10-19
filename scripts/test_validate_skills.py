@@ -385,6 +385,14 @@ class ValidateSkillsTest(unittest.TestCase):
         with self.repository(body=body) as root:
             self.assert_invalid(root, "the limit is 2000")
 
+    def test_skill_keeping_verification_branch_has_its_own_body_limit(self):
+        within = ESSENCE_BODY.strip() + "x" * (2344 - len(ESSENCE_BODY.strip()))
+        with self.repository(plugin_name="build-poc", body=within) as root:
+            self.assert_valid(root)
+        over = within + "x"
+        with self.repository(plugin_name="build-poc", body=over) as root:
+            self.assert_invalid(root, "the limit is 2344")
+
     def test_unconverted_skill_is_exempt_until_removed_from_the_ratchet(self):
         legacy = "## 手順\n\n1. step\n\n## 完了\n\ndone\n"
         with self.repository(plugin_name="extract-figma-spec", body=legacy) as root:
