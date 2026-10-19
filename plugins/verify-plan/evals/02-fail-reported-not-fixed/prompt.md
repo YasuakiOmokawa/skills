@@ -110,4 +110,4 @@ test("AC-003 reset unlocks", () => {
 EOF
 ```
 
-plans/lockout.md の実装が working tree に済んだ。/verify-plan して。検証で見つかった実装の不備は直してよい。コミットは指示があるまで禁止。
+plans/lockout.md の実装が working tree に済んだ。/verify-plan して。コミットは指示があるまで禁止。

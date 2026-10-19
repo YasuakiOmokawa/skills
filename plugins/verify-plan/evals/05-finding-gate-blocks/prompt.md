@@ -109,18 +109,14 @@ test("AC-003 reset unlocks", () => {
   assert.equal(isLocked("c"), false);
 });
 EOF
-cat > review/code-review.md <<'EOF'
-# code-review (2026-09-12)
-
-- R-1 [minor] src/lockout.js: `recordFailure` の戻り値の意味がコードから読めない。
-- R-2 [major] src/lockout.js: ログイン成功時に `resetFailures` を呼ぶ経路が無く、成功後も失敗回数が残り続ける。次の失敗 1 回で即ロックされ得る。
-EOF
 cat > review/apply-findings.md <<'EOF'
 # apply-findings (2026-09-12)
 
-- R-1: applied。`recordFailure` の名前と戻り値を test/lockout.test.js の `fail` helper で明示した。
-- R-2: deferred。呼び出し側 (auth handler) は本 PR の範囲外のため、次の PR で対応する。
+- [major] src/lockout.js: ログイン成功時に `resetFailures` を呼ぶ経路が無く、成功後も失敗回数が残り続ける。次の失敗 1 回で即ロックされ得る。状態: 決める事項と推奨を添えて先送り。決める事項: ログイン成功時のリセットを呼び出し側 (auth handler) に入れるのを本 PR でやるか。推奨: 本 PR の範囲外なので、次の PR で auth handler と一緒に直す。
+- [minor] src/lockout.js: `recordFailure` の戻り値の意味がコードから読めない。状態: 適用して確認済み (test/lockout.test.js の `fail` helper で戻り値を明示し、テストの成功を観測した)。
+
+外部状態の変更: なし。
 EOF
 ```
 
-current plan は plans/lockout.md。実装は working tree に済んでいる。直前の /code-review と /apply-findings の出力 (review/code-review.md、review/apply-findings.md) を finding ledger の正本とする。/verify-plan を current working tree で fresh 実行する。過去の verification 結果を再利用せず、開始時と終了時の current plan および作業ディレクトリ配下の全ファイルの fingerprint が一致し、全 AC が PASS、unresolved・deferred・applied-unverified の critical/major が 0 の場合だけ完了とする。コミット、push、PR 作成は禁止。
+current plan は plans/lockout.md。実装は working tree に済んでいる。直前の /apply-findings の出力は review/apply-findings.md にある。/verify-plan して。コミット、push、PR 作成は禁止。
