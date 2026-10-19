@@ -47,7 +47,6 @@ _UNCONVERTED_SKILLS = frozenset(
         "ground-design-in-codebase",
         "implement-plan",
         "mece-plan-review",
-        "model-data",
         "prepare-plan-for-implementation",
     }
 )

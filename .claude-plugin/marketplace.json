@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "omokawa-skills",
-  "version": "12.5.0",
+  "version": "12.6.0",
   "description": "Plan-driven development workflow を構成する個別 skill 群。必要なものだけ install 可能",
   "owner": {
     "name": "Yasuaki Omokawa",
@@ -73,8 +73,8 @@
     },
     {
       "name": "model-data",
-      "description": "業務要求を既存のスキーマやSQLに照らしてモデル化し、一貫したデータモデル、必要に応じたDBML、データ設計、エンティティ関係、スキーマ整合性、SQLアンチパターンについての根拠付きの指摘を作る必要があるときに使う。",
-      "version": "1.4.0",
+      "description": "業務要求を既存のスキーマやSQLに照らしてモデル化し、一貫したデータモデル、必要に応じたDBML、データ設計、エンティティ関係、スキーマ整合性についての根拠付きの指摘を作る必要があるときに使う。",
+      "version": "1.5.0",
       "source": "./plugins/model-data",
       "skills": [
         "./skills/model-data"
