@@ -1,0 +1,18 @@
+{
+  "name": "define-done",
+  "description": "既存の計画を仕様とコードの根拠でレビューし、計画ごとの受け入れ基準と、その検証の対応付けまでを計画に書いて、実装に着手できる状態にする。計画を一から作るときや、計画を実装するときには使わない。",
+  "version": "1.0.0",
+  "author": {
+    "name": "Yasuaki Omokawa",
+    "url": "https://github.com/YasuakiOmokawa"
+  },
+  "homepage": "https://github.com/YasuakiOmokawa/skills",
+  "repository": "https://github.com/YasuakiOmokawa/skills",
+  "license": "MIT",
+  "keywords": [
+    "acceptance-criteria",
+    "plan-driven",
+    "qa",
+    "mece"
+  ]
+}
