@@ -5,6 +5,12 @@ All notable changes to omokawa-skills will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v13.0.0 - 2026-10-21
+
+### Changed
+
+- **`ground-design-in-codebase`、`define-acceptance-criteria`、`mece-plan-review`、`prepare-plan-for-implementation` → `define-done` (BREAKING):** 4 段のパイプラインを 1 スキルに統合した。設計境界のレビュー、受け入れ基準、MECE レビュー、検証の対応付けを順に行い、計画に `## Ground Review`、`## Acceptance Criteria`、`## MECE Review`、`## Verification Plan` を書く。止まるのは Gate が ready でないときの Verification Plan だけ。各段の規則は `references/` に置く。後続が読む節の書式は変えない。
+
 ## v10.0.0 - 2026-08-27
 
 ### Changed

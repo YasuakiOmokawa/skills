@@ -5,7 +5,7 @@
 - Skill: `plugins/<name>/skills/<name>/SKILL.md`
 - Outcome evaluation: `plugins/<name>/evals/outcomes.md`
 - Eval case: `plugins/<name>/evals/<NN-slug>/prompt.md` と `graders/*.md`
-- Chain eval case: `evals-chain/<slug>/`。複数pluginを繋いだ流れを測る。case frontmatter の `plugins:` に対象pluginを列挙し、repository rootを対象にして `--eval-dir evals-chain` で走らせる
+- Chain eval case: 複数pluginを繋いだ流れを測るときは、case frontmatter の `plugins:` に対象pluginを列挙し、それらを含むrootを対象にして `--eval-dir <dir>` で走らせる
 - Plugin manifest: `plugins/<name>/.claude-plugin/plugin.json`
 - Marketplace manifest: `.claude-plugin/marketplace.json`
 
