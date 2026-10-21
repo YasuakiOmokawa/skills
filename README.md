@@ -18,6 +18,7 @@ npx skills add YasuakiOmokawa/skills
 | [`create-commits`](./plugins/create-commits/skills/create-commits/SKILL.md) | 現在のブランチの未commitまたは未公開の変更を、レビュアーが順に読める境界のcommitにまとめる。公開前のcommit、分割、ローカル履歴の再構成を求められたときに使う。 |
 | [`create-design-doc`](./plugins/create-design-doc/skills/create-design-doc/SKILL.md) | 承認済み計画と、PoCとプロトタイプまたは同等の根拠による実現可能性とコードベース適合性の根拠から、実装判断に使うDesign Docを指定または導出した保存先に作る必要があるときに使う。 |
 | [`define-acceptance-criteria`](./plugins/define-acceptance-criteria/skills/define-acceptance-criteria/SKILL.md) | 既存の計画や仕様を観測可能な受け入れ基準に変換する。成功、失敗、境界、非影響の振る舞いを判定可能にする必要があるときに使う。 |
+| [`define-done`](./plugins/define-done/skills/define-done/SKILL.md) | 既存の計画を仕様とコードの根拠でレビューし、計画ごとの受け入れ基準と、その検証の対応付けまでを計画に書いて、実装に着手できる状態にする。計画を一から作るときや、計画を実装するときには使わない。 |
 | [`dry-ssot-text`](./plugins/dry-ssot-text/skills/dry-ssot-text/SKILL.md) | 正本文書と対象範囲の文書が特定されているとき、重複した読み手向けの手順を、読み手ごとの差異を保ったまま集約する。 |
 | [`express-intent-in-code`](./plugins/express-intent-in-code/skills/express-intent-in-code/SKILL.md) | コメント、boolean、nullableな戻り値に置かれた意図を、名前、直和型、全域関数、テストへ移す。コードで言えることを言い直すコメント、ありえない状態を許すbooleanやoptionalの組み合わせ、2つの意味を持つ1つのnull、振る舞いを選ぶboolean引数、I/Oに埋もれた判断を含むコードが渡されたときに使う。 |
 | [`extract-figma-spec`](./plugins/extract-figma-spec/skills/extract-figma-spec/SKILL.md) | 提供または取得できるFigmaの根拠を原子的な確認項目に分解し、指定されたフレーム、状態、部品について特定された実装とデザイン差分表で比較する必要があるときに使う。 |
