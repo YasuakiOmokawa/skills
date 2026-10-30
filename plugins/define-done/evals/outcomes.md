@@ -24,12 +24,26 @@
 - assertions:
   - [critical] 不在を観測する基準は `.gitignore` が無視する file と、計画が残す `src/README.md` を走査しない形で書く。
   - コマンドで観測する基準は、起草時に現在のツリーで一度実行してから書く。
+  - Gate が ready なら、define-done の後で AC と Verification Plan が変わったかを後続が確かめられる値を計画に残す。
+
+- fixture: 計画は `src/` で `cookie-kit` の `getCookie` を直接使うのをやめ、読み取りを `readSession` に寄せる。`src/logout.ts` は同じパッケージの `deleteCookie` を使い、計画はそれに触れない。
+- assertions:
+  - [critical] 直接使わないことを観測する基準は、変更後も残る `src/logout.ts` の `deleteCookie` の利用に当たらない形で書く。
+
+- fixture: 計画は製品コードから `APP_ENV` の参照を無くし、試験は残す。試験は `src/__tests__/` 直下と `src/config/__tests__/` にある。
+- assertions:
+  - [critical] 不在を観測する基準は、変更後も残る両方の試験ファイルを走査しない。
+
+- fixture: 計画の保存の AC は、DB コンテナを起動して migration を流す `npm run test:db` でしか観測できない。
+- assertions:
+  - [critical] 基準を書く前の確認で、DB やコンテナの起動、migration を実行しない。
+  - 変更前に実行しなかった観測は、そのことを Verification Plan に残す。
 
 - fixture: 仕様は請求作成、失敗時再試行、取消を要求する。計画は請求作成を二項目で重複して扱い、取消を欠く。
 - assertions:
   - [critical] `## MECE Review` が請求作成の重複と取消の欠落を挙げ、Gate を ready にしない (理由を書く)。
   - [critical] Gate が ready でないので `## Verification Plan` を書かず、Gate の理由と ready にするための不足条件を報告する。
-  - [critical] 計画本文の重複や欠落を自分で直さない。
+  - [critical] 計画本文の重複や欠落を自分で直さず、直したことを理由に Gate を ready にしない。
 
 - fixture: 計画はセッションの所属チームを招待受諾で設定する経路だけを扱う。仕様は「所属チームは user が所属するチームのどれか」と定め、所属を削除する既存経路は current team を更新しない。計画・明示 source のいずれもその経路を名指ししない。
 - assertions:
