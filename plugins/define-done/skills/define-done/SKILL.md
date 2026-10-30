@@ -9,7 +9,7 @@ description: 既存の計画を仕様とコードの根拠でレビューし、�
 
 ## 原理
 
-- 段の順序: 次の 4 段をこの順に行う。各段に入るときにその段の規則を読んで従い、前の段が書いた節を次の段の根拠にする。
+- 段の順序: 最初に 4 段の規則をすべて読み、次の 4 段をこの順に行う。前の段が書いた節を次の段の根拠にする。
   1. 設計境界のレビュー: [references/ground-review.md](references/ground-review.md)
   2. 受け入れ基準: [references/acceptance-criteria.md](references/acceptance-criteria.md)
   3. MECE レビュー: [references/mece-review.md](references/mece-review.md)
@@ -19,12 +19,12 @@ description: 既存の計画を仕様とコードの根拠でレビューし、�
 ## 契約
 
 - 入力: 書き込み可能な既存の計画と、依頼・計画が名指しする仕様とコード。計画が無いか全体を読めないときは何も書かず、その欠陥を報告する。
-- 出力: 計画にそれぞれ唯一の `## Ground Review`、`## Acceptance Criteria`、`## MECE Review`、`## Verification Plan`。書式は各段の規則が定める。後続は `## Acceptance Criteria` の AC-ID、`## MECE Review` の `- Gate:`、`## Verification Plan` を読む。
-- 最終回答: 段ごとに、書いた節、条件と基準の対応、未決の判断、不足情報、範囲外の項目、未検証の範囲を返し、Gate と書き込みの結果を添える。
+- 出力: 計画にそれぞれ唯一の `## Ground Review`、`## Acceptance Criteria`、`## MECE Review`、`## Verification Plan`。書式は各段の規則が定める。後続は `## Acceptance Criteria` の AC-ID、`## MECE Review` の `- Gate:` と `- Fingerprint:`、`## Verification Plan` を読む。`- Fingerprint:` は、define-done の後で AC と Verification Plan が変わっていないことを後続が確かめるための値である。
+- 最終回答: Gate、書いた節、書き込みを確かめた方法と結果を返し、空でない未決の判断 (既定と行き先を添える)、不足情報、範囲外、未検証を 1 件 1 行で並べる。該当の無い種類は書かない。Gate が ready でなければ、`## Verification Plan` を書いていないので計画は実装の入力を満たさないと書く。
 
 ## 禁止
 
-- 計画の 4 節以外の行、製品コード、test、設定、外部状態を変えない。見つけた不足を計画本文や製品コードへ自分で反映しない。
+- 計画の 4 節以外の行 (状態の行を含む)、製品コード、test、設定、外部状態を変えない。見つけた不足や上流の修正を計画本文や製品コードへ自分で反映せず、反映したことを理由に Gate を ready にしない。
 - 書き込みに失敗しても、別の保存先へ迂回せず、同じ書き込みを再試行しない。内容は回答で返す。
 - 資料が決めていない値と未解決の前提を推測で埋めない。
 
