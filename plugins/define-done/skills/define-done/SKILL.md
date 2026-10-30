@@ -20,7 +20,7 @@ description: 既存の計画を仕様とコードの根拠でレビューし、�
 
 - 入力: 書き込み可能な既存の計画と、依頼・計画が名指しする仕様とコード。計画が無いか全体を読めないときは何も書かず、その欠陥を報告する。
 - 出力: 計画にそれぞれ唯一の `## Ground Review`、`## Acceptance Criteria`、`## MECE Review`、`## Verification Plan`。書式は各段の規則が定める。後続は `## Acceptance Criteria` の AC-ID、`## MECE Review` の `- Gate:` と `- Fingerprint:`、`## Verification Plan` を読む。`- Fingerprint:` は、define-done の後で AC と Verification Plan が変わっていないことを後続が確かめるための値である。
-- 最終回答: Gate、書いた節、書き込みを確かめた方法と結果を返し、空でない未決の判断 (既定と行き先を添える)、不足情報、範囲外、未検証を 1 件 1 行で並べる。該当の無い種類は書かない。Gate が ready でなければ、`## Verification Plan` を書いていないので計画は実装の入力を満たさないと書く。
+- 最終回答: Gate、書いた節、書き込みを確かめた方法と結果を返し、`## MECE Review` が仕様の項目ごとに判定した対応 (対応あり・欠落・未検証と、根拠のファイルか行)、空でない未決の判断 (既定と行き先を添える)、不足情報、範囲外、未検証を 1 件 1 行で並べる。該当の無い種類は書かない。Gate が ready でなければ、`## Verification Plan` を書いていないので計画は実装の入力を満たさないと書く。
 
 ## 禁止
 
