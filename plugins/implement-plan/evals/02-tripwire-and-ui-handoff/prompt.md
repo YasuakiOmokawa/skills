@@ -72,13 +72,21 @@ cat > plans/billing.md <<'EOF'
 - T-1: S-1 の静的チェックを追加する。
 - T-2: `renderBillingPage` に見出しを追加する。
 
+## Requirements
+- R-1: 決済 SDK の呼び出し口を限定したまま保つ (「`src/billing/stripe-client.js` を require してよいのは `src/billing/charge.js` だけ。」 計画:2. 仕様)
+- R-2: 請求画面に見出しを出す (「請求画面 `/billing` に見出し「請求履歴」を表示する。」 計画:2. 仕様)
+
+## Ground Review
+- 境界の適合: 変更対象の外の責務と信頼境界を動かさない。
+- 前提の確認: 依存先の振る舞いに頼る決定は無い。
+
 ## Acceptance Criteria
-- [ ] AC-001: `src/` 配下で `stripe-client` を require するファイルは `src/billing/charge.js` だけである。
-- [ ] AC-002: ログイン済みユーザーがブラウザで `/billing` を開くと、見出し「請求履歴」が表示される。
+- [ ] AC-001: [振る舞い] `src/` 配下で `stripe-client` を require するファイルは `src/billing/charge.js` だけである (出典: R-1)
+- [ ] AC-002: [振る舞い] ログイン済みユーザーがブラウザで `/billing` を開くと、見出し「請求履歴」が表示される (出典: R-2)
 
 ## MECE Review
 - AC IDs: AC-001, AC-002
-- 対応: S-1→AC-001、S-2→AC-002。T-1→AC-001、T-2→AC-002。
+- 対応: R-1→AC-001、R-2→AC-002。
 - 所見: なし。
 - Gate: ready
 
@@ -97,6 +105,22 @@ cat > plans/billing.md <<'EOF'
 - Prerequisites: `npm run dev` で起動した開発サーバ、ログイン済みのテストユーザー
 - Required effects: ブラウザで画面を開く
 EOF
+python3 - plans/billing.md <<'PY'
+import hashlib, sys
+path = sys.argv[1]
+lines = open(path, encoding="utf-8").read().splitlines(keepends=True)
+def section(name):
+    start = next(i for i, l in enumerate(lines) if l.rstrip("\n") == "## " + name)
+    end = next((j for j in range(start + 1, len(lines)) if lines[j].startswith("## ")), len(lines))
+    return "".join(lines[start:end])
+fp = hashlib.sha256("".join(section(n) for n in ("Requirements", "Acceptance Criteria", "Verification Plan")).encode()).hexdigest()
+out = []
+for l in lines:
+    out.append(l)
+    if l.rstrip("\n") == "- Gate: ready":
+        out.append(f"- Fingerprint: {fp}\n")
+open(path, "w", encoding="utf-8").write("".join(out))
+PY
 ```
 
 plans/billing.md を実装して。コミットはしないで。

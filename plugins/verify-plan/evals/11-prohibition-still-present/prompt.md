@@ -48,13 +48,21 @@ cat > plans/rate-limit.md <<'EOF'
 ## 1. 目的
 `/items` の要求を client ごとに制限する。上限値は `config/limits.json` にだけ置く。
 
+## Requirements
+- R-1: client ごとに `/items` を制限する (「`/items` の要求を client ごとに制限する。」 計画:1. 目的)
+- R-2: 上限値は設定にだけ置く (「上限値は `config/limits.json` にだけ置く。」 計画:1. 目的)
+
+## Ground Review
+- 境界の適合: 制限は `handle` の中に収まる。前提の確認: 依存先は無い。
+
 ## Acceptance Criteria
-- [ ] AC-001: [振る舞い] 同じ `x-client-id` で `handle` に `/items` を `perMinute` 回 (60 回) 送ると、すべて status 200、61 回目は status 429 を返す
-- [ ] AC-002: [振る舞い] `/items` を 61 回送った後も、`handle` に `/health` を送ると status 200 と body `ok` を返す
-- [ ] AC-003: [禁止] 上限値を `config/limits.json` の外 (コードや他の設定) に写さない
+- [ ] AC-001: [振る舞い] 同じ `x-client-id` で `handle` に `/items` を `perMinute` 回 (60 回) 送ると、すべて status 200、61 回目は status 429 を返す (出典: R-1)
+- [ ] AC-002: [振る舞い] `/items` を 61 回送った後も、`handle` に `/health` を送ると status 200 と body `ok` を返す (出典: R-1)
+- [ ] AC-003: [禁止] 上限値を `src/` のコードに写さない (出典: R-2)
 
 ## MECE Review
 - AC IDs: AC-001, AC-002, AC-003
+- 対応: R-1→AC-001/AC-002、R-2→AC-003。
 - Gate: ready
 
 ## Verification Plan
@@ -73,19 +81,34 @@ cat > plans/rate-limit.md <<'EOF'
 - Required effects: 無い
 
 ### AC-003
-- Oracle: `npm run check` が通り、Violation sample を入れると落ち、除くと通る
-- Evidence anchors: `npm run check`、`config/limits.json`
+- Oracle: check_plan.py の禁止の検査が通り、Violation sample を入れると落ち、除くと通る
+- Evidence anchors: `config/limits.json`
 - Prerequisites: 無い
 - Required effects: 無い
 - Violation sample: `src/zz-violation.js` に `module.exports = { perMinute: 60 };`
+- Forbidden row: {"pattern": "(perMinute|PER_MINUTE)[^0-9]*60", "pathspec": ["src"]}
 EOF
-fp=$(awk '/^## / {f=0} /^## (Acceptance Criteria|Verification Plan)$/ {f=1} f' plans/rate-limit.md | shasum -a 256 | cut -d' ' -f1)
-awk -v fp="$fp" '{print} /^- Gate: ready$/{print "- Fingerprint: " fp}' plans/rate-limit.md > plans/rate-limit.md.tmp && mv plans/rate-limit.md.tmp plans/rate-limit.md
+python3 - plans/rate-limit.md <<'PY'
+import hashlib, sys
+path = sys.argv[1]
+lines = open(path, encoding="utf-8").read().splitlines(keepends=True)
+def section(name):
+    start = next(i for i, l in enumerate(lines) if l.rstrip("\n") == "## " + name)
+    end = next((j for j in range(start + 1, len(lines)) if lines[j].startswith("## ")), len(lines))
+    return "".join(lines[start:end])
+fp = hashlib.sha256("".join(section(n) for n in ("Requirements", "Acceptance Criteria", "Verification Plan")).encode()).hexdigest()
+out = []
+for l in lines:
+    out.append(l)
+    if l.rstrip("\n") == "- Gate: ready":
+        out.append(f"- Fingerprint: {fp}\n")
+open(path, "w", encoding="utf-8").write("".join(out))
+PY
 git add -A
 git -c user.name=fixture -c user.email=fixture@example.com commit -qm init
 cat > src/app.js <<'EOF'
 const { health } = require("./health");
-const { perMinute } = require("../config/limits.json");
+const PER_MINUTE = 60;
 
 const ITEMS = ["apple", "banana"];
 const counts = new Map();
@@ -93,7 +116,7 @@ const counts = new Map();
 function overLimit(clientId) {
   const next = (counts.get(clientId) ?? 0) + 1;
   counts.set(clientId, next);
-  return next > perMinute;
+  return next > PER_MINUTE;
 }
 
 function handle(req) {

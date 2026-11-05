@@ -14,11 +14,11 @@ Verification Plan が全受け入れ基準を対応付けている準備済み�
   - green: 通すための最小の変更にとどめ、まだテストの無い期待値を先取りしない。到達しうるテストを実行する。
   - refactor: 全 green のまま、このサイクルで入った重複と意図を表さない名前を、振る舞いの変更と分けられる形で一つずつ直し、そのたびにテストを実行する。差分に重複が無く新しい名前がすべて意図を述べていれば済む。既存コードの smell は直さず記録する。
 - 外の境界を通す: `[振る舞い]` の基準ごとに、Evidence anchors の外の境界を通すテストを少なくとも一つ書く。内部の関数のテストは実装の一部として足してよく、基準の受け入れには数えない。
-- tripwire: `[禁止]`、不変条件、不在、静的な基準は、リポジトリの check (lint、型、外部状態に触れない単体試験) として残るチェックを書き、Verification Plan の `- Violation sample:` (無ければ一時的な違反) を入れて落ちること、戻して通ることを観測する。
+- tripwire: 不変条件、不在、静的な基準は、リポジトリの check (lint、型、外部状態に触れない単体試験) として残るチェックを書き、一時的な違反を入れて落ちること、戻して通ることを観測する。`[禁止]` は tripwire を書かず、計画の禁止の行を check_plan.py が確かめる。
 
 ## 契約
 
-- 入力: 計画の `## Acceptance Criteria`、`- Gate:` が `ready` の `## MECE Review`、全 AC の `### AC-NNN` を持つ `## Verification Plan`。対応が欠ける AC、印 (`[振る舞い]`、`[禁止]`) のある計画で印の無い AC、`- Violation sample:` の無い `[禁止]` の AC があればコードを編集する前に止めて欠けを報告し、対応は実装でなく計画から得る。計画の作業項目は依存順に進める。
+- 入力: define-done が封をした計画。コードを編集する前に、この skill の dir の `scripts/check_plan.py` を `python3 <script> check <計画> <repo>` で流し、exit 1 なら止めて出力を報告する。対応は実装でなく計画から得る。計画の作業項目は依存順に進める。
 - 最初に test suite、lint、type check を一度実行して baseline を記録し、既に red のものは報告して以降の red と区別する。
 - 実画面や外部状態が要る基準は、実装して到達するテストを実行し、PASS とは言わず前提条件とともに検証へ引き渡す。観測にだけ要る前提条件は実装を止めない。
 - 計画外の変更が要る項目と、oracle がコードと矛盾する項目は、依存する項目ごと止めて衝突を報告する。
@@ -31,4 +31,4 @@ Verification Plan が全受け入れ基準を対応付けている準備済み�
 
 ## 完了条件
 
-全 AC を tested、tripwire proved、handed to verification、stopped のちょうど一つに割り当てる。どの作業項目にも紐づかない AC は stopped にする。最後に test suite 全体、lint、type check を実行し、baseline と比べて報告する。基準の受け入れは検証の結果であり、実装はここで終わる。
+全 AC を tested、tripwire proved、handed to verification、stopped のちょうど一つに割り当てる。どの作業項目にも紐づかない AC は stopped にする。最後に test suite 全体、lint、type check と `check_plan.py check-green <計画> <repo>` を実行し、baseline と比べて報告する。後者の `forbidden:` の行に挙がった `[禁止]` の AC は stopped、挙がらない `[禁止]` の AC は handed to verification にする。基準の受け入れは検証の結果であり、実装はここで終わる。

@@ -31,14 +31,22 @@ cat > plans/lockout.md <<'EOF'
 - T-1: `src/lockout.js` を新規作成し、`recordFailure` / `resetFailures` / `isLocked` を実装する。
 - T-2: `test/lockout.test.js` を追加する。
 
+## Requirements
+- R-1: 失敗回数を数える (「`recordFailure(userId)` は失敗回数を 1 増やし、その回数を返す。」 計画:2. 仕様)
+- R-2: 5 回でロックする (「失敗回数が 5 に達したら `isLocked(userId)` は true を返す。4 以下では false。」 計画:2. 仕様)
+- R-3: リセットでロックを解除する (「`resetFailures(userId)` は失敗回数を 0 に戻し、ロックを解除する。」 計画:2. 仕様)
+
+## Ground Review
+- 境界の適合: 計画の変更対象は既存の責務に収まる。前提の確認: 依存先は無い。
+
 ## Acceptance Criteria
-- [ ] AC-001: `recordFailure("u")` を 4 回呼んだ後、`isLocked("u")` は false を返す。
-- [ ] AC-002: `recordFailure("u")` を 5 回呼んだ後、`isLocked("u")` は true を返す。
-- [ ] AC-003: `recordFailure("u")` を 5 回呼んでから `resetFailures("u")` を呼ぶと、`isLocked("u")` は false を返す。
+- [ ] AC-001: [振る舞い] `recordFailure("u")` を 4 回呼んだ後、`isLocked("u")` は false を返す。 (出典: R-2)
+- [ ] AC-002: [振る舞い] `recordFailure("u")` を 5 回呼んだ後、`isLocked("u")` は true を返す。 (出典: R-1, R-2)
+- [ ] AC-003: [振る舞い] `recordFailure("u")` を 5 回呼んでから `resetFailures("u")` を呼ぶと、`isLocked("u")` は false を返す。 (出典: R-3)
 
 ## MECE Review
 - AC IDs: AC-001, AC-002, AC-003
-- 対応: S-1→AC-001/AC-002、S-2→AC-001/AC-002、S-3→AC-003。T-1→AC-001/AC-002/AC-003、T-2→AC-001/AC-002/AC-003。
+- 対応: R-1→AC-002、R-2→AC-001/AC-002、R-3→AC-003。
 - 所見: なし。
 - Gate: ready
 
@@ -63,6 +71,22 @@ cat > plans/lockout.md <<'EOF'
 - Prerequisites: なし
 - Required effects: package.json の test script でテストを実行する
 EOF
+python3 - plans/lockout.md <<'PY'
+import hashlib, sys
+path = sys.argv[1]
+lines = open(path, encoding="utf-8").read().splitlines(keepends=True)
+def section(name):
+    start = next(i for i, l in enumerate(lines) if l.rstrip("\n") == "## " + name)
+    end = next((j for j in range(start + 1, len(lines)) if lines[j].startswith("## ")), len(lines))
+    return "".join(lines[start:end])
+fp = hashlib.sha256("".join(section(n) for n in ("Requirements", "Acceptance Criteria", "Verification Plan")).encode()).hexdigest()
+out = []
+for l in lines:
+    out.append(l)
+    if l.rstrip("\n") == "- Gate: ready":
+        out.append(f"- Fingerprint: {fp}\n")
+open(path, "w", encoding="utf-8").write("".join(out))
+PY
 cat > src/lockout.js <<'EOF'
 const MAX_ATTEMPTS = 6;
 const attempts = new Map();

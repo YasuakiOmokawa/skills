@@ -1,6 +1,6 @@
 ---
 type: regex
-target: {source: file, path: plans/webhook.md}
+target: {source: file, path: repo/plans/webhook.md}
 match: contains
 weight: 0.5
 ---

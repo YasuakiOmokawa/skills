@@ -51,15 +51,24 @@ cat > plans/audit-login.md <<'EOF'
 - T-1: `src/audit.js` の `recordLogin` / `readAudit` を実装する。
 - T-2: `test/audit.test.js` を追加する。
 
+## Requirements
+- R-1: ログインを監査ログに追記する (「`recordLogin(userId, now)` は `data/audit.json` に `{ userId, at }` を追記する。`at` は ISO 8601。」 計画:2. 仕様)
+- R-2: 空の userId は記録しない (「`userId` が空なら `InvalidUser` を投げ、記録しない。」 計画:2. 仕様)
+- R-3: 追記順で全件を返す (「`readAudit()` は追記順で全件を返す。」 計画:2. 仕様)
+- R-4: production では flag の有効化で記録が始まる (「production では feature flag `audit_login` を有効化して初めて記録が始まる。」 計画:2. 仕様)
+
+## Ground Review
+- 境界の適合: 計画の変更対象は既存の責務に収まる。前提の確認: 依存先は無い。
+
 ## Acceptance Criteria
-- [ ] AC-001: `recordLogin("u1", new Date("2026-09-01T00:00:00Z"))` の後、`readAudit()` が `[{ userId: "u1", at: "2026-09-01T00:00:00.000Z" }]` を返す。
-- [ ] AC-002: `recordLogin("")` は `InvalidUser` を投げ、`readAudit()` は空のままである。
-- [ ] AC-003: `recordLogin("a")`、`recordLogin("b")` の後、`readAudit()` の userId 順が `["a", "b"]` である。
-- [ ] AC-004: production で feature flag `audit_login` を有効化した後にログインすると、production の `audit_log` テーブルの行数が 1 増える。
+- [ ] AC-001: [振る舞い] `recordLogin("u1", new Date("2026-09-01T00:00:00Z"))` の後、`readAudit()` が `[{ userId: "u1", at: "2026-09-01T00:00:00.000Z" }]` を返す。 (出典: R-1)
+- [ ] AC-002: [振る舞い] `recordLogin("")` は `InvalidUser` を投げ、`readAudit()` は空のままである。 (出典: R-2)
+- [ ] AC-003: [振る舞い] `recordLogin("a")`、`recordLogin("b")` の後、`readAudit()` の userId 順が `["a", "b"]` である。 (出典: R-3)
+- [ ] AC-004: [振る舞い] production で feature flag `audit_login` を有効化した後にログインすると、production の `audit_log` テーブルの行数が 1 増える。 (出典: R-4)
 
 ## MECE Review
 - AC IDs: AC-001, AC-002, AC-003, AC-004
-- 対応: S-1→AC-001、S-2→AC-002、S-3→AC-003、S-4→AC-004。T-1→AC-001/AC-002/AC-003、T-2→AC-001/AC-002/AC-003。
+- 対応: R-1→AC-001、R-2→AC-002、R-3→AC-003、R-4→AC-004。
 - 所見: なし。
 - Gate: ready
 
@@ -90,6 +99,22 @@ cat > plans/audit-login.md <<'EOF'
 - Prerequisites: production DB 接続 (PROD_DB_URL) と本番操作の許可
 - Required effects: production で `sh scripts/prod-flag.sh enable audit_login` を実行し、本番アカウントでログインする
 EOF
+python3 - plans/audit-login.md <<'PY'
+import hashlib, sys
+path = sys.argv[1]
+lines = open(path, encoding="utf-8").read().splitlines(keepends=True)
+def section(name):
+    start = next(i for i, l in enumerate(lines) if l.rstrip("\n") == "## " + name)
+    end = next((j for j in range(start + 1, len(lines)) if lines[j].startswith("## ")), len(lines))
+    return "".join(lines[start:end])
+fp = hashlib.sha256("".join(section(n) for n in ("Requirements", "Acceptance Criteria", "Verification Plan")).encode()).hexdigest()
+out = []
+for l in lines:
+    out.append(l)
+    if l.rstrip("\n") == "- Gate: ready":
+        out.append(f"- Fingerprint: {fp}\n")
+open(path, "w", encoding="utf-8").write("".join(out))
+PY
 cat > src/audit.js <<'EOF'
 const fs = require("node:fs");
 const path = require("node:path");

@@ -1,6 +1,6 @@
 # omokawa-skills 開発ガイド
 
-スキル本文を読む場合、前提知識として CONTEXT.md を参照。
+スキル本文を読む場合、前提知識として GLOSSARY.md を参照。
 
 ## 構成とファイル配置
 
@@ -21,7 +21,7 @@ plugin は**設定不要で動く**ことを目標にし、設定が必要なら
 
 ## 設定値の保管 (グローバル)
 
-機密でないマシンごとのグローバル設定は `~/.claude/skills-config/*.md` (定義は CONTEXT.md)。各 plugin は「このファイルを Read で取得」と SKILL.md に書く。`.env` は使わない (SKILL.md は AI が読む文書なのでシェル変数展開は機能しない)。
+機密でないマシンごとのグローバル設定は `~/.claude/skills-config/*.md` (定義は GLOSSARY.md)。各 plugin は「このファイルを Read で取得」と SKILL.md に書く。`.env` は使わない (SKILL.md は AI が読む文書なのでシェル変数展開は機能しない)。
 
 ## バージョン bump ルール
 
