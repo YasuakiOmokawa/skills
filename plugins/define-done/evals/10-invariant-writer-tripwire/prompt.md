@@ -7,6 +7,9 @@ runs: 3
 まず次のコマンドをそのまま実行して、作業ディレクトリに fixture を用意してください。
 
 ```bash
+mkdir -p repo
+cd repo
+git init -q --template= --separate-git-dir=../repo.gitdir -b main .
 mkdir -p plans docs src/user src/membership src/invitation src/team src/session
 cat > plans/team-current.md <<'EOF'
 # current team を所属の増減に追従させる 設計
@@ -157,6 +160,8 @@ export async function verifySession(userId: string): Promise<SessionView> {
   return { userId: user.id, teamId: user.currentTeamId };
 }
 EOF
+git add -A
+git -c user.name=fixture -c user.email=fixture@example.com commit -qm init
 ```
 
-plans/team-current.md の設計を /define-done して、設計を確定する。実装は指示まで禁止。
+repo/plans/team-current.md の設計を /define-done して、設計を確定する。実装は指示まで禁止。

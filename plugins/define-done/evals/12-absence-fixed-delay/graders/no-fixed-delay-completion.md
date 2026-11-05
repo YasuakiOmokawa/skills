@@ -1,6 +1,6 @@
 ---
 type: llm
-focus: {source: file, path: plans/webhook.md}
+focus: {source: file, path: repo/plans/webhook.md}
 ---
 `## Verification Plan` の `### AC-002`、`### AC-003`、`### AC-004` の 3 entry だけを見る。
 

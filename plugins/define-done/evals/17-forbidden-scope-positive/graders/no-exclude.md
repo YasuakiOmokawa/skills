@@ -2,6 +2,6 @@
 type: regex
 target: {source: file, path: repo/plans/no-app-env.md}
 match: not_contains
-weight: 0.5
+flags: m
 ---
-(?:\(exclude\)|:!|:\^)src/\*\*/__tests__
+^- (?:Oracle|Forbidden row|Evidence anchors):[^\n]*(?::\([^)\n]*exclude|:!|:\^)

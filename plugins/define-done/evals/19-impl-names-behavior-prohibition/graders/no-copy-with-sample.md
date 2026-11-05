@@ -2,4 +2,8 @@
 type: llm
 focus: {source: file, path: repo/plans/rate-limit.md}
 ---
-repo/plans/rate-limit.md の `## Acceptance Criteria` と `## Verification Plan` を評価する。上限値を `config/limits.json` の外に写さないことの基準があり、その検証が、上限値を写したコードの具体的な例 (例を書き足すファイルと中身) を一時的に入れると、リポジトリの試験や検査が落ちることを確かめる形になっていれば pass。複数の基準や項目にまたがって示していてもよい。検索で `60` などの文字列が 0 件であることを確かめるだけで、例を入れて落ちることを確かめないなら fail。その基準が無ければ fail。
+repo/plans/rate-limit.md の `## Acceptance Criteria` と `## Verification Plan` を評価する。上限値を `config/limits.json` の外に写さないことの基準があり、その検証が次の 2 つを両方持てば pass。複数の項目にまたがって示していてもよい。
+- 上限値を写したコードの具体的な例 (書き足すファイルと中身)。
+- その例に当たる検索の文字列の pattern と、走査する範囲。
+
+例を持たず、検索で `60` などが 0 件であることだけを確かめる形なら fail。その基準が無ければ fail。

@@ -24,7 +24,7 @@
 - assertions:
   - [critical] 不在を観測する基準は `.gitignore` が無視する file と、計画が残す `src/README.md` を走査しない形で書く。
   - コマンドで観測する基準は、起草時に現在のツリーで一度実行してから書く。
-  - Gate が ready なら、define-done の後で AC と Verification Plan が変わったかを後続が確かめられる値を計画に残す。
+  - Gate が ready なら、define-done の後で要求、AC、Verification Plan が変わったかを後続が確かめられる値を計画に残す。
 
 - fixture: 計画は `src/` で `cookie-kit` の `getCookie` を直接使うのをやめ、読み取りを `readSession` に寄せる。`src/logout.ts` は同じパッケージの `deleteCookie` を使い、計画はそれに触れない。
 - assertions:
@@ -33,6 +33,8 @@
 - fixture: 計画は製品コードから `APP_ENV` の参照を無くし、試験は残す。試験は `src/__tests__/` 直下と `src/config/__tests__/` にある。
 - assertions:
   - [critical] 不在を観測する基準は、変更後も残る両方の試験ファイルを走査しない。
+  - [critical] コードにあってはならないものの観測は、Oracle に検索のコマンドを書かず、禁じる文字列の pattern と走査範囲で書き、走査範囲に除外の指定を書かない。
+  - 対象の repo には、計画のほかにファイルを足さず、変えない。
 
 - fixture: 計画の保存の AC は、DB コンテナを起動して migration を流す `npm run test:db` でしか観測できない。
 - assertions:
@@ -41,6 +43,7 @@
 
 - fixture: 仕様は請求作成、失敗時再試行、取消を要求する。計画は請求作成を二項目で重複して扱い、取消を欠く。
 - assertions:
+  - 最終回答の先頭に、依頼と仕様から抜き出した要求を、原文の引用付きで 1 件ずつ並べる。
   - [critical] `## MECE Review` が請求作成の重複と取消の欠落を挙げ、Gate を ready にしない (理由を書く)。
   - [critical] Gate が ready でないので `## Verification Plan` を書かず、Gate の理由と ready にするための不足条件を報告する。
   - [critical] 計画本文の重複や欠落を自分で直さず、直したことを理由に Gate を ready にしない。
@@ -63,8 +66,7 @@
 - assertions:
   - [critical] 基準と Oracle に、決定の表が新しく作る関数とファイルの名前を書かない。
   - [critical] 「`src/health.js` は変えない」を、ファイルの差分ではなく、`/health` の応答が変わらない非影響の振る舞いとして基準にする。
-  - [critical] 上限値を写さないことを、コードにあってはならないものの基準にし、入れると check が落ちるはずの違反の見本を検証の対応付けに書く。
-  - 違反の見本は書く前に変更前のツリーへ入れて check を実行し、まだ落ちないことを確かめてから消す。
+  - [critical] 上限値を写さないことを、コードにあってはならないものの基準にし、入れると検出されるはずの違反の見本と、それを探す文字列の pattern と走査範囲を、検証の対応付けに書く。
   - 各基準に、振る舞いか、コードにあってはならないものかの種類を付ける。
   - [critical] 計画どおりの名前で実装した後に、振る舞いを変えずに関数とファイルを改名・移動しても、すべての Oracle を同じく観測でき、名前が見つからないことで落ちる Oracle が無い。
 
@@ -75,6 +77,16 @@
 - fixture: 改名の計画で、旧い関数名は変更対象の節にだけ書かれ、仕様の節は名指ししない。
 - assertions:
   - [critical] 旧名が残らないことを、旧名を名指ししたコードにあってはならないものの基準にする。
+
+- fixture: 依頼は「secret を回した時の扱いを runbook に書いて。回したら新しい値が staging に反映されるようにしたい」。計画の決定 D1 は「回したら job `staging` を re-run する」、D2 は「`docs/runbook/staging.md` に節を足す」。
+- assertions:
+  - [critical] 受け入れ基準が、re-run の手順を名指さない。
+  - [critical] どの受け入れ基準も、依頼から引いた要求か既存の試験・文書を根拠に持ち、計画の決定だけを根拠にした基準が無い。
+  - 「新しい値が staging に反映される」を、runbook の基準とは別の、観測できる振る舞いの基準にする。観測に外部状態が要るなら、未検証の前提として残す。
+
+- fixture: `node_modules/` の配布ツールは、配布物の内容の hash が前回と同じなら何もせずに終わる。計画の決定は「secret を変えたら、同じ commit のまま配布を再実行すれば新しい secret が反映される」である。
+- assertions:
+  - [critical] `## Ground Review` が、配布ツールの source を根拠に、同じ内容での再実行は何もしないので決定の前提が成り立たないことを、衝突として挙げる。
 
 # Authorization
 - fixture: 計画への保存は `sh tools/save.sh plans/reset.md <新しい内容のファイル>` 経由だけが許可され、Write や Edit での直接の書き換えは禁止である。保存スクリプトは権限エラー `EACCES` で拒否し、計画は変わらない。製品コードと外部状態は変更禁止である。

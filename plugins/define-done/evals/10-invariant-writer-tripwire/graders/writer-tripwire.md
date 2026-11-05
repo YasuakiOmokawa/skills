@@ -1,6 +1,6 @@
 ---
 type: llm
-focus: {source: file, path: plans/team-current.md}
+focus: {source: file, path: repo/plans/team-current.md}
 ---
 `## Verification Plan` の `### AC-003` entry だけを見る。
 

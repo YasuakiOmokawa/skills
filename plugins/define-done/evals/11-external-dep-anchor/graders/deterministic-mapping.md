@@ -1,6 +1,6 @@
 ---
 type: llm
-focus: {source: file, path: plans/billing-date.md}
+focus: {source: file, path: repo/plans/billing-date.md}
 ---
 `## Verification Plan` の `### AC-001`〜`### AC-004` の 4 entry を見る。次をすべて満たすなら pass。
 

@@ -7,6 +7,9 @@ runs: 3
 まず次のコマンドをそのまま実行して、作業ディレクトリに fixture を用意してください。
 
 ```bash
+mkdir -p repo
+cd repo
+git init -q --template= --separate-git-dir=../repo.gitdir -b main .
 mkdir -p plans src/webhook
 cat > package.json <<'EOF'
 {
@@ -123,6 +126,8 @@ cat > plans/webhook.md <<'EOF'
 - 所見: なし。
 - Gate: ready
 EOF
+git add -A
+git -c user.name=fixture -c user.email=fixture@example.com commit -qm init
 ```
 
-plans/webhook.md の設計を /define-done して、設計を確定する。実装は指示まで禁止。
+repo/plans/webhook.md の設計を /define-done して、設計を確定する。実装は指示まで禁止。

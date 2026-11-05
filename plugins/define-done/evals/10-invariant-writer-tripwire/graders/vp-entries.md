@@ -1,6 +1,6 @@
 ---
 type: regex
-target: {source: file, path: plans/team-current.md}
+target: {source: file, path: repo/plans/team-current.md}
 match: count:3
 weight: 0.5
 ---
