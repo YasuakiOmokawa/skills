@@ -5,6 +5,13 @@ All notable changes to omokawa-skills will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v14.1.0 - 2026-11-05
+
+### Changed
+
+- **`define-done` 2.1.0:** 要求どうしが範囲を定め合うとき (「旧名が残らない」と「移行の文書の言及は残す」) を矛盾として扱わず、基準の範囲を絞って両方を満たす規則を足した。他の要求が残すと定める文書や作らせる試験を、禁止と不在の範囲の「変更後も残る行」に戻した。種類の印や出典を足すだけなら AC の意味の変更に数えない。 計画の決定が要求を満たすかが依存先の振る舞いで決まり、その振る舞いを source か文書で確かめられないときは Gate を ready にしない。要求の表の `未検証` は外から観測する手段が無い要求だけに使う。 Ground Review の前提の確認で、DB やコンテナの起動、migration、外部への送信が要る確かめ方は実行しない。
+- `define-done` の eval の計測器を、v14 の契約に合わせて直した (AC-ID の番号と件数への依存、節の位置の限定、assertion との食い違いを除いた)。
+
 ## v14.0.0 - 2026-11-05
 
 ### Changed
