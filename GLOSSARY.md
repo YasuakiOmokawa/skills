@@ -99,3 +99,34 @@ n=3では2 run以上の差だけを有意とする。without armで素のモデ�
 - sandboxでは素の `git init` が `.git/config` と `.git/hooks` への書き込み拒否で失敗し、以後のgitは親の `home/.git` に落ちる。gitのfixtureは `git init -q --template= --separate-git-dir=../repo.gitdir -b main .` で作り、remoteは `git init -q --bare --template= ../remote.git` にpushする。graderは `repo.gitdir/logs/HEAD` (reflog) や `remote.git/refs/heads/<b>` を `{source: file, path}` で読める。
 - `--keep-temp` のsandboxで `home/` と `tmp/` はmode 000で封印され、chmodは許可されない。書き込まれたファイルの内容は `out/trace.jsonl` のWrite/Edit入力から復元する。
 - 負例caseでもagentがBashにturnを使うため、10 turn程度は与える。
+
+## Language
+
+### 完了の定義 (define-done・implement-plan・verify-plan)
+
+**受け入れ基準 (AC)**:
+計画が完了したと言える条件。外から観測できる振る舞い (`[振る舞い]`) と、コードにあってはならないもの (`[禁止]`) の 2 種類だけで書く。
+_Avoid_: 完了条件 (SKILL.md の節名と紛れる)
+
+**要求**:
+依頼・issue・仕様が求めていることを、原文の引用付きで 1 件ずつ挙げたもの。計画の決定からは引かない。
+_Avoid_: 要件
+
+**既存の保証**:
+変更前の repo に既にある試験・guard・不変条件の文書。要求と並んで AC の出典になれる。
+
+**出典**:
+AC が何に基づくかを示すもの。要求か既存の保証のどちらかに限る。
+_Avoid_: 根拠 (Ground Review の根拠と紛れる)、出どころ
+
+**決定**:
+計画が選んだ手順・値・仕組み。変わりうるので AC の出典にはならず、どの要求に仕えるかだけを持つ。
+_Avoid_: 設計判断
+
+**封**:
+define-done が書き終えた要求・AC・検証の対応付けが、その後に変わっていないと確かめられる状態。
+_Avoid_: seal と fingerprint を状態の名前として使うこと (fingerprint は封の値の名前)
+
+**禁止の行**:
+`[禁止]` の AC ごとに、検証の対応付けに書く「あってはならない文字列の pattern と、それを探す範囲」の組。
+_Avoid_: 禁止の表、tripwire (実装が書く検査と紛れる)
