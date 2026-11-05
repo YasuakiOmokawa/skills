@@ -31,14 +31,22 @@ cat > plans/retry.md <<'EOF'
 - T-1: `src/retry.js` を新規作成する。
 - T-2: `test/retry.test.js` を追加する。
 
+## Requirements
+- R-1: 失敗したら再試行し成功の値を返す (「`withRetry(fn)` は `fn` が reject したら再試行し、成功したらその値を返す。」 計画:2. 仕様)
+- R-2: 最大 3 回で諦める (「試行は最大 3 回。3 回とも失敗したら最後のエラーで reject する。」 計画:2. 仕様)
+- R-3: 指数バックオフで待つ (「再試行の間は 10ms、20ms の指数バックオフで待つ。」 計画:2. 仕様)
+
+## Ground Review
+- 境界の適合: 計画の変更対象は既存の責務に収まる。前提の確認: 依存先は無い。
+
 ## Acceptance Criteria
-- [ ] AC-001: 3 回目で成功する `fn` を `withRetry` に渡すと、`fn` は 3 回呼ばれ、戻り値は 3 回目の値である。
-- [ ] AC-002: 常に失敗する `fn` を渡すと、`fn` は 3 回呼ばれ、3 回目のエラーで reject する。
-- [ ] AC-003: 再試行の待機時間は 1 回目 10ms、2 回目 20ms である。
+- [ ] AC-001: [振る舞い] 3 回目で成功する `fn` を `withRetry` に渡すと、`fn` は 3 回呼ばれ、戻り値は 3 回目の値である。 (出典: R-1)
+- [ ] AC-002: [振る舞い] 常に失敗する `fn` を渡すと、`fn` は 3 回呼ばれ、3 回目のエラーで reject する。 (出典: R-2)
+- [ ] AC-003: [振る舞い] 再試行の待機時間は 1 回目 10ms、2 回目 20ms である。 (出典: R-3)
 
 ## MECE Review
 - AC IDs: AC-001, AC-002, AC-003
-- 対応: S-1→AC-001、S-2→AC-002、S-3→AC-003。T-1→AC-001/AC-002/AC-003、T-2→AC-001/AC-002/AC-003。
+- 対応: R-1→AC-001、R-2→AC-002、R-3→AC-003。
 - 所見: なし。
 - Gate: ready
 
@@ -63,6 +71,22 @@ cat > plans/retry.md <<'EOF'
 - Prerequisites: なし
 - Required effects: package.json の test script でテストを実行する
 EOF
+python3 - plans/retry.md <<'PY'
+import hashlib, sys
+path = sys.argv[1]
+lines = open(path, encoding="utf-8").read().splitlines(keepends=True)
+def section(name):
+    start = next(i for i, l in enumerate(lines) if l.rstrip("\n") == "## " + name)
+    end = next((j for j in range(start + 1, len(lines)) if lines[j].startswith("## ")), len(lines))
+    return "".join(lines[start:end])
+fp = hashlib.sha256("".join(section(n) for n in ("Requirements", "Acceptance Criteria", "Verification Plan")).encode()).hexdigest()
+out = []
+for l in lines:
+    out.append(l)
+    if l.rstrip("\n") == "- Gate: ready":
+        out.append(f"- Fingerprint: {fp}\n")
+open(path, "w", encoding="utf-8").write("".join(out))
+PY
 cat > src/retry.js <<'EOF'
 const MAX_ATTEMPTS = 3;
 const BASE_DELAY_MS = 10;
