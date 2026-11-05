@@ -1,5 +1,5 @@
 # Trigger
-- fixture: current plan に AC-ID 付きの `## Acceptance Criteria`、`Gate: ready` の `## MECE Review`、全ACを対応付けた `## Verification Plan` がある。依頼Aは「このプランを実装して。コミットは指示まで禁止」、依頼Bは「実装済みの差分をプランで検証して」、依頼Cは「実装前にVerification Planを作って」である。
+- fixture: current plan は define-done が封をした計画で、`## Requirements`、出典付きの AC を持つ `## Acceptance Criteria`、`Gate: ready` の `## MECE Review`、全ACを対応付けた `## Verification Plan` がある。依頼Aは「このプランを実装して。コミットは指示まで禁止」、依頼Bは「実装済みの差分をプランで検証して」、依頼Cは「実装前にVerification Planを作って」である。
 - assertions:
   - [critical] 依頼Aでは製品コードとテストを変更して実装を始める。
   - [critical] 依頼Bでは新しい実装を始めず、検証を行う。
@@ -17,10 +17,10 @@
   - 開始時と最後にテスト、lint、型チェックを実行し、それぞれ開始時の結果と比較して報告する。
   - すべてのACを、テスト済み、tripwire確認済み、検証へ引き渡し、停止のいずれか一つとして報告する。
 
-- fixture: 計画の基準は既存の公開関数を外の境界として観測する振る舞い一件と、違反の見本を持つコードにあってはならないもの一件である。計画の決定は新しい内部 module と関数の名前を挙げる。
+- fixture: 計画の基準は既存の公開関数を外の境界として観測する振る舞い一件と、違反の見本と禁止の行 (pattern と走査範囲) を持つコードにあってはならないもの一件である。計画の決定は新しい内部 module と関数の名前を挙げる。
 - assertions:
   - [critical] 振る舞いの基準に、外の境界を通すテストを少なくとも一つ書く。
-  - [critical] コードにあってはならないものの基準に、check として残るチェックを書き、違反の見本を入れて落ちること、戻して通ることを観測する。
+  - [critical] コードにあってはならないものの基準には残るチェックを書かず、実装の後に計画の禁止の行による検査を流して結果を報告する。
 
 - fixture: 計画の AC のうち二件には種類の印があり、一件には無い。
 - assertions:

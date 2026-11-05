@@ -42,16 +42,29 @@ cat > plans/version.md <<'EOF'
 | D2 | 組み込み | `src/app.js` の `handle` で `/version` のとき `readVersion()` の値を返す |
 
 ## 作業項目
-- W-1: D1 と D2 を実装する (AC-001)。
-- W-2: 版の写しを検出するチェックを足す (AC-002)。
+- W-1: D1 と D2 を実装する (AC-001、AC-002)。
+
+## Requirements
+- R-1: 運用者が版を `/version` で確かめられる (「運用者が動いている版を `/version` で確かめられるようにする。」 計画:1. 目的)
+- R-2: 版の値は `package.json` にだけ置く (「版の値は `package.json` の `version` にだけ置く。」 計画:1. 目的)
+
+## Ground Review
+- 境界の適合: `handle` に経路を 1 つ足すだけで、既存の `/health` の応答と責務を動かさない。
+- 前提の確認: 依存先の振る舞いに頼る決定は無い。
 
 ## Acceptance Criteria
-- [ ] AC-001: [振る舞い] `handle` に `/version` を送ると、status 200 と、body に `package.json` の `version` の値を返す
-- [ ] AC-002: [禁止] 版の値を `package.json` の外 (コードや他の設定) に写さない
+- [ ] AC-001: [振る舞い] `handle` に `/version` を送ると、status 200 と、body に `package.json` の `version` の値を返す (出典: R-1)
+- [ ] AC-002: [禁止] 版の値をコード (`src/`) に写さない (出典: R-2)
 
 ## MECE Review
 - AC IDs: AC-001, AC-002
+- 対応: R-1→AC-001、R-2→AC-002。
 - Gate: ready
+
+| 決定 | 要求 |
+|---|---|
+| D1 | R-1, R-2 |
+| D2 | R-1 |
 
 ## Verification Plan
 - AC IDs: AC-001, AC-002
@@ -63,14 +76,29 @@ cat > plans/version.md <<'EOF'
 - Required effects: 無い
 
 ### AC-002
-- Oracle: `npm run check` が通り、Violation sample を入れると落ち、除くと通る
-- Evidence anchors: `npm run check`、`package.json`
-- Prerequisites: 変更前は写しを検出するチェックが無く、見本を入れても check は通る
+- Oracle: check_plan.py の禁止の検査が通り、Violation sample を入れると落ち、除くと通る
+- Evidence anchors: `package.json`
+- Prerequisites: 無い
 - Required effects: 無い
 - Violation sample: `src/zz-violation.js` に `module.exports = "1.4.2";`
+- Forbidden row: {"pattern": "1\\.4\\.2", "pathspec": ["src"]}
 EOF
-fp=$(awk '/^## / {f=0} /^## (Acceptance Criteria|Verification Plan)$/ {f=1} f' plans/version.md | shasum -a 256 | cut -d' ' -f1)
-awk -v fp="$fp" '{print} /^- Gate: ready$/{print "- Fingerprint: " fp}' plans/version.md > plans/version.md.tmp && mv plans/version.md.tmp plans/version.md
+python3 - plans/version.md <<'PY'
+import hashlib, sys
+path = sys.argv[1]
+lines = open(path, encoding="utf-8").read().splitlines(keepends=True)
+def section(name):
+    start = next(i for i, l in enumerate(lines) if l.rstrip("\n") == "## " + name)
+    end = next((j for j in range(start + 1, len(lines)) if lines[j].startswith("## ")), len(lines))
+    return "".join(lines[start:end])
+fp = hashlib.sha256("".join(section(n) for n in ("Requirements", "Acceptance Criteria", "Verification Plan")).encode()).hexdigest()
+out = []
+for l in lines:
+    out.append(l)
+    if l.rstrip("\n") == "- Gate: ready":
+        out.append(f"- Fingerprint: {fp}\n")
+open(path, "w", encoding="utf-8").write("".join(out))
+PY
 git add -A
 git -c user.name=fixture -c user.email=fixture@example.com commit -qm init
 ```
