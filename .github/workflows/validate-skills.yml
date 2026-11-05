@@ -11,6 +11,8 @@ on:
       - "scripts/check_version_bump.py"
       - "scripts/test_check_version_bump.py"
       - "scripts/test_check_plan.py"
+      - "scripts/eval_coverage.py"
+      - "scripts/test_eval_coverage.py"
       - ".github/workflows/validate-skills.yml"
   push:
     branches: [main]
@@ -22,6 +24,8 @@ on:
       - "scripts/check_version_bump.py"
       - "scripts/test_check_version_bump.py"
       - "scripts/test_check_plan.py"
+      - "scripts/eval_coverage.py"
+      - "scripts/test_eval_coverage.py"
       - ".github/workflows/validate-skills.yml"
 
 jobs:
@@ -32,9 +36,12 @@ jobs:
         with:
           fetch-depth: 0
       - name: Test skill validator
-        run: python3 -m unittest scripts/test_validate_skills.py scripts/test_check_version_bump.py scripts/test_check_plan.py
+        run: python3 -m unittest scripts/test_validate_skills.py scripts/test_check_version_bump.py scripts/test_check_plan.py scripts/test_eval_coverage.py
       - name: Check version bumps
         if: github.event_name == 'pull_request'
         run: python3 scripts/check_version_bump.py origin/${{ github.base_ref }}
+      - name: Check eval coverage
+        if: github.event_name == 'pull_request'
+        run: python3 -m scripts.eval_coverage check origin/${{ github.base_ref }}
       - name: Validate skill structure
         run: python3 scripts/validate_skills.py
