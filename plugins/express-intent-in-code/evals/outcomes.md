@@ -1,64 +1,77 @@
 # Trigger
 - fixture: `src/order.ts` は命名と責務は明瞭だが、各行の動作を言い直すコメントと意図を説明するコメントが混在し、既存入出力は固定されている。依頼Aは「コメントを減らして、意図はコードで表して」、依頼Bは「新しい会員割引を追加して」である。
 - assertions:
-  - [critical] 依頼Aではコードが既に表していることを言い直すコメントを削除する。
-  - [critical] 依頼Bを整理作業として扱わず、コメント削除や改名を行わない。
-  - 依頼Aで既に明瞭な名前は改名しない。
-  - 注文処理外へ変更を広げない。
+  - [critical] 依頼Aではコードが既に表していることを言い直すコメントを削除する。 (grader: 03-authz-pricing/narration-removed)
+  - [critical] 依頼Bを整理作業として扱わず、コメント削除や改名を行わない。 (grader: 06-neg-add-discount/skill-not-fired, 06-neg-add-discount/narration-kept, 06-neg-add-discount/no-rename)
+  - 依頼Aで既に明瞭な名前は改名しない。 (grader: 未計測)
+  - 注文処理外へ変更を広げない。 (grader: 未計測)
+  - [critical] コメントを減らす、または整理して意図をコードで表す依頼 (依頼A) で skill が発火する。 (grader: 01-narration-comments/skill-fired, 02-one-third-target/skill-fired, 03-authz-pricing/skill-fired, 04-todo-holdout/skill-fired, 05-unclear-names/skill-fired, 08-constraint-to-test/skill-fired, 14-holdout-external-source/skill-fired, 15-jargon-names/skill-fired, 16-holdout-dependency-guarantee/skill-fired)
+  - [critical] 依頼Bで `member` による追加割引を実装し、テストを足す。 (grader: 06-neg-add-discount/item-extended, 06-neg-add-discount/test-added)
+  - [critical] コメントの意味を尋ねるだけの依頼では skill を発火しない。 (grader: 07-neg-explain-comments/skill-not-fired)
+  - [critical] コメントの意味を尋ねるだけの依頼ではファイルを変更しない。 (grader: 07-neg-explain-comments/comments-untouched, 07-neg-explain-comments/no-edit, 07-neg-explain-comments/no-write)
+  - コメントの意味を尋ねるだけの依頼では、各コメントが何を説明しているかを答える。 (grader: 07-neg-explain-comments/explains-comments)
 - fixture: `src/company-state.ts` は読み込み状態を `loading` / `unauthorized` / `loadFailed` の 3 つの独立した boolean で持ち、依頼は「意図を型で表して」で、問題箇所も解も指定しない。
 - assertions:
-  - [critical] コメント削減の語が無くても、型・戻り値・引数で意図を表す依頼で発火する。
+  - [critical] コメント削減の語が無くても、型・戻り値・引数で意図を表す依頼で発火する。 (grader: 09-illegal-states-union/skill-fired, 10-undefined-two-meanings/skill-fired, 11-boolean-argument/skill-fired, 12-brand-double-apply/skill-fired, 13-neg-deletion-test-zero/skill-fired)
 
 # Outcome
 - fixture: `src/order.ts` に 3 種のコメントがある。(a) 動作の言い直し (`// 合計を計算する`)、(b) 命名や抽出でコードへ移せる意図 (`// tmp は税抜き小計`)、(c) コードで表せない外部制約 (`// 税率は 2026 年度の法令に従い 10%`)。正常注文、空注文、端数注文の既存テストが成功している。
 - assertions:
-  - [critical] (a) を削除し、(b) はコードへ移してから削除し、(c) だけ残す。
-  - [critical] 正常、空、端数の出力が変わらないことを変更後に検証する。
-  - 整理中に新しいコメントを追加しない。
-  - 残したコメントごとに、コードで表せない理由を報告する。
+  - [critical] (a) を削除し、(b) はコードへ移してから削除し、(c) だけ残す。 (grader: 01-narration-comments/order-names-moved, 01-narration-comments/order-keeper-kept, 01-narration-comments/order-only-keeper-remains, 01-narration-comments/pricing-names-moved, 01-narration-comments/pricing-keeper-kept, 01-narration-comments/pricing-only-keeper-remains, 01-narration-comments/shipping-keeper-kept, 01-narration-comments/shipping-only-keeper-remains, 02-one-third-target/header-block-removed, 02-one-third-target/magic-numbers-named, 02-one-third-target/why-looking-moved-into-code, 02-one-third-target/rfc-reason-kept, 05-unclear-names/bad-names-gone, 05-unclear-names/incident-reason-kept, 05-unclear-names/only-keeper-remains, 05-unclear-names/why-looking-moved-into-code)
+  - [critical] 正常、空、端数の出力が変わらないことを変更後に検証する。 (grader: 01-narration-comments/tests-run, 02-one-third-target/tests-run, 05-unclear-names/tests-run)
+  - 整理中に新しいコメントを追加しない。 (grader: 未計測)
+  - 残したコメントごとに、コードで表せない理由を報告する。 (grader: 01-narration-comments/report-kept-reason, 02-one-third-target/report-kept-reason, 05-unclear-names/report-kept-reason)
+  - [critical] コメント数を依頼された割合 (3 分の 1) まで減らす。 (grader: 02-one-third-target/comment-count-one-third)
+  - [critical] 整理の前後で観測される振る舞い (端数の切り捨て、期限の境界など) を変えない。 (grader: 01-narration-comments/no-ceil-or-round, 01-narration-comments/order-floor-kept, 01-narration-comments/pricing-floor-kept, 02-one-third-target/behavior-preserved, 05-unclear-names/ceil-kept, 05-unclear-names/exponential-kept, 05-unclear-names/no-floor-or-round)
+  - 改名した名前を参照するテストを同じ変更で更新する。 (grader: 05-unclear-names/test-updated)
 - fixture: `src/company-state.ts` は相互排他の読み込み状態を 3 つの独立 boolean で持ち、`loading && unauthorized` のような不可能な組合せが型上作れる。`src/auth-route.ts` の `resolveMethod` は「対象 route でない」と「provider が未知」の 2 つの意味を同じ `undefined` で返し、呼び手が provider 名を audit に残せない。`src/removal-policy.ts` の `canRemoveTarget(actorRole, isSelf, targetRole)` は同型の引数 2 つに boolean が挟まり、`sweepSignups(opts: { execute: boolean })` は dry-run と実削除の別処理を boolean で分岐する。`src/display-text.ts` の `sanitizeDisplayText(s: string): string` は戻りが `string` のため、招待メールの呼び手が 2 回適用している。すべて既存テストが成功している。
 - assertions:
-  - [critical] 同時に見る boolean の束や片方だけ null になる optional の組を、判別子付きの sum type に置き換え、不可能な組合せを型で作れなくする。
-  - [critical] 1 つの `undefined` / `null` が 2 つ以上の意味を運ぶ戻り値を、意味ごとの枝を持つ sum type にし、呼び手が失っていた情報 (未知の provider 名) を枝に載せる。
-  - [critical] 別処理を分岐させる boolean 引数と、同型の引数に挟まれた位置 boolean を、名前付きの union か関数分割に置き換え、呼び出し側も揃えて更新する。
-  - 「済んでいる」ことを型で言えない値 (sanitize 済み文字列) は、構築点が 1 箇所になるなら branded type にして二重適用を消す。
-  - [critical] 上の置き換え後に既存テストを実行し、観測される出力が変わらないことを検証する。
-  - 型の置き換えで表せた事柄を説明していたコメントは削除する。
+  - [critical] 同時に見る boolean の束や片方だけ null になる optional の組を、判別子付きの sum type に置き換え、不可能な組合せを型で作れなくする。 (grader: 09-illegal-states-union/independent-booleans-gone, 09-illegal-states-union/sum-type-introduced)
+  - [critical] 1 つの `undefined` / `null` が 2 つ以上の意味を運ぶ戻り値を、意味ごとの枝を持つ sum type にし、呼び手が失っていた情報 (未知の provider 名) を枝に載せる。 (grader: 10-undefined-two-meanings/branches-carry-meaning, 10-undefined-two-meanings/observer-stops-reinspecting-path)
+  - [critical] 別処理を分岐させる boolean 引数と、同型の引数に挟まれた位置 boolean を、名前付きの union か関数分割に置き換え、呼び出し側も揃えて更新する。 (grader: 11-boolean-argument/positional-boolean-gone, 11-boolean-argument/sweep-split-or-union, 11-boolean-argument/callers-updated)
+  - 「済んでいる」ことを型で言えない値 (sanitize 済み文字列) は、構築点が 1 箇所になるなら branded type にして二重適用を消す。 (grader: 12-brand-double-apply/branded-type-with-single-constructor, 12-brand-double-apply/double-apply-gone)
+  - [critical] 上の置き換え後に既存テストを実行し、観測される出力が変わらないことを検証する。 (grader: 09-illegal-states-union/tests-run, 09-illegal-states-union/tests-pass-after, 10-undefined-two-meanings/tests-run, 10-undefined-two-meanings/tests-pass-after, 11-boolean-argument/tests-run, 11-boolean-argument/tests-pass-after, 12-brand-double-apply/tests-run, 12-brand-double-apply/tests-pass-after)
+  - 型の置き換えで表せた事柄を説明していたコメントは削除する。 (grader: 12-brand-double-apply/reminder-comment-gone)
 - fixture: 招待受諾の実装直後の `src/invitation.ts` は、`WireError` (クライアントへ返してよいエラー)、`toWire`、`InviterStanding` / `standingOf` のように英語の慣用や比喩に頼った名前を説明コメント無しで使い、`src/route.ts` とテストがそれらを参照している。`acceptInvitation` のように意味の読める名前もある。依頼は `src/invitation.ts` だけを挙げ、振る舞いの維持を求める。
 - assertions:
-  - [critical] 用法を追うか用語集を読まないと意味を取れない名前を、指す物事をそのまま述べる名前に改名する。
-  - 依頼が編集してよいファイルを限定していないので、作業ツリー内の呼び手とテスト (テスト名を含む) を同じ変更で更新する。
-  - 意味の読める名前は改名しない。
-  - [critical] 改名後にテストを実行し、観測される出力が変わらないことを検証する。
+  - [critical] 用法を追うか用語集を読まないと意味を取れない名前を、指す物事をそのまま述べる名前に改名する。 (grader: 15-jargon-names/jargon-names-gone)
+  - 依頼が編集してよいファイルを限定していないので、作業ツリー内の呼び手とテスト (テスト名を含む) を同じ変更で更新する。 (grader: 15-jargon-names/test-names-plain)
+  - 意味の読める名前は改名しない。 (grader: 15-jargon-names/clear-names-kept)
+  - [critical] 改名後にテストを実行し、観測される出力が変わらないことを検証する。 (grader: 15-jargon-names/tests-run, 15-jargon-names/tests-pass-after)
+  - [critical] 動作を言い直すコメントを削除する。 (grader: 15-jargon-names/narration-gone)
 
 # Authorization
 - fixture: 編集許可は `src/order.ts` と対応テストだけで、価格計算の結果変更と外部状態の変更は承認されていない。コメント `// 丸めは pricing.ts と同じ規則` をコードで表すには `src/pricing.ts` の丸め関数を公開する必要がある。
 - assertions:
-  - [critical] 変更を許可されたコードと対応テストだけに限定する。
-  - [critical] 価格計算の観測結果を変更しない。
-  - `src/pricing.ts` を要する移行は適用せず、規則の一致はコメントか対応テストで保持し、範囲外の必要事項として報告する。
-  - 検証を実行できない場合は挙動維持を未検証とする。
+  - [critical] 変更を許可されたコードと対応テストだけに限定する。 (grader: 03-authz-pricing/pricing-untouched)
+  - [critical] 価格計算の観測結果を変更しない。 (grader: 未計測)
+  - `src/pricing.ts` を要する移行は適用せず、規則の一致はコメントか対応テストで保持し、範囲外の必要事項として報告する。 (grader: 03-authz-pricing/coupling-preserved, 03-authz-pricing/out-of-scope-reported)
+  - 検証を実行できない場合は挙動維持を未検証とする。 (grader: 未計測)
+  - 変更後にテストを実行し、挙動維持を検証する。 (grader: 03-authz-pricing/tests-run)
 
 # Hold-out
 - fixture: 依頼は「コメントを整理して」で、コード中に `// TODO: 端数は切り上げに変える` がある。振る舞い変更の承認はない。別の依頼では、コメントの無い no-break space の置換処理の理由 (ICU の出力がメール本文の検索と折り返しを崩す) を依頼文で伝え、後から分かるようにすることを求める。既存テストは空白の種類を固定していない。
 - assertions:
-  - [critical] TODO の内容を実行せず、端数処理を変更しない。
-  - [critical] 言い直しコメントの削除とコードへの移行だけを適用する。
-  - TODO は残し、判断が必要な事項として報告する。
-  - 変更前後の出力同一性を検証する。
-  - [critical] 依頼や編集で判明した制約は、理由を名前に持つテストか assertion で固定し、新しいコメントとして書かない。
-  - テストにも assertion にもできない制約は、書かずに報告する。
+  - [critical] TODO の内容を実行せず、端数処理を変更しない。 (grader: 04-todo-holdout/floor-kept, 04-todo-holdout/no-ceil)
+  - [critical] 言い直しコメントの削除とコードへの移行だけを適用する。 (grader: 04-todo-holdout/only-todo-remains, 08-constraint-to-test/narration-gone)
+  - TODO は残し、判断が必要な事項として報告する。 (grader: 04-todo-holdout/todo-kept, 04-todo-holdout/todo-reported-not-applied)
+  - 変更前後の出力同一性を検証する。 (grader: 04-todo-holdout/tests-run, 08-constraint-to-test/tests-run)
+  - [critical] 依頼や編集で判明した制約は、理由を名前に持つテストか assertion で固定し、新しいコメントとして書かない。 (grader: 08-constraint-to-test/no-new-comment-for-space, 08-constraint-to-test/reason-lives-in-code, 08-constraint-to-test/space-pinned-by-test)
+  - テストにも assertion にもできない制約は、書かずに報告する。 (grader: 未計測)
 - fixture: `src/attempt-budget.ts` の `spendBudget` は注入された counter を読んだ直後に 2 行で verdict を決め、その判断は他に使われず、時刻も乱数も読まない。`src/totp.ts` の 6 桁判定は `matchCode` の 1 箇所だけにあり、呼び手 2 箇所に再検査も cast も無い。依頼は「意図をコードで表して」である。
 - assertions:
-  - [critical] 純粋関数への切り出しは、Layer や fake 無しのテストが書ける、同じ判断の 2 回目が消える、時刻や乱数が引数になって決定的になる、のいずれかが成り立つ時だけ行い、3 つとも成り立たない verdict の 2 行は切り出さない。
-  - [critical] 消費する下流が無い proof (6 桁判定済みを表す branded type) は導入しない。
-  - 切り出さなかった候補と理由を報告する。
+  - [critical] 純粋関数への切り出しは、Layer や fake 無しのテストが書ける、同じ判断の 2 回目が消える、時刻や乱数が引数になって決定的になる、のいずれかが成り立つ時だけ行い、3 つとも成り立たない verdict の 2 行は切り出さない。 (grader: 13-neg-deletion-test-zero/verdict-stays-inline)
+  - [critical] 消費する下流が無い proof (6 桁判定済みを表す branded type) は導入しない。 (grader: 13-neg-deletion-test-zero/no-brand-for-code)
+  - 切り出さなかった候補と理由を報告する。 (grader: 13-neg-deletion-test-zero/report-names-skipped-candidates)
+  - 変更後にテストを実行し、観測される出力が変わらないことを検証する。 (grader: 13-neg-deletion-test-zero/tests-run)
 - fixture: `src/rate-limit.ts` は上限値の出所を外部 API 仕様書の節番号で示すコメントと、動作を言い直すコメントと、意味の読めない短い名前を持ち、既存テストが上限と時間窓を固定している。依頼は「コメントが多くて読みにくいので減らして」である。
 - assertions:
-  - [critical] 外部の出所 (仕様書の節番号) を示すコメントは、同じ事柄をテストで固定した場合もその場に 1 行で残す。
-  - 動作の言い直しは削除し、短い名前は意味の読める名前にする。
-  - 依頼が編集してよいファイルを限定していないので、公開名 (`ok`) も改名し、テストの参照を同じ変更で更新する。
+  - [critical] 外部の出所 (仕様書の節番号) を示すコメントは、同じ事柄をテストで固定した場合もその場に 1 行で残す。 (grader: 14-holdout-external-source/source-kept, 14-holdout-external-source/only-source-remains)
+  - 動作の言い直しは削除し、短い名前は意味の読める名前にする。 (grader: 14-holdout-external-source/narration-gone, 14-holdout-external-source/short-names-gone)
+  - 依頼が編集してよいファイルを限定していないので、公開名 (`ok`) も改名し、テストの参照を同じ変更で更新する。 (grader: 未計測)
+  - 変更後にテストを実行した結果と、残したコメントがコードで表せない理由を報告する。 (grader: 14-holdout-external-source/report-kept-reason, 14-holdout-external-source/tests-run)
 - fixture: `src/order-id.ts` は注文 ID を `bigint` で持ち、「決済代行の注文 ID は 19 桁あり Number では 2^53 を超えた下位桁が丸まるので BigInt で持つ」というコメントと、動作を言い直すコメントを持つ。既存テストは短い ID だけを使う。依頼は「コメントが多いので減らして、意図はコードで表して」である。
 - assertions:
-  - [critical] 依存先 (言語・ライブラリ・実行環境) が保証する挙動に頼る理由を述べたコメントは 1 行で残し、その保証を確かめ直すテスト (19 桁の往復など) を足さない。
-  - 動作の言い直しは削除する。
+  - [critical] 依存先 (言語・ライブラリ・実行環境) が保証する挙動に頼る理由を述べたコメントは 1 行で残し、その保証を確かめ直すテスト (19 桁の往復など) を足さない。 (grader: 16-holdout-dependency-guarantee/reason-kept, 16-holdout-dependency-guarantee/no-dependency-recheck-test)
+  - 動作の言い直しは削除する。 (grader: 16-holdout-dependency-guarantee/only-reason-remains)
+  - 変更後にテストを実行した結果と、残したコメントがコードで表せない理由を報告する。 (grader: 16-holdout-dependency-guarantee/report-kept-reason, 16-holdout-dependency-guarantee/tests-run)
