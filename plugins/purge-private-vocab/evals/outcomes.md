@@ -1,42 +1,45 @@
 # Trigger
 - fixture: 公開設計書に「青箱ルート」があり、提供資料は「審査失敗時に手動確認へ送る経路」と定義する。依頼Aは「初見でも分かる表現へ直して」、依頼Bは「借方と貸方も一般語へ置換して」である。
 - assertions:
-  - [critical] 依頼Aでは定義に基づいて私的な用語を分かる表現へ直す。
-  - [critical] 依頼Bでは確立した会計用語を置換しない。
-  - 依頼Aで意味と文脈を保つ。
-  - 公開 API 名やコード識別子を変更しない。
+  - [critical] 依頼Aでは定義に基づいて私的な用語を分かる表現へ直す。 (grader: 01-expand-defined-keep-shared/private-terms-gone)
+  - [critical] 依頼Aでは purge-private-vocab を使う。 (grader: 01-expand-defined-keep-shared/skill-fired)
+  - [critical] 依頼Bでは確立した会計用語を置換しない。 (grader: 未計測)
+  - 依頼Aで意味と文脈を保つ。 (grader: 未計測)
+  - 公開 API 名やコード識別子を変更しない。 (grader: 01-expand-defined-keep-shared/public-api-name-kept)
 - fixture: 公開のADRに私的な用語「青箱ルート」「手確」があり、提供資料が定義する。依頼Cは「用語集にこの二語の項目を足して」、依頼Dは「文体だけ整えて。用語はそのままにして」である。
 - assertions:
-  - [critical] 依頼Cでは用語集に項目を足すだけで、ADRの用語を置換しない。
-  - [critical] 依頼Dでは文体だけを直し、用語を置換しない。
+  - [critical] 依頼Cでは用語集に項目を足すだけで、ADRの用語を置換しない。 (grader: 02-neg-add-glossary-entries/glossary-entries-added, 02-neg-add-glossary-entries/adr-untouched)
+  - [critical] 依頼Dでは文体だけを直し、用語を置換しない。 (grader: 03-neg-style-polish/terms-kept)
+  - [critical] 依頼Cと依頼Dでは purge-private-vocab を使わない。 (grader: 02-neg-add-glossary-entries/skill-not-fired, 03-neg-style-polish/skill-not-fired)
+  - 依頼Cと依頼Dでは、行った編集の種類だけを報告し、用語の置換を行ったと報告しない。 (grader: 02-neg-add-glossary-entries/reports-glossary-only, 03-neg-style-polish/style-edit-reported)
 
 # Outcome
 - fixture: 運用文書には「青箱ルート」と略語「手確」があり、用語資料はそれぞれ「審査失敗時の手動確認経路」「担当者による手動確認」と定義し、「仕訳」は確立した会計用語として指定されている。
 - assertions:
-  - [critical] 二つの私的な用語を提供定義に沿って展開する。
-  - [critical] 「仕訳」を保持する。
-  - 置換後も手順の主体と条件を変えない。
-  - 置換内容と保持した用語を報告する。
+  - [critical] 二つの私的な用語を提供定義に沿って展開する。 (grader: 01-expand-defined-keep-shared/terms-expanded-route)
+  - [critical] 「仕訳」を保持する。 (grader: 01-expand-defined-keep-shared/established-term-kept)
+  - 置換後も手順の主体と条件を変えない。 (grader: 01-expand-defined-keep-shared/meaning-preserved)
+  - 置換内容と保持した用語を報告する。 (grader: 01-expand-defined-keep-shared/replacements-and-holds-reported)
 - fixture: 公開のADRに、設計書だけが定義する「青箱ルート」「手確」と、その設計書への参照「Design Doc の T-16」がある。T-16の公開の対応物はADRの関連欄のissueである。ADRは、読者向けのREADME・運用手順・CHANGELOGで繰り返し使われる「保留箱」と、読者向け用語集が定義する「仕訳」も使う。どの資料にも定義が無い「赤橋」もある。依頼は設計書以外のmdファイルへの適用である。
 - assertions:
-  - [critical] 読者が開けない文書への参照を、読者が開ける公開の対応物に置き換える。
-  - [critical] 読者向けの文書群で既に定義されている語、または繰り返し使われている語を、私的な用語として置換しない。
+  - [critical] 読者が開けない文書への参照を、読者が開ける公開の対応物に置き換える。 (grader: 01-expand-defined-keep-shared/internal-ref-gone, 01-expand-defined-keep-shared/internal-ref-replaced-by-issue)
+  - [critical] 読者向けの文書群で既に定義されている語、または繰り返し使われている語を、私的な用語として置換しない。 (grader: 01-expand-defined-keep-shared/shared-term-kept)
 
 # Authorization
 - fixture: 編集許可は `docs/manual-review.md` だけで、同名のコード識別子、公開 API、他の文書は変更禁止である。固定された書き込み結果では `docs/manual-review.md` の保存が権限エラー `EACCES` で拒否され、文書は変更されていない。
 - assertions:
-  - [critical] 変更を指定文書だけに限定する。
-  - [critical] コード識別子と公開 API を変更しない。
-  - `docs/manual-review.md` の `EACCES` と未変更を失敗結果として報告する。
-  - 外部文書へ置換を波及させない。
+  - [critical] 変更を指定文書だけに限定する。 (grader: 01-expand-defined-keep-shared/design-doc-untouched)
+  - [critical] コード識別子と公開 API を変更しない。 (grader: 01-expand-defined-keep-shared/code-identifier-kept)
+  - `docs/manual-review.md` の `EACCES` と未変更を失敗結果として報告する。 (grader: 未計測)
+  - 外部文書へ置換を波及させない。 (grader: 未計測)
 - fixture: 依頼は「コードコメントと設計書以外のmdファイル」への適用で、私的な用語と同じ語がコードコメントにも出る。
 - assertions:
-  - [critical] コードコメントを変更しない。
+  - [critical] コードコメントを変更しない。 (grader: 01-expand-defined-keep-shared/code-comment-kept)
 
 # Hold-out
 - fixture: 「手確」は提供資料に「担当者による手動確認」と定義される一方、「赤橋」は定義資料にもなく、周辺文から複数の意味が考えられる。
 - assertions:
-  - [critical] 「手確」だけを確認済みの定義で展開する。
-  - [critical] 「赤橋」の意味を推測して置換しない。
-  - 未確認の用語として「赤橋」を報告する。
-  - 確認済みの編集と保留箇所を分ける。
+  - [critical] 「手確」だけを確認済みの定義で展開する。 (grader: 01-expand-defined-keep-shared/terms-expanded-abbreviation)
+  - [critical] 「赤橋」の意味を推測して置換しない。 (grader: 01-expand-defined-keep-shared/unverified-term-kept)
+  - 未確認の用語として「赤橋」を報告する。 (grader: 01-expand-defined-keep-shared/unverified-reported)
+  - 確認済みの編集と保留箇所を分ける。 (grader: 未計測)

@@ -244,6 +244,51 @@ class ValidateSkillsTest(unittest.TestCase):
             )
             self.assert_invalid(root, "outcomes.md", "sections")
 
+    def _write_case(self, root, case, graders):
+        for grader in graders:
+            self._write(
+                root / "plugins" / "sample-skill" / "evals" / case / "graders" / f"{grader}.md",
+                "---\ntype: llm\n---\ncriterion\n",
+            )
+
+    def _write_outcomes(self, root, assertions):
+        self._write(
+            root / "plugins" / "sample-skill" / "evals" / "outcomes.md",
+            "# Trigger\n\n- fixture: trigger\n- assertions:\n"
+            + "".join(f"  - {line}\n" for line in assertions)
+            + "\n# Outcome\n\n# Authorization\n\n# Hold-out\n",
+        )
+
+    def test_every_assertion_names_existing_graders_and_every_grader_is_named_once(self):
+        with self.repository() as root:
+            self._write_case(root, "01-a", ["fired", "kept"])
+            self._write_outcomes(root, ["[critical] 発火する (grader: 01-a/fired)", "保つ (grader: 01-a/kept)", "測らない (grader: 未計測)"])
+            self.assertEqual([], validate_repository(root))
+
+    def test_assertion_without_a_grader_reference_is_rejected(self):
+        with self.repository() as root:
+            self._write_case(root, "01-a", ["fired"])
+            self._write_outcomes(root, ["[critical] 発火する (grader: 01-a/fired)", "参照の無い assertion"])
+            self.assert_invalid(root, "outcomes.md", "must end with (grader:")
+
+    def test_reference_to_a_missing_grader_is_rejected(self):
+        with self.repository() as root:
+            self._write_case(root, "01-a", ["fired"])
+            self._write_outcomes(root, ["発火する (grader: 01-a/fired, 01-a/gone)"])
+            self.assert_invalid(root, "outcomes.md", "'01-a/gone' does not exist")
+
+    def test_grader_that_no_assertion_names_is_rejected(self):
+        with self.repository() as root:
+            self._write_case(root, "01-a", ["fired", "orphan"])
+            self._write_outcomes(root, ["発火する (grader: 01-a/fired)"])
+            self.assert_invalid(root, "outcomes.md", "'01-a/orphan' is not referenced")
+
+    def test_grader_named_by_two_assertions_is_rejected(self):
+        with self.repository() as root:
+            self._write_case(root, "01-a", ["fired"])
+            self._write_outcomes(root, ["発火する (grader: 01-a/fired)", "また発火する (grader: 01-a/fired)"])
+            self.assert_invalid(root, "outcomes.md", "more than one assertion")
+
     def test_manifest_and_marketplace_plugin_names_must_match(self):
         with self.repository() as root:
             marketplace_path = root / ".claude-plugin" / "marketplace.json"

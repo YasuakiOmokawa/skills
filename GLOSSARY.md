@@ -86,6 +86,14 @@ n=3では2 run以上の差だけを有意とする。without armで素のモデ�
 
 曖昧さの発見は編集のたびに `empirical-prompt-tuning`、回帰検出はPR前のsuiteが担う。
 
+### assertion と grader の対応
+
+`outcomes.md` の `- assertions:` の下の各行は、行末に `(grader: <case>/<grader>[, ...])` を持つ。測る grader が無い assertion は `(grader: 未計測)` と書く。各 grader はちょうど 1 つの assertion から参照される (1 grader 1 論点)。`scripts/validate_skills.py` が双方向に照合し、参照先の無い grader、assertion の無い grader、2 つの assertion から参照される grader を落とす。skill の契約を変えたら、参照を辿って全 grader を新しい契約に照らす。
+
+### 網羅の記録
+
+plugin の `skills/` か `commands/` を変えた PR は、`plugins/<name>/evals/last-run.json` に、変えた後の中身で全 case を回した記録を持つ。記録は `python3 -m scripts.eval_coverage record plugins/<name> <result.json>...` で書く (同じ中身の記録には case を足していける)。回さないと決めたら `python3 -m scripts.eval_coverage waive plugins/<name> "<理由>"` で理由を残す。CI の `eval_coverage check` は、中身の hash が記録と違うか、回していない case があり理由も無ければ落とす。
+
 ### runnerのクセ
 
 - pilotは `--runs 1 --no-publish`。`aggregate-result.json` の `suite.plugins` に対象pluginが載り `problem` が無いことを確認する。載っていなければwith armがplugin無しで走っており、pilotは無意味。
