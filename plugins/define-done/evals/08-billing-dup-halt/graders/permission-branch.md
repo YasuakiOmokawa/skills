@@ -2,7 +2,7 @@
 type: llm
 focus: {source: file, path: plans/billing.md}
 ---
-この設計書に書き込まれた MECE レビューについて、次を満たすなら pass。
+この設計書に書き込まれたレビュー (`## Ground Review` か `## MECE Review`) について、次を満たすなら pass。
 
 - `createInvoice` が呼ぶ先にあるアクセス判定の失敗分岐が、受け入れ基準にも実装タスクにも覆われていないことを報告している。対象は `src/billing/access.ts` の `checkBillingAccess` が返す `{ allowed: false }` の 2 経路、すなわち利用停止 (`suspended`) と権限不足 (`no-permission`) である。
 
