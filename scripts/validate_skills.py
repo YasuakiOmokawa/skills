@@ -37,6 +37,8 @@ _OUTCOME_SECTIONS = ["Trigger", "Outcome", "Authorization", "Hold-out"]
 _SKILL_SECTIONS = ["目的", "原理", "契約", "禁止", "完了条件"]
 _SKILL_BODY_MAX_CHARS = 2000
 _SKILLS_KEEPING_VERIFICATION_BRANCH = {"build-poc": 2344}
+_UNMEASURED = "未計測"
+_GRADER_REFERENCE_RE = re.compile(r"\(grader: ([^()]+)\)\s*$")
 
 
 class _ErrorCollector:
@@ -617,6 +619,40 @@ def _validate_outcomes(plugin_root: Path, errors: _ErrorCollector) -> None:
             path,
             f"top-level sections must be exactly {_OUTCOME_SECTIONS!r} in order",
         )
+    _validate_grader_traceability(plugin_root, path, text, errors)
+
+
+def _validate_grader_traceability(
+    plugin_root: Path, path: Path, text: str, errors: _ErrorCollector
+) -> None:
+    graders = {
+        f"{grader.parent.parent.name}/{grader.stem}"
+        for grader in (plugin_root / "evals").glob("*/graders/*.md")
+    }
+    referenced: dict[str, list[int]] = {}
+    in_assertions = False
+    for number, line in enumerate(text.splitlines(), 1):
+        if line.startswith("- "):
+            in_assertions = line.rstrip() == "- assertions:"
+            continue
+        if not (in_assertions and line.startswith("  - ")):
+            continue
+        match = _GRADER_REFERENCE_RE.search(line)
+        if match is None:
+            errors.add(path, f"line {number}: assertion must end with (grader: <case>/<grader>, ...) or (grader: {_UNMEASURED})")
+            continue
+        references = [reference.strip() for reference in match.group(1).split(",")]
+        if references == [_UNMEASURED]:
+            continue
+        for reference in references:
+            if reference not in graders:
+                errors.add(path, f"line {number}: grader '{reference}' does not exist")
+            referenced.setdefault(reference, []).append(number)
+    for grader in sorted(graders - set(referenced)):
+        errors.add(path, f"grader '{grader}' is not referenced by any assertion")
+    for grader, lines in sorted(referenced.items()):
+        if len(lines) > 1:
+            errors.add(path, f"grader '{grader}' is referenced by more than one assertion (lines {', '.join(map(str, lines))})")
 
 
 def validate_repository(root: Path) -> list[str]:
