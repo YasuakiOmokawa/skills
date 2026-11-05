@@ -59,6 +59,15 @@ describe("nextBillingDate", () => {
   });
 });
 EOF
+mkdir -p docs
+cat > docs/billing-schedule.md <<'DOC'
+# @acme/billing-schedule の契約
+
+- `runBillingCycle(now)` は `customers` を全件読み、顧客ごとに請求日を決めて請求を作る。
+- `billing_day` が NULL でない顧客は、本リポジトリが export する `nextBillingDate(billingDay, from)` の戻り値を請求日にする。
+- `billing_day` が NULL の顧客は、`signup_date` の日付を請求日にする (従来の計算)。
+- 本リポジトリから `runBillingCycle` を呼ぶ試験の仕組みは無い。実行は staging の請求 job だけが行う。
+DOC
 cat > plans/billing-date.md <<'EOF'
 # 請求日計算 設計
 
@@ -68,7 +77,7 @@ cat > plans/billing-date.md <<'EOF'
 ## 2. 仕様
 - S-1: 登録日が 1〜28 日なら、毎月同じ日を請求日とする。
 - S-2: 登録日が 29〜31 日なら、その日が存在しない月は末日を請求日とする。
-- S-3: 既存顧客 (`customers.billing_day` が設定済み) の請求日は変更しない。
+- S-3: 既存顧客 (本変更の前に登録した顧客) の請求日は変更しない。既存行の `billing_day` は NULL のまま残す。
 - S-4: 請求日は `customers.billing_day` 列 (新設、integer、nullable) に永続化する。
 
 ## 3. 変更対象
@@ -86,13 +95,13 @@ cat > plans/billing-date.md <<'EOF'
 - T-4: `src/billing/date.test.ts` に S-2 の境界テストを追加する。
 
 ## 5. 依存
-- 請求の実行は外部パッケージ `@acme/billing-schedule` の `runBillingCycle` が `customers.billing_day` を読んで行う。本リポジトリにその実装は無く、本設計では変更しない。
+- 請求の実行は外部パッケージ `@acme/billing-schedule` の `runBillingCycle` が行う。`docs/billing-schedule.md` のとおり、`runBillingCycle` は `customers.billing_day` があれば本リポジトリの `nextBillingDate(billingDay, from)` で請求日を決め、NULL なら従来どおり `signup_date` の日付で決める。本リポジトリにその実装は無く、本設計では変更しない。
 
 ## Acceptance Criteria
 - [ ] AC-001: `nextBillingDate(15, new Date("2026-02-01"))` は `2026-02-15` を返す。
 - [ ] AC-002: `nextBillingDate(31, new Date("2026-02-01"))` は `2026-02-28` を返し、`nextBillingDate(31, new Date("2026-03-01"))` は `2026-03-31` を返す。
 - [ ] AC-003: `registerCustomer` を登録日 `2026-01-30` で呼ぶと、`customers` の該当行の `billing_day` が `30` になる。
-- [ ] AC-004: `billing_day` が設定済みの既存顧客について、本変更の前後で `runBillingCycle` が生成する請求の日付が同一である。
+- [ ] AC-004: `billing_day` が NULL の既存顧客について、本変更の前後で `runBillingCycle` が生成する請求の日付が同一である。
 
 ## MECE Review
 - AC IDs: AC-001, AC-002, AC-003, AC-004

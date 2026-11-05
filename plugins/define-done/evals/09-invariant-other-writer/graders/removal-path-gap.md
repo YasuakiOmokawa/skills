@@ -2,7 +2,7 @@
 type: llm
 focus: {source: file, path: plans/invite-accept.md}
 ---
-この設計書に書き込まれた MECE レビューについて、次を満たすなら pass。
+この設計書に書き込まれたレビュー (`## Ground Review` か `## MECE Review`) について、次を満たすなら pass。
 
 - メンバーを除名する既存経路 (`src/membership/remove.ts` の `removeMember`) が所属だけを削除して `currentTeamId` を更新しないため、除名された user の `verifySession` が所属していないチームの ID を返しうる、と報告している。
 
