@@ -5,6 +5,16 @@ All notable changes to omokawa-skills will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v14.0.0 - 2026-11-05
+
+### Changed
+
+- **`define-done` 2.0.0 (BREAKING):** 受け入れ基準 (AC) を、依頼から抜き出した要求 (`## Requirements` の `R-n`、原文の引用付き) と既存の保証 (base にある試験・guard・不変条件の文書) だけから引くようにした。各 AC は行末に `(出典: …)` を持ち、計画の決定は出典にできない。段は要求の抜き出しを先頭に足した 5 段。MECE は要求 → AC、AC → 出典、決定 → 要求の 3 つだけを突き合わせ、要求を範囲外にした計画は Gate を ready にしない。`[禁止]` は検証の対応付けの `- Forbidden row:` (pattern と正の pathspec) にだけ持ち、oracle は定型にした。Ground Review に、決定が頼る依存先の振る舞いを依存先の source で反証する前提の確認を足した。書き終えたら同梱の `scripts/check_plan.py seal` で書式・出典・網羅・禁止を検査して封をする。
+- **`implement-plan` 2.0.0 (BREAKING):** 始める前に同梱の `scripts/check_plan.py check` を流し、落ちたら編集しない。`[禁止]` の tripwire は書かず、最後に `check-green` で禁止の検査を確かめる。
+- **`verify-plan` 3.0.0 (BREAKING):** 入力の検査 (fingerprint、エントリの欠け、見本の欠け) と `[禁止]` の判定を、同梱の `scripts/check_plan.py check-green` に置き換えた。AC が要求を満たせないと分かったときは計画の直し案を返さず、要求の見直しが要ることと根拠だけを返す。
+- v13 の書式の計画 (`## Requirements` と出典の無いもの) は `implement-plan` と `verify-plan` の入力にならない。`define-done` をやり直すと新しい書式で書き直される。
+- `CONTEXT.md` を `GLOSSARY.md` に改名し、完了の定義の用語 (受け入れ基準、要求、既存の保証、出典、決定、封、禁止の行) を足した。
+
 ## v13.0.0 - 2026-10-21
 
 ### Changed
