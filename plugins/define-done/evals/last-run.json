@@ -1,7 +1,7 @@
 {
   "cases": {
     "01-session-store": {
-      "passed": 16,
+      "passed": 17,
       "total": 18
     },
     "02-neg-create-plan": {
@@ -9,23 +9,23 @@
       "total": 9
     },
     "03-neg-implement": {
-      "passed": 9,
+      "passed": 8,
       "total": 9
     },
     "04-reset-boundaries": {
-      "passed": 15,
+      "passed": 13,
       "total": 15
     },
     "05-recommendations-out-of-scope": {
-      "passed": 12,
+      "passed": 11,
       "total": 12
     },
     "06-oracle-dry-run": {
-      "passed": 3,
+      "passed": 2,
       "total": 3
     },
     "08-billing-dup-halt": {
-      "passed": 25,
+      "passed": 26,
       "total": 27
     },
     "09-invariant-other-writer": {
@@ -49,7 +49,7 @@
       "total": 6
     },
     "14-holdout-unverified": {
-      "passed": 9,
+      "passed": 8,
       "total": 12
     },
     "15-ac-id-semantic-change": {
@@ -57,7 +57,7 @@
       "total": 15
     },
     "17-forbidden-scope-positive": {
-      "passed": 3,
+      "passed": 2,
       "total": 3
     },
     "18-no-external-state-dry-run": {
@@ -93,7 +93,7 @@
       "total": 6
     },
     "27-real-bug-remove-missing-member": {
-      "passed": 7,
+      "passed": 3,
       "total": 9
     },
     "28-existing-guard-string-quantity": {
@@ -101,6 +101,6 @@
       "total": 9
     }
   },
-  "shipped_sha256": "8eb00e2deb66848125fdbbd1b33089ee2c553e66a6735a61ea12811aadcc1e2d",
+  "shipped_sha256": "f8f77d7567f9a55d567ffafe1e14a6a694fab04dab6aafc4cac4843514773ee9",
   "waived": null
 }
