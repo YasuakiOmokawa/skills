@@ -96,6 +96,7 @@ class ScoreRunTest(unittest.TestCase):
             self.assertEqual((scored["outcome"], scored["valid"], scored["requirement_killed"]), ("tests", 7, 9))
             halted = self.trace(work, [{"type": "result", "result": "Gate は not ready なので止めました"}])
             self.assertEqual(score_results.score_run(halted, mapping, Path(work) / "r2")["outcome"], "gate")
+            self.assertEqual(score_results.score_run(halted, {**mapping, "code": True}, Path(work) / "r3")["code"], "gate")
 
 
 if __name__ == "__main__":

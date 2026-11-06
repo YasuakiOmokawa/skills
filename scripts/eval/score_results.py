@@ -39,13 +39,14 @@ def score_code(run, mapping, durable):
 
 
 def score_run(run, mapping, durable):
-    code = score_code(run, mapping, durable) if mapping.get("code") else {}
     restored = restore_file.cat_output(Path(run["tracePath"]), mapping["test"])
     if restored is None:
         restored, _ = restore_file.restore(Path(run["tracePath"]), mapping["test"])
     if restored is None:
         outcome = "gate" if GATE_HALT.search(last_message(run["tracePath"])) else "no-test"
-        return {"outcome": outcome, **code}
+        code = {"code": "gate"} if outcome == "gate" else score_code(run, mapping, durable)
+        return {"outcome": outcome, **(code if mapping.get("code") else {})}
+    code = score_code(run, mapping, durable) if mapping.get("code") else {}
     target = durable / mapping["test"]
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(restored, encoding="utf-8")
@@ -104,7 +105,8 @@ def table(case, arms):
             passes = " ".join(f"{r['hidden_passed']}/{r['hidden_total']}" for r in scored) or "-"
             unrestorable = sum(r.get("code") == "unrestorable" for r in runs)
             unchanged = sum(r.get("code") == "unchanged" for r in runs)
-            notes = [f"復元できず {unrestorable}"] * bool(unrestorable) + [f"未実装 {unchanged}"] * bool(unchanged)
+            halted = sum(r.get("code") == "gate" for r in runs)
+            notes = [f"Gate で停止 {halted}"] * bool(halted) + [f"復元できず {unrestorable}"] * bool(unrestorable) + [f"未実装 {unchanged}"] * bool(unchanged)
             lines.append(f"| {arm} | {full}/{len(runs)}" + (f" ({', '.join(notes)})" if notes else "") + f" | {passes} |")
         for arm, runs in arms.items():
             for index, r in enumerate(runs):
