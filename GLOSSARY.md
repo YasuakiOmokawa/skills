@@ -70,27 +70,28 @@ python3 scripts/eval/rejudge.py /tmp/<name>-new.json <NN> plugins/<name>/evals/<
 
 ### 翻訳の質 (define-done)
 
-define-done の受け入れテストは、runner の外で決定論的に採点する (runner には出力にコマンドを流す grader が無い)。題材ごとに `scripts/eval/mutant/<題材>/` に次を置く。
+define-done の受け入れテストは、runner の外で決定論的に採点する (runner には出力にコマンドを流す grader が無い)。題材ごとに `scripts/eval/mutant/<題材>/` に次を置き、eval の case の dir に `mutant.json` (`{"subject": "scripts/eval/mutant/<題材>", "test": "<受け入れテストの相対 path>"}`) を置く。
 
-- `subject.json`: `{"target": "<テストが import する製品コードの path>"}`
-- `reference.js`: 要求どおりの参照実装
+- `subject.json`: `{"target": "<テストが import する製品コードの path>", "references": [...]}`。`references` は省略すると `["reference.js"]`
+- `reference.js` (と `references` に挙げた他の参照実装): 要求どおりの実装。2 つ目以降は、資料が決めていない振る舞い (状態コード、上限、境界ちょうど) だけを変える。テストはすべての参照実装で通るときだけ有効と数え、資料に無い値を期待するテストは、推測が 1 つ目と一致しても無効になる
 - `stub.js`: 変更前のコード (受け入れテストが落ちるべき状態)
 - `mutants.json`: 要求を破る手書きの変種。`find` と `replace`、離れた箇所を変えるなら `edits` の列で書き、各 `find` は参照実装にちょうど 1 回当たる。実バグの修正前を写した変種は id を `real-` で始める
 - `test/hidden.test.js`: 自己検査用の隠しテスト
 
+手書きの変種と隠しテストは、題材の資料が決めていることだけを破り、確かめる。隠しテストの名前と変種の `requirement` には、根拠の文 (`S-n`、要件の番号、用語集の項目) を書く。資料が二通りに読める点を片方の読みで破る変種を置くと、曖昧さを未決の判断として返す define-done が、推測して書いた素のモデルより低く出る。
+
 ```bash
 python3 -I scripts/eval/mutant_score.py scripts/eval/mutant/<題材> scripts/eval/mutant/<題材> test/hidden.test.js
-python3 -I scripts/eval/restore_file.py <trace.jsonl> <repo からの相対 path> <復元先>
-python3 -I scripts/eval/mutant_score.py scripts/eval/mutant/<題材> <復元先> <テストの相対 path>
+cd plugins/define-done && claude plugin eval . --case <case> --ablation with-without --keep-temp ... --json /tmp/<name>.json
+python3 -m scripts.eval.score_results /tmp/<name>.json --record
 ```
 
-手書きの変種は、題材の資料が決めていることだけを破る。資料が二通りに読める点を片方の読みで破る変種を置くと、曖昧さを未決の判断として返す define-done が、推測して書いた素のモデルより低く出る。
+1 行目は計測器の自己検査で、隠しテストがすべての参照実装で通り、手書きの変種を全部落とすことを確かめる。2 行目は `--keep-temp` を必ず付ける。3 行目は trace から受け入れテストを `<name>.json.restored/` に復元し、arm ごとの表を出し、`evals/mutant-record.json` に shipped の中身の hash ごとに記録する。sandbox を消すのは 3 行目の後にする。見る数は次のとおり。
 
-1 行目は計測器の自己検査で、隠しテストが参照実装で全件 pass し、手書きの変種を全部落とすことを確かめる。2・3 行目で `--keep-temp` の trace から define-done が書いたテストを復元して採点する。見る数は次のとおり。
-
-- 要件適合度: `killed` / `mutant_total` (手書きの変種のうち落としたもの)
-- バグ検出率: `auto.killed` / `auto.killable`。自動の変異 (比較・論理・算術演算子の入れ替え、数値の ±1、真偽値の反転、`!` の除去、式の文の削除) のうち、隠しテストが落とせるものを分母にする (隠しテストも落とせないものは等価とみなす)
-- 歯止め: `reference_pass` が全テスト (100% を必須とする)、`reference_repeatable` (5 回の再実行で同じ結果)、`stub_red` (stub で落ちたテスト)
+- 全テストが有効な run: 資料に無い値や振る舞いを期待するテストを書かなかった run
+- 要件適合度: 有効なテストで落とした手書きの変種 / 全変種
+- バグ検出率: 有効なテストで落とした自動の変異 / 隠しテストが落とせる自動の変異。自動の変異は比較・論理・算術演算子の入れ替え、数値の ±1、真偽値の反転、`!` の除去、式の文の削除で作り、隠しテストも落とせないものは等価とみなす
+- テストを書いた run: 書かなかった run は最終回答から Gate での停止とそれ以外を分ける
 
 ### 改善ルーティン
 

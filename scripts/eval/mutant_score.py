@@ -132,19 +132,27 @@ def killers(passing, results):
 
 
 def score(subject, tests_root, test_paths):
-    target = json.loads((subject / "subject.json").read_text(encoding="utf-8"))["target"]
-    reference = (subject / "reference.js").read_text(encoding="utf-8")
+    config = json.loads((subject / "subject.json").read_text(encoding="utf-8"))
+    target = config["target"]
+    reference_names = config.get("references") or ["reference.js"]
+    references = [(subject / name).read_text(encoding="utf-8") for name in reference_names]
+    reference = references[0]
     mutants = json.loads((subject / "mutants.json").read_text(encoding="utf-8"))
     run = lambda source: run_suite(target, source, tests_root, test_paths)
     runs = [run(reference) for _ in range(REPEATS)]
     baseline = runs[0]
-    passing = {name for name, ok in baseline.items() if ok}
+    per_reference = [baseline] + [run(source) for source in references[1:]]
+    passing = {name for name in baseline if all(result.get(name, False) for result in per_reference)}
     stub_results = run((subject / "stub.js").read_text(encoding="utf-8"))
     report = {
         "tests": len(baseline),
         "tests_with_ac_id": sum(1 for name in baseline if AC_ID.search(name)),
         "reference_pass": len(passing),
-        "reference_failures": sorted(name for name, ok in baseline.items() if not ok),
+        "reference_failures": sorted(name for name in baseline if name not in passing),
+        "reference_failures_by_reference": {
+            reference_name: sorted(name for name in baseline if not result.get(name, False))
+            for reference_name, result in zip(reference_names, per_reference)
+        },
         "reference_repeatable": all(result == baseline for result in runs),
         "stub_red": sum(1 for name in passing if not stub_results.get(name, False)),
         "mutants": {},

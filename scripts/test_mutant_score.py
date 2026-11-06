@@ -53,5 +53,25 @@ class ScoreTest(unittest.TestCase):
         self.assertEqual(report["auto"]["killed"], report["auto"]["killable"])
 
 
+@unittest.skipUnless(shutil.which("node"), "node is required")
+class ScoreRunTest(unittest.TestCase):
+    def trace(self, directory, events):
+        path = Path(directory) / "trace.jsonl"
+        path.write_text("\n".join(json.dumps(event, ensure_ascii=False) for event in events) + "\n", encoding="utf-8")
+        return {"tracePath": str(path)}
+
+    def test_written_test_is_scored_and_gate_halt_is_classified(self):
+        from scripts.eval import score_results
+        hidden = (ROOT / "scripts/eval/mutant/bulk-discount/test/hidden.test.js").read_text(encoding="utf-8")
+        mapping = {"subject": "scripts/eval/mutant/bulk-discount", "test": "test/bulk.acceptance.test.js"}
+        with tempfile.TemporaryDirectory() as work:
+            write = {"type": "tool_use", "id": "w1", "name": "Write", "input": {"file_path": "/x/repo/test/bulk.acceptance.test.js", "content": hidden}}
+            run = self.trace(work, [{"type": "assistant", "message": {"content": [write]}}])
+            scored = score_results.score_run(run, mapping, Path(work) / "restored")
+            self.assertEqual((scored["outcome"], scored["valid"], scored["requirement_killed"]), ("tests", 7, 9))
+            halted = self.trace(work, [{"type": "result", "result": "Gate は not ready なので止めました"}])
+            self.assertEqual(score_results.score_run(halted, mapping, Path(work) / "r2")["outcome"], "gate")
+
+
 if __name__ == "__main__":
     unittest.main()
