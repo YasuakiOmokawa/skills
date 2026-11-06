@@ -69,6 +69,11 @@ def inspect(repo):
     return info, findings
 
 
+def run_tests(cwd, command):
+    completed = subprocess.run(command, shell=True, cwd=cwd, capture_output=True, text=True, timeout=600)
+    return completed.returncode, completed.stdout + completed.stderr
+
+
 def run_at_seal(repo, info, command):
     with tempfile.TemporaryDirectory() as work:
         archive = subprocess.run(["git", "-C", str(repo), "archive", info["seal"]], capture_output=True, check=True)
@@ -76,17 +81,29 @@ def run_at_seal(repo, info, command):
         modules = Path(repo) / "node_modules"
         if modules.is_dir():
             (Path(work) / "node_modules").symlink_to(modules.resolve())
-        completed = subprocess.run(command, shell=True, cwd=work, capture_output=True, text=True, timeout=600)
-        return completed.returncode, completed.stdout + completed.stderr
+        return run_tests(work, command)
+
+
+def verify(repo, info):
+    command = info["test-command"]
+    sealed_code, _ = run_at_seal(repo, info, command)
+    current_code, output = run_tests(repo, command)
+    print(f"sealed-exit: {sealed_code}")
+    print(f"current-exit: {current_code}")
+    print(output[-4000:])
+    findings = []
+    if sealed_code == 0:
+        findings.append("vacuous: 受け入れテストが封の時点で既に通っていた。振る舞いを観測していない")
+    if current_code != 0:
+        findings.append("fail: 受け入れテストが今の tree で落ちる")
+    return findings
 
 
 def main(argv=None):
     parser = argparse.ArgumentParser(prog="check_seal.py")
     sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("check").add_argument("repo", type=Path)
-    at_seal = sub.add_parser("at-seal")
-    at_seal.add_argument("repo", type=Path)
-    at_seal.add_argument("cmd", nargs=argparse.REMAINDER)
+    sub.add_parser("verify").add_argument("repo", type=Path)
     args = parser.parse_args(argv)
     try:
         info, findings = inspect(args.repo)
@@ -100,12 +117,11 @@ def main(argv=None):
         print(finding)
     if findings:
         return 1
-    if args.command == "at-seal":
-        command = " ".join(part for part in args.cmd if part != "--") or info["test-command"]
-        code, output = run_at_seal(args.repo, info, command)
-        print(f"at-seal-command: {command}")
-        print(f"at-seal-exit: {code}")
-        print(output[-4000:])
+    if args.command == "verify":
+        failures = verify(args.repo, info)
+        for failure in failures:
+            print(failure)
+        return 1 if failures else 0
     return 0
 
 

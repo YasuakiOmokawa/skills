@@ -3,7 +3,6 @@ name: chain-string-quantity
 tags: [chain]
 plugins:
   - "../../plugins/define-done"
-  - "../../plugins/implement-plan"
 max_turns: 150
 timeout_seconds: 3600
 allowed_tools: [Skill, Read, Grep, Glob, Bash, Write, Edit]
@@ -81,4 +80,4 @@ EOF
 git add -A && git commit -qm base
 ```
 
-`repo/` の plans/string-quantity.md について、/define-done で要求から受け入れテストを `repo/test/string-quantity.acceptance.test.js` に `node:test` で書いて実装に着手できる状態にし、続けて /implement-plan で `repo/src/cart.js` を実装してください。受け入れテストの封の commit のほかは commit しなくていいです。作業の最後に、`cat repo/test/string-quantity.acceptance.test.js` と `cat repo/src/cart.js` をそれぞれ 1 回ずつ実行して内容を表示してください。
+`repo/` の plans/string-quantity.md について、/define-done で要求から受け入れテストを `repo/test/string-quantity.acceptance.test.js` に `node:test` で書いて実装に着手できる状態にし、続けて、封の commit に入った受け入れテストと計画を変えずに `repo/src/cart.js` を実装し、define-done の skill の dir にある `scripts/check_seal.py` を `python3 <script> verify repo` で流してください。受け入れテストの封の commit のほかは commit しなくていいです。作業の最後に、`cat repo/test/string-quantity.acceptance.test.js` と `cat repo/src/cart.js` をそれぞれ 1 回ずつ実行して内容を表示してください。

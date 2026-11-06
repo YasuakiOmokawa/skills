@@ -95,7 +95,7 @@ python3 -m scripts.eval.score_results /tmp/<name>.json --record
 
 ### コードの水準 (chain eval)
 
-`evals-chain/<case>/` の case は frontmatter の `plugins:` に define-done と implement-plan を並べ、repo root から `claude plugin eval . --eval-dir evals-chain --ablation with-without --keep-temp` で走らせる。依頼文は成果物 (受け入れテストの置き場所と、実装するファイル) を平文で書き、作業の最後に両方を `cat` で表示させる。implement-plan も素のモデルも製品コードを heredoc や `python3 -` で書き換えるので、trace の Write/Edit からは最終状態を再現できない。`score_results` は最後の `cat` の出力を最終状態とし、`mutant.json` に `"code": true` があれば、製品コードに隠しテストを流して「隠しテストを全部通したコード」を数える。Gate で止まって製品コードが stub のままの run は未実装と数える。
+`evals-chain/<case>/` の case は frontmatter の `plugins:` に define-done を置き、repo root から `claude plugin eval . --eval-dir evals-chain --ablation with-without --keep-temp` で走らせる。依頼文は成果物 (受け入れテストの置き場所と、実装するファイル) を平文で書き、作業の最後に両方を `cat` で表示させる。エージェントは製品コードを heredoc や `python3 -` で書き換えるので、trace の Write/Edit からは最終状態を再現できない。`score_results` は最後の `cat` の出力を最終状態とし、`mutant.json` に `"code": true` があれば、製品コードに隠しテストを流して「隠しテストを全部通したコード」を数える。Gate で止まって製品コードが stub のままの run は未実装と数える。
 
 ### 改善ルーティン
 
@@ -139,7 +139,7 @@ plugin の `skills/` か `commands/` を変えた PR は、`plugins/<name>/evals
 
 ## Language
 
-### 完了の定義 (define-done・implement-plan・verify-plan)
+### 完了の定義 (define-done)
 
 **受け入れ基準 (AC)**:
 計画が完了したと言える条件。外から観測できる振る舞い (`[振る舞い]`) と、コードにあってはならないもの (`[禁止]`) の 2 種類だけで書く。
@@ -165,8 +165,8 @@ define-done が各 AC から翻訳した、実行できるテスト。テスト�
 _Avoid_: 検証の対応付け、Verification Plan (v14 までの散文の oracle)
 
 **封**:
-受け入れテストと計画だけを含み、trailer `Define-Done-Seal:` と `Define-Done-Test-Command:` を持つ commit。その後に封をしたファイルを変えれば、`check_seal.py check` が必ず差分として検出する。define-done のやり直しは新しい封の commit を積む。
+受け入れテストと計画だけを含み、trailer `Define-Done-Seal:` と `Define-Done-Test-Command:` を持つ commit。その後に封をしたファイルを変えれば、`check_seal.py check` が必ず差分として検出する。完了は `check_seal.py verify` が、封が破られておらず、受け入れテストが封の時点で落ち、今の tree で通ることを exit 0 で返したときである。define-done のやり直しは新しい封の commit を積む。
 _Avoid_: fingerprint (v14 までの、計画の中に書いた hash)
 
 **保護するパス**:
-封の commit に入ったファイルの集合。implement-plan と verify-plan は変えない。
+封の commit に入ったファイルの集合。実装は変えない。

@@ -20,7 +20,7 @@ description: 既存の計画を仕様とコードの根拠でレビューし、�
 ## 契約
 
 - 入力: 書き込み可能な既存の計画と、依頼・計画が名指しする仕様とコード。計画が無いか全体を読めないときは何も書かず、その欠陥を報告する。
-- 出力: 計画にそれぞれ唯一の `## Requirements`、`## Ground Review`、`## Acceptance Criteria`、`## MECE Review` と、AC-ID で始まる名前のテストを持つ受け入れテストのファイルと、その 2 つだけを含み `Define-Done-Seal:` の trailer を持つ封の commit。書式は各段の規則が定める。後続はこの skill と同じ `scripts/check_seal.py` で封を確かめてから読む。この skill の起動は、封の commit を作る承認を含む。
+- 出力: 計画にそれぞれ唯一の `## Requirements`、`## Ground Review`、`## Acceptance Criteria`、`## MECE Review` と、AC-ID で始まる名前のテストを持つ受け入れテストのファイルと、その 2 つだけを含み `Define-Done-Seal:` の trailer を持つ封の commit。書式は各段の規則が定める。完了は、この skill の `scripts/check_seal.py verify <repo>` の exit 0 で判定する。この skill の起動は、封の commit を作る承認を含む。
 - 最終回答: 先頭に `## Requirements` の要求を引用付きで 1 件 1 行で並べ、利用者が抜けを確かめられるようにする。続けて Gate、書いた節とテストのファイル、書き込みを確かめた方法と結果、AC ごとのテスト名、テストを現在のツリーで流したコマンドと結果、封の commit の SHA を返し、`## MECE Review` が要求ごとに判定した対応 (対応あり・欠落・未検証と、根拠のファイルか行)、空でない未決の判断 (既定と行き先を添える)、不足情報、範囲外、未検証を 1 件 1 行で並べる。該当の無い種類は書かない。Gate が ready でなければ、受け入れテストと封を作っていないので計画は実装の入力を満たさないと書く。
 
 ## 禁止

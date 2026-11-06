@@ -127,6 +127,7 @@
   - [critical] 受け入れ基準が、re-run の手順を名指さない。 (grader: 21-ac-from-request-not-decision/no-rerun-in-criteria)
   - [critical] どの受け入れ基準も、依頼から引いた要求か既存の試験・文書を根拠に持ち、計画の決定だけを根拠にした基準が無い。 (grader: 21-ac-from-request-not-decision/criteria-from-request, 21-ac-from-request-not-decision/no-decision-source)
   - 「新しい値が staging に反映される」を、runbook の基準とは別の、観測できる振る舞いの基準にする。観測に外部状態が要るなら、未検証の前提として残す。 (grader: 21-ac-from-request-not-decision/reflection-as-behavior)
+  - staging への反映の基準には受け入れテストを書かず、観測の手段を添えて最終回答の未検証に並べる。 (grader: 21-ac-from-request-not-decision/untested-ac-listed)
 
 - fixture: `node_modules/` の配布ツールは、配布物の内容の hash が前回と同じなら何もせずに終わる。計画の決定は「secret を変えたら、同じ commit のまま配布を再実行すれば新しい secret が反映される」である。
 - assertions:
