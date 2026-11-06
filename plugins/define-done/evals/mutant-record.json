@@ -232,10 +232,30 @@
       "arms": {
         "with": [
           {
-            "outcome": "no-test"
+            "auto_killable": 19,
+            "auto_killed": 19,
+            "auto_survivors": [],
+            "invalid": [],
+            "outcome": "tests",
+            "repeatable": true,
+            "requirement_killed": 9,
+            "requirement_survivors": [],
+            "requirement_total": 9,
+            "tests": 7,
+            "valid": 7
           },
           {
-            "outcome": "no-test"
+            "auto_killable": 19,
+            "auto_killed": 19,
+            "auto_survivors": [],
+            "invalid": [],
+            "outcome": "tests",
+            "repeatable": true,
+            "requirement_killed": 9,
+            "requirement_survivors": [],
+            "requirement_total": 9,
+            "tests": 7,
+            "valid": 7
           },
           {
             "auto_killable": 19,
@@ -252,7 +272,7 @@
           }
         ]
       },
-      "startedAt": "2026-11-06T09:51:07.625Z"
+      "startedAt": "2026-11-06T11:41:34.578Z"
     }
   },
   "8eb00e2deb66848125fdbbd1b33089ee2c553e66a6735a61ea12811aadcc1e2d": {
