@@ -47,6 +47,10 @@ class TallyTest(unittest.TestCase):
         second = {"cases": [{"name": "01-a", "arms": {"with": [{"graders": [{"passed": True}]}], "without": [{"graders": [{"passed": False}]}]}}]}
         self.assertEqual({"01-a": {"passed": 1, "total": 1}}, tally([first, second]))
 
+    def test_records_when_each_case_ran(self):
+        result = {"startedAt": "2026-11-06T08:36:00.153Z", "cases": [{"name": "01-a", "arms": {"with": [{"graders": [{"passed": True}]}]}}]}
+        self.assertEqual({"01-a": {"passed": 1, "total": 1, "startedAt": "2026-11-06T08:36:00.153Z"}}, tally([result]))
+
 
 class ShippedDigestTest(unittest.TestCase):
     def test_digest_follows_tracked_shipped_files_only(self):

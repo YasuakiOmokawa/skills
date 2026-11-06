@@ -45,6 +45,25 @@ def writes_to(command, relpath):
     return any(re.search(pattern, command) for pattern in patterns)
 
 
+HEREDOC = re.compile(
+    r"\bcat\s+(?:>\s*(?P<before>[^\s<;&|]+)\s*<<-?\s*(?P<q1>['\"]?)(?P<d1>\w+)(?P=q1)"
+    r"|<<-?\s*(?P<q2>['\"]?)(?P<d2>\w+)(?P=q2)\s*>\s*(?P<after>[^\s;&|]+))[^\n]*\n"
+)
+
+
+def heredoc_writes(command, relpath):
+    bodies = []
+    for match in HEREDOC.finditer(command):
+        path = (match.group("before") or match.group("after")).strip("\"'")
+        if path != relpath and not path.endswith("/" + relpath):
+            continue
+        delimiter = match.group("d1") or match.group("d2")
+        end = re.compile(rf"^{re.escape(delimiter)}$", re.M).search(command, match.end())
+        body = command[match.end():end.start()] if end else command[match.end():]
+        bodies.append(body)
+    return bodies
+
+
 def restore(trace_path, relpath, base=None):
     text, bash_writes, fixture_seen = base, 0, base is None
     suffix = "/" + relpath
@@ -53,8 +72,12 @@ def restore(trace_path, relpath, base=None):
         if name == "Bash" and not fixture_seen:
             fixture_seen = True
             continue
-        if name == "Bash" and writes_to(data.get("command", ""), relpath):
-            bash_writes += 1
+        if name == "Bash":
+            bodies = heredoc_writes(data.get("command", ""), relpath)
+            if bodies:
+                text = bodies[-1]
+            elif writes_to(data.get("command", ""), relpath):
+                bash_writes += 1
             continue
         if not str(data.get("file_path", "")).endswith(suffix):
             continue

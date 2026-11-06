@@ -44,6 +44,9 @@ API key、access token、passwordはこの領域へ保存しない。
 - 「欠落の無いplan」を意図したfixtureは本当に欠落を無くす。非同期は `await` ごとにreject経路を数える。仕込み損ねると、正しく指摘したarmをgraderが罰する。
 - llm rubricは「1観測 = 1 criterion」で分割された出力をfailにしないよう、複数criterionにまたがる充足を明示的に可とする。
 - suiteにskillが発火してはならない負例を1件以上残す。`tool_used` だけのcaseは作らない。
+- graderを足したら、既存のrunのtraceで、そのgraderが判定する段までrunが届いているかを確かめてから回す。Gateで止まるcaseに受け入れテストの段のgraderを置いても、何も測らない。
+- skillの契約を変えたら、参照を辿って全graderを新しい契約に照らす。新旧比較で2 run以上落ちたgraderは、skillを直す前に、graderが今の契約に合っているかを確かめる。
+- 変異の題材 (`scripts/eval/mutant/`) の採点用テストは全referenceで通り、手書きの変種を全部検出する。`scripts/test_mutant_score.py` が全題材でこれを検査する。chain caseの正解は `evals-chain/outcomes.md` に書く。
 
 ### 実行
 
@@ -62,11 +65,11 @@ claude plugin eval . --ablation with-without --judge-model sonnet --allow-tools 
 python3 scripts/eval/mkvariant.py plugins/<name> plugins/<name>/skills/<name>/SKILL.md /tmp/<name>-old
 python3 scripts/eval/mkvariant.py plugins/<name> <新しい SKILL.md> /tmp/<name>-new
 (cd /tmp/<name>-old && claude plugin eval . --ablation none --judge-model sonnet --allow-tools "Write,Edit,Bash" --no-publish --trust-plugin --json /tmp/<name>-old.json)
-python3 scripts/eval/compare.py old=/tmp/<name>-old.json new=/tmp/<name>-new.json
+python3 scripts/eval/compare.py old=@plugins/<name> new=/tmp/<name>-new.json
 python3 scripts/eval/rejudge.py /tmp/<name>-new.json <NN> plugins/<name>/evals/<NN-slug>/graders/<grader>.md
 ```
 
-`mkvariant.py` は4番目以降の引数に渡した句を SKILL.md から1箇所ずつ消した版を作る (句を外した版の with run)。`compare.py` はカンマ区切りで複数の結果を1列に合算する (`--case` で再実行した分を足す)。`rejudge.py` は FAIL した run の evidence を同じ criterion で sonnet に3票判定し直す。llm judge が多条項の rubric を誤って FAIL にしたかを確かめるのに使う。
+`mkvariant.py` は4番目以降の引数に渡した句を SKILL.md から1箇所ずつ消した版を作る (句を外した版の with run)。`compare.py` はカンマ区切りで複数の結果を1列に合算する (`--case` で再実行した分を足す)。`@plugins/<name>` は `last-run.json` が case ごとに記録した `startedAt` から `evals/results/<startedAt>/aggregate-result.json` を読む。新しい結果を `eval_coverage record` する前なら、旧版の記録になる。results は gitignore なので、記録を書いたマシンでだけ読める。`rejudge.py` は FAIL した run の evidence を同じ criterion で sonnet に3票判定し直す。llm judge が多条項の rubric を誤って FAIL にしたかを確かめるのに使う。
 
 ### 翻訳の質 (define-done)
 

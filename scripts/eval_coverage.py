@@ -38,7 +38,7 @@ def tally(results: list[dict]) -> dict[str, dict[str, int]]:
                 for grader in run.get("graders") or []:
                     total += 1
                     passed += 1 if grader.get("passed") else 0
-            cases[case["name"]] = {"passed": passed, "total": total}
+            cases[case["name"]] = {"passed": passed, "total": total, **({"startedAt": result["startedAt"]} if result.get("startedAt") else {})}
     return cases
 
 

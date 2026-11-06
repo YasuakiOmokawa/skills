@@ -1,15 +1,38 @@
 import collections
 import json
 import sys
+from pathlib import Path
+
+
+
+def recorded_results(plugin_root):
+    record = json.loads((plugin_root / "evals" / "last-run.json").read_text(encoding="utf-8"))
+    for name, entry in sorted((record.get("cases") or {}).items()):
+        if not entry.get("startedAt"):
+            sys.exit(f"{plugin_root}: {name} has no startedAt in last-run.json; record it again with eval_coverage")
+        stamp = entry["startedAt"].replace(":", "-").replace(".", "-")
+        path = plugin_root / "evals" / "results" / stamp / "aggregate-result.json"
+        if not path.exists():
+            sys.exit(f"{path}: missing; results are kept only on the machine that ran the eval")
+        result = json.loads(path.read_text(encoding="utf-8"))
+        yield {"cases": [case for case in result["cases"] if case["name"] == name]}
+
+
+def load(paths):
+    for path in paths.split(","):
+        if path.startswith("@"):
+            yield from recorded_results(Path(path[1:]))
+        else:
+            with open(path) as handle:
+                yield json.load(handle)
+
 
 labels = []
 passes = collections.defaultdict(lambda: collections.defaultdict(lambda: [0, 0]))
 for argument in sys.argv[1:]:
     label, paths = argument.split("=", 1)
     labels.append(label)
-    for path in paths.split(","):
-        with open(path) as handle:
-            result = json.load(handle)
+    for result in load(paths):
         for case in result["cases"]:
             for run in case["arms"].get("with") or []:
                 if run.get("error"):
