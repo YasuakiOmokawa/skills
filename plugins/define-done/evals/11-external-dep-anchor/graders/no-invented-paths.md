@@ -2,5 +2,6 @@
 type: regex
 target: {source: file, path: repo/plans/billing-date.md}
 match: not_contains
+flags: m
 ---
-(?m)^(?!- Violation sample:)[^\n]*(?:src/billing/(?![\w-]+\.test\.ts|db\.ts|date\.ts|customer\.ts)[\w./-]+|migrations/(?!\d{3})[\w./-]+)
+^(?!- Violation sample:)[^\n]*(?:src/billing/(?![\w.-]+\.test\.ts|db\.ts|date\.ts|customer\.ts)[\w./-]+|migrations/(?!\d{3})[\w./-]+)
