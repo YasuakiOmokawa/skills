@@ -1,7 +1,7 @@
 {
   "cases": {
     "01-session-store": {
-      "passed": 17,
+      "passed": 16,
       "total": 18
     },
     "02-neg-create-plan": {
@@ -9,23 +9,23 @@
       "total": 9
     },
     "03-neg-implement": {
-      "passed": 8,
+      "passed": 9,
       "total": 9
     },
     "04-reset-boundaries": {
-      "passed": 13,
+      "passed": 15,
       "total": 15
     },
     "05-recommendations-out-of-scope": {
-      "passed": 11,
+      "passed": 12,
       "total": 12
     },
     "06-oracle-dry-run": {
-      "passed": 2,
+      "passed": 3,
       "total": 3
     },
     "08-billing-dup-halt": {
-      "passed": 26,
+      "passed": 27,
       "total": 27
     },
     "09-invariant-other-writer": {
@@ -49,7 +49,7 @@
       "total": 6
     },
     "14-holdout-unverified": {
-      "passed": 8,
+      "passed": 9,
       "total": 12
     },
     "15-ac-id-semantic-change": {
@@ -57,7 +57,7 @@
       "total": 15
     },
     "17-forbidden-scope-positive": {
-      "passed": 2,
+      "passed": 0,
       "total": 3
     },
     "18-no-external-state-dry-run": {
@@ -69,8 +69,8 @@
       "total": 9
     },
     "21-ac-from-request-not-decision": {
-      "passed": 15,
-      "total": 15
+      "passed": 16,
+      "total": 18
     },
     "22-dependency-premise-refuted": {
       "passed": 9,
@@ -93,14 +93,18 @@
       "total": 6
     },
     "27-real-bug-remove-missing-member": {
-      "passed": 3,
+      "passed": 5,
       "total": 9
     },
     "28-existing-guard-string-quantity": {
       "passed": 3,
       "total": 9
+    },
+    "29-untested-ac-staging": {
+      "passed": 9,
+      "total": 9
     }
   },
-  "shipped_sha256": "f8f77d7567f9a55d567ffafe1e14a6a694fab04dab6aafc4cac4843514773ee9",
+  "shipped_sha256": "3ca0a8608134fc87a3675b7822035e7ac39b06ac04de56ffc102e5ea86d9b545",
   "waived": null
 }

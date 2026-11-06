@@ -5,6 +5,18 @@ All notable changes to omokawa-skills will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v16.0.0 - 2026-11-06
+
+### Removed
+
+- **`implement-plan` と `verify-plan` (BREAKING):** 2 plugin を廃止した。define-done の封の commit と `check_seal.py verify` だけで完了を判定する。実装は「封の受け入れテストと計画を変えずに実装する」という依頼で足り、変えれば `verify` が落ちる。サイクルごとの refactor の規律と、実装中の矛盾での早い停止は失う。既存 suite の回帰は CI に任せる。
+
+### Changed
+
+- **`define-done` 4.0.0 (BREAKING):** `check_seal.py` の `at-seal` を廃止し、`verify` を足した。`verify` は封の確認のあと、受け入れテストが封の時点の tree で落ち、今の tree で通るときだけ exit 0 を返す。実画面、CI や deploy の後でしか観測できない AC はテストを書かず、観測の手段を添えて回答の未検証に並べる。
+- chain eval: implement-plan の代わりに、封のファイルを変えない実装の依頼と `verify` を流す依頼にした。
+- eval: staging でしか観測できない AC を未検証に並べるかを測る case 29 を足した。case 17 の grader が、v15 で受け入れテストを書く契約に変えた後も「計画のほかに書かない」のままだったので、受け入れテストのファイルを許す形に直した。
+
 ## v15.1.0 - 2026-11-06
 
 ### Changed

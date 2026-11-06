@@ -7,12 +7,9 @@ from contextlib import redirect_stdout
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-SCRIPT_COPIES = [
-    ROOT / "plugins" / name / "skills" / name / "scripts" / "check_seal.py"
-    for name in ("define-done", "implement-plan", "verify-plan")
-]
+SCRIPT = ROOT / "plugins" / "define-done" / "skills" / "define-done" / "scripts" / "check_seal.py"
 
-spec = importlib.util.spec_from_file_location("check_seal", SCRIPT_COPIES[0])
+spec = importlib.util.spec_from_file_location("check_seal", SCRIPT)
 check_seal = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(check_seal)
 
@@ -63,9 +60,6 @@ class CheckSealTest(unittest.TestCase):
 
     def tearDown(self):
         self.tmp.cleanup()
-
-    def test_copies_are_identical(self):
-        self.assertEqual(len({path.read_bytes() for path in SCRIPT_COPIES}), 1)
 
     def test_missing_seal_fails(self):
         code, out = run("check", self.tmp.name)
@@ -125,20 +119,36 @@ class CheckSealTest(unittest.TestCase):
         self.assertEqual(code, 1)
         self.assertIn("Define-Done-Test-Command", out)
 
-    def test_at_seal_runs_tests_on_sealed_tree(self):
+    def test_verify_passes_when_sealed_red_turns_green(self):
         self.repo.seal()
         self.repo.write("src/a.js", "export const f = () => 1;\n")
         self.repo.commit("impl")
-        code, out = run("at-seal", self.tmp.name)
+        code, out = run("verify", self.tmp.name)
         self.assertEqual(code, 0, out)
-        self.assertIn("at-seal-exit: 1", out)
+        self.assertIn("sealed-exit: 1", out)
+        self.assertIn("current-exit: 0", out)
 
-    def test_at_seal_accepts_explicit_command(self):
+    def test_verify_fails_while_acceptance_tests_are_red(self):
         self.repo.seal()
-        code, out = run("at-seal", self.tmp.name, "--", "true")
-        self.assertEqual(code, 0, out)
-        self.assertIn("at-seal-exit: 0", out)
+        code, out = run("verify", self.tmp.name)
+        self.assertEqual(code, 1)
+        self.assertIn("fail:", out)
 
+    def test_verify_fails_on_tests_green_at_seal(self):
+        self.repo.write("src/a.js", "export const f = () => 1;\n")
+        self.repo.commit("already")
+        self.repo.seal()
+        code, out = run("verify", self.tmp.name)
+        self.assertEqual(code, 1)
+        self.assertIn("vacuous:", out)
+
+    def test_verify_fails_on_tamper_without_running_tests(self):
+        self.repo.seal()
+        self.repo.write("test/a.test.js", FAILING_TEST.replace("f(), 1", "f(), 0"))
+        code, out = run("verify", self.tmp.name)
+        self.assertEqual(code, 1)
+        self.assertIn("tamper:", out)
+        self.assertNotIn("current-exit", out)
 
 if __name__ == "__main__":
     unittest.main()
