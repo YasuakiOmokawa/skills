@@ -70,15 +70,27 @@ python3 scripts/eval/rejudge.py /tmp/<name>-new.json <NN> plugins/<name>/evals/<
 
 ### 翻訳の質 (define-done)
 
-define-done の受け入れテストは、runner の外で決定論的に採点する (runner には出力にコマンドを流す grader が無い)。題材ごとに `scripts/eval/mutant/<題材>/` に参照実装 `reference.js`、要求を 1 件ずつ破る `mutants.json` (`find` が参照実装にちょうど 1 回当たる置換)、自己検査用の `test/hidden.test.js` を置く。
+define-done の受け入れテストは、runner の外で決定論的に採点する (runner には出力にコマンドを流す grader が無い)。題材ごとに `scripts/eval/mutant/<題材>/` に次を置く。
+
+- `subject.json`: `{"target": "<テストが import する製品コードの path>"}`
+- `reference.js`: 要求どおりの参照実装
+- `stub.js`: 変更前のコード (受け入れテストが落ちるべき状態)
+- `mutants.json`: 要求を破る手書きの変種。`find` と `replace`、離れた箇所を変えるなら `edits` の列で書き、各 `find` は参照実装にちょうど 1 回当たる。実バグの修正前を写した変種は id を `real-` で始める
+- `test/hidden.test.js`: 自己検査用の隠しテスト
 
 ```bash
-python3 -I scripts/eval/mutant_score.py scripts/eval/mutant/<題材> scripts/eval/mutant/<題材> test/hidden.test.js --stub <stub>
+python3 -I scripts/eval/mutant_score.py scripts/eval/mutant/<題材> scripts/eval/mutant/<題材> test/hidden.test.js
 python3 -I scripts/eval/restore_file.py <trace.jsonl> <repo からの相対 path> <復元先>
-python3 -I scripts/eval/mutant_score.py scripts/eval/mutant/<題材> <復元先> <テストの相対 path> --stub <stub>
+python3 -I scripts/eval/mutant_score.py scripts/eval/mutant/<題材> <復元先> <テストの相対 path>
 ```
 
-1 行目は計測器の自己検査で、隠しテストが参照実装で全件 pass し、全 mutant を落とすことを確かめる。落とせない mutant は捨てる。2・3 行目で `--keep-temp` の trace から define-done が書いたテストを復元して採点する。見る数は、kill (落とした mutant / 全 mutant、要件適合度)、`reference_pass` (参照実装で通ったテスト / 全テスト、100% を必須とする歯止め)、`reference_repeatable` (5 回の再実行で同じ結果)、`stub_red` (stub で落ちたテスト)。
+手書きの変種は、題材の資料が決めていることだけを破る。資料が二通りに読める点を片方の読みで破る変種を置くと、曖昧さを未決の判断として返す define-done が、推測して書いた素のモデルより低く出る。
+
+1 行目は計測器の自己検査で、隠しテストが参照実装で全件 pass し、手書きの変種を全部落とすことを確かめる。2・3 行目で `--keep-temp` の trace から define-done が書いたテストを復元して採点する。見る数は次のとおり。
+
+- 要件適合度: `killed` / `mutant_total` (手書きの変種のうち落としたもの)
+- バグ検出率: `auto.killed` / `auto.killable`。自動の変異 (比較・論理・算術演算子の入れ替え、数値の ±1、真偽値の反転、`!` の除去、式の文の削除) のうち、隠しテストが落とせるものを分母にする (隠しテストも落とせないものは等価とみなす)
+- 歯止め: `reference_pass` が全テスト (100% を必須とする)、`reference_repeatable` (5 回の再実行で同じ結果)、`stub_red` (stub で落ちたテスト)
 
 ### 改善ルーティン
 

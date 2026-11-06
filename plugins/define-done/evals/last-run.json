@@ -79,6 +79,18 @@
     "23-acceptance-tests-sealed": {
       "passed": 9,
       "total": 9
+    },
+    "24-bulk-discount-existing-code": {
+      "passed": 9,
+      "total": 9
+    },
+    "25-real-bug-admin-mints-owner": {
+      "passed": 3,
+      "total": 3
+    },
+    "26-real-bug-last-used-company": {
+      "passed": 6,
+      "total": 6
     }
   },
   "shipped_sha256": "8eb00e2deb66848125fdbbd1b33089ee2c553e66a6735a61ea12811aadcc1e2d",

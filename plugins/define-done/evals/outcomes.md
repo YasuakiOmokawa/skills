@@ -32,6 +32,22 @@
   - [critical] 資料に無い再送の上限を、受け入れテストの期待値にしない。 (grader: 23-acceptance-tests-sealed/no-invented-limit-test)
   - 受け入れテストは、参照実装で全件 pass し、要求を 1 件ずつ破った変種をそれぞれ落とす (`scripts/eval/mutant_score.py` で数える)。 (grader: 未計測)
 
+- fixture: まとめ買い割引の要件は振る舞いだけを書き、端数の扱い (割引後の小計を商品ごとに切り捨てる) まで決め、interface を名指ししない。既存の `src/cart.js` と既存の試験 `test/cart.test.js` が `createCart`・`add`・`total` を固定している。計画の決定は割引後の小計を `Math.floor(小計 * 0.9)` で求めると言う。依頼は受け入れテストの置き場所を名指しする。repo は git で管理され、base の commit がある。
+- assertions:
+  - [critical] 依頼が名指しした置き場所に受け入れテストを書き、受け入れテストと計画だけを含む封の commit を作る。 (grader: 24-bulk-discount-existing-code/test-file-written, 24-bulk-discount-existing-code/seal-commit)
+  - [critical] 受け入れテストは、既存の試験が固定している interface を通して観測する。 (grader: 24-bulk-discount-existing-code/existing-interface-used)
+  - 受け入れテストは、参照実装で全件 pass し、要求を破った変種と、隠しテストが落とせる自動の変異をそれぞれ落とす (`scripts/eval/mutant_score.py` で数える)。 (grader: 未計測)
+
+- fixture: 招待の計画は作成・受諾・二度受諾の拒否を仕様に持つ。計画が従うと名指しする用語集は「ADMIN は OWNER を作れず」と定める (taimei-auth #108 の修正前と同じ状況)。既存の `src/membership.js` は role の変更を持ち、招待は未実装。
+- assertions:
+  - [critical] ADMIN が OWNER を作れることを、受け入れテストで落とす形にして封をするか、計画と用語集の食い違いとして Gate を止める理由に挙げる。 (grader: 25-real-bug-admin-mints-owner/bug-caught)
+  - 受け入れテストは、ADMIN が OWNER の招待を作れることを落とす (修正前の実バグの mutant を `scripts/eval/mutant_score.py` で落とす)。 (grader: 未計測)
+
+- fixture: 招待の受諾の計画は、所属することと二度受諾の拒否だけを仕様に持つ。計画が従うと名指しする用語集は、session の `currentCompanyId` が `null` なのは所属が 0 件の時などに限ると定め、新しい session は user の `lastUsedCompanyId` を写すと定める (taimei-auth #223 の修正前と同じ状況)。
+- assertions:
+  - [critical] 依頼が名指しした置き場所に受け入れテストを書き、受け入れテストと計画だけを含む封の commit を作る。 (grader: 26-real-bug-last-used-company/test-file-written, 26-real-bug-last-used-company/seal-commit)
+  - 受け入れテストは、初めての所属が招待の受諾だった利用者の次の session が事業所未選択になることを落とす (修正前の実バグの mutant を `scripts/eval/mutant_score.py` で落とす)。 (grader: 未計測)
+
 - fixture: 改名の計画が「repository の中に旧 path を指す記述が残らない」を求める。`.gitignore` が無視する `.cache/` に旧 path の文字列があり、`src/README.md` の旧 path への言及は計画が別 issue で直すとして残す。
 - assertions:
   - [critical] 不在を観測する基準は `.gitignore` が無視する file と、計画が残す `src/README.md` を走査しない形で書く。 (grader: 未計測)
