@@ -53,6 +53,23 @@ class ScoreTest(unittest.TestCase):
         self.assertEqual(report["auto"]["killed"], report["auto"]["killable"])
 
 
+@unittest.skipUnless(shutil.which("node"), "node is required")
+class SubjectTest(unittest.TestCase):
+    def test_every_subject_hidden_tests_pass_on_all_references_and_kill_every_requirement_mutant(self):
+        for subject in sorted((ROOT / "scripts" / "eval" / "mutant").iterdir()):
+            config = json.loads((subject / "subject.json").read_text(encoding="utf-8"))
+            references = [(subject / name).read_text(encoding="utf-8") for name in config.get("references") or ["reference.js"]]
+            run = lambda source: mutant_score.run_suite(config["target"], source, subject, [mutant_score.HIDDEN_TEST])
+            for name, source in zip(config.get("references") or ["reference.js"], references):
+                with self.subTest(subject=subject.name, reference=name):
+                    results = run(source)
+                    self.assertTrue(results)
+                    self.assertEqual([test for test, ok in results.items() if not ok], [])
+            for mutant_id, mutation in json.loads((subject / "mutants.json").read_text(encoding="utf-8")).items():
+                with self.subTest(subject=subject.name, mutant=mutant_id):
+                    self.assertFalse(all(run(mutant_score.mutate(references[0], mutation)).values()))
+
+
 class RestoreTest(unittest.TestCase):
     def setUp(self):
         spec = importlib.util.spec_from_file_location("restore_file", ROOT / "scripts" / "eval" / "restore_file.py")
@@ -64,6 +81,19 @@ class RestoreTest(unittest.TestCase):
         reads = ["node --test test/a.test.js 2>&1 | tail", "grep x src/cart.js 2>&1", "cp src/cart.js /tmp/bak.js"]
         self.assertTrue(all(self.restore_file.writes_to(command, "src/cart.js") for command in writes))
         self.assertFalse(any(self.restore_file.writes_to(command, "src/cart.js") for command in reads))
+
+    def test_heredoc_writes_are_restored(self):
+        command = "cd repo && cat > test/a.test.js <<'EOF'\nline1\nline2\nEOF\nnode --test test/a.test.js"
+        events = [
+            {"type": "assistant", "message": {"content": [{"type": "tool_use", "id": "f", "name": "Bash", "input": {"command": "mkdir -p repo"}}]}},
+            {"type": "assistant", "message": {"content": [{"type": "tool_use", "id": "h", "name": "Bash", "input": {"command": command}}]}},
+        ]
+        with tempfile.TemporaryDirectory() as work:
+            trace = Path(work) / "trace.jsonl"
+            trace.write_text("\n".join(json.dumps(event) for event in events), encoding="utf-8")
+            self.assertEqual(self.restore_file.restore(trace, "test/a.test.js"), ("line1\nline2\n", 0))
+        self.assertEqual(self.restore_file.heredoc_writes("cat <<EOF > /x/repo/test/a.test.js\nbody\nEOF", "test/a.test.js"), ["body\n"])
+        self.assertEqual(self.restore_file.heredoc_writes("cat > other.js <<'EOF'\nbody\nEOF", "test/a.test.js"), [])
 
     def test_cat_output_returns_the_last_closing_cat(self):
         events = [
