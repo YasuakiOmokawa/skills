@@ -1,0 +1,14 @@
+{
+  "m01-registered-screen": {"requirement": "S-1", "find": "    return { screen: 'accepted' };", "replace": "    return { screen: users.has(email) ? 'sent' : 'accepted' };"},
+  "m02-unregistered-leak": {"requirement": "S-2", "find": "    return { screen: 'accepted' };", "replace": "    return users.has(email) ? { screen: 'accepted' } : { screen: 'accepted', registered: false };"},
+  "m03-unregistered-mailed": {"requirement": "S-2", "find": "    if (users.has(email)) {", "replace": "    if (true) {"},
+  "m04-registered-no-mail": {"requirement": "S-3", "find": "      mailer.send(email, token);\n", "replace": ""},
+  "m05-expire-early": {"requirement": "S-3", "find": "const TTL_MS = 30 * 60 * 1000;", "replace": "const TTL_MS = 29 * 60 * 1000;"},
+  "m06-expire-late": {"requirement": "S-3", "find": "const TTL_MS = 30 * 60 * 1000;", "replace": "const TTL_MS = 31 * 60 * 1000;"},
+  "m07-expired-writes": {"requirement": "S-3", "find": "      if (now() - entry.issuedAt > TTL_MS) return { screen: 'expired' };", "replace": "      if (now() - entry.issuedAt > TTL_MS) { users.get(entry.email).password = newPassword; return { screen: 'expired' }; }"},
+  "m08-sessions-cleared": {"requirement": "S-4", "find": "      entry.used = true;\n", "replace": "      entry.used = true;\n      users.get(entry.email).sessions.clear();\n"},
+  "m09-password-not-changed": {"requirement": "S-4", "find": "      users.get(entry.email).password = newPassword;\n      return { screen: 'done' };", "replace": "      return { screen: 'done' };"},
+  "m10-reuse-allowed": {"requirement": "S-5", "find": "      entry.used = true;\n", "replace": ""},
+  "m11-reuse-writes": {"requirement": "S-5", "find": "      if (entry.used) return { screen: 'used' };", "replace": "      if (entry.used) { users.get(entry.email).password = newPassword; return { screen: 'used' }; }"},
+  "m12-resend-no-mail": {"requirement": "S-6", "find": "    resend: issue,", "replace": "    resend: () => ({ screen: 'accepted' }),"}
+}
