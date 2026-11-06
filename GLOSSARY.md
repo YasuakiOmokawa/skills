@@ -26,7 +26,7 @@ API key、access token、passwordはこの領域へ保存しない。
 - Skillは別skillを暗黙起動せず、必要な後続作業を結果として返す。
 - PoC、プロトタイプ、Design Docの受け渡しは、出力先直下の案件ディレクトリ（`<案件slug>/`）にある `poc.md` のパスで行う。`poc.md` の見出し（問い、星取表、結論、PR、申し送り、Prototype）と `design-doc.md` は後続skillが読むmachine contract。
 - 固定見出し、ID、列、状態値は、skill外のconsumerが実際に読む場合だけmachine contractとする。
-- 外部状態の変更と破壊的操作は、正確な対象と変更内容が依頼で承認された場合だけ行う。例外として、`build-poc` と `build-prototype` の起動は、検証用ブランチのpushと、元のブランチをbaseとするdraft PRの作成の承認を含む。PRのURLは後続skillが読む。依頼が外部状態の変更を禁じる場合は行わない。
+- 外部状態の変更と破壊的操作は、正確な対象と変更内容が依頼で承認された場合だけ行う。例外として、`build-poc` と `build-prototype` の起動は、検証用ブランチのpushと、元のブランチをbaseとするdraft PRの作成の承認を含む。`define-done` の起動は、受け入れテストと計画だけを含む封の commit を作る承認を含む (push は含まない)。PRのURLは後続skillが読む。依頼が外部状態の変更を禁じる場合は行わない。
 
 ## Evaluation
 
@@ -67,6 +67,18 @@ python3 scripts/eval/rejudge.py /tmp/<name>-new.json <NN> plugins/<name>/evals/<
 ```
 
 `mkvariant.py` は4番目以降の引数に渡した句を SKILL.md から1箇所ずつ消した版を作る (句を外した版の with run)。`compare.py` はカンマ区切りで複数の結果を1列に合算する (`--case` で再実行した分を足す)。`rejudge.py` は FAIL した run の evidence を同じ criterion で sonnet に3票判定し直す。llm judge が多条項の rubric を誤って FAIL にしたかを確かめるのに使う。
+
+### 翻訳の質 (define-done)
+
+define-done の受け入れテストは、runner の外で決定論的に採点する (runner には出力にコマンドを流す grader が無い)。題材ごとに `scripts/eval/mutant/<題材>/` に参照実装 `reference.js`、要求を 1 件ずつ破る `mutants.json` (`find` が参照実装にちょうど 1 回当たる置換)、自己検査用の `test/hidden.test.js` を置く。
+
+```bash
+python3 -I scripts/eval/mutant_score.py scripts/eval/mutant/<題材> scripts/eval/mutant/<題材> test/hidden.test.js --stub <stub>
+python3 -I scripts/eval/restore_file.py <trace.jsonl> <repo からの相対 path> <復元先>
+python3 -I scripts/eval/mutant_score.py scripts/eval/mutant/<題材> <復元先> <テストの相対 path> --stub <stub>
+```
+
+1 行目は計測器の自己検査で、隠しテストが参照実装で全件 pass し、全 mutant を落とすことを確かめる。落とせない mutant は捨てる。2・3 行目で `--keep-temp` の trace から define-done が書いたテストを復元して採点する。見る数は、kill (落とした mutant / 全 mutant、要件適合度)、`reference_pass` (参照実装で通ったテスト / 全テスト、100% を必須とする歯止め)、`reference_repeatable` (5 回の再実行で同じ結果)、`stub_red` (stub で落ちたテスト)。
 
 ### 改善ルーティン
 
@@ -131,10 +143,13 @@ _Avoid_: 根拠 (Ground Review の根拠と紛れる)、出どころ
 計画が選んだ手順・値・仕組み。変わりうるので AC の出典にはならず、どの要求に仕えるかだけを持つ。
 _Avoid_: 設計判断
 
-**封**:
-define-done が書き終えた要求・AC・検証の対応付けが、その後に変わっていないと確かめられる状態。
-_Avoid_: seal と fingerprint を状態の名前として使うこと (fingerprint は封の値の名前)
+**受け入れテスト**:
+define-done が各 AC から翻訳した、実行できるテスト。テスト名は AC-ID で始まる。テストがそのまま oracle であり、散文の oracle は書かない。
+_Avoid_: 検証の対応付け、Verification Plan (v14 までの散文の oracle)
 
-**禁止の行**:
-`[禁止]` の AC ごとに、検証の対応付けに書く「あってはならない文字列の pattern と、それを探す範囲」の組。
-_Avoid_: 禁止の表、tripwire (実装が書く検査と紛れる)
+**封**:
+受け入れテストと計画だけを含み、trailer `Define-Done-Seal:` と `Define-Done-Test-Command:` を持つ commit。その後に封をしたファイルを変えれば、`check_seal.py check` が必ず差分として検出する。define-done のやり直しは新しい封の commit を積む。
+_Avoid_: fingerprint (v14 までの、計画の中に書いた hash)
+
+**保護するパス**:
+封の commit に入ったファイルの集合。implement-plan と verify-plan は変えない。

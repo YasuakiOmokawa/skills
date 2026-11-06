@@ -1,11 +1,11 @@
 # Trigger
 - fixture: 要件 `docs/requirements/session-store.md`、ADR、既存コード、既存の設計 `plans/session-store.md` があり、計画の更新が許可されている。依頼Aは「plans/session-store.md の設計を確定して、実装に着手できる状態にして」、依頼Bは「要件から実装計画を一から作って、回答として返して」、依頼Cは「準備済みの計画 plans/session-store.md を実装して」である。
 - assertions:
-  - [critical] 依頼Aでは `plans/session-store.md` に `## Ground Review`、`## Acceptance Criteria`、`## MECE Review` を書き、Gate が ready なら `## Verification Plan` も書く。 (grader: 01-session-store/ground-review-section)
+  - [critical] 依頼Aでは `plans/session-store.md` に `## Ground Review`、`## Acceptance Criteria`、`## MECE Review` を書き、Gate が ready なら受け入れテストを書いて封の commit を作る。 (grader: 01-session-store/ground-review-section)
   - [critical] 依頼Bでは既存の計画に 4 節を書かない。 (grader: 02-neg-create-plan/is-a-plan, 02-neg-create-plan/no-gate-verdict)
   - [critical] 依頼Cでは define-done を発火させず、計画に従って製品コードを変更し、4 節を書き換えない。 (grader: 03-neg-implement/implements, 03-neg-implement/skill-not-fired, 03-neg-implement/vp-intact)
   - [critical] 依頼Bでは define-done を発火させない。 (grader: 02-neg-create-plan/skill-not-fired)
-  - [critical] 計画を指定して `/define-done` と依頼したときは define-done を発火させる。 (grader: 20-oracles-survive-refactor/skill-fired, 21-ac-from-request-not-decision/skill-fired, 22-dependency-premise-refuted/skill-fired)
+  - [critical] 計画を指定して `/define-done` と依頼したときは define-done を発火させる。 (grader: 21-ac-from-request-not-decision/skill-fired, 22-dependency-premise-refuted/skill-fired)
 
 # Outcome
 - fixture: 要件と ADR はセッションストアの外部化を Stage 1〜3 に分け、要件は Stage 1 だけを対象にする。`src/session/__tests__/containment.test.ts` は `src/session/` の外部パッケージ依存を全列挙する。ADR は接続先の環境変数を `config/env.example` に列挙すると定める。
@@ -25,33 +25,39 @@
   - [critical] 受け入れ基準を `AC-001` から始まる `- AC-NNN:` (または `- [ ] AC-NNN:`) の行で書く。 (grader: 04-reset-boundaries/ac-001-checkbox, 05-recommendations-out-of-scope/ac-001-checkbox)
   - 推奨を外した後も、計画の目的が求める振る舞いをそれぞれ観測する基準が残る。 (grader: 05-recommendations-out-of-scope/purpose-covered)
 
+- fixture: パスワード再設定の仕様が公開 interface (`createReset({ users, mailer, now })`) と画面の値を名指しし、再送の上限は資料に無い。依頼は受け入れテストの置き場所を名指しし、「必要なら適切な再送上限も決めて」と言う。repo は git で管理され、base の commit がある。
+- assertions:
+  - [critical] Gate が ready なら、依頼が名指しした置き場所に受け入れテストを書く。 (grader: 23-acceptance-tests-sealed/test-file-written)
+  - [critical] 受け入れテストと計画だけを含む封の commit を作る。 (grader: 23-acceptance-tests-sealed/seal-commit)
+  - [critical] 資料に無い再送の上限を、受け入れテストの期待値にしない。 (grader: 23-acceptance-tests-sealed/no-invented-limit-test)
+  - 受け入れテストは、参照実装で全件 pass し、要求を 1 件ずつ破った変種をそれぞれ落とす (`scripts/eval/mutant_score.py` で数える)。 (grader: 未計測)
+
 - fixture: 改名の計画が「repository の中に旧 path を指す記述が残らない」を求める。`.gitignore` が無視する `.cache/` に旧 path の文字列があり、`src/README.md` の旧 path への言及は計画が別 issue で直すとして残す。
 - assertions:
-  - [critical] 不在を観測する基準は `.gitignore` が無視する file と、計画が残す `src/README.md` を走査しない形で書く。 (grader: 07-repo-search-ignores-cache/no-ignored-scan, 07-repo-search-ignores-cache/untracked-search, 06-oracle-dry-run/readme-not-scanned)
+  - [critical] 不在を観測する基準は `.gitignore` が無視する file と、計画が残す `src/README.md` を走査しない形で書く。 (grader: 未計測)
   - コマンドで観測する基準は、起草時に現在のツリーで一度実行してから書く。 (grader: 06-oracle-dry-run/dry-run)
-  - Gate が ready なら、define-done の後で要求、AC、Verification Plan が変わったかを後続が確かめられる値を計画に残す。 (grader: 07-repo-search-ignores-cache/fingerprint-written)
-  - [critical] 旧名の不在を観測する基準は、計画が別に求める「その名前を export しないことを test で確かめる」基準と同時に成立し、test の file に書く名前の文字列に当たって落ちない形で書く。 (grader: 06-oracle-dry-run/test-compatible)
+  - [critical] 旧名の不在を観測する基準は、計画が別に求める「その名前を export しないことを test で確かめる」基準と同時に成立し、test の file に書く名前の文字列に当たって落ちない形で書く。 (grader: 未計測)
 
 - fixture: 計画は `src/` で `cookie-kit` の `getCookie` を直接使うのをやめ、読み取りを `readSession` に寄せる。`src/logout.ts` は同じパッケージの `deleteCookie` を使い、計画はそれに触れない。
 - assertions:
-  - [critical] 直接使わないことを観測する基準は、変更後も残る `src/logout.ts` の `deleteCookie` の利用に当たらない形で書く。 (grader: 16-absence-remaining-usage/logout-not-hit)
+  - [critical] 直接使わないことを観測する基準は、変更後も残る `src/logout.ts` の `deleteCookie` の利用に当たらない形で書く。 (grader: 未計測)
 
 - fixture: 計画は製品コードから `APP_ENV` の参照を無くし、試験は残す。試験は `src/__tests__/` 直下と `src/config/__tests__/` にある。
 - assertions:
-  - [critical] 不在を観測する基準は、変更後も残る両方の試験ファイルを走査しない。 (grader: 17-forbidden-scope-positive/tests-not-scanned)
-  - [critical] コードにあってはならないものの観測は、Oracle に検索のコマンドを書かず、禁じる文字列の pattern と走査範囲で書き、走査範囲に除外の指定を書かない。 (grader: 17-forbidden-scope-positive/oracle-no-command, 17-forbidden-scope-positive/no-exclude)
+  - [critical] 不在を観測する基準は、変更後も残る両方の試験ファイルを走査しない。 (grader: 未計測)
+  - [critical] コードにあってはならないもののテストは、禁じる文字列の pattern を正の pathspec で絞った走査範囲に当て、走査範囲に除外の指定を書かない。 (grader: 未計測)
   - 対象の repo には、計画のほかにファイルを足さず、変えない。 (grader: 17-forbidden-scope-positive/repo-untouched)
 
 - fixture: 計画の保存の AC は、DB コンテナを起動して migration を流す `npm run test:db` でしか観測できない。
 - assertions:
   - [critical] 基準を書く前の確認で、DB やコンテナの起動、migration を実行しない。 (grader: 18-no-external-state-dry-run/no-db-started)
-  - 変更前に実行しなかった観測は、そのことを Verification Plan に残す。 (grader: 18-no-external-state-dry-run/not-run-recorded)
+  - 変更前に実行しなかった受け入れテストは、そのことを回答で報告する。 (grader: 18-no-external-state-dry-run/not-run-recorded)
 
 - fixture: 仕様は請求作成、失敗時再試行、取消を要求する。計画は請求作成を二項目で重複して扱い、取消を欠く。
 - assertions:
   - 最終回答の先頭に、依頼と仕様から抜き出した要求を、原文の引用付きで 1 件ずつ並べる。 (grader: 08-billing-dup-halt/requirements-listed)
   - [critical] `## MECE Review` が請求作成の重複と取消の欠落を挙げ、Gate を ready にしない (理由を書く)。 (grader: 08-billing-dup-halt/dup-billing, 08-billing-dup-halt/cancel-missing, 08-billing-dup-halt/gate-not-ready, 08-billing-dup-halt/gate-row)
-  - [critical] Gate が ready でないので `## Verification Plan` を書かず、Gate の理由と ready にするための不足条件を報告する。 (grader: 08-billing-dup-halt/no-vp-when-not-ready, 08-billing-dup-halt/halt-reported)
+  - [critical] Gate が ready でないので受け入れテストと封の commit を作らず、Gate の理由と ready にするための不足条件を報告する。 (grader: 08-billing-dup-halt/halt-reported)
   - [critical] 計画本文の重複や欠落を自分で直さず、直したことを理由に Gate を ready にしない。 (grader: 08-billing-dup-halt/plan-body-unchanged)
   - 請求作成が呼ぶ先にあるアクセス判定の失敗分岐 (利用停止、権限不足) を呼び出し先まで辿って名指しし、基準にも実装タスクにも覆われていないことをレビューに書く。 (grader: 08-billing-dup-halt/permission-branch)
   - [critical] 取消の欠落を、製品コードに取消を実装して埋めない。 (grader: 08-billing-dup-halt/no-code-impl)
@@ -63,23 +69,22 @@
 
 - fixture: ready になる計画の AC が、所属と current team を書く 4 経路を列挙して不変条件を確かめる。請求予定処理は外部パッケージにある。
 - assertions:
-  - [critical] 不変条件の AC は、列挙の外に書き手が増えたら決定的に落ちる観測を Required effects に含めるか、その不足を Prerequisites に未解決として残す。 (grader: 10-invariant-writer-tripwire/writer-tripwire)
-  - [critical] Evidence anchors にはリポジトリに実在するファイル・関数・テスト・コマンドだけを書き、外部パッケージの処理は Prerequisites に未解決として残す。 (grader: 11-external-dep-anchor/no-invented-paths, 11-external-dep-anchor/deterministic-mapping)
-  - [critical] `## Verification Plan` は `- AC IDs:` 行と、AC ごとに `### AC-NNN` と空でない `- Oracle:`、`- Evidence anchors:`、`- Prerequisites:`、`- Required effects:` だけから成る。 (grader: 10-invariant-writer-tripwire/vp-complete, 11-external-dep-anchor/vp-complete, 11-external-dep-anchor/vp-single)
+  - [critical] 不変条件の AC のテストは、列挙の外に書き手が増えたら決定的に落ちる形にするか、その不足を不足情報として返す。 (grader: 未計測)
+  - [critical] 計画と受け入れテストには、リポジトリに実在するファイル・関数・コマンドだけを書き、外部パッケージの処理を観測する手段が無ければ不足情報として返す。 (grader: 11-external-dep-anchor/no-invented-paths)
   - [critical] 製品コードを変更しない。 (grader: 10-invariant-writer-tripwire/no-code-impl)
 
 - fixture: 計画の AC が再試行しないこと、同時実行が一件までであること、非影響を、固定時間待って何も起きないことだけで確かめる。
 - assertions:
-  - [critical] 固定時間の不在だけの AC を完了扱いにしない。`## MECE Review` が欠落か未検証として Gate を ready にしないか、`## Verification Plan` が肯定的な証跡と決定的な失敗シグナルまたは制御された seam の不足を Prerequisites に未解決として残す。 (grader: 12-absence-fixed-delay/no-fixed-delay-completion)
+  - [critical] 固定時間の不在だけの AC を完了扱いにしない。`## MECE Review` が欠落か未検証として Gate を ready にしないか、受け入れテストが固定時間の待機でなく肯定的な証跡と制御された seam で観測する。 (grader: 未計測)
   - [critical] 計画に、リポジトリに実在しないファイルのパスを書かない。 (grader: 12-absence-fixed-delay/no-invented-paths)
 
 - fixture: 計画は仕様の節を持たず、目的、前提、新しく作る関数とファイルの名前を並べた決定の表から成る。要件は計画が判断の正本と名指しする ADR にあり、上限を超えた要求は 429 を返すこと、上限値を `config/limits.json` 以外に写さないことを定める。決定の一つは「`src/health.js` は変えない」で、その意図は既存の `/health` の応答を変えないことである。リポジトリには静的検査と単体試験を走らせる check がある。
 - assertions:
-  - [critical] 基準と Oracle に、決定の表が新しく作る関数とファイルの名前を書かない。 (grader: 19-impl-names-behavior-prohibition/names-not-in-ac, 19-impl-names-behavior-prohibition/names-not-in-oracle, 20-oracles-survive-refactor/names-not-in-oracle)
+  - [critical] 基準と受け入れテストに、決定の表が新しく作る関数とファイルの名前を書かない。 (grader: 19-impl-names-behavior-prohibition/names-not-in-ac)
   - [critical] 「`src/health.js` は変えない」を、ファイルの差分ではなく、`/health` の応答が変わらない非影響の振る舞いとして基準にする。 (grader: 19-impl-names-behavior-prohibition/health-as-behavior)
-  - [critical] 上限値を写さないことを、コードにあってはならないものの基準にし、入れると検出されるはずの違反の見本と、それを探す文字列の pattern と走査範囲を、検証の対応付けに書く。 (grader: 19-impl-names-behavior-prohibition/no-copy-with-sample)
+  - [critical] 上限値を写さないことを、コードにあってはならないものの基準にし、それを探す文字列の pattern と走査範囲を持つ受け入れテストにする。 (grader: 未計測)
   - 各基準に、振る舞いか、コードにあってはならないものかの種類を付ける。 (grader: 19-impl-names-behavior-prohibition/kind-marked)
-  - [critical] 計画どおりの名前で実装した後に、振る舞いを変えずに関数とファイルを改名・移動しても、すべての Oracle を同じく観測でき、名前が見つからないことで落ちる Oracle が無い。 (grader: 20-oracles-survive-refactor/oracles-survive)
+  - [critical] 計画どおりの名前で実装した後に、振る舞いを変えずに関数とファイルを改名・移動しても、受け入れテストが名前の不在で落ちない。 (grader: 未計測)
 
 - fixture: 振る舞いを変えない改修の計画で、目的が「読みやすくする」だけで、コードにあってはならないものとして書けない。
 - assertions:
@@ -113,7 +118,7 @@
 - assertions:
   - [critical] 請求作成の対応を、読めるコードを根拠に判定する。 (grader: 14-holdout-unverified/billing-decided)
   - [critical] 再試行の対応を未検証として扱い、適合とも計画の欠落とも断定しない。 (grader: 14-holdout-unverified/retry-unverified)
-  - [critical] 必須の比較の根拠が欠けているので Gate を ready にせず、`## Verification Plan` を書かず、Gate の理由を報告する。 (grader: 14-holdout-unverified/gate-not-ready, 14-holdout-unverified/no-vp-when-not-ready, 14-holdout-unverified/halt-reported)
+  - [critical] 必須の比較の根拠が欠けているので Gate を ready にせず、受け入れテストと封の commit を作らず、Gate の理由を報告する。 (grader: 14-holdout-unverified/gate-not-ready, 14-holdout-unverified/halt-reported)
 
 - fixture: 既存の計画の `AC-004` は「期限後は変更しない」を意味するが、更新した仕様は「期限後は新しいリンクを発行する」へ意味を変え、その置き換えが許可されている。
 - assertions:

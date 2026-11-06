@@ -1,34 +1,33 @@
 ---
 name: implement-plan
-description: Verification Planが全受け入れ基準を対応付けている準備済みの計画を実装する。テストで観測できる各基準を、計画の依存順にred、green、refactorで進める。
+description: define-doneが受け入れテストに封をした計画を実装する。封の受け入れテストを変えずに、計画の依存順にred、green、refactorで通していく。
 ---
 
 ## 目的
 
-Verification Plan が全受け入れ基準を対応付けている準備済みの計画を、計画の依存順に実装する。
+define-done が封をした受け入れテストを、テストを変えずに計画の依存順に green にする。
 
 ## 原理
 
-- TDD: テスト一つにつき red → green → refactor を回し、refactor が済んでから次のテストを始める。
-  - red: `Evidence anchors` の seam に、公開インターフェースを通したテストを一つ書き、期待値は oracle か計算済みのリテラルから取る。import・型・セットアップの失敗は red に数えず、無い公開インターフェースは振る舞いを持たない最小のスタブで補い、振る舞いが無いための失敗を確かめる。書いた時点で通ったテストは red 未観測と報告し、tripwire と同様に一時的な違反で落ちうることを示す。
+- 受け入れテストが完了の定義: 封の commit に入ったファイル (受け入れテストと計画) は変えない。受け入れテストは define-done が red を確かめてあるので、実装の red はそれを流して観測する。
+- TDD: 失敗している受け入れテスト一つ、または実装の途中で足す内部のテスト一つにつき、red → green → refactor を回し、refactor が済んでから次のテストへ進む。
+  - red: テストを流し、振る舞いの不在で落ちることを確かめる。import・型・セットアップの失敗は red に数えず、無い公開インターフェースは振る舞いを持たない最小のスタブで補う。内部のテストは公開インターフェースを通して書き、期待値は要求の値か計算済みのリテラルから取る。
   - green: 通すための最小の変更にとどめ、まだテストの無い期待値を先取りしない。到達しうるテストを実行する。
   - refactor: 全 green のまま、このサイクルで入った重複と意図を表さない名前を、振る舞いの変更と分けられる形で一つずつ直し、そのたびにテストを実行する。差分に重複が無く新しい名前がすべて意図を述べていれば済む。既存コードの smell は直さず記録する。
-- 外の境界を通す: `[振る舞い]` の基準ごとに、Evidence anchors の外の境界を通すテストを少なくとも一つ書く。内部の関数のテストは実装の一部として足してよく、基準の受け入れには数えない。
-- tripwire: 不変条件、不在、静的な基準は、リポジトリの check (lint、型、外部状態に触れない単体試験) として残るチェックを書き、一時的な違反を入れて落ちること、戻して通ることを観測する。`[禁止]` は tripwire を書かず、計画の禁止の行を check_plan.py が確かめる。
+- 衝突は戻す: 受け入れテストが要求、仕様、既存コードと矛盾するか、通すのに計画外の変更が要るときは、テストを直さずにその AC と依存する作業項目を止め、define-done のやり直しが要ると返す。
 
 ## 契約
 
-- 入力: define-done が封をした計画。コードを編集する前に、この skill の dir の `scripts/check_plan.py` を `python3 <script> check <計画> <repo>` で流し、exit 1 なら止めて出力を報告する。対応は実装でなく計画から得る。計画の作業項目は依存順に進める。
-- 最初に test suite、lint、type check を一度実行して baseline を記録し、既に red のものは報告して以降の red と区別する。
-- 実画面や外部状態が要る基準は、実装して到達するテストを実行し、PASS とは言わず前提条件とともに検証へ引き渡す。観測にだけ要る前提条件は実装を止めない。
-- 計画外の変更が要る項目と、oracle がコードと矛盾する項目は、依存する項目ごと止めて衝突を報告する。
-- 出力: 基準ごとに、追加したテストまたはチェック、観測した red とその理由、green、適用した refactor を報告する。記録した既存の smell も報告する。
+- 入力: define-done が封をした計画と repo。コードを編集する前に、この skill の dir の `scripts/check_seal.py` を `python3 <script> check <repo>` で流し、exit 1 なら止めて出力を報告する。出力の `test-command:` が受け入れテストを流すコマンド、`protected:` が変えてはならないファイルである。計画の作業項目は依存順に進める。
+- 最初に test suite、lint、type check と受け入れテストを一度実行して baseline を記録し、既に red の既存テストは報告して以降の red と区別する。
+- define-done が未実行と返した受け入れテスト (DB、サーバ、外部への送信が要るもの) とテストの無い AC は、実装して到達するテストを実行し、PASS とは言わず前提条件とともに検証へ引き渡す。
+- 出力: AC ごとに、通した受け入れテスト、観測した red とその理由、green、適用した refactor、足した内部のテストを報告する。記録した既存の smell も報告する。
 
 ## 禁止
 
-- 計画、AC、Verification Plan を書き換えない。
+- `protected:` に挙がったファイル (受け入れテストと計画) を変えない。
 - 依頼が許可していない commit、push、PR 作成をしない。
 
 ## 完了条件
 
-全 AC を tested、tripwire proved、handed to verification、stopped のちょうど一つに割り当てる。どの作業項目にも紐づかない AC は stopped にする。最後に test suite 全体、lint、type check と `check_plan.py check-green <計画> <repo>` を実行し、baseline と比べて報告する。後者の `forbidden:` の行に挙がった `[禁止]` の AC は stopped、挙がらない `[禁止]` の AC は handed to verification にする。基準の受け入れは検証の結果であり、実装はここで終わる。
+全 AC を green、handed to verification、stopped のちょうど一つに割り当てる。最後に test suite 全体、lint、type check、受け入れテストと `check_seal.py check <repo>` を実行し、baseline と比べて報告する。後者が exit 1 なら完了と言わない。基準の受け入れは検証の結果であり、実装はここで終わる。
