@@ -1,0 +1,5 @@
+{
+  "e01-parse-int-accepts-fraction": {"requirement": "既存の guard: 数量は正の整数 (1.5 を 1 にしない)", "find": "      const count = typeof quantity === 'string' && /^[0-9]+$/.test(quantity) ? Number(quantity) : quantity;\n", "replace": "      const count = Number.parseInt(quantity, 10);\n"},
+  "e02-strings-skip-guard": {"requirement": "既存の guard: 正の整数でない文字列は受け付けない", "find": "      if (!Number.isInteger(count) || count <= 0)", "replace": "      if (typeof quantity !== 'string' && (!Number.isInteger(count) || count <= 0))"},
+  "r01-strings-rejected": {"requirement": "要件: 正の整数を表す 10 進の文字列を受け付ける", "find": "typeof quantity === 'string' && /^[0-9]+$/.test(quantity) ? Number(quantity) : quantity", "replace": "quantity"}
+}

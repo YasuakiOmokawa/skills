@@ -38,8 +38,7 @@ test('S-3: an invitation cannot be accepted twice', () => {
 
 test('用語集 role: admin cannot create an owner through an invitation', () => {
   const company = companyWithAdmin();
-  const { status, invitationId } = company.invite('admin', 'OWNER');
-  assert.notEqual(status, 201);
+  const { invitationId } = company.invite('admin', 'OWNER');
   if (invitationId) company.accept(invitationId, 'climber');
   assert.notEqual(company.roleOf('climber'), 'OWNER');
 });

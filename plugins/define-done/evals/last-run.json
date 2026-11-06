@@ -91,6 +91,14 @@
     "26-real-bug-last-used-company": {
       "passed": 6,
       "total": 6
+    },
+    "27-real-bug-remove-missing-member": {
+      "passed": 7,
+      "total": 9
+    },
+    "28-existing-guard-string-quantity": {
+      "passed": 3,
+      "total": 9
     }
   },
   "shipped_sha256": "8eb00e2deb66848125fdbbd1b33089ee2c553e66a6735a61ea12811aadcc1e2d",

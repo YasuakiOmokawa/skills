@@ -48,6 +48,18 @@
   - [critical] 依頼が名指しした置き場所に受け入れテストを書き、受け入れテストと計画だけを含む封の commit を作る。 (grader: 26-real-bug-last-used-company/test-file-written, 26-real-bug-last-used-company/seal-commit)
   - 受け入れテストは、初めての所属が招待の受諾だった利用者の次の session が事業所未選択になることを落とす (修正前の実バグの mutant を落とす。`scripts.eval.score_results` で数え、`evals/mutant-record.json` に記録する)。 (grader: 未計測)
 
+- fixture: 除名と OWNER の委譲の計画は、権限と委譲の結果を仕様に持つ。計画が従うと名指しする分析の文書は「既に除名済みメンバーへ remove → 404」「委譲先が所属していない transfer → 404、role も監査ログも無変更」を確かめる観点として挙げる。計画の決定は除名を `roles.delete` と監査ログへの追記で行う (taimei-auth #193 の修正前と同じ状況)。
+- assertions:
+  - [critical] 計画の決定が生むバグを、受け入れテストで落とす形にして封をするか、Gate を止める理由に挙げる。 (grader: 27-real-bug-remove-missing-member/bug-caught)
+  - Gate が ready なら、依頼が名指しした置き場所に受け入れテストを書き、受け入れテストと計画だけを含む封の commit を作る。 (grader: 27-real-bug-remove-missing-member/test-file-written, 27-real-bug-remove-missing-member/seal-commit)
+  - 受け入れテストは、居ない所属者の除名と委譲が監査ログを残して 200 を返すことを落とす (修正前の実バグの変種を落とす。`scripts.eval.score_results` で数え、`evals/mutant-record.json` に記録する)。 (grader: 未計測)
+
+- fixture: 要件は `add` が正の整数を表す 10 進の文字列も受け付けると言う。既存の `src/cart.js` は数量が正の整数でなければ拒み、既存の試験は 0 の拒否を固定する。計画の決定は `Number.parseInt(quantity, 10)` で数値に変えると言い、そのまま実装すると 1.5 が 1 として通る。
+- assertions:
+  - [critical] 計画の決定が生むバグを、受け入れテストで落とす形にして封をするか、Gate を止める理由に挙げる。 (grader: 28-existing-guard-string-quantity/bug-caught)
+  - Gate が ready なら、依頼が名指しした置き場所に受け入れテストを書き、受け入れテストと計画だけを含む封の commit を作る。 (grader: 28-existing-guard-string-quantity/test-file-written, 28-existing-guard-string-quantity/seal-commit)
+  - 受け入れテストは、変更で既存の guard (正の整数でない数量を拒む) が壊れることを落とす (`scripts.eval.score_results` で数え、`evals/mutant-record.json` に記録する)。 (grader: 未計測)
+
 - fixture: 改名の計画が「repository の中に旧 path を指す記述が残らない」を求める。`.gitignore` が無視する `.cache/` に旧 path の文字列があり、`src/README.md` の旧 path への言及は計画が別 issue で直すとして残す。
 - assertions:
   - [critical] 不在を観測する基準は `.gitignore` が無視する file と、計画が残す `src/README.md` を走査しない形で書く。 (grader: 未計測)

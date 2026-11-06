@@ -291,6 +291,236 @@
         ]
       },
       "startedAt": "2026-11-06T05:45:23.346Z"
+    },
+    "27-real-bug-remove-missing-member": {
+      "arms": {
+        "with": [
+          {
+            "outcome": "gate"
+          },
+          {
+            "auto_killable": 28,
+            "auto_killed": 28,
+            "auto_survivors": [],
+            "invalid": [],
+            "outcome": "tests",
+            "repeatable": true,
+            "requirement_killed": 6,
+            "requirement_survivors": [],
+            "requirement_total": 6,
+            "tests": 12,
+            "valid": 12
+          },
+          {
+            "auto_killable": 28,
+            "auto_killed": 28,
+            "auto_survivors": [],
+            "invalid": [],
+            "outcome": "tests",
+            "repeatable": true,
+            "requirement_killed": 6,
+            "requirement_survivors": [],
+            "requirement_total": 6,
+            "tests": 10,
+            "valid": 10
+          }
+        ],
+        "without": [
+          {
+            "auto_killable": 28,
+            "auto_killed": 28,
+            "auto_survivors": [],
+            "invalid": [
+              "4:AC-10 [不変条件 I1]: OWNER は自分自身を除名できない → 409 owner_must_transfer、無変更",
+              "4:AC-11: OWNER は ADMIN に委譲でき、元 OWNER は ADMIN になり、監査ログに 1 行残る",
+              "4:AC-17 [不変条件 I1]: OWNER が自分自身へ委譲 → 409 already_owner、無変更 (OWNER が降格して不在にならない)",
+              "4:AC-1: ADMIN は MEMBER を除名でき、所属行が消え、監査ログに 1 行残る",
+              "4:AC-3: OWNER は ADMIN を除名できる"
+            ],
+            "outcome": "tests",
+            "repeatable": true,
+            "requirement_killed": 6,
+            "requirement_survivors": [],
+            "requirement_total": 6,
+            "tests": 19,
+            "valid": 14
+          },
+          {
+            "auto_killable": 28,
+            "auto_killed": 21,
+            "auto_survivors": [
+              "inc-L1C30",
+              "dec-L1C40",
+              "swap-L4C42",
+              "swap-L22C22",
+              "inc-L22C74",
+              "dec-L22C74",
+              "swap-L24C56"
+            ],
+            "invalid": [
+              "4:AC-11: 委譲後は新 OWNER だけが OWNER を除名でき、元 OWNER (ADMIN) は除名できない",
+              "4:AC-12: OWNER 以外 (ADMIN) の transfer → 403、role も監査ログも無変更",
+              "4:AC-1: ADMIN が MEMBER を除名 → 200、所属が消え membership_removed が 1 行記録される",
+              "4:AC-3: MEMBER が除名 → 403、所属も監査ログも無変更 [ADR-0010 permission]",
+              "4:AC-4: ADMIN が OWNER を除名 → 403、所属も監査ログも無変更 [ADR-0010 permission]",
+              "4:AC-5: 所属していない actor の除名 → 403、無変更",
+              "4:AC-8: 権限チェックは存在チェックより先 (MEMBER が非所属者を除名 → 403)",
+              "4:AC-9: OWNER が ADMIN に委譲 → 200、相手が OWNER・元 OWNER が ADMIN、ownership_transferred が 1 行"
+            ],
+            "outcome": "tests",
+            "repeatable": true,
+            "requirement_killed": 4,
+            "requirement_survivors": [
+              "r01-admin-removes-owner",
+              "r02-member-removes"
+            ],
+            "requirement_total": 6,
+            "tests": 14,
+            "valid": 6
+          },
+          {
+            "auto_killable": 28,
+            "auto_killed": 21,
+            "auto_survivors": [
+              "inc-L1C30",
+              "dec-L1C40",
+              "swap-L4C42",
+              "swap-L22C22",
+              "inc-L22C74",
+              "dec-L22C74",
+              "swap-L24C56"
+            ],
+            "invalid": [
+              "4:AC-10: OWNER が自分自身を除名 → 403、無変更 (OWNER 不在を作らない。離れるには先に委譲)",
+              "4:AC-11: OWNER が ADMIN に委譲 → 200、委譲先が OWNER・元 OWNER が ADMIN、監査ログに ownership_transferred が 1 行",
+              "4:AC-13: 委譲後は新 OWNER だけが委譲でき、元 OWNER (ADMIN) は OWNER を除名できない",
+              "4:AC-14: OWNER 以外 (admin) の委譲 → 403、role も監査ログも無変更",
+              "4:AC-14: OWNER 以外 (member) の委譲 → 403、role も監査ログも無変更",
+              "4:AC-14: OWNER 以外 (outsider) の委譲 → 403、role も監査ログも無変更",
+              "4:AC-17: OWNER が自分自身へ委譲 → 400 invalid_target、無変更 (自分を ADMIN に降格させない)",
+              "4:AC-1: ADMIN が MEMBER を除名 → 200、所属が消え、監査ログに membership_removed が 1 行",
+              "4:AC-4 [ADR permission]: MEMBER が除名 → 403、所属・監査ログは無変更",
+              "4:AC-5 [ADR permission]: ADMIN が OWNER を除名 → 403、所属・監査ログは無変更",
+              "4:AC-6: 所属していない actor の除名 → 403、無変更",
+              "4:AC-9: 権限チェックが存在チェックより先 (MEMBER が非所属者を除名 → 403)"
+            ],
+            "outcome": "tests",
+            "repeatable": true,
+            "requirement_killed": 4,
+            "requirement_survivors": [
+              "r01-admin-removes-owner",
+              "r02-member-removes"
+            ],
+            "requirement_total": 6,
+            "tests": 20,
+            "valid": 8
+          }
+        ]
+      },
+      "startedAt": "2026-11-06T06:45:07.270Z"
+    },
+    "28-existing-guard-string-quantity": {
+      "arms": {
+        "with": [
+          {
+            "outcome": "gate"
+          },
+          {
+            "outcome": "gate"
+          },
+          {
+            "outcome": "no-test"
+          }
+        ],
+        "without": [
+          {
+            "auto_killable": 18,
+            "auto_killed": 15,
+            "auto_survivors": [
+              "swap-L7C36",
+              "swap-L7C45",
+              "dec-L7C48"
+            ],
+            "invalid": [
+              "0:AC2: rejects non-decimal-positive-integer string \" 3\"",
+              "0:AC2: rejects non-decimal-positive-integer string \"\"",
+              "0:AC2: rejects non-decimal-positive-integer string \"+3\"",
+              "0:AC2: rejects non-decimal-positive-integer string \"-1\"",
+              "0:AC2: rejects non-decimal-positive-integer string \"0\"",
+              "0:AC2: rejects non-decimal-positive-integer string \"000\"",
+              "0:AC2: rejects non-decimal-positive-integer string \"0x10\"",
+              "0:AC2: rejects non-decimal-positive-integer string \"1e3\"",
+              "0:AC2: rejects non-decimal-positive-integer string \"3 \"",
+              "0:AC2: rejects non-decimal-positive-integer string \"3.5\"",
+              "0:AC2: rejects non-decimal-positive-integer string \"3abc\"",
+              "0:AC2: rejects non-decimal-positive-integer string \"３\"",
+              "0:AC3: still rejects numeric quantity -1",
+              "0:AC3: still rejects numeric quantity 0",
+              "0:AC3: still rejects numeric quantity 2.5",
+              "0:AC3: still rejects numeric quantity Infinity",
+              "0:AC3: still rejects numeric quantity NaN",
+              "0:AC4: rejects non-string, non-number quantity bigint",
+              "0:AC4: rejects non-string, non-number quantity boolean",
+              "0:AC4: rejects non-string, non-number quantity object",
+              "0:AC4: rejects non-string, non-number quantity undefined",
+              "0:AC5: unknown sku is rejected even with a string quantity"
+            ],
+            "outcome": "tests",
+            "repeatable": true,
+            "requirement_killed": 1,
+            "requirement_survivors": [
+              "e01-parse-int-accepts-fraction",
+              "e02-strings-skip-guard"
+            ],
+            "requirement_total": 3,
+            "tests": 25,
+            "valid": 3
+          },
+          {
+            "auto_killable": 18,
+            "auto_killed": 16,
+            "auto_survivors": [
+              "swap-L7C45",
+              "dec-L7C48"
+            ],
+            "invalid": [
+              "0:AC4: rejects string \"\"",
+              "0:AC4: rejects string \"-1\"",
+              "0:AC4: rejects string \"0\"",
+              "0:AC4: rejects string \"0x10\"",
+              "0:AC4: rejects string \"1e3\"",
+              "0:AC4: rejects string \"3.5\"",
+              "0:AC4: rejects string \"3abc\"",
+              "0:AC4: rejects string \"abc\"",
+              "0:AC6: still rejects number -1",
+              "0:AC6: still rejects number 0",
+              "0:AC6: still rejects number 2.5",
+              "0:AC6: still rejects number NaN"
+            ],
+            "outcome": "tests",
+            "repeatable": true,
+            "requirement_killed": 3,
+            "requirement_survivors": [],
+            "requirement_total": 3,
+            "tests": 16,
+            "valid": 4
+          },
+          {
+            "auto_killable": 18,
+            "auto_killed": 18,
+            "auto_survivors": [],
+            "invalid": [],
+            "outcome": "tests",
+            "repeatable": true,
+            "requirement_killed": 3,
+            "requirement_survivors": [],
+            "requirement_total": 3,
+            "tests": 24,
+            "valid": 24
+          }
+        ]
+      },
+      "startedAt": "2026-11-06T06:51:06.941Z"
     }
   }
 }
