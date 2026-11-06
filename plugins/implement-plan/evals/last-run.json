@@ -8,6 +8,10 @@
       "passed": 12,
       "total": 12
     },
+    "03-refactor-each-cycle": {
+      "passed": 20,
+      "total": 21
+    },
     "04-holdout-no-seal": {
       "passed": 9,
       "total": 9
