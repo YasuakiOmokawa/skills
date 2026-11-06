@@ -9,13 +9,13 @@ function companyWithAdmin() {
   return company;
 }
 
-test('owner and admin can invite members', () => {
+test('S-1: owner and admin can invite members', () => {
   const company = companyWithAdmin();
   assert.equal(company.invite('owner', 'MEMBER').status, 201);
   assert.equal(company.invite('admin', 'MEMBER').status, 201);
 });
 
-test('member and outsider cannot invite', () => {
+test('S-1: member and outsider cannot invite', () => {
   const company = companyWithAdmin();
   const { invitationId } = company.invite('owner', 'MEMBER');
   company.accept(invitationId, 'member');
@@ -23,12 +23,12 @@ test('member and outsider cannot invite', () => {
   assert.equal(company.invite('stranger', 'MEMBER').status, 403);
 });
 
-test('accepting joins with the invited role', () => {
+test('S-2: accepting joins with the invited role', () => {
   const company = companyWithAdmin();
   assert.equal(company.roleOf('admin'), 'ADMIN');
 });
 
-test('an invitation cannot be accepted twice', () => {
+test('S-3: an invitation cannot be accepted twice', () => {
   const company = createCompany({ ownerId: 'owner' });
   const { invitationId } = company.invite('owner', 'MEMBER');
   assert.equal(company.accept(invitationId, 'a').status, 200);
@@ -36,7 +36,7 @@ test('an invitation cannot be accepted twice', () => {
   assert.equal(company.roleOf('b'), null);
 });
 
-test('admin cannot create an owner through an invitation', () => {
+test('用語集 role: admin cannot create an owner through an invitation', () => {
   const company = companyWithAdmin();
   const { status, invitationId } = company.invite('admin', 'OWNER');
   assert.notEqual(status, 201);
@@ -44,7 +44,7 @@ test('admin cannot create an owner through an invitation', () => {
   assert.notEqual(company.roleOf('climber'), 'OWNER');
 });
 
-test('owner can invite another owner', () => {
+test('用語集 role: owner can invite another owner', () => {
   const company = createCompany({ ownerId: 'owner' });
   const { status, invitationId } = company.invite('owner', 'OWNER');
   assert.equal(status, 201);

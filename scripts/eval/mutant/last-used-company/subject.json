@@ -1,1 +1,1 @@
-{"target": "src/account.js"}
+{"target": "src/account.js", "references": ["reference.js", "reference-b.js"]}

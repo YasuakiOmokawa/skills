@@ -10,13 +10,13 @@ function accountsWithCompany() {
   return accounts;
 }
 
-test('accepting joins the company with the invited role', () => {
+test('S-1: accepting joins the company with the invited role', () => {
   const accounts = accountsWithCompany();
   assert.equal(accounts.accept(accounts.invite('acme', 'MEMBER'), 'guest').status, 200);
   assert.deepEqual(accounts.companiesOf('guest'), ['acme']);
 });
 
-test('an invitation cannot be accepted twice', () => {
+test('S-2: an invitation cannot be accepted twice', () => {
   const accounts = accountsWithCompany();
   const invitationId = accounts.invite('acme', 'MEMBER');
   accounts.accept(invitationId, 'guest');
@@ -25,7 +25,7 @@ test('an invitation cannot be accepted twice', () => {
   assert.deepEqual(accounts.companiesOf('other'), []);
 });
 
-test('a first membership by invitation is selected in the next session', () => {
+test('用語集 currentCompanyId: a first membership by invitation is selected in the next session', () => {
   const accounts = accountsWithCompany();
   accounts.accept(accounts.invite('acme', 'MEMBER'), 'guest');
   assert.equal(accounts.signIn('guest').currentCompanyId, 'acme');
