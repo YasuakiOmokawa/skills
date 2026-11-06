@@ -1,0 +1,3 @@
+{
+  "real-223-last-used-not-set": {"requirement": "所属があるのに新しい session が事業所未選択にならない (taimei-auth #223 の修正前)", "find": "      users.get(userId).lastUsedCompanyId = invitation.companyId;\n      return { status: 200 };", "replace": "      return { status: 200 };"}
+}

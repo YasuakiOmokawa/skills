@@ -1,0 +1,3 @@
+{
+  "real-108-admin-mints-owner": {"requirement": "ADMIN は OWNER を作れない (taimei-auth #108 の修正前)", "find": "      if (!canInviteRole(actorRole, role)) return { status: 403 };\n", "replace": ""}
+}

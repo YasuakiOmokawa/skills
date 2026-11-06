@@ -1,0 +1,59 @@
+{
+  "r01-threshold-11": {
+    "requirement": "10 個以上で割引",
+    "find": "const BULK_QUANTITY = 10;",
+    "replace": "const BULK_QUANTITY = 11;"
+  },
+  "r02-threshold-9": {
+    "requirement": "9 個以下は割引かない",
+    "find": "const BULK_QUANTITY = 10;",
+    "replace": "const BULK_QUANTITY = 9;"
+  },
+  "r03-round-up": {
+    "requirement": "1 円未満は切り捨て",
+    "find": "Math.floor((subtotal * 9) / 10)",
+    "replace": "Math.ceil((subtotal * 9) / 10)"
+  },
+  "r04-round-nearest": {
+    "requirement": "1 円未満は切り捨て",
+    "find": "Math.floor((subtotal * 9) / 10)",
+    "replace": "Math.round((subtotal * 9) / 10)"
+  },
+  "r05-twenty-percent": {
+    "requirement": "1 割引く",
+    "find": "Math.floor((subtotal * 9) / 10)",
+    "replace": "Math.floor((subtotal * 8) / 10)"
+  },
+  "r06-cart-wide-count": {
+    "requirement": "商品ごとに判定し他の商品と合算しない",
+    "find": "      let sum = 0;\n      for (const [sku, quantity] of lines) {\n        const subtotal = catalog.get(sku) * quantity;\n        sum += quantity >= BULK_QUANTITY",
+    "replace": "      let sum = 0;\n      const cartQuantity = [...lines.values()].reduce((a, b) => a + b, 0);\n      for (const [sku, quantity] of lines) {\n        const subtotal = catalog.get(sku) * quantity;\n        sum += cartQuantity >= BULK_QUANTITY"
+  },
+  "r07-round-once": {
+    "requirement": "商品の小計ごとに切り捨て",
+    "find": "        sum += quantity >= BULK_QUANTITY ? Math.floor((subtotal * 9) / 10) : subtotal;\n      }\n      return sum;",
+    "replace": "        sum += quantity >= BULK_QUANTITY ? (subtotal * 9) / 10 : subtotal;\n      }\n      return Math.floor(sum);"
+  },
+  "r08-per-add-count": {
+    "requirement": "同じ商品の合計の個数で判定",
+    "edits": [
+      {
+        "find": "  const lines = new Map();\n",
+        "replace": "  const lines = new Map();\n  const largestAdd = new Map();\n"
+      },
+      {
+        "find": "      lines.set(sku, (lines.get(sku) ?? 0) + quantity);\n",
+        "replace": "      lines.set(sku, (lines.get(sku) ?? 0) + quantity);\n      largestAdd.set(sku, Math.max(largestAdd.get(sku) ?? 0, quantity));\n"
+      },
+      {
+        "find": "        sum += quantity >= BULK_QUANTITY",
+        "replace": "        sum += largestAdd.get(sku) >= BULK_QUANTITY"
+      }
+    ]
+  },
+  "r09-no-discount": {
+    "requirement": "10 個以上で割引",
+    "find": "quantity >= BULK_QUANTITY ? Math.floor((subtotal * 9) / 10) : subtotal",
+    "replace": "subtotal"
+  }
+}
