@@ -53,6 +53,31 @@ class ScoreTest(unittest.TestCase):
         self.assertEqual(report["auto"]["killed"], report["auto"]["killable"])
 
 
+class RestoreTest(unittest.TestCase):
+    def setUp(self):
+        spec = importlib.util.spec_from_file_location("restore_file", ROOT / "scripts" / "eval" / "restore_file.py")
+        self.restore_file = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(self.restore_file)
+
+    def test_writes_to_matches_only_writes_to_the_path(self):
+        writes = ["cat > src/cart.js <<EOF", "echo x >> /tmp/r/src/cart.js", "sed -i '' s/a/b/ src/cart.js", "cp /tmp/x.js src/cart.js", "tee src/cart.js < x"]
+        reads = ["node --test test/a.test.js 2>&1 | tail", "grep x src/cart.js 2>&1", "cp src/cart.js /tmp/bak.js"]
+        self.assertTrue(all(self.restore_file.writes_to(command, "src/cart.js") for command in writes))
+        self.assertFalse(any(self.restore_file.writes_to(command, "src/cart.js") for command in reads))
+
+    def test_cat_output_returns_the_last_closing_cat(self):
+        events = [
+            {"type": "assistant", "message": {"content": [{"type": "tool_use", "id": "a", "name": "Bash", "input": {"command": "cat repo/src/cart.js"}}]}},
+            {"type": "user", "message": {"content": [{"type": "tool_result", "tool_use_id": "a", "content": "old"}]}},
+            {"type": "assistant", "message": {"content": [{"type": "tool_use", "id": "b", "name": "Bash", "input": {"command": "cd repo && cat src/cart.js"}}]}},
+            {"type": "user", "message": {"content": [{"type": "tool_result", "tool_use_id": "b", "content": [{"type": "text", "text": "new"}]}]}},
+        ]
+        with tempfile.TemporaryDirectory() as work:
+            trace = Path(work) / "trace.jsonl"
+            trace.write_text("\n".join(json.dumps(event) for event in events), encoding="utf-8")
+            self.assertEqual(self.restore_file.cat_output(trace, "src/cart.js"), "new")
+
+
 @unittest.skipUnless(shutil.which("node"), "node is required")
 class ScoreRunTest(unittest.TestCase):
     def trace(self, directory, events):

@@ -1,0 +1,32 @@
+{
+  "real-193-remove-missing-records-audit": {
+    "requirement": "既に除名済みメンバーへ remove → 404 not_found (ADR-0010 の分析、taimei-auth #193 の修正前)",
+    "find": "      if (!roles.has(targetId)) return { status: 404, error: 'not_found' };\n",
+    "replace": ""
+  },
+  "real-193-transfer-to-missing-demotes": {
+    "requirement": "委譲先が居なければ何も変えない (taimei-auth #193 の修正前)",
+    "find": "      if (!roles.has(toId)) return { status: 404, error: 'not_found' };\n",
+    "replace": ""
+  },
+  "r01-admin-removes-owner": {
+    "requirement": "S-1: OWNER を除名できるのは OWNER だけ",
+    "find": "      if (roles.get(targetId) === 'OWNER' && actorRole !== 'OWNER') return { status: 403 };\n",
+    "replace": ""
+  },
+  "r02-member-removes": {
+    "requirement": "S-1: 除名できるのは ADMIN 以上",
+    "find": "      if (!actorRole || !isAtLeast(actorRole, 'ADMIN')) return { status: 403 };\n",
+    "replace": ""
+  },
+  "r03-transfer-keeps-owner": {
+    "requirement": "S-2: 委譲した OWNER は ADMIN になる",
+    "find": "      roles.set(actorId, 'ADMIN');\n",
+    "replace": ""
+  },
+  "r04-remove-no-audit": {
+    "requirement": "用語集: 除名は監査ログ 1 行を記録する",
+    "find": "      audit.push({ event: 'membership_removed', actorId, targetId });\n",
+    "replace": ""
+  }
+}
