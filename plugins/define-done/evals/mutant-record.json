@@ -1,0 +1,296 @@
+{
+  "8eb00e2deb66848125fdbbd1b33089ee2c553e66a6735a61ea12811aadcc1e2d": {
+    "24-bulk-discount-existing-code": {
+      "arms": {
+        "with": [
+          {
+            "auto_killable": 19,
+            "auto_killed": 19,
+            "auto_survivors": [],
+            "invalid": [],
+            "outcome": "tests",
+            "repeatable": true,
+            "requirement_killed": 9,
+            "requirement_survivors": [],
+            "requirement_total": 9,
+            "tests": 7,
+            "valid": 7
+          },
+          {
+            "auto_killable": 19,
+            "auto_killed": 19,
+            "auto_survivors": [],
+            "invalid": [],
+            "outcome": "tests",
+            "repeatable": true,
+            "requirement_killed": 9,
+            "requirement_survivors": [],
+            "requirement_total": 9,
+            "tests": 7,
+            "valid": 7
+          },
+          {
+            "auto_killable": 19,
+            "auto_killed": 19,
+            "auto_survivors": [],
+            "invalid": [],
+            "outcome": "tests",
+            "repeatable": true,
+            "requirement_killed": 9,
+            "requirement_survivors": [],
+            "requirement_total": 9,
+            "tests": 8,
+            "valid": 8
+          }
+        ],
+        "without": [
+          {
+            "auto_killable": 19,
+            "auto_killed": 19,
+            "auto_survivors": [],
+            "invalid": [],
+            "outcome": "tests",
+            "repeatable": true,
+            "requirement_killed": 9,
+            "requirement_survivors": [],
+            "requirement_total": 9,
+            "tests": 7,
+            "valid": 7
+          },
+          {
+            "auto_killable": 19,
+            "auto_killed": 19,
+            "auto_survivors": [],
+            "invalid": [],
+            "outcome": "tests",
+            "repeatable": true,
+            "requirement_killed": 9,
+            "requirement_survivors": [],
+            "requirement_total": 9,
+            "tests": 9,
+            "valid": 9
+          },
+          {
+            "auto_killable": 19,
+            "auto_killed": 19,
+            "auto_survivors": [],
+            "invalid": [],
+            "outcome": "tests",
+            "repeatable": true,
+            "requirement_killed": 9,
+            "requirement_survivors": [],
+            "requirement_total": 9,
+            "tests": 9,
+            "valid": 9
+          }
+        ]
+      },
+      "startedAt": "2026-11-06T05:42:02.241Z"
+    },
+    "25-real-bug-admin-mints-owner": {
+      "arms": {
+        "with": [
+          {
+            "auto_killable": 26,
+            "auto_killed": 26,
+            "auto_survivors": [],
+            "invalid": [],
+            "outcome": "tests",
+            "repeatable": true,
+            "requirement_killed": 1,
+            "requirement_survivors": [],
+            "requirement_total": 1,
+            "tests": 11,
+            "valid": 11
+          },
+          {
+            "auto_killable": 26,
+            "auto_killed": 26,
+            "auto_survivors": [],
+            "invalid": [],
+            "outcome": "tests",
+            "repeatable": true,
+            "requirement_killed": 1,
+            "requirement_survivors": [],
+            "requirement_total": 1,
+            "tests": 11,
+            "valid": 11
+          },
+          {
+            "outcome": "gate"
+          }
+        ],
+        "without": [
+          {
+            "auto_killable": 26,
+            "auto_killed": 26,
+            "auto_survivors": [],
+            "invalid": [
+              "4:409 になった招待は消費されず、未所属の利用者がその後受諾できる",
+              "4:admin が OWNER の招待を作ろうとすると 403",
+              "4:admin が作った MEMBER 招待で OWNER を降格できない (409)",
+              "4:invitationId=\"no-such-id\" は 404 で、所属は変わらない",
+              "4:invitationId=999999 は 404 で、所属は変わらない",
+              "4:invitationId=undefined は 404 で、所属は変わらない",
+              "4:role=\"\" は 400",
+              "4:role=\"SUPERUSER\" は 400",
+              "4:role=\"__proto__\" は 400",
+              "4:role=\"owner\" は 400",
+              "4:role=\"toString\" は 400",
+              "4:role=undefined は 400",
+              "4:既存 MEMBER が ADMIN 招待を受諾しても昇格しない (409)"
+            ],
+            "outcome": "tests",
+            "repeatable": true,
+            "requirement_killed": 1,
+            "requirement_survivors": [],
+            "requirement_total": 1,
+            "tests": 33,
+            "valid": 20
+          },
+          {
+            "auto_killable": 26,
+            "auto_killed": 26,
+            "auto_survivors": [],
+            "invalid": [
+              "0:S-4: ADMIN cannot mint an OWNER through an invitation",
+              "0:S-5: an unknown role is rejected with 400 after the permission check",
+              "0:S-6: accepting an unknown invitation returns 404",
+              "0:S-7: an existing member cannot accept; role and invitation stay intact"
+            ],
+            "outcome": "tests",
+            "repeatable": true,
+            "requirement_killed": 0,
+            "requirement_survivors": [
+              "real-108-admin-mints-owner"
+            ],
+            "requirement_total": 1,
+            "tests": 10,
+            "valid": 6
+          },
+          {
+            "auto_killable": 26,
+            "auto_killed": 26,
+            "auto_survivors": [],
+            "invalid": [
+              "0:S-4: ADMIN cannot create an OWNER invitation",
+              "0:S-4: ADMIN cannot mint an OWNER through invite + accept"
+            ],
+            "outcome": "tests",
+            "repeatable": true,
+            "requirement_killed": 0,
+            "requirement_survivors": [
+              "real-108-admin-mints-owner"
+            ],
+            "requirement_total": 1,
+            "tests": 11,
+            "valid": 9
+          }
+        ]
+      },
+      "startedAt": "2026-11-06T05:50:55.702Z"
+    },
+    "26-real-bug-last-used-company": {
+      "arms": {
+        "with": [
+          {
+            "auto_killable": 12,
+            "auto_killed": 12,
+            "auto_survivors": [],
+            "invalid": [],
+            "outcome": "tests",
+            "repeatable": true,
+            "requirement_killed": 1,
+            "requirement_survivors": [],
+            "requirement_total": 1,
+            "tests": 8,
+            "valid": 8
+          },
+          {
+            "auto_killable": 12,
+            "auto_killed": 12,
+            "auto_survivors": [],
+            "invalid": [],
+            "outcome": "tests",
+            "repeatable": true,
+            "requirement_killed": 1,
+            "requirement_survivors": [],
+            "requirement_total": 1,
+            "tests": 4,
+            "valid": 4
+          },
+          {
+            "auto_killable": 12,
+            "auto_killed": 12,
+            "auto_survivors": [],
+            "invalid": [],
+            "outcome": "tests",
+            "repeatable": true,
+            "requirement_killed": 1,
+            "requirement_survivors": [],
+            "requirement_total": 1,
+            "tests": 8,
+            "valid": 8
+          }
+        ],
+        "without": [
+          {
+            "auto_killable": 12,
+            "auto_killed": 7,
+            "auto_survivors": [
+              "inc-L15C112",
+              "dec-L15C112",
+              "inc-L32C24",
+              "dec-L32C24",
+              "delete-L30C1"
+            ],
+            "invalid": [
+              "0:S-1: 受諾すると 200 を返し、招待の事業所に招待の role で所属する",
+              "0:S-1: 所属していない事業所の role は null",
+              "0:S-2: 受諾済みの招待を別の利用者が受諾しても 410 で、所属は作らない",
+              "0:S-4 (D2): すでに既定の事業所がある利用者が受諾しても、既定は変わらない"
+            ],
+            "outcome": "tests",
+            "repeatable": true,
+            "requirement_killed": 1,
+            "requirement_survivors": [],
+            "requirement_total": 1,
+            "tests": 6,
+            "valid": 2
+          },
+          {
+            "auto_killable": 12,
+            "auto_killed": 12,
+            "auto_survivors": [],
+            "invalid": [
+              "0:S-1: the membership has the role of the invitation",
+              "0:S-2: the same invitation cannot be accepted twice",
+              "0:S-4: a user who already uses a company keeps it selected after accepting another invitation"
+            ],
+            "outcome": "tests",
+            "repeatable": true,
+            "requirement_killed": 1,
+            "requirement_survivors": [],
+            "requirement_total": 1,
+            "tests": 6,
+            "valid": 3
+          },
+          {
+            "auto_killable": 12,
+            "auto_killed": 12,
+            "auto_survivors": [],
+            "invalid": [],
+            "outcome": "tests",
+            "repeatable": true,
+            "requirement_killed": 1,
+            "requirement_survivors": [],
+            "requirement_total": 1,
+            "tests": 6,
+            "valid": 6
+          }
+        ]
+      },
+      "startedAt": "2026-11-06T05:45:23.346Z"
+    }
+  }
+}
