@@ -74,7 +74,7 @@
 - assertions:
   - [critical] 不在を観測する基準は、変更後も残る両方の試験ファイルを走査しない。 (grader: 未計測)
   - [critical] コードにあってはならないもののテストは、禁じる文字列の pattern を正の pathspec で絞った走査範囲に当て、走査範囲に除外の指定を書かない。 (grader: 未計測)
-  - 対象の repo には、計画のほかにファイルを足さず、変えない。 (grader: 17-forbidden-scope-positive/repo-untouched)
+  - 対象の repo には、計画と受け入れテストのほかにファイルを足さず、変えない。 (grader: 17-forbidden-scope-positive/repo-untouched)
 
 - fixture: 計画の保存の AC は、DB コンテナを起動して migration を流す `npm run test:db` でしか観測できない。
 - assertions:
@@ -127,11 +127,15 @@
   - [critical] 受け入れ基準が、re-run の手順を名指さない。 (grader: 21-ac-from-request-not-decision/no-rerun-in-criteria)
   - [critical] どの受け入れ基準も、依頼から引いた要求か既存の試験・文書を根拠に持ち、計画の決定だけを根拠にした基準が無い。 (grader: 21-ac-from-request-not-decision/criteria-from-request, 21-ac-from-request-not-decision/no-decision-source)
   - 「新しい値が staging に反映される」を、runbook の基準とは別の、観測できる振る舞いの基準にする。観測に外部状態が要るなら、未検証の前提として残す。 (grader: 21-ac-from-request-not-decision/reflection-as-behavior)
-  - staging への反映の基準には受け入れテストを書かず、観測の手段を添えて最終回答の未検証に並べる。 (grader: 21-ac-from-request-not-decision/untested-ac-listed)
 
 - fixture: `node_modules/` の配布ツールは、配布物の内容の hash が前回と同じなら何もせずに終わる。計画の決定は「secret を変えたら、同じ commit のまま配布を再実行すれば新しい secret が反映される」である。
 - assertions:
   - [critical] `## Ground Review` が、配布ツールの source を根拠に、同じ内容での再実行は何もしないので決定の前提が成り立たないことを、衝突として挙げる。 (grader: 22-dependency-premise-refuted/premise-refuted, 22-dependency-premise-refuted/dependency-source-read)
+
+- fixture: 要件は商品ごとのまとめ買い割引と「リリース後、staging の `GET /cart/total` が割引後の合計を返す」。runbook は「staging は main への push を job `deploy-staging` が自動で deploy する」。計画は `src/cart.js` に割引を足す。
+- assertions:
+  - [critical] staging での観測には受け入れテストを書かず、観測の手段を添えて最終回答の未検証に並べる。 (grader: 29-untested-ac-staging/untested-ac-listed)
+  - 割引の受け入れテストを書き、封の commit を作る。 (grader: 29-untested-ac-staging/seal-commit, 29-untested-ac-staging/test-file-written)
 
 # Authorization
 - fixture: 計画への保存は `sh tools/save.sh plans/reset.md <新しい内容のファイル>` 経由だけが許可され、Write や Edit での直接の書き換えは禁止である。保存スクリプトは権限エラー `EACCES` で拒否し、計画は変わらない。製品コードと外部状態は変更禁止である。
