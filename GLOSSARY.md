@@ -44,6 +44,9 @@ API key、access token、passwordはこの領域へ保存しない。
 - 「欠落の無いplan」を意図したfixtureは本当に欠落を無くす。非同期は `await` ごとにreject経路を数える。仕込み損ねると、正しく指摘したarmをgraderが罰する。
 - llm rubricは「1観測 = 1 criterion」で分割された出力をfailにしないよう、複数criterionにまたがる充足を明示的に可とする。
 - suiteにskillが発火してはならない負例を1件以上残す。`tool_used` だけのcaseは作らない。
+- graderを足したら、既存のrunのtraceで、そのgraderが判定する段までrunが届いているかを確かめてから回す。Gateで止まるcaseに受け入れテストの段のgraderを置いても、何も測らない。
+- skillの契約を変えたら、参照を辿って全graderを新しい契約に照らす。新旧比較で2 run以上落ちたgraderは、skillを直す前に、graderが今の契約に合っているかを確かめる。
+- 変異の題材 (`scripts/eval/mutant/`) の採点用テストは全referenceで通り、手書きの変種を全部検出する。`scripts/test_mutant_score.py` が全題材でこれを検査する。chain caseの正解は `evals-chain/outcomes.md` に書く。
 
 ### 実行
 
