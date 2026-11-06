@@ -5,6 +5,16 @@ All notable changes to omokawa-skills will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v15.0.0 - 2026-11-06
+
+### Changed
+
+- **`define-done` 3.0.0 (BREAKING):** 5 段目を検証の対応付け (`## Verification Plan`) から受け入れテストに替えた。各 AC を AC-ID で始まる名前の実行できるテストに翻訳し、変更前に振る舞いの不在で落ちることを確かめてから、受け入れテストと計画だけを含む封の commit (trailer `Define-Done-Seal:` と `Define-Done-Test-Command:`) を作る。起動は封の commit を作る承認を含む。資料に無い値を依頼が決めるよう求めていても、それだけでは Gate を止めず未決の判断に置く。`check_plan.py` と fingerprint をやめた。
+- **`implement-plan` 3.0.0 (BREAKING):** 入力を封の commit にした。編集の前と最後に `check_seal.py check` を流し、封の受け入れテストと計画を変えずに red、green、refactor で通す。テストが要求や仕様と矛盾すれば直さずに止め、define-done のやり直しを返す。tripwire をやめた。
+- **`verify-plan` 4.0.0 (BREAKING):** 封の確認 (`check_seal.py check`)、封の時点の tree で受け入れテストが落ちることの再現 (`at-seal`)、今の tree での受け入れテストの合否、封の時点からの回帰で判定する。テストの無い AC だけを直接観測で判定する。
+- v14 の計画 (`## Verification Plan` を持ち封の commit の無いもの) は `implement-plan` と `verify-plan` の入力にならない。`define-done` をやり直すと受け入れテストと封の commit が作られる。
+- eval: `define-done` に受け入れテストと封の commit の case を足し、廃止した Verification Plan だけを測る case と grader を除いた。`implement-plan` と `verify-plan` は、封の commit を持つ fixture の作り直しまで、契約が変わっても成り立つ負例と封が無いときの case だけを残し、その他の assertion を未計測にした。受け入れテストの翻訳の質を参照実装と要求の変種で数える `scripts/eval/mutant_score.py` と、trace からファイルを復元する `scripts/eval/restore_file.py` を足した。
+
 ## v14.1.0 - 2026-11-05
 
 ### Changed
