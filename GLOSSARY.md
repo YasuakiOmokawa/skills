@@ -65,11 +65,11 @@ claude plugin eval . --ablation with-without --judge-model sonnet --allow-tools 
 python3 scripts/eval/mkvariant.py plugins/<name> plugins/<name>/skills/<name>/SKILL.md /tmp/<name>-old
 python3 scripts/eval/mkvariant.py plugins/<name> <新しい SKILL.md> /tmp/<name>-new
 (cd /tmp/<name>-old && claude plugin eval . --ablation none --judge-model sonnet --allow-tools "Write,Edit,Bash" --no-publish --trust-plugin --json /tmp/<name>-old.json)
-python3 scripts/eval/compare.py old=/tmp/<name>-old.json new=/tmp/<name>-new.json
+python3 scripts/eval/compare.py old=@plugins/<name> new=/tmp/<name>-new.json
 python3 scripts/eval/rejudge.py /tmp/<name>-new.json <NN> plugins/<name>/evals/<NN-slug>/graders/<grader>.md
 ```
 
-`mkvariant.py` は4番目以降の引数に渡した句を SKILL.md から1箇所ずつ消した版を作る (句を外した版の with run)。`compare.py` はカンマ区切りで複数の結果を1列に合算する (`--case` で再実行した分を足す)。`rejudge.py` は FAIL した run の evidence を同じ criterion で sonnet に3票判定し直す。llm judge が多条項の rubric を誤って FAIL にしたかを確かめるのに使う。
+`mkvariant.py` は4番目以降の引数に渡した句を SKILL.md から1箇所ずつ消した版を作る (句を外した版の with run)。`compare.py` はカンマ区切りで複数の結果を1列に合算する (`--case` で再実行した分を足す)。`@plugins/<name>` は `last-run.json` が case ごとに記録した `startedAt` から `evals/results/<startedAt>/aggregate-result.json` を読む。新しい結果を `eval_coverage record` する前なら、旧版の記録になる。results は gitignore なので、記録を書いたマシンでだけ読める。`rejudge.py` は FAIL した run の evidence を同じ criterion で sonnet に3票判定し直す。llm judge が多条項の rubric を誤って FAIL にしたかを確かめるのに使う。
 
 ### 翻訳の質 (define-done)
 
