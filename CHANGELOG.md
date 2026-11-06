@@ -5,6 +5,13 @@ All notable changes to omokawa-skills will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v15.1.0 - 2026-11-06
+
+### Changed
+
+- **`define-done` 3.1.0:** 要求の条件を満たさない入力 (条件の外側) は「資料が決めていない値」に当たらないとした。要求が入力の受け付ける範囲を広げるか変えるとき、条件を満たさない入力が変更前に受けていた扱い (拒否、例外) を保つことを、要求とその入力の検査を出典にした非影響の基準にする。既存の保証に、製品コードの中で入力を拒む検査を含めると明記した。chain eval の string-quantity で、`"1.5"` などを「決めていない」として基準にせず、計画の決定 (`parseInt`) どおりの実装で既存の検査が壊れていた。
+- **採点:** `score_results` は、Gate で止まった run のコードを、隠しテストを落としたコードと数えず「Gate で停止」と数える。
+
 ## v15.0.0 - 2026-11-06
 
 ### Changed
