@@ -176,6 +176,12 @@ def score(subject, tests_root, test_paths):
     return report
 
 
+def score_code(subject, source):
+    target = json.loads((subject / "subject.json").read_text(encoding="utf-8"))["target"]
+    results = run_suite(target, source, subject, [HIDDEN_TEST])
+    return {"hidden_passed": sum(results.values()), "hidden_total": len(results), "hidden_failures": sorted(name for name, ok in results.items() if not ok)}
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(prog="mutant_score.py")
     parser.add_argument("subject", type=Path)

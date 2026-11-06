@@ -21,11 +21,31 @@ def last_message(trace_path):
     return text
 
 
+def score_code(run, mapping, durable):
+    subject = ROOT / mapping["subject"]
+    target = json.loads((subject / "subject.json").read_text(encoding="utf-8"))["target"]
+    stub = (subject / "stub.js").read_text(encoding="utf-8")
+    source = restore_file.cat_output(Path(run["tracePath"]), target)
+    if source is None:
+        source, bash_writes = restore_file.restore(Path(run["tracePath"]), target, base=stub)
+        if bash_writes:
+            return {"code": "unrestorable"}
+    if source == stub:
+        return {"code": "unchanged"}
+    destination = durable / target
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    destination.write_text(source, encoding="utf-8")
+    return {"code": "scored", **mutant_score.score_code(subject, source)}
+
+
 def score_run(run, mapping, durable):
-    restored, _ = restore_file.restore(Path(run["tracePath"]), mapping["test"])
+    code = score_code(run, mapping, durable) if mapping.get("code") else {}
+    restored = restore_file.cat_output(Path(run["tracePath"]), mapping["test"])
+    if restored is None:
+        restored, _ = restore_file.restore(Path(run["tracePath"]), mapping["test"])
     if restored is None:
         outcome = "gate" if GATE_HALT.search(last_message(run["tracePath"])) else "no-test"
-        return {"outcome": outcome}
+        return {"outcome": outcome, **code}
     target = durable / mapping["test"]
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(restored, encoding="utf-8")
@@ -42,6 +62,7 @@ def score_run(run, mapping, durable):
         "auto_killable": report["auto"]["killable"],
         "auto_survivors": report["auto"]["survivors"],
         "repeatable": report["reference_repeatable"],
+        **code,
     }
 
 
@@ -75,6 +96,20 @@ def table(case, arms):
         valid = sum(r["outcome"] == "tests" and r["valid"] == r["tests"] for r in runs)
         written_cell = f"{written}/{len(runs)}" + (f" (Gate で停止 {halted})" if halted else "")
         lines.append(f"| {arm} | {written_cell} | {valid}/{len(runs)} | {cell(runs, 'requirement_killed', 'requirement_total')} | {cell(runs, 'auto_killed', 'auto_killable')} |")
+    if any("code" in r for runs in arms.values() for r in runs):
+        lines += ["", "| arm | 隠しテストを全部通したコード | 隠しテストの pass |", "|---|---|---|"]
+        for arm, runs in arms.items():
+            scored = [r for r in runs if r.get("code") == "scored"]
+            full = sum(r["hidden_passed"] == r["hidden_total"] for r in scored)
+            passes = " ".join(f"{r['hidden_passed']}/{r['hidden_total']}" for r in scored) or "-"
+            unrestorable = sum(r.get("code") == "unrestorable" for r in runs)
+            unchanged = sum(r.get("code") == "unchanged" for r in runs)
+            notes = [f"復元できず {unrestorable}"] * bool(unrestorable) + [f"未実装 {unchanged}"] * bool(unchanged)
+            lines.append(f"| {arm} | {full}/{len(runs)}" + (f" ({', '.join(notes)})" if notes else "") + f" | {passes} |")
+        for arm, runs in arms.items():
+            for index, r in enumerate(runs):
+                if r.get("hidden_failures"):
+                    lines.append(f"- {arm}{index} のコードが落とした隠しテスト: {r['hidden_failures']}")
     for arm, runs in arms.items():
         for index, r in enumerate(runs):
             if r["outcome"] == "tests" and (r["invalid"] or r["requirement_survivors"] or r["auto_survivors"]):
