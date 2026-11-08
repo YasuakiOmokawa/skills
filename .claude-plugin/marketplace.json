@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "omokawa-skills",
-  "version": "16.2.0",
+  "version": "16.3.0",
   "description": "Plan-driven development workflow を構成する個別 skill 群。必要なものだけ install 可能",
   "owner": {
     "name": "Yasuaki Omokawa",
@@ -14,7 +14,7 @@
     {
       "name": "define-done",
       "description": "既存の計画を仕様とコードの根拠でレビューし、計画ごとの受け入れ基準を計画に書き、その基準を実行できる受け入れテストに翻訳して封の commit にし、実装に着手できる状態にする。計画を一から作るときや、計画を実装するときには使わない。",
-      "version": "4.2.0",
+      "version": "4.3.0",
       "source": "./plugins/define-done",
       "skills": [
         "./skills/define-done"
