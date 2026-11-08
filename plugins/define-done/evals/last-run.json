@@ -139,6 +139,11 @@
       "passed": 17,
       "startedAt": "2026-11-08T07:37:07.404Z",
       "total": 18
+    },
+    "32-zero-questions": {
+      "passed": 15,
+      "startedAt": "2026-11-08T08:57:55.689Z",
+      "total": 15
     }
   },
   "shipped_sha256": "005054b6e632994d2dfb2e84713252186cf2fccf8ce8b471fb4114f42eb6d34f",
