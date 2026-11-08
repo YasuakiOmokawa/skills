@@ -112,6 +112,56 @@ class CheckSealTest(unittest.TestCase):
         code, out = run("check", self.tmp.name)
         self.assertEqual(code, 0, out)
 
+    def test_reseal_clears_tamper_before_it(self):
+        self.repo.seal()
+        self.repo.write("test/a.test.js", FAILING_TEST.replace("f(), 1", "f(), 0"))
+        self.repo.commit("impl edits the sealed test")
+        self.repo.write("test/a.test.js", FAILING_TEST.replace("returns 1", "returns one"))
+        self.repo.commit(SEAL_MESSAGE, "test/a.test.js")
+        code, out = run("check", self.tmp.name)
+        self.assertEqual(code, 0, out)
+
+    def test_reseal_of_one_file_keeps_tamper_on_another(self):
+        self.repo.seal()
+        self.repo.write("plan.md", "# plan changed\n")
+        self.repo.commit("impl edits the sealed plan")
+        self.repo.write("test/a.test.js", FAILING_TEST.replace("returns 1", "returns one"))
+        self.repo.commit(SEAL_MESSAGE, "test/a.test.js")
+        code, out = run("check", self.tmp.name)
+        self.assertEqual(code, 1)
+        self.assertIn("tamper:", out)
+
+    def test_last_line_states_exit_code(self):
+        code, out = run("check", self.tmp.name)
+        self.assertEqual(out.strip().splitlines()[-1], f"exit: {code}")
+
+    def test_supersede_seal_keeps_verify_on_the_behavior_seal(self):
+        self.repo.seal()
+        self.repo.write("src/a.js", "export const f = () => 1;\n")
+        self.repo.commit("impl")
+        self.repo.write("test/a.test.js", FAILING_TEST.replace("returns 1", "returns one"))
+        self.repo.commit("test: plan.md の AC-001 を置き換える\n\nDefine-Done-Supersedes: AC-001\n", "test/a.test.js")
+        code, out = run("verify", self.tmp.name)
+        self.assertEqual(code, 0, out)
+        self.assertIn("sealed-exit: 1", out)
+
+    def test_supersede_seal_is_not_tamper(self):
+        self.repo.seal()
+        self.repo.write("test/a.test.js", FAILING_TEST.replace("returns 1", "returns one"))
+        self.repo.commit("test: replace\n\nDefine-Done-Supersedes: AC-001\n", "test/a.test.js")
+        code, out = run("check", self.tmp.name)
+        self.assertEqual(code, 0, out)
+
+    def test_supersede_seal_protects_the_files_it_rewrote(self):
+        self.repo.seal()
+        self.repo.write("test/a.test.js", FAILING_TEST.replace("returns 1", "returns one"))
+        self.repo.commit("test: replace\n\nDefine-Done-Supersedes: AC-001\n", "test/a.test.js")
+        self.repo.write("test/a.test.js", FAILING_TEST.replace("f(), 1", "f(), 0"))
+        self.repo.commit("impl edits the test")
+        code, out = run("check", self.tmp.name)
+        self.assertEqual(code, 1)
+        self.assertIn("tamper:", out)
+
     def test_seal_without_command_trailer_fails(self):
         self.repo.write("test/a.test.js", FAILING_TEST)
         self.repo.commit("test: x\n\nDefine-Done-Seal: AC-001\n", "test/a.test.js")

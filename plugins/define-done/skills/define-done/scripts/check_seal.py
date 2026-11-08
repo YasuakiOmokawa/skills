@@ -6,6 +6,7 @@ from pathlib import Path
 
 SEAL_TRAILER = "Define-Done-Seal"
 COMMAND_TRAILER = "Define-Done-Test-Command"
+SUPERSEDES_TRAILER = "Define-Done-Supersedes"
 
 
 def git(repo, *args):
@@ -33,8 +34,8 @@ def git_stdin(repo, text, *args):
 
 
 def seals(repo):
-    out = git(repo, "log", "-E", f"--grep=^{SEAL_TRAILER}: ", "--format=%H", "HEAD")
-    return [sha for sha in out.split() if SEAL_TRAILER in trailers(repo, sha)]
+    out = git(repo, "log", "-E", f"--grep=^({SEAL_TRAILER}|{SUPERSEDES_TRAILER}): ", "--format=%H", "HEAD")
+    return [(sha, values) for sha in out.split() if {SEAL_TRAILER, SUPERSEDES_TRAILER} & set(values := trailers(repo, sha))]
 
 
 def files_in(repo, sha):
@@ -42,20 +43,25 @@ def files_in(repo, sha):
 
 
 def inspect(repo):
-    found = seals(repo)
-    if not found:
+    sealed = seals(repo)
+    found = [sha for sha, _ in sealed]
+    behavior_seals = [(sha, values) for sha, values in sealed if SEAL_TRAILER in values and SUPERSEDES_TRAILER not in values]
+    if not behavior_seals:
         return None, ["seal: `Define-Done-Seal:` の trailer を持つ commit が HEAD から辿れない"]
-    latest, oldest = found[0], found[-1]
-    values = trailers(repo, latest)
+    latest, values = behavior_seals[0]
     findings = []
     if not values.get(COMMAND_TRAILER):
         findings.append(f"seal: {latest[:12]} に `{COMMAND_TRAILER}:` の trailer が無い")
     protected = sorted({path for sha in found for path in files_in(repo, sha)})
     seal_set = set(found)
-    for sha in git(repo, "log", "--format=%H", f"{oldest}..HEAD", "--", *protected).split():
-        if sha not in seal_set:
-            touched = sorted(set(files_in(repo, sha)) & set(protected))
-            findings.append(f"tamper: {sha[:12]} が封の後に {', '.join(touched)} を変えた")
+    touched_after_seal = {}
+    for path in protected:
+        last_seal = next(sha for sha in found if path in files_in(repo, sha))
+        for sha in git(repo, "log", "--format=%H", f"{last_seal}..HEAD", "--", path).split():
+            if sha not in seal_set:
+                touched_after_seal.setdefault(sha, []).append(path)
+    for sha, paths in touched_after_seal.items():
+        findings.append(f"tamper: {sha[:12]} が封の後に {', '.join(paths)} を変えた")
     dirty = git(repo, "status", "--porcelain", "--", *protected).splitlines()
     if dirty:
         findings.append(f"tamper: 封をしたファイルに未 commit の変更がある ({'; '.join(line.strip() for line in dirty)})")
@@ -105,6 +111,12 @@ def main(argv=None):
     sub.add_parser("check").add_argument("repo", type=Path)
     sub.add_parser("verify").add_argument("repo", type=Path)
     args = parser.parse_args(argv)
+    code = run_command(args)
+    print(f"exit: {code}")
+    return code
+
+
+def run_command(args):
     try:
         info, findings = inspect(args.repo)
     except RuntimeError as exc:
