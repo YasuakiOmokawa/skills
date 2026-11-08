@@ -5,6 +5,13 @@ All notable changes to omokawa-skills will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v16.3.0 - 2026-11-08
+
+### Changed
+
+- **`define-done` 4.3.0:** どの実装・部品・runtime・file が担うか (実装の選択) と、移行の途中の状態 (まだ移していない、〜のまま) を受け入れ基準にしない。要求がそれを名指しても、URL を開いた時に出る内容などの結果で観測する。実装の選択を返す関数と、その戻り値を固定する既存の試験は、外の境界にも既存の保証にもしない。case 33 で、旧版は 3 run すべてで基準に実装の選択を書き、新版は 3 run すべて書かなかった。
+- **`check_seal.py`:** 改ざんの検査を、file ごとに、その file を最後に封じた commit から数える。封をし直せば、その前の変更は改ざんに数えない。要求の変更で古くなった前の封の AC を書き直すだけの commit は、`Define-Done-Supersedes: <置き換える AC-ID>[, ...]` の trailer で封じる。この封は改ざんの検査では封として数え、`verify` が流す封 (振る舞いを足した最後の `Define-Done-Seal:` の封) には選ばない。出力の最後の行に `exit: <code>` を出す。
+
 ## v16.0.0 - 2026-11-06
 
 ### Removed

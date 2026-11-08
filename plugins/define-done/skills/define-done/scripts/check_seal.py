@@ -6,6 +6,7 @@ from pathlib import Path
 
 SEAL_TRAILER = "Define-Done-Seal"
 COMMAND_TRAILER = "Define-Done-Test-Command"
+SUPERSEDES_TRAILER = "Define-Done-Supersedes"
 
 
 def git(repo, *args):
@@ -33,8 +34,8 @@ def git_stdin(repo, text, *args):
 
 
 def seals(repo):
-    out = git(repo, "log", "-E", f"--grep=^{SEAL_TRAILER}: ", "--format=%H", "HEAD")
-    return [sha for sha in out.split() if SEAL_TRAILER in trailers(repo, sha)]
+    out = git(repo, "log", "-E", f"--grep=^({SEAL_TRAILER}|{SUPERSEDES_TRAILER}): ", "--format=%H", "HEAD")
+    return [(sha, values) for sha in out.split() if {SEAL_TRAILER, SUPERSEDES_TRAILER} & set(values := trailers(repo, sha))]
 
 
 def files_in(repo, sha):
@@ -42,11 +43,12 @@ def files_in(repo, sha):
 
 
 def inspect(repo):
-    found = seals(repo)
-    if not found:
+    sealed = seals(repo)
+    found = [sha for sha, _ in sealed]
+    behavior_seals = [(sha, values) for sha, values in sealed if SEAL_TRAILER in values and SUPERSEDES_TRAILER not in values]
+    if not behavior_seals:
         return None, ["seal: `Define-Done-Seal:` の trailer を持つ commit が HEAD から辿れない"]
-    latest = found[0]
-    values = trailers(repo, latest)
+    latest, values = behavior_seals[0]
     findings = []
     if not values.get(COMMAND_TRAILER):
         findings.append(f"seal: {latest[:12]} に `{COMMAND_TRAILER}:` の trailer が無い")
