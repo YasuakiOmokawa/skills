@@ -1,0 +1,42 @@
+{
+  "r01-demote-last-owner": {
+    "requirement": "用語集 OWNER: 最後の OWNER を OWNER 以外へ変える操作は 409 last_owner で拒否する",
+    "find": "      if (before === 'OWNER' && role !== 'OWNER' && ownerCount === 1) return { status: 409, error: 'last_owner' };\n",
+    "replace": ""
+  },
+  "r02-remove-last-owner": {
+    "requirement": "用語集 OWNER: 最後の OWNER の除名は 409 last_owner で拒否する",
+    "find": "      if (roles.get(targetId) === 'OWNER' && ownerCount === 1) return { status: 409, error: 'last_owner' };\n",
+    "replace": ""
+  },
+  "r03-non-owner-changes-role": {
+    "requirement": "S-1: OWNER 以外は role を変えられない",
+    "find": "    changeRole(actorId, targetId, role) {\n      if (roles.get(actorId) !== 'OWNER') return { status: 403 };\n",
+    "replace": "    changeRole(actorId, targetId, role) {\n"
+  },
+  "r04-non-owner-removes": {
+    "requirement": "S-2: OWNER 以外は除名できない",
+    "find": "    remove(actorId, targetId) {\n      if (roles.get(actorId) !== 'OWNER') return { status: 403 };\n",
+    "replace": "    remove(actorId, targetId) {\n"
+  },
+  "s01-remove-owner-keeps-count": {
+    "requirement": "用語集 OWNER: 事業所には OWNER が常に 1 人以上いる (OWNER を除名した後に残った最後の OWNER を外せてしまう)",
+    "find": "      if (roles.get(targetId) === 'OWNER') ownerCount -= 1;\n",
+    "replace": ""
+  },
+  "s02-demote-owner-keeps-count": {
+    "requirement": "用語集 OWNER: 事業所には OWNER が常に 1 人以上いる (OWNER を降格した後に残った最後の OWNER を外せてしまう)",
+    "find": "      if (before === 'OWNER' && role !== 'OWNER') ownerCount -= 1;\n",
+    "replace": ""
+  },
+  "s03-promote-skips-count": {
+    "requirement": "S-1: OWNER は自分の role を変えられる (所属者を OWNER にした後の元の OWNER の降格を 409 で誤って拒む)",
+    "find": "      if (before !== 'OWNER' && role === 'OWNER') ownerCount += 1;\n",
+    "replace": ""
+  },
+  "s04-owner-to-owner-counts": {
+    "requirement": "用語集 OWNER: 事業所には OWNER が常に 1 人以上いる (OWNER を OWNER に変える操作で人数がずれ、最後の OWNER を外せてしまう)",
+    "find": "      if (before !== 'OWNER' && role === 'OWNER') ownerCount += 1;\n",
+    "replace": "      if (role === 'OWNER') ownerCount += 1;\n"
+  }
+}
