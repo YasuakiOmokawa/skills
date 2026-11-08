@@ -9,13 +9,12 @@ description: 既存の計画を仕様とコードの根拠でレビューし、�
 
 ## 原理
 
-- 段の順序: 最初に 5 段の規則をすべて読み、次の 5 段をこの順に行う。前の段が書いたものを次の段の根拠にする。
-  1. 要求の抜き出し: [references/requirements.md](references/requirements.md)
-  2. 設計境界のレビュー: [references/ground-review.md](references/ground-review.md)
-  3. 受け入れ基準: [references/acceptance-criteria.md](references/acceptance-criteria.md)
-  4. MECE レビュー: [references/mece-review.md](references/mece-review.md)
-  5. 受け入れテスト: [references/acceptance-tests.md](references/acceptance-tests.md)
-- 止めるのは 5 段目だけ: 1〜4 段の未決の判断、不足情報、範囲外、未検証は、その段の節に書いて次の段へ進む。`## MECE Review` の Gate が ready でなければ、受け入れテストを書かず、Gate の理由と ready にするための不足条件を報告して止まる。
+- 段の順序: 最初に 3 段の規則をすべて読み、次の 3 段をこの順に行う。前の段が書いたものを次の段の根拠にする。
+  1. 要求と既存の保証: [references/requirements.md](references/requirements.md)
+  2. 受け入れ基準と網羅: [references/acceptance-criteria.md](references/acceptance-criteria.md)
+  3. 受け入れテストと封: [references/acceptance-tests.md](references/acceptance-tests.md)
+- 止めるのは 3 段目だけ: 1〜2 段の未決の判断、不足情報、範囲外、未検証は、その段の節に書いて次の段へ進む。`## MECE Review` の Gate が ready でなければ、受け入れテストを書かず Gate の理由と ready にするための不足条件を報告して止まる。
+- 実行しない確かめ方: DB、コンテナ、サーバの起動、migration、外部への送信が要るコマンドとテストはどの段でも実行せず、変更前は未実行と書く。
 
 ## 契約
 
@@ -27,8 +26,8 @@ description: 既存の計画を仕様とコードの根拠でレビューし、�
 
 - 計画の 4 節以外の行 (状態の行を含む)、製品コード、既存の test、設定、外部状態を変えない。足してよいのは受け入れテストのファイルだけで、作ってよい commit は封の commit だけである。push しない。見つけた不足や上流の修正を計画本文や製品コードへ自分で反映せず、反映したことを理由に Gate を ready にしない。
 - 書き込みに失敗しても、別の保存先へ迂回せず、同じ書き込みを再試行しない。内容は回答で返す。
-- 資料が決めていない値と未解決の前提を推測で埋めない。計画の決定だけを根拠にした AC とテストを作らない。
+- 資料が決めていない値 (境界点を含む) と未解決の前提を依頼が決めるよう求めても推測で埋めず、基準にもテストの期待値にもしない。その値は既定 (決めない) と行き先 (要求の持ち主) を添えて不足情報にする。計画の決定だけを根拠にした AC とテストを作らない。
 
 ## 完了条件
 
-5 段を終えて受け入れテストを現在のツリーで流し、各テストが振る舞いの不在で落ちることを確かめて、封の commit を `scripts/check_seal.py check <repo>` が exit 0 で認めたか、5 段目で Gate を理由に止まった。再読取などで確かめていない書き込みを成功と報告しない。書き込みが失敗したら、その内容と計画の状態を報告する。
+3 段を終えて受け入れテストを現在のツリーで流し、各テストが振る舞いの不在で落ちることを確かめて、封の commit を `scripts/check_seal.py check <repo>` が exit 0 で認めたか、3 段目に入る前に Gate を理由に止まった。再読取などで確かめていない書き込みを成功と報告しない。書き込みが失敗したら、その内容と計画の状態を報告する。
