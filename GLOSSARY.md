@@ -138,6 +138,9 @@ plugin の `skills/` か `commands/` を変えた PR は、`plugins/<name>/evals
 - `--ablation none` では `tool_used: Skill` のgraderも採点に入るので、with-without のscoreと比べられない。版どうしの比較はgrader単位の合否で行う。skill-not-firedの負例でも同じgraderが3/3から1/3までぶれるので、3 runの2 run差はノイズとみなす。
 - sandboxでは素の `git init` が `.git/config` と `.git/hooks` への書き込み拒否で失敗し、以後のgitは親の `home/.git` に落ちる。gitのfixtureは `git init -q --template= --separate-git-dir=../repo.gitdir -b main .` で作り、remoteは `git init -q --bare --template= ../remote.git` にpushする。graderは `repo.gitdir/logs/HEAD` (reflog) や `remote.git/refs/heads/<b>` を `{source: file, path}` で読める。
 - `--keep-temp` のsandboxで `home/` と `tmp/` はmode 000で封印され、chmodは許可されない。書き込まれたファイルの内容は `out/trace.jsonl` のWrite/Edit入力から復元する。
+- `eval_coverage record` と `score_results --record` は、`skills/` と `commands/` の中身の hash を `git ls-files` の一覧から計算する。新しく足したファイルが未追跡のまま記録すると、そのファイルが hash から抜け、CI の `eval_coverage check` が別の中身の記録として落とす。記録は `git add` の後に書く。
+- `score_results` は結果の `suite.root` を plugin の場所として読み、`git ls-files` で hash を取る。`/tmp` の複製 (git の外) で回した結果は記録できないので、`suite.root` と `suite.plugins[].path` を repo の plugin の path に書き換えた写しを渡す。
+- `target: trace` の regex は、Bash の heredoc で書いた本文の中の文字列にも当たる。コマンドの実行を照合する regex は `"command":"(?![^"]*<<)` で heredoc を含むコマンドを除く。
 - 負例caseでもagentがBashにturnを使うため、10 turn程度は与える。
 
 ## Language
