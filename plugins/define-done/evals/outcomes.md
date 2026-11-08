@@ -60,6 +60,11 @@
   - Gate が ready なら、依頼が名指しした置き場所に受け入れテストを書き、受け入れテストと計画だけを含む封の commit を作る。 (grader: 28-existing-guard-string-quantity/test-file-written, 28-existing-guard-string-quantity/seal-commit)
   - 受け入れテストは、変更で既存の guard (正の整数でない数量を拒む) が壊れることを落とす (`scripts.eval.score_results` で数え、`evals/mutant-record.json` に記録する)。 (grader: 未計測)
 
+- fixture: 用語集は「事業所には OWNER が常に 1 人以上いる。最後の OWNER を外す操作は 409 last_owner で拒否する」と定め、計画の仕様は OWNER による role の変更と除名 (自分も対象にできる) を持つ。計画の決定は OWNER の人数を `ownerCount` で持ち、増減のたびに更新すると言う (派生した状態があることを計画が示す)。人数の更新漏れは 1 回の操作では観測できず、OWNER を除名・降格・昇格した後で最後の OWNER を外す操作の列でだけ不変条件が破れる。居ない所属者の扱いと、403 と 409 のどちらを先に返すかは資料に無い。
+- assertions:
+  - [critical] Gate が ready なら、依頼が名指しした置き場所に受け入れテストを書き、受け入れテストと計画だけを含む封の commit を作る。 (grader: 30-invariant-op-sequence/test-file-written, 30-invariant-op-sequence/seal-commit)
+  - 受け入れテストは、1 回の操作で不変条件を破る変種 (`r` で始まる id) に加え、操作の列でだけ不変条件を破る変種 (`s` で始まる id) も落とす (`scripts.eval.score_results` で数え、`evals/mutant-record.json` に記録する)。 (grader: 未計測)
+
 - fixture: 改名の計画が「repository の中に旧 path を指す記述が残らない」を求める。`.gitignore` が無視する `.cache/` に旧 path の文字列があり、`src/README.md` の旧 path への言及は計画が別 issue で直すとして残す。
 - assertions:
   - [critical] 不在を観測する基準は `.gitignore` が無視する file と、計画が残す `src/README.md` を走査しない形で書く。 (grader: 未計測)
