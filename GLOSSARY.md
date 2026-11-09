@@ -55,7 +55,7 @@ cd plugins/<name>
 claude plugin eval . --ablation with-without --judge-model sonnet --allow-tools "Write,Edit,Bash"
 ```
 
-`--allow-tools` はSKILL.mdに `allowed-tools` frontmatterが無い場合の運用側付与で、全caseに効く。見る数字はΔ（withスコア引くwithoutスコア）。7 caseで1回およそ$21、85分。
+`--allow-tools` はSKILL.mdに `allowed-tools` frontmatterが無い場合の運用側付与で、全caseに効く。見る数字はΔ（withスコア引くwithoutスコア）。7 caseで1回およそ$21、85分 (2026-09 の実測)。
 
 ### 新旧の比較
 
