@@ -168,11 +168,11 @@ _Avoid_: 設計判断
 
 **受け入れテスト**:
 define-done が各 AC から翻訳した、実行できるテスト。テスト名は AC-ID で始まる。テストがそのまま oracle であり、散文の oracle は書かない。
-_Avoid_: 検証の対応付け、Verification Plan (v14 までの散文の oracle)
+_Avoid_: 検証の対応付け、Verification Plan (散文の oracle を指す)
 
 **封**:
 受け入れテストと計画だけを含み、trailer `Define-Done-Seal:` と `Define-Done-Test-Command:` を持つ commit。その後に封をしたファイルを変えれば、`check_seal.py check` が必ず差分として検出する。完了は `check_seal.py verify` が、封が破られておらず、受け入れテストが封の時点で落ち、今の tree で通ることを exit 0 で返したときである。define-done のやり直しは新しい封の commit を積む。古くなった AC を書き直すだけの commit は trailer `Define-Done-Supersedes: <置き換える AC-ID>` で封じる。この commit は改ざんの検査では封に数え、`verify` が流す封には選ばない。
-_Avoid_: fingerprint (v14 までの、計画の中に書いた hash)
+_Avoid_: fingerprint (計画の中に書く hash を指す)
 
 **保護するパス**:
 封の commit に入ったファイルの集合。実装は変えない。
