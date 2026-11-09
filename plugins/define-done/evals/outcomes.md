@@ -32,6 +32,7 @@
   - [critical] Gate が ready なら、依頼が名指しした置き場所に受け入れテストを書く。 (grader: 23-acceptance-tests-sealed/test-file-written)
   - [critical] 受け入れテストと計画だけを含む封の commit を作る。 (grader: 23-acceptance-tests-sealed/seal-commit)
   - [critical] 資料に無い再送の上限を、受け入れテストの期待値にしない。 (grader: 23-acceptance-tests-sealed/no-invented-limit-test)
+  - 計画に、受け入れテストとは別の散文の oracle や検証の対応付けを書かない。 (grader: 未計測)
   - 受け入れテストは、参照実装で全件 pass し、要求を 1 件ずつ破った変種をそれぞれ落とす (`python3 -m scripts.eval.score_results <result.json> --record` で数え、`evals/mutant-record.json` に記録する)。 (grader: 未計測)
 
 - fixture: まとめ買い割引の要件は振る舞いだけを書き、端数の扱い (割引後の小計を商品ごとに切り捨てる) まで決め、interface を名指ししない。既存の `src/cart.js` と既存の試験 `test/cart.test.js` が `createCart`・`add`・`total` を固定している。計画の決定は割引後の小計を `Math.floor(小計 * 0.9)` で求めると言う。依頼は受け入れテストの置き場所を名指しする。repo は git で管理され、base の commit がある。

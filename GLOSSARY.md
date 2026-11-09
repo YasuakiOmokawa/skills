@@ -55,7 +55,7 @@ cd plugins/<name>
 claude plugin eval . --ablation with-without --judge-model sonnet --allow-tools "Write,Edit,Bash"
 ```
 
-`--allow-tools` はSKILL.mdに `allowed-tools` frontmatterが無い場合の運用側付与で、全caseに効く。見る数字はΔ（withスコア引くwithoutスコア）。7 caseで1回およそ$21、85分。
+`--allow-tools` はSKILL.mdに `allowed-tools` frontmatterが無い場合の運用側付与で、全caseに効く。見る数字はΔ（withスコア引くwithoutスコア）。7 caseで1回およそ$21、85分 (2026-09 の実測)。
 
 ### 新旧の比較
 
@@ -171,7 +171,7 @@ define-done が各 AC から翻訳した、実行できるテスト。テスト�
 _Avoid_: 検証の対応付け、Verification Plan (散文の oracle を指す)
 
 **封**:
-受け入れテストと計画だけを含み、trailer `Define-Done-Seal:` と `Define-Done-Test-Command:` を持つ commit。その後に封をしたファイルを変えれば、`check_seal.py check` が必ず差分として検出する。完了は `check_seal.py verify` が、封が破られておらず、受け入れテストが封の時点で落ち、今の tree で通ることを exit 0 で返したときである。define-done のやり直しは新しい封の commit を積む。古くなった AC を書き直すだけの commit は trailer `Define-Done-Supersedes: <置き換える AC-ID>` で封じる。この commit は改ざんの検査では封に数え、`verify` が流す封には選ばない。
+受け入れテストと計画だけを含み、trailer `Define-Done-Seal:` と `Define-Done-Test-Command:` を持つ commit。その後に封をしたファイルを変えれば、`check_seal.py check` が必ず差分として検出する。完了は `check_seal.py verify` が、封が破られておらず、受け入れテストが封の時点で落ち、今の tree で通ることを exit 0 で返したときである。define-done のやり直しは新しい封の commit を積む。古くなった AC を書き直すだけの commit は trailer `Define-Done-Supersedes: <置き換える AC-ID>` で封じる。この commit は改ざんの検査では封に数え、`verify` が流す封には選ばない。define-done はこの封を作らない。AC を書き直す人か agent が、利用者の依頼を受けて打つ。
 _Avoid_: fingerprint (計画の中に書く hash を指す)
 
 **保護するパス**:
