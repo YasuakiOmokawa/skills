@@ -98,7 +98,7 @@ python3 -m scripts.eval.score_results /tmp/<name>.json --record
 
 ### コードの水準 (chain eval)
 
-`evals-chain/<case>/` の case は frontmatter の `plugins:` に define-done を置き、repo root から `claude plugin eval . --eval-dir evals-chain --ablation with-without --keep-temp` で走らせる。依頼文は成果物 (受け入れテストの置き場所と、実装するファイル) を平文で書き、作業の最後に両方を `cat` で表示させる。エージェントは製品コードを heredoc や `python3 -` で書き換えるので、trace の Write/Edit からは最終状態を再現できない。`score_results` は最後の `cat` の出力を最終状態とし、`mutant.json` に `"code": true` があれば、製品コードに隠しテストを流して「隠しテストを全部通したコード」を数える。Gate で止まって製品コードが stub のままの run は未実装と数える。
+`evals-chain/<case>/` の case は frontmatter の `plugins:` に define-done を置き、repo root から `claude plugin eval . --eval-dir evals-chain --ablation with-without --keep-temp` で走らせる。依頼文は成果物 (受け入れテストの置き場所と、実装するファイル) を平文で書き、作業の最後に両方を `cat` で表示させる。エージェントは製品コードを heredoc や `python3 -` で書き換えるので、trace の Write/Edit からは最終状態を再現できない。`score_results` は最後の `cat` の出力を最終状態とし、`mutant.json` に `"code": true` があれば、製品コードに隠しテストを流して「隠しテストを全部通したコード」を数える。Gate で止まった run は「Gate で停止」と数え、Gate で止まらずに製品コードが stub のままの run を「未実装」と数える。
 
 ### 改善ルーティン
 
