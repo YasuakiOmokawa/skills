@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "omokawa-skills",
-  "version": "17.0.0",
+  "version": "17.1.0",
   "description": "Plan-driven development workflow を構成する個別 skill 群。必要なものだけ install 可能",
   "owner": {
     "name": "Yasuaki Omokawa",
@@ -150,6 +150,18 @@
       "source": "./plugins/create-commits",
       "skills": [
         "./skills/create-commits"
+      ],
+      "category": "productivity",
+      "homepage": "https://github.com/YasuakiOmokawa/skills",
+      "license": "MIT"
+    },
+    {
+      "name": "check-pr",
+      "description": "PR を出す前、またはブランチに commit を足した後に、リポジトリの検査項目表に照らして差分を検査し、PR 本文に載せる検査結果ブロックを作る必要があるときに使う。レビュー指摘を探すときや適用するときには使わない。",
+      "version": "1.0.0",
+      "source": "./plugins/check-pr",
+      "skills": [
+        "./skills/check-pr"
       ],
       "category": "productivity",
       "homepage": "https://github.com/YasuakiOmokawa/skills",
