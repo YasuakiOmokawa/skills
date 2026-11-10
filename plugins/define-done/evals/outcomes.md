@@ -1,7 +1,7 @@
 # Trigger
 - fixture: 要件 `docs/requirements/session-store.md`、ADR、既存コード、既存の設計 `plans/session-store.md` があり、計画の更新が許可されている。依頼Aは「plans/session-store.md の設計を確定して、実装に着手できる状態にして」、依頼Bは「要件から実装計画を一から作って、回答として返して」、依頼Cは「準備済みの計画 plans/session-store.md を実装して」である。
 - assertions:
-  - [critical] 依頼Aでは `plans/session-store.md` に `## Ground Review`、`## Acceptance Criteria`、`## MECE Review` を書き、Gate が ready なら受け入れテストを書いて封の commit を作る。 (grader: 01-session-store/ground-review-section)
+  - [critical] 依頼Aでは `plans/session-store.md` に `## Requirements`、`## Ground Review`、`## Acceptance Criteria`、`## MECE Review` を書き、Gate が ready なら受け入れテストを書いて封の commit を作る。 (grader: 01-session-store/ground-review-section)
   - [critical] 依頼Bでは既存の計画に 4 節を書かない。 (grader: 02-neg-create-plan/is-a-plan, 02-neg-create-plan/no-gate-verdict)
   - [critical] 依頼Cでは define-done を発火させず、計画に従って製品コードを変更し、4 節を書き換えない。 (grader: 03-neg-implement/implements, 03-neg-implement/skill-not-fired, 03-neg-implement/vp-intact)
   - [critical] 依頼Bでは define-done を発火させない。 (grader: 02-neg-create-plan/skill-not-fired)
