@@ -105,7 +105,7 @@ python3 -m scripts.eval.score_results /tmp/<name>.json --record
 1. 仕様変更を `outcomes.md` のassertionとして先に書く。
 2. SKILL.mdを触る前にsuiteを回し、caseごとのΔをベースラインにする。suiteは実行ごとにディスク上のpluginを読むため、実行中にSKILL.mdを編集しない。
 3. SKILL.mdを編集するagentには `outcomes.md` とeval結果（スコア、落ちたgrader名、trace抜粋）だけ渡す。`prompt.md` と `graders/` は渡さない。
-4. 編集後にsuiteを回しcaseごとのΔを比較する。1つでも下がれば回帰。負例のwithスコア低下はover-trigger。
+4. 編集後にsuiteを回しcaseごとのΔを比較する。下がったcaseは、下のgrader単位の基準で回帰かを決める。負例のwithスコア低下はover-trigger。
 5. 新しい振る舞いを足したときだけ、対応するcaseを1つ追加する。
 
 SKILL.mdの本文は `## 目的` / `## 原理` / `## 契約` / `## 禁止` / `## 完了条件` の5節に限る (`scripts/validate_skills.py` が検査する)。新旧の版は `--ablation none` のwith runをgrader単位で比べ、graderを次の5種に分けて合否を決める。
@@ -135,7 +135,7 @@ plugin の `skills/` か `commands/` を変えた PR は、`plugins/<name>/evals
 - 上の性質から、多条項で例外規定の多いrubricは正解にも3票FAILを付け、whitelist照合 (「この一覧に無い名前を挙げていればfail」) は票が割れる。rubricは1 graderにつき1論点で短く書き、実在性の照合はfixtureに無いパスを `not_contains` で検出するregexにする。
 - `focus: trace` のllm graderに渡るevidenceは、メッセージが24件を超えると先頭12件と末尾12件だけに間引かれ、traceの途中のメッセージが落ちる (80KBのtraceでassistant 37件中11件しか残らない)。途中で起きた手順 (refactorの編集、一時違反によるred) は正解でも3票FAILになり、逆に最終報告から推測したPASSも出る。手順の有無は `type: regex`、`target: trace`、`flags: s` で全traceを照合する。tool_useの順序は `"name":"(?:Write|Edit)","input":\{[^{}]*?"file_path":"[^"]*<path>"` を区切りにしたtempered regexで書く。テスト失敗は `"type":"tool_result","content":"` の内側に限る。agentのgrepコマンド文字列 (`not ok`、`✖`) にも一致するため。
 - traceのJSONでは改行が `\n` の2文字になる。改行直後のコマンドの前では `\b` が効かないので、コマンドの区切りは `(?:\\n|;|&&|\|\||\||\(|\{)` のように明示する。Bashの1回の呼び出しで書き込みと読み直しを済ませる手順も、Write/Edit の後の別の呼び出しと同じく照合できるregexにする。
-- `--ablation none` では `tool_used: Skill` のgraderも採点に入るので、with-without のscoreと比べられない。版どうしの比較はgrader単位の合否で行う。skill-not-firedの負例でも同じgraderが3/3から1/3までぶれるので、3 runの2 run差はノイズとみなす。
+- `--ablation none` では `tool_used: Skill` のgraderも採点に入るので、with-without のscoreと比べられない。版どうしの比較はgrader単位の合否で行う。skill-not-firedの負例では同じgraderが3/3から1/3までぶれるので、負例のgraderに限り、3 runの2 run差も有意に数えない。
 - sandboxでは素の `git init` が `.git/config` と `.git/hooks` への書き込み拒否で失敗し、以後のgitは親の `home/.git` に落ちる。gitのfixtureは `git init -q --template= --separate-git-dir=../repo.gitdir -b main .` で作り、remoteは `git init -q --bare --template= ../remote.git` にpushする。graderは `repo.gitdir/logs/HEAD` (reflog) や `remote.git/refs/heads/<b>` を `{source: file, path}` で読める。
 - `--keep-temp` のsandboxで `home/` と `tmp/` はmode 000で封印され、chmodは許可されない。書き込まれたファイルの内容は `out/trace.jsonl` のWrite/Edit入力から復元する。
 - `eval_coverage record` と `score_results --record` は、`skills/` と `commands/` の中身の hash を `git ls-files` の一覧から計算する。新しく足したファイルが未追跡のまま記録すると、そのファイルが hash から抜け、CI の `eval_coverage check` が別の中身の記録として落とす。記録は `git add` の後に書く。
