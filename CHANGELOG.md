@@ -5,6 +5,13 @@ All notable changes to omokawa-skills will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v18.0.0 - 2026-11-10
+
+### Changed
+
+- **`enforce-conventions` 2.0.0 (BREAKING):** テスト、実行時の検査、lint の rule が既に落としている規約も、より強い場所で覆えるなら移す。1.0.0 は仕組みが何も検査していない規約だけを移し、既に仕組みが落とす規約には触れなかった。移した先で規約を破る例が落ちるのを見た規約は、それまで落としていた実行時の検査とテストを外す。見ていなければ外さず、型を通らない値が届く境界 (外部入力の読み込み) の検査は残す。型で書ける言語なら、型検査のコマンドが repo に無くても型を置ける場所に数え、落ちるのを見られなければ未検証と報告する。「振る舞いを変えない」は「型が受け入れる値に対する振る舞いを変えない」に絞った。case を 2 つ足した (テストが落としている import の向きを lint へ移す正例、型検査の無い repo で実行時の検査を外さない hold-out)。9 case を with arm で 3 run ずつ回し、全 case 1.00、旧版と比べて下がった grader は無い。without arm は足した正例で 0.36、hold-out で 0.89 だった。実行時の検査を型へ移して検査を外す正例は、sandbox に型検査が無いため未計測である。
+- **GLOSSARY:** 「規約」の定義に、テスト、実行時の検査、lint が既に落としているものを足した。
+
 ## v17.1.0 - 2026-11-10
 
 ### Added

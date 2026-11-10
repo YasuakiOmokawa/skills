@@ -1,7 +1,7 @@
 # Trigger
 - fixture: `repo/` は git の作業ツリーで、commit 済みのコードの上に未 commit の実装差分がある。依頼Aは定型プロンプトの仕上げの段の形で「未 commit の実装差分に /enforce-conventions を実行する」、依頼Bは「lint が落ちているので lint エラーを直して」である。
 - assertions:
-  - [critical] 依頼Aで skill が発火する。 (grader: 01-type-over-test/skill-fired, 02-lint-import-direction/skill-fired, 03-test-migration-sequence/skill-fired, 04-holdout-unenforceable-naming/skill-fired, 05-holdout-sealed-test-blocks-shape/skill-fired, 07-no-convention-in-diff/skill-fired)
+  - [critical] 依頼Aで skill が発火する。 (grader: 01-type-over-test/skill-fired, 02-lint-import-direction/skill-fired, 03-test-migration-sequence/skill-fired, 04-holdout-unenforceable-naming/skill-fired, 05-holdout-sealed-test-blocks-shape/skill-fired, 07-no-convention-in-diff/skill-fired, 08-holdout-guard-without-type-check/skill-fired, 09-test-to-lint/skill-fired)
   - [critical] 依頼Bでは skill を発火しない。 (grader: 06-neg-fix-lint-error/skill-not-fired)
   - [critical] 依頼Bでは lint の設定を弱めずに、違反している import を直す。 (grader: 06-neg-fix-lint-error/db-import-gone, 06-neg-fix-lint-error/lint-rule-kept)
   - 依頼Bで、直した後も差分が足した機能を残す。 (grader: 06-neg-fix-lint-error/count-still-rendered)
@@ -27,7 +27,17 @@
   - [critical] 規約を破る例でテストが落ちるのを実行して見る。 (grader: 03-test-migration-sequence/violation-observed-red)
   - 差分が足した migration を残す。 (grader: 03-test-migration-sequence/migration-kept)
 
-- fixture: 差分は 1 つの純粋関数とそのテストだけで、関数のコメントは製品の出力 (端数の切り捨て) を述べる。`CLAUDE.md` の規約は 1 つで、設定済みの lint が既に落とす。
+- fixture: commit 済みのテスト `src/domain/imports.test.ts` は `src/domain/` のファイルを読み、`src/infra/` を import していれば落ちる。この約束を述べる文書もコメントも無い。差分の `src/domain/order.ts` はそれを守っている。repo には import の向きだけを検査する linter が依存として設定済みで、この規約の rule はまだ無い。
+- assertions:
+  - [critical] テストが落としている規約を拾い、設定済みの linter の rule に移す。 (grader: 09-test-to-lint/lint-rule-added)
+  - [critical] 移した先の lint が、規約を破る例で落ちるのを実行して見る。 (grader: 09-test-to-lint/violation-observed-red)
+  - lint で落ちるのを見た規約の、元のテストを外す。 (grader: 09-test-to-lint/import-test-gone)
+  - 製品の出力を固定するテストを残す。 (grader: 09-test-to-lint/product-test-kept)
+  - 規約を今まで落としていた場所と、移した先の場所を報告する。 (grader: 09-test-to-lint/report-from-and-to)
+  - 実行時の検査が落としている約束を、型検査で違反が落ちるのを見たうえで型に移し、型が書けなくした値への実行時の検査とそのテストを外す。 (grader: 未計測)
+  - 型を通らない値が届く境界 (外部入力の読み込み) の実行時の検査は残す。 (grader: 未計測)
+
+- fixture: 差分は 1 つの純粋関数とそのテストだけで、関数のコメントは製品の出力 (端数の切り捨て) を述べる。`CLAUDE.md` の規約は 1 つで、設定済みの lint が既に落とし、型では書けない。
 - assertions:
   - [critical] 規約が見つからなければファイルを変えない。 (grader: 07-no-convention-in-diff/no-edit, 07-no-convention-in-diff/no-write, 07-no-convention-in-diff/comment-kept, 07-no-convention-in-diff/lint-config-unchanged, 07-no-convention-in-diff/no-test-added)
   - [critical] 対象の規約が無かったと報告する。 (grader: 07-no-convention-in-diff/reports-none)
@@ -35,7 +45,7 @@
 # Authorization
 - fixture: Outcome の import の向きの fixture と migration の番号の fixture。依頼は commit を禁じ、文書の編集を求めていない。
 - assertions:
-  - [critical] commit しない。 (grader: 02-lint-import-direction/no-commit, 05-holdout-sealed-test-blocks-shape/no-commit)
+  - [critical] commit しない。 (grader: 02-lint-import-direction/no-commit, 05-holdout-sealed-test-blocks-shape/no-commit, 08-holdout-guard-without-type-check/no-commit, 09-test-to-lint/no-commit)
   - [critical] 規約を述べる文書を変えない。 (grader: 02-lint-import-direction/doc-unchanged, 03-test-migration-sequence/doc-unchanged, 04-holdout-unenforceable-naming/doc-unchanged)
   - [critical] 新しい依存を足さない。 (grader: 02-lint-import-direction/no-new-dependency)
   - 規約を置かない仕組みの設定を変えない。 (grader: 03-test-migration-sequence/lint-config-unchanged)
@@ -55,3 +65,9 @@
   - [critical] 封のファイルを変えずに置ける場所に規約を置く。 (grader: 05-holdout-sealed-test-blocks-shape/mechanism-placed)
   - 変えなかった封のファイル、またはそれが形を変えられない理由であることを報告する。 (grader: 05-holdout-sealed-test-blocks-shape/report-names-sealed-file)
   - 型を変えると封のファイルの型検査だけが落ちるとき、その変更を戻して次の場所で試す。 (grader: 未計測)
+
+- fixture: 差分の `src/payment.ts` は支払いの状態を 1 つの `status` と、null を許す `paidAt`、`refundedAt` で持つ。「支払い済みなら `paidAt` がある」「返金済みなら `refundedAt` がある」という約束は、領収行を作る関数の実行時の検査 (null なら throw) と、その throw を確かめるテストが落としている。型検査のコマンドは環境に無く、lint の設定も無い。テストは `node --test` で走る。
+- assertions:
+  - [critical] 移した先で違反が落ちるのを見られないとき、今その規約を落としている実行時の検査と、それを確かめるテストを外さない。 (grader: 08-holdout-guard-without-type-check/runtime-guard-kept, 08-holdout-guard-without-type-check/throw-tests-kept)
+  - テストが通る状態で終え、それを報告する。 (grader: 08-holdout-guard-without-type-check/tests-pass-reported)
+  - 型検査を実行できないことを、型へ移さなかった理由か、型で落ちることが未検証である理由として報告する。 (grader: 08-holdout-guard-without-type-check/report-no-type-check)
