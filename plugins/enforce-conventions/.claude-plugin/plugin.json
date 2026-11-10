@@ -1,0 +1,19 @@
+{
+  "name": "enforce-conventions",
+  "description": "実装差分が守っている、または破っている規約のうち、仕組みが検査していないものを、構造・型、lint、テストのうち覆える最も強い場所へ移す。実装差分の仕上げとして渡されたときに使う。",
+  "version": "1.0.0",
+  "author": {
+    "name": "Yasuaki Omokawa",
+    "url": "https://github.com/YasuakiOmokawa"
+  },
+  "homepage": "https://github.com/YasuakiOmokawa/skills",
+  "repository": "https://github.com/YasuakiOmokawa/skills",
+  "license": "MIT",
+  "keywords": [
+    "conventions",
+    "type-safety",
+    "lint",
+    "mistake-proofing",
+    "refactoring"
+  ]
+}

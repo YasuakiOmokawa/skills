@@ -5,6 +5,17 @@ All notable changes to omokawa-skills will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v17.0.0 - 2026-11-10
+
+### Removed
+
+- **`express-intent-in-code` (BREAKING):** plugin を廃止した。コードが既に言っていることを言い直すコメントの削除、jargon の改名、外部制約のコメントをテストへ移す働きは、どの plugin も引き継がない。定型プロンプトの仕上げの段は `enforce-conventions` に替える。
+
+### Added
+
+- **`enforce-conventions` 1.0.0:** 実装差分が守っているか破っている規約のうち、仕組みが検査していないものを、構造・型、lint、テストのうち覆える最も強い場所へ移す。規約は、差分のコメントと文書、repo の文書、作業ツリーの 2 箇所以上が同じ形で守っている約束から集め、製品が何を出力するかの固定は対象にしない。置いた仕組みは、規約を破る例で落ちるのを実行して確かめる。封の commit のファイルは変えず、変えないと通らない変更は戻して次の場所で試す。7 case を両 arm で 3 run ずつ回し、with は全 case 1.00、without は負例を除いて 0.25〜0.83 だった。素の arm は skill が無いと答えて作業を止める run が多く、差には skill の有無そのものが含まれる。
+- **GLOSSARY:** 「規約」と「強制の場所」を足した。
+
 ## v16.3.0 - 2026-11-08
 
 ### Changed
