@@ -17,11 +17,11 @@
 
 ## 設定への依存
 
-plugin は**設定不要で動く**ことを目標にし、設定が必要なら `~/.claude/skills-config/*.md` から読み、なければエラーで止めず**フォールバック**を提示する。
+plugin は**設定不要で動く**ことを目標にし、設定が必要なら `~/.claude/skills-config/<plugin>/*.md` から読み、なければエラーで止めず**フォールバック**を提示する。
 
 ## 設定値の保管 (グローバル)
 
-機密でないマシンごとのグローバル設定は `~/.claude/skills-config/*.md` (定義は GLOSSARY.md)。各 plugin は「このファイルを Read で取得」と SKILL.md に書く。`.env` は使わない (SKILL.md は AI が読む文書なのでシェル変数展開は機能しない)。
+機密でないマシンごとのグローバル設定は `~/.claude/skills-config/<plugin>/*.md` (定義は GLOSSARY.md)。各 plugin は「このファイルを Read で取得」と SKILL.md に書く。`.env` は使わない (SKILL.md は AI が読む文書なのでシェル変数展開は機能しない)。
 
 ## バージョン bump ルール
 
