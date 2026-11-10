@@ -60,7 +60,7 @@
   - テストにも assertion にもできない制約は、書かずに報告する。 (grader: 未計測)
 - fixture: `src/attempt-budget.ts` の `spendBudget` は注入された counter を読んだ直後に 2 行で verdict を決め、その判断は他に使われず、時刻も乱数も読まない。`src/totp.ts` の 6 桁判定は `matchCode` の 1 箇所だけにあり、呼び手 2 箇所に再検査も cast も無い。依頼は「意図をコードで表して」である。
 - assertions:
-  - [critical] 純粋関数への切り出しは、Layer や fake 無しのテストが書ける、同じ判断の 2 回目が消える、時刻や乱数が引数になって決定的になる、のいずれかが成り立つ時だけ行い、3 つとも成り立たない verdict の 2 行は切り出さない。 (grader: 13-neg-deletion-test-zero/verdict-stays-inline)
+  - [critical] 純粋関数への切り出しは、既存テストが要する fake・層・注入された依存、同じ判断の 2 つ目のコピー、関数内の時計や乱数の読み取りのいずれかが消える時だけ行い、何も消えない verdict の 2 行は切り出さない。 (grader: 13-neg-deletion-test-zero/verdict-stays-inline)
   - [critical] 消費する下流が無い proof (6 桁判定済みを表す branded type) は導入しない。 (grader: 13-neg-deletion-test-zero/no-brand-for-code)
   - 切り出さなかった候補と理由を報告する。 (grader: 13-neg-deletion-test-zero/report-names-skipped-candidates)
   - 変更後にテストを実行し、観測される出力が変わらないことを検証する。 (grader: 13-neg-deletion-test-zero/tests-run)
