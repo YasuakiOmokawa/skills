@@ -1,0 +1,16 @@
+{
+  "cases": {
+    "01-ng-caller-ok-migration": {
+      "passed": 27,
+      "startedAt": "2026-11-10T11:17:38.691Z",
+      "total": 27
+    },
+    "02-neg-fix-caller": {
+      "passed": 9,
+      "startedAt": "2026-11-10T11:17:38.691Z",
+      "total": 9
+    }
+  },
+  "shipped_sha256": "e7794d728a0cf1c9e442607659ef88b5eda13e3f4d9bf86358deec8a476d8f17",
+  "waived": null
+}

@@ -5,6 +5,13 @@ All notable changes to omokawa-skills will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v17.1.0 - 2026-11-10
+
+### Added
+
+- **`check-pr` 1.0.0:** PR を出す前に、リポジトリの検査項目表 (`.github/pr-checks.md`。列は ID・対象の glob・項目) に照らして差分を検査し、検査結果ブロックを作る。検査する行は、対象の glob が変更ファイルに一致する行のすべて。判定は `OK` / `NG` / `判断不能` で、根拠は `path:line` かコマンドの出力に限る。ブロックには検査した HEAD の SHA を書くので、CI は「ブロックがある・SHA が最新の commit と一致する・対象の行がすべて載っている・`NG` が 0 件」を照合できる。`NG` は直さずに返す。2 case を両 arm で 3 run ずつ回し、with は両 case 1.00、without は正例 0.38・負例 1.00 だった。素の arm は skill が無いので検査結果ブロックを書かず、差には skill の有無そのものが含まれる。判断不能、承認なしの依頼、未 commit の変更、検査項目表が無い場合は未計測。
+- **GLOSSARY:** 「検査項目表」と「検査結果ブロック」を足した。
+
 ## v17.0.0 - 2026-11-10
 
 ### Removed

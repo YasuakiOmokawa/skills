@@ -1,0 +1,18 @@
+{
+  "name": "check-pr",
+  "description": "PR を出す前、またはブランチに commit を足した後に、リポジトリの検査項目表に照らして差分を検査し、PR 本文に載せる検査結果ブロックを作る必要があるときに使う。レビュー指摘を探すときや適用するときには使わない。",
+  "version": "1.0.0",
+  "author": {
+    "name": "Yasuaki Omokawa",
+    "url": "https://github.com/YasuakiOmokawa"
+  },
+  "homepage": "https://github.com/YasuakiOmokawa/skills",
+  "repository": "https://github.com/YasuakiOmokawa/skills",
+  "license": "MIT",
+  "keywords": [
+    "pull-request",
+    "checklist",
+    "code-review",
+    "ci"
+  ]
+}
