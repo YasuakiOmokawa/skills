@@ -5,6 +5,12 @@ All notable changes to omokawa-skills will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v17.0.0 - 2026-11-10
+
+### Removed
+
+- **`express-intent-in-code` (BREAKING):** plugin を廃止した。コードが既に言っていることを言い直すコメントの削除、jargon の改名、外部制約のコメントをテストへ移す働きは、どの plugin も引き継がない。定型プロンプトの仕上げの段は `enforce-conventions` に替える。
+
 ## v16.3.0 - 2026-11-08
 
 ### Changed
