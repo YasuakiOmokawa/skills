@@ -84,6 +84,18 @@
       "license": "MIT"
     },
     {
+      "name": "enforce-conventions",
+      "description": "実装差分が守っている、または破っている規約のうち、仕組みが検査していないものを、構造・型、lint、テストのうち覆える最も強い場所へ移す。実装差分の仕上げとして渡されたときに使う。",
+      "version": "1.0.0",
+      "source": "./plugins/enforce-conventions",
+      "skills": [
+        "./skills/enforce-conventions"
+      ],
+      "category": "productivity",
+      "homepage": "https://github.com/YasuakiOmokawa/skills",
+      "license": "MIT"
+    },
+    {
       "name": "extract-figma-spec",
       "description": "提供または取得できるFigmaの根拠を原子的な確認項目に分解し、指定されたフレーム、状態、部品について特定された実装とデザイン差分表で比較する必要があるときに使う。",
       "version": "1.4.0",
