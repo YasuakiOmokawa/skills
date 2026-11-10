@@ -20,7 +20,7 @@ npx skills add YasuakiOmokawa/skills
 | [`create-design-doc`](./plugins/create-design-doc/skills/create-design-doc/SKILL.md) | 承認済み計画と、PoCとプロトタイプまたは同等の根拠による実現可能性とコードベース適合性の根拠から、実装判断に使うDesign Docを指定または導出した保存先に作る必要があるときに使う。 |
 | [`define-done`](./plugins/define-done/skills/define-done/SKILL.md) | 既存の計画を仕様とコードの根拠でレビューし、計画ごとの受け入れ基準を計画に書き、その基準を実行できる受け入れテストに翻訳して封の commit にし、実装に着手できる状態にする。計画を一から作るときや、計画を実装するときには使わない。 |
 | [`dry-ssot-text`](./plugins/dry-ssot-text/skills/dry-ssot-text/SKILL.md) | 正本文書と対象範囲の文書が特定されているとき、重複した読み手向けの手順を、読み手ごとの差異を保ったまま集約する。 |
-| [`enforce-conventions`](./plugins/enforce-conventions/skills/enforce-conventions/SKILL.md) | 実装差分が守っている、または破っている規約のうち、仕組みが検査していないものを、構造・型、lint、テストのうち覆える最も強い場所へ移す。実装差分の仕上げとして渡されたときに使う。 |
+| [`enforce-conventions`](./plugins/enforce-conventions/skills/enforce-conventions/SKILL.md) | 実装差分が守っている、または破っている規約を、構造・型、lint、テストのうち覆える最も強い場所へ移す。実装差分の仕上げとして渡されたときに使う。 |
 | [`extract-figma-spec`](./plugins/extract-figma-spec/skills/extract-figma-spec/SKILL.md) | 提供または取得できるFigmaの根拠を原子的な確認項目に分解し、指定されたフレーム、状態、部品について特定された実装とデザイン差分表で比較する必要があるときに使う。 |
 | [`model-data`](./plugins/model-data/skills/model-data/SKILL.md) | 業務要求を既存のスキーマやSQLに照らしてモデル化し、一貫したデータモデル、必要に応じたDBML、データ設計、エンティティ関係、スキーマ整合性についての根拠付きの指摘を作る必要があるときに使う。 |
 | [`purge-private-vocab`](./plugins/purge-private-vocab/skills/purge-private-vocab/SKILL.md) | 渡された定義により対象読者にとっての意味を確認できるとき、依頼で許可された読み手向け文書の内輪の用語を置き換える。 |
