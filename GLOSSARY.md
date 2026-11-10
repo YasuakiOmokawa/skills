@@ -85,7 +85,7 @@ define-done の受け入れテストは、runner の外で決定論的に採点�
 
 ```bash
 python3 -I scripts/eval/mutant_score.py scripts/eval/mutant/<題材> scripts/eval/mutant/<題材> test/hidden.test.js
-cd plugins/define-done && claude plugin eval . --case <case> --ablation with-without --keep-temp ... --json /tmp/<name>.json
+(cd plugins/define-done && claude plugin eval . --case <case> --ablation with-without --keep-temp ... --json /tmp/<name>.json)
 python3 -m scripts.eval.score_results /tmp/<name>.json --record
 ```
 
