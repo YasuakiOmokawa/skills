@@ -5,6 +5,14 @@ All notable changes to omokawa-skills will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v19.0.0 - 2026-11-11
+
+### Changed
+
+- **`enforce-conventions` 3.0.0 (BREAKING):** どこにも述べられていなくても、作業ツリーの全箇所が満たし、利用する側が当てにしている約束を「観測した規約」として、破るコードを書けないか型検査で落ちる形にする。満たす箇所は 1 箇所でもよい。2.0.0 の出典「2 箇所以上が同じ形で守っている」と、禁止の「規約を作らない、変えない、広げない」は外した。満たさない箇所が 1 つでもある約束、外から来る値の型、利用する側が当てにしていない約束、既定の枝が 2 個以上の値をまとめて受ける分岐は、変えずに報告する (2.0.0 は 2 対 1 の多数を規約と読んで型を絞っていた)。決めるのは結果だけで、手段は名指さず、repo に同じ種類の約束を守る書き方があればそれに合わせる。値の形は変えず、今ある値を新しく弾く検査は足さない。取りうる値をすべて扱う分岐は、値を足すと型エラーになる形にする。観測した規約の判断に読んだ箇所は `path:line` で報告する。観測した規約の細目は `references/observed-conventions.md` に分けた。case を 3 つ足した (型検査が動く fixture でのステートマシンの正例、変えてはいけないものの hold-out、既存の書き方に合わせる正例)。12 case を with arm で 3 run ずつ回し、足した case の critical な grader はすべて 3/3、既存の grader で 2.0.0 より 2 run 以上下がったものは無い。critical でない grader のうち 3/3 でなかったのは 2 つで、どちらも 2/3 だった (検査の無い関数の引数の絞り込み、封のファイルを名指す報告)。2.0.0 で未計測だった「型検査で違反が落ちるのを見てから実行時の検査を外す」は、型検査が動く fixture で 3/3 を観測した。計測は TypeScript だけで、Ruby での動きは未計測である。
+- **eval:** package の install が要る fixture を、`case.yaml` の `scaffold_script` で作る形を足した。case 01 の union 型を前提にした grader 2 つを、手段を問わず結果で判定する 1 つに替えた。
+- **GLOSSARY:** 「述べられた規約」「観測した規約」「外から来る値」「値の形」を足し、「規約」の定義をこの 2 種類で言い直した。Evaluation に、scaffold の作り方と、scaffold と sandbox の性質 3 件を足した。
+
 ## v18.0.0 - 2026-11-10
 
 ### Changed

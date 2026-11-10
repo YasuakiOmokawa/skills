@@ -40,6 +40,7 @@ API key、access token、passwordはこの領域へ保存しない。
 - 入力は実トラフィックから取る。`~/.claude/projects/<repo>/*.jsonl` のskill呼び出し直前のuser promptを読む。SKILL.mdの例文を入力にしない。
 - 実プロンプトは複数skillを連ねたpipeline形である。後続skillはサンドボックスに無いため、対象skillまでで切った部分集合を入力にする。
 - fixtureは各 `prompt.md` 冒頭のbash heredocで作業ディレクトリに生成する。絶対パスと `~/` は使わない。
+- packageのinstallが要るfixture (型検査など) は、`prompt.md` の隣の `case.yaml` の `context.scaffold_script` が指すscriptで作る。scriptはsandboxの外で走り、`--scaffold` を付けたときだけ実行される。
 - caseは `outcomes.md` のassertionに対応させる。対応の無い振る舞いをcaseにしたら、先に `outcomes.md` へassertionを足す。
 - graderは `outcomes.md` を見て書く。SKILL.mdの語彙を写すと過適合する。仕様の書式リテラルを使うなら `weight: 0.5` の二次判定に留め、一次はoutcome graderにする。
 - 「欠落の無いplan」を意図したfixtureは本当に欠落を無くす。非同期は `await` ごとにreject経路を数える。仕込み損ねると、正しく指摘したarmをgraderが罰する。
@@ -56,7 +57,7 @@ cd plugins/<name>
 claude plugin eval . --ablation with-without --judge-model sonnet --allow-tools "Write,Edit,Bash"
 ```
 
-`--allow-tools` はSKILL.mdに `allowed-tools` frontmatterが無い場合の運用側付与で、全caseに効く。見る数字はΔ（withスコア引くwithoutスコア）。7 caseで1回およそ$21、85分 (2026-09 の実測)。
+`--allow-tools` はSKILL.mdに `allowed-tools` frontmatterが無い場合の運用側付与で、全caseに効く。`scaffold_script` を持つcaseがあるpluginは `--scaffold --trust-plugin` を足す。見る数字はΔ（withスコア引くwithoutスコア）。7 caseで1回およそ$21、85分 (2026-09 の実測)。
 
 ### 新旧の比較
 
@@ -143,6 +144,9 @@ plugin の `skills/` か `commands/` を変えた PR は、`plugins/<name>/evals
 - `score_results` は結果の `suite.root` を plugin の場所として読み、`git ls-files` で hash を取る。`/tmp` の複製 (git の外) で回した結果は記録できないので、`suite.root` と `suite.plugins[].path` を repo の plugin の path に書き換えた写しを渡す。
 - `target: trace` の regex は、Bash の heredoc で書いた本文の中の文字列にも当たる。コマンドの実行を照合する regex は `"command":"(?![^"]*<<)` で heredoc を含むコマンドを除く。
 - 負例caseでもagentがBashにturnを使うため、10 turn程度は与える。
+- scaffoldの環境は `PATH`、一時の `HOME`、`TMPDIR` と少数の定数だけで、`NODE_ENV=production` が入る。`npm install` は `--include=dev` を付けないと devDependencies を入れず、`node_modules` を作らないまま exit 0 で終わる。
+- scaffoldには `NODE_EXTRA_CA_CERTS` が渡らない。独自のCAが要るnetworkでは `npm install` が証明書エラーで再試行を続け、120秒の制限で `scaffold failed (exit null)` になる。`NODE_OPTIONS=--use-system-ca` を付けてOSの証明書ストアを使わせる。scaffoldが失敗したrunは cost 0、score 0 になる。
+- sandboxの中では `npm run` と `npx` が exit 255 で動かない。テストと型検査は `node --test`、`node node_modules/typescript/bin/tsc --noEmit` のように直接実行するコマンドを依頼文に書く。TypeScriptはJavaScript実装の 5.x を固定する (native実装の 7.x はsandboxで未確認)。
 
 ## Language
 
@@ -181,8 +185,21 @@ _Avoid_: fingerprint (計画の中に書く hash を指す)
 ### 規約の担保 (enforce-conventions)
 
 **規約**:
-書き手が守らなければならない、コードの書き方への約束。文書やコメントが述べるもの、コードが 2 箇所以上で同じ形で守っているもの、テストや実行時の検査や lint が既に落としているものがある。製品が何を出力するかの固定は含めない。
+書き手が守らなければならない、コードの書き方への約束。出どころで、述べられた規約と観測した規約に分かれる。製品が何を出力するかの固定は含めない。
 _Avoid_: 規則、ルール
+
+**述べられた規約**:
+文書、コメント、検査 (テスト、実行時の検査、lint) が述べている規約。破っている箇所は違反である。
+
+**観測した規約**:
+どこにも述べられていないが、作業ツリーの全箇所が満たし、利用する側が当てにしている規約。全箇所とは、値を組み立てる箇所、関数を呼ぶ箇所、値の取りうる範囲で分岐する箇所を指す。当てにしているとは、約束を破る値が来ると、例外になるか、破れた場合を扱わずに結果を出す利用箇所があることを指す。満たさない箇所が 1 つでもあれば規約ではない。
+_Avoid_: 暗黙の規約
+
+**外から来る値**:
+作業ツリーを読んでも取りうる値が分からない値。読み込んだ値 (JSON、HTTP の応答、DB の行、ファイル、環境変数、CLI の引数)、製品コードで型を主張しただけの値 (cast、`any` からの代入)、公開する package の入口の export が受け取る値。
+
+**値の形**:
+実行時の値が持つ field の有無と、値の種類 (plain object、class の instance、primitive)。
 
 **強制の場所**:
 規約を破ったコードを落とす仕組みの置き場所。強い順に、違反を書く場所が無い構造と型検査、lint、テスト。違反が落ちる時点が早いほど強制力が強い。
