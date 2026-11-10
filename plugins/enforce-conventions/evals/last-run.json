@@ -1,51 +1,66 @@
 {
   "cases": {
     "01-type-over-test": {
-      "passed": 18,
-      "startedAt": "2026-11-10T12:34:59.871Z",
-      "total": 18
+      "passed": 15,
+      "startedAt": "2026-11-10T20:31:13.750Z",
+      "total": 15
     },
     "02-lint-import-direction": {
       "passed": 24,
-      "startedAt": "2026-11-10T12:34:59.871Z",
+      "startedAt": "2026-11-10T20:31:13.750Z",
       "total": 24
     },
     "03-test-migration-sequence": {
       "passed": 18,
-      "startedAt": "2026-11-10T12:34:59.871Z",
+      "startedAt": "2026-11-10T20:31:13.750Z",
       "total": 18
     },
     "04-holdout-unenforceable-naming": {
       "passed": 15,
-      "startedAt": "2026-11-10T12:34:59.871Z",
+      "startedAt": "2026-11-10T20:31:13.750Z",
       "total": 15
     },
     "05-holdout-sealed-test-blocks-shape": {
-      "passed": 18,
-      "startedAt": "2026-11-10T12:34:59.871Z",
+      "passed": 17,
+      "startedAt": "2026-11-10T20:31:13.750Z",
       "total": 18
     },
     "06-neg-fix-lint-error": {
       "passed": 12,
-      "startedAt": "2026-11-10T12:34:59.871Z",
+      "startedAt": "2026-11-10T20:31:13.750Z",
       "total": 12
     },
     "07-no-convention-in-diff": {
       "passed": 21,
-      "startedAt": "2026-11-10T12:34:59.871Z",
+      "startedAt": "2026-11-10T20:31:13.750Z",
       "total": 21
     },
     "08-holdout-guard-without-type-check": {
       "passed": 18,
-      "startedAt": "2026-11-10T12:34:59.871Z",
+      "startedAt": "2026-11-10T20:31:13.750Z",
       "total": 18
     },
     "09-test-to-lint": {
       "passed": 21,
-      "startedAt": "2026-11-10T12:34:59.871Z",
+      "startedAt": "2026-11-10T20:31:13.750Z",
       "total": 21
+    },
+    "10-state-machine-with-type-check": {
+      "passed": 35,
+      "startedAt": "2026-11-10T21:22:12.793Z",
+      "total": 36
+    },
+    "11-holdout-not-a-convention": {
+      "passed": 30,
+      "startedAt": "2026-11-10T20:31:13.750Z",
+      "total": 30
+    },
+    "12-existing-idiom-type-guard": {
+      "passed": 27,
+      "startedAt": "2026-11-10T20:31:13.750Z",
+      "total": 27
     }
   },
-  "shipped_sha256": "4926711e3ec1820af550246e05a72823a30badb2bab10b8a7d0f070e1949ab61",
+  "shipped_sha256": "a7a7897fdac55ce5ff8bb9fd17f475c6f61c608efc90a8d5a7ee5565ffc3503a",
   "waived": null
 }
