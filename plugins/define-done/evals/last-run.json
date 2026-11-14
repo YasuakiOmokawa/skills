@@ -1,5 +1,5 @@
 {
   "cases": {},
-  "shipped_sha256": "e1e4292f9bded631c4926418ea0956c0e7982c41cbf9f0d47dc666c1f0ddd86f",
-  "waived": "全 30 case を 1 つ前の中身 (questions.md の結びを直す前) で回し、case 32 の next-step-prompted だけが旧版 5/6 から 2/6 に下がった。questions.md の結びに計画のパスを書かせる 1 行を直し、問い返しを読む case 31・32 を回して 6 run とも全 grader が通った。ほかの case は questions.md を読まない (問い返しの語が無い依頼では読まない規則) ので、回し直していない。case 33 (新規) は旧版 0/3、新版 3/3。"
+  "shipped_sha256": "e89d2dc3f9e7fd928dc07f207fec6292ef70796f596520171f7288a3be29af65",
+  "waived": "変えたのは scripts/check_seal.py の封の見分け方 (trailer に加えて、変えたファイルがすべて受け入れテストか計画であること) と GLOSSARY の 1 文だけで、SKILL.md と references は変えていない。agent が封を作る手順と出力は同じなので eval は回し直していない。script の振る舞いは scripts/test_check_seal.py の 20 件 (squash の commit を模した 2 件を足した) で確かめた。"
 }

@@ -1,4 +1,5 @@
 import argparse
+import re
 import subprocess
 import sys
 import tempfile
@@ -33,9 +34,20 @@ def git_stdin(repo, text, *args):
     return completed.stdout
 
 
+TEST_OR_PLAN = re.compile(r"\.md$|(^|/)(tests?|__tests__|specs?|e2e)/|(^|/)test_[^/]*$|[._-](test|spec)\.[^/]+$")
+
+
+def only_tests_and_plans(repo, sha):
+    return all(TEST_OR_PLAN.search(path) for path in files_in(repo, sha))
+
+
 def seals(repo):
     out = git(repo, "log", "-E", f"--grep=^({SEAL_TRAILER}|{SUPERSEDES_TRAILER}): ", "--format=%H", "HEAD")
-    return [(sha, values) for sha in out.split() if {SEAL_TRAILER, SUPERSEDES_TRAILER} & set(values := trailers(repo, sha))]
+    return [
+        (sha, values)
+        for sha in out.split()
+        if {SEAL_TRAILER, SUPERSEDES_TRAILER} & set(values := trailers(repo, sha)) and only_tests_and_plans(repo, sha)
+    ]
 
 
 def files_in(repo, sha):
