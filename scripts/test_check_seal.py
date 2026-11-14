@@ -162,6 +162,26 @@ class CheckSealTest(unittest.TestCase):
         self.assertEqual(code, 1)
         self.assertIn("tamper:", out)
 
+    def squash_merge_ending_with_seal_trailer(self):
+        self.repo.write("src/a.js", "export const f = () => 1;\n")
+        self.repo.write("test/a.test.js", FAILING_TEST.replace("returns 1", "returns one"))
+        self.repo.commit("feat: f (#1)\n\n* impl\n\n* " + SEAL_MESSAGE)
+
+    def test_squash_merge_ending_with_seal_trailer_does_not_protect_product_files(self):
+        self.squash_merge_ending_with_seal_trailer()
+        self.repo.seal()
+        self.repo.write("src/a.js", "export const f = () => 2;\n")
+        self.repo.commit("impl of the next issue")
+        code, out = run("check", self.tmp.name)
+        self.assertEqual(code, 0, out)
+        self.assertIn("protected: plan.md, test/a.test.js\n", out)
+
+    def test_squash_merge_alone_is_not_a_seal(self):
+        self.squash_merge_ending_with_seal_trailer()
+        code, out = run("check", self.tmp.name)
+        self.assertEqual(code, 1)
+        self.assertIn("seal:", out)
+
     def test_seal_without_command_trailer_fails(self):
         self.repo.write("test/a.test.js", FAILING_TEST)
         self.repo.commit("test: x\n\nDefine-Done-Seal: AC-001\n", "test/a.test.js")

@@ -5,6 +5,13 @@ All notable changes to omokawa-skills will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v19.1.0 - 2026-11-14
+
+### Fixed
+
+- **`define-done` 4.4.0:** `check_seal.py` は、trailer `Define-Done-Seal:` か `Define-Done-Supersedes:` を持っていても、受け入れテストと計画 (`.md`) のほかのファイルを変えた commit を封に数えない。封を含む branch を squash merge すると、squash の commit の本文が封の trailer で終わり、PR の全ファイルが保護するパスになって、次の PR がそれらを変えると改ざんと判定されていた。受け入れテストは path で見分ける (`test`・`tests`・`__tests__`・`spec`・`specs`・`e2e` の dir の下、`test_` で始まる名前、`.test.`・`_test.`・`-test.`・`.spec.` などを含む名前)。
+- **GLOSSARY:** 「封」に、他のファイルを変えた trailer 付きの commit は封に数えないことを足した。
+
 ## v19.0.0 - 2026-11-11
 
 ### Changed
