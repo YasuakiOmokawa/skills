@@ -86,7 +86,7 @@
     {
       "name": "enforce-conventions",
       "description": "実装差分が守っている、または破っている規約を、構造・型、lint、テストのうち覆える最も強い場所へ移す。実装差分の仕上げとして渡されたときに使う。",
-      "version": "3.0.0",
+      "version": "3.1.0",
       "source": "./plugins/enforce-conventions",
       "skills": [
         "./skills/enforce-conventions"
