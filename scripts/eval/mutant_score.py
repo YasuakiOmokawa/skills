@@ -8,7 +8,6 @@ import tempfile
 from pathlib import Path
 
 TAP_LINE = re.compile(r"^(\s*)(not ok|ok) \d+ - (.*?)(?: # .*)?$")
-AC_ID = re.compile(r"AC-\d{3}")
 REPEATS = 5
 HIDDEN_TEST = "test/hidden.test.js"
 SWAPS = {"===": "!==", "!==": "===", "<=": "<", ">=": ">", "<": "<=", ">": ">=", "&&": "||", "||": "&&"}
@@ -146,7 +145,6 @@ def score(subject, tests_root, test_paths, support_paths=()):
     stub_results = run((subject / "stub.js").read_text(encoding="utf-8"))
     report = {
         "tests": len(baseline),
-        "tests_with_ac_id": sum(1 for name in baseline if AC_ID.search(name)),
         "reference_pass": len(passing),
         "reference_failures": sorted(name for name in baseline if name not in passing),
         "reference_failures_by_reference": {

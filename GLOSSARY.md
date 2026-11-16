@@ -27,7 +27,7 @@ API key、access token、passwordはこの領域へ保存しない。
 - PoC、プロトタイプ、Design Docの受け渡しは、出力先直下の案件ディレクトリ（`<案件slug>/`）にある `poc.md` のパスで行う。`poc.md` の見出し（問い、星取表、結論、PR、申し送り、Prototype）と `design-doc.md` は後続skillが読むmachine contract。
 - 固定見出し、ID、列、状態値は、skill外のconsumerが実際に読む場合だけmachine contractとする。
 - `check-pr` の検査結果ブロック (マーカー、`検査した commit` の行、表の列、判定の値) は、CIが読むmachine contract。
-- 外部状態の変更と破壊的操作は、正確な対象と変更内容が依頼で承認された場合だけ行う。例外として、`build-poc` と `build-prototype` の起動は、検証用ブランチのpushと、元のブランチをbaseとするdraft PRの作成の承認を含む。`define-done` の起動は、受け入れテスト・土台・計画と、要求が変える既存の規則の基準の書き直しだけを含む封の commit を作る承認を含む (push は含まない)。PRのURLは後続skillが読む。依頼が外部状態の変更を禁じる場合は行わない。
+- 外部状態の変更と破壊的操作は、正確な対象と変更内容が依頼で承認された場合だけ行う。例外として、`build-poc` と `build-prototype` の起動は、検証用ブランチのpushと、元のブランチをbaseとするdraft PRの作成の承認を含む。`define-done` の起動は、受け入れテスト・土台・計画と、要求が変える既存の規則の基準の書き直しだけを含む封の commit を作る承認と、repo が開発用に示すローカルの DB とコンテナの起動・停止とテスト用の DB への migration の承認を含む (push は含まない)。PRのURLは後続skillが読む。依頼が外部状態の変更を禁じる場合は行わない。
 
 ## Evaluation
 
@@ -75,7 +75,7 @@ python3 scripts/eval/rejudge.py /tmp/<name>-new.json <NN> plugins/<name>/evals/<
 
 ### 翻訳の質 (define-done)
 
-define-done の受け入れテストは、runner の外で決定論的に採点する (runner には出力にコマンドを流す grader が無い)。題材ごとに `scripts/eval/mutant/<題材>/` に次を置き、eval の case の dir に `mutant.json` (`{"subject": "scripts/eval/mutant/<題材>", "tests": "<受け入れテストの置き場所の dir>/"}`) を置く。採点は、その dir の下に agent が書いたファイル (受け入れテスト、土台、期待値のファイル) をすべて復元し、AC-ID を含む `*.test.js` だけを流す。
+define-done の受け入れテストは、runner の外で決定論的に採点する (runner には出力にコマンドを流す grader が無い)。題材ごとに `scripts/eval/mutant/<題材>/` に次を置き、eval の case の dir に `mutant.json` (`{"subject": "scripts/eval/mutant/<題材>", "tests": "<受け入れテストの置き場所の dir>/"}`) を置く。採点は、その dir の下に agent が書いたファイル (受け入れテスト、土台、期待値のファイル) をすべて復元し、土台の外の `*.test.js` を受け入れテストとして流す。
 
 - `subject.json`: `{"target": "<テストが import する製品コードの path>", "references": [...]}`。`references` は省略すると `["reference.js"]`
 - `reference.js` (と `references` に挙げた他の参照実装): 要求どおりの実装。2 つ目以降は、資料が決めていない振る舞い (状態コード、上限、境界ちょうど) だけを変える。テストはすべての参照実装で通るときだけ有効と数え、資料に無い値を期待するテストは、推測が 1 つ目と一致しても無効になる
@@ -180,7 +180,7 @@ _Avoid_: 根拠 (Ground Review の根拠と紛れる)、出どころ
 _Avoid_: 設計判断
 
 **受け入れテスト**:
-define-done が各 AC から翻訳した、実行できるテスト。テスト名は AC-ID で始まる。テストがそのまま oracle であり、散文の oracle は書かない。
+define-done が各 AC から翻訳した、実行できるテスト。テスト名は観測する振る舞いを業務の言葉で書き、AC-ID を含めない。AC との対応は封が記録する。テストがそのまま oracle であり、散文の oracle は書かない。
 _Avoid_: 検証の対応付け、Verification Plan (散文の oracle を指す)
 
 **封**:

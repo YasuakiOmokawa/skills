@@ -11,7 +11,6 @@ ROOT = Path(__file__).resolve().parents[2]
 GATE_HALT = re.compile(r"Gate[^\n]{0,80}(?:not ready|ready でない|ready にならな|ready ではな)", re.I)
 RECORD_NAME = "mutant-record.json"
 TEST_FILE = re.compile(r"\.test\.m?js$")
-AC_ID = re.compile(r"AC-\d{3}")
 
 
 def last_message(trace_path):
@@ -54,7 +53,7 @@ def restored_files(trace_path, prefix):
 def score_run(run, mapping, durable):
     trace = Path(run["tracePath"])
     restored = restored_files(trace, mapping["tests"])
-    tests = [relpath for relpath, text in restored.items() if TEST_FILE.search(relpath) and AC_ID.search(text)]
+    tests = [relpath for relpath in restored if TEST_FILE.search(relpath) and "/harness/" not in relpath]
     if not tests:
         outcome = "gate" if GATE_HALT.search(last_message(run["tracePath"])) else "no-test"
         code = {"code": "gate"} if outcome == "gate" else score_code(run, mapping, durable)

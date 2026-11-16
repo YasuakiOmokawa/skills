@@ -119,7 +119,7 @@ class ScoreRunTest(unittest.TestCase):
         from scripts.eval import score_results
         hidden = (ROOT / "scripts/eval/mutant/bulk-discount/test/hidden.test.js").read_text(encoding="utf-8")
         mapping = {"subject": "scripts/eval/mutant/bulk-discount", "tests": "test/"}
-        through_harness = hidden.replace("../src/cart.js", "./harness/cart.js").replace("test('", "test('AC-001 ")
+        through_harness = hidden.replace("../src/cart.js", "./harness/cart.js")
         self.assertNotEqual(through_harness, hidden)
         with tempfile.TemporaryDirectory() as work:
             fixture = {"type": "tool_use", "id": "f1", "name": "Bash", "input": {"command": "mkdir -p repo"}}
