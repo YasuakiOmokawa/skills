@@ -1,5 +1,6 @@
 import argparse
 import json
+import os
 import posixpath
 import re
 import subprocess
@@ -12,11 +13,14 @@ SEAL_TRAILER = "Define-Done-Seal"
 RULE_TRAILER = "Define-Done-Rule"
 RULE_FILES_TRAILER = "Define-Done-Rule-Files"
 FILES_TRAILER = "Define-Done-Files"
+TEST_TRAILER = "Define-Done-Test"
 COMMAND_TRAILER = "Define-Done-Test-Command"
 SUPERSEDES_TRAILER = "Define-Done-Supersedes"
+TEST_SEPARATOR = " › "
 REPORT_PLACEHOLDER = "{report}"
 COMPLETION_REFS = ("refs/remotes/origin/HEAD", "refs/remotes/origin/main", "refs/remotes/origin/master")
 AC_ID = re.compile(r"AC-\d{3}")
+TEST_ENTRY = re.compile(r"^(AC-\d{3}) = (.+?)" + TEST_SEPARATOR + r"(.+)$")
 CODE_SUFFIXES = (".js", ".mjs", ".cjs", ".jsx", ".ts", ".mts", ".cts", ".tsx", ".py", ".rb")
 HARNESS_DIR = "harness"
 RUNNER_MODULES = {
@@ -57,15 +61,29 @@ def git_stdin(repo, text, *args):
 
 def trailers(repo, sha):
     parsed = git_stdin(repo, git(repo, "show", "-s", "--format=%B", sha), "interpret-trailers", "--parse")
-    values = {}
+    values, tests = {}, []
     for line in parsed.splitlines():
         key, _, value = line.partition(":")
-        values[key.strip()] = value.strip()
+        if key.strip() == TEST_TRAILER:
+            tests.append(value.strip())
+        else:
+            values[key.strip()] = value.strip()
+    if tests:
+        values[TEST_TRAILER] = tests
     return values
 
 
 def listed(value):
     return [item.strip() for item in (value or "").split(",") if item.strip()]
+
+
+def test_mapping(entries):
+    mapping = []
+    for entry in entries:
+        match = TEST_ENTRY.match(entry)
+        if match:
+            mapping.append({"ac": match.group(1), "file": match.group(2), "name": match.group(3)})
+    return mapping
 
 
 def files_in(repo, sha):
@@ -103,6 +121,7 @@ def seals(repo):
             "files": files,
             "behavior": SEAL_TRAILER in values and (recorded or SUPERSEDES_TRAILER not in values),
             "recorded": recorded,
+            "mapping": test_mapping(values.get(TEST_TRAILER, [])),
             "rule_files": set(listed(values.get(RULE_FILES_TRAILER))),
             "completed": is_completed(repo, ref, sha),
         })
@@ -121,8 +140,8 @@ def protected_paths(found):
     return protected
 
 
-def is_test_file(path, text):
-    return path.endswith(CODE_SUFFIXES) and HARNESS_DIR not in path.split("/")[:-1] and AC_ID.search(text) is not None
+def is_code(path):
+    return path.endswith(CODE_SUFFIXES) and HARNESS_DIR not in path.split("/")[:-1]
 
 
 def import_findings(path, text):
@@ -138,8 +157,8 @@ def import_findings(path, text):
             findings.append(specifier)
         return findings
     if path.endswith(".py"):
-        specifiers = [a or b for a, b in PY_IMPORT.findall(text)]
-        for specifier in specifiers:
+        for a, b in PY_IMPORT.findall(text):
+            specifier = a or b
             head = specifier.lstrip(".").split(".")[0]
             if head not in RUNNER_MODULES and head != HARNESS_DIR:
                 findings.append(specifier)
@@ -161,6 +180,12 @@ def read_at(repo, sha, path):
         return git(repo, "show", f"{sha}:{path}")
     except RuntimeError:
         return ""
+
+
+def sealed_test_files(repo, seal):
+    if seal["mapping"]:
+        return sorted({test["file"] for test in seal["mapping"]})
+    return [path for path in seal["files"] if is_code(path) and AC_ID.search(read_at(repo, seal["sha"], path))]
 
 
 def inspect(repo):
@@ -192,11 +217,9 @@ def inspect(repo):
     for seal in behavior:
         if not seal["recorded"]:
             continue
-        for path in seal["files"]:
-            text = read_at(repo, seal["sha"], path)
-            if is_test_file(path, text):
-                for specifier in import_findings(path, text):
-                    findings.append(f"boundary: {path} が土台とテストランナーの外の {specifier} を import している")
+        for path in sealed_test_files(repo, seal):
+            for specifier in import_findings(path, read_at(repo, seal["sha"], path)):
+                findings.append(f"boundary: {path} が土台とテストランナーの外の {specifier} を import している")
     info = {
         "seal": latest["sha"],
         "acs": values.get(SEAL_TRAILER, ""),
@@ -206,15 +229,17 @@ def inspect(repo):
         "permanent": ", ".join(path for path, entry in protected.items() if entry["permanent"]),
         "seals": ", ".join(seal["sha"][:12] for seal in found),
     }
-    return {**info, "recorded": latest["recorded"]}, findings
+    return {**info, "recorded": latest["recorded"], "mapping": latest["mapping"]}, findings
 
 
 def run_tests(cwd, command):
-    with tempfile.TemporaryDirectory() as scratch:
-        report = Path(scratch) / "report"
-        completed = subprocess.run(command.replace(REPORT_PLACEHOLDER, str(report)), shell=True, cwd=cwd, capture_output=True, text=True, timeout=1200)
-        results = parse_report(report.read_text(encoding="utf-8")) if report.exists() else {}
-    return completed.returncode, completed.stdout + completed.stderr, results
+    report = Path(cwd) / f".define-done-report-{os.getpid()}"
+    try:
+        completed = subprocess.run(command.replace(REPORT_PLACEHOLDER, report.name), shell=True, cwd=cwd, capture_output=True, text=True, timeout=1800)
+        entries = parse_report(report.read_text(encoding="utf-8")) if report.exists() else []
+    finally:
+        report.unlink(missing_ok=True)
+    return completed.returncode, completed.stdout + completed.stderr, entries
 
 
 def parse_report(text):
@@ -222,41 +247,74 @@ def parse_report(text):
 
 
 def parse_rspec_json(text):
-    results = {}
     try:
         examples = json.loads(text).get("examples") or []
     except json.JSONDecodeError:
-        return results
+        return []
     states = {"passed": "pass", "failed": "fail"}
-    for example in examples:
-        match = AC_ID.search(example.get("full_description", "")) or AC_ID.search(example.get("description", ""))
-        if match is not None:
-            results.setdefault(match.group(0), []).append(states.get(example.get("status"), "skipped"))
-    return results
+    return [
+        {"files": [example.get("file_path", "")], "names": [example.get("full_description", ""), example.get("description", "")], "state": states.get(example.get("status"), "skipped")}
+        for example in examples
+    ]
 
 
 def parse_junit(text):
-    results = {}
     try:
         root = ElementTree.fromstring(text)
     except ElementTree.ParseError:
-        return results
+        return []
+    entries = []
     for case in root.iter("testcase"):
-        match = AC_ID.search(case.get("name", "")) or AC_ID.search(case.get("classname", ""))
-        if match is None:
-            continue
         if case.find("skipped") is not None:
             state = "skipped"
         elif case.find("failure") is not None or case.find("error") is not None or case.get("failure"):
             state = "fail"
         else:
             state = "pass"
-        results.setdefault(match.group(0), []).append(state)
-    return results
+        classname = case.get("classname", "")
+        entries.append({
+            "files": [case.get("file", ""), classname, classname.replace(".", "/")],
+            "names": [case.get("name", ""), f"{classname} {case.get('name', '')}"],
+            "state": state,
+        })
+    return entries
+
+
+def same_file(candidate, path):
+    candidate = candidate.replace("\\", "/").removeprefix("./")
+    if not candidate:
+        return False
+    stem = posixpath.splitext(path)[0]
+    return any(candidate == target or candidate.endswith("/" + target) or target.endswith("/" + candidate) for target in (path, stem))
+
+
+def in_files(entry, paths):
+    return any(same_file(candidate, path) for candidate in entry["files"] for path in paths)
+
+
+def matches(entry, test):
+    return in_files(entry, [test["file"]]) and any(name == test["name"] or name.endswith(test["name"]) for name in entry["names"] if name)
+
+
+def states_by_ac(entries, mapping):
+    states = {}
+    for test in mapping:
+        found = [entry["state"] for entry in entries if matches(entry, test)]
+        states.setdefault(test["ac"], []).extend(found or ["missing"])
+    return states
+
+
+def legacy_states_by_ac(entries):
+    states = {}
+    for entry in entries:
+        match = next((AC_ID.search(name) for name in entry["names"] if AC_ID.search(name)), None)
+        if match:
+            states.setdefault(match.group(0), []).append(entry["state"])
+    return states
 
 
 def outcome(states):
-    if not states or "skipped" in states:
+    if not states or "missing" in states or "skipped" in states:
         return "missing"
     if all(state == "fail" for state in states):
         return "fail"
@@ -277,32 +335,30 @@ def run_at_seal(repo, sha, command):
 
 def verify(repo, info):
     command = info["test-command"]
-    sealed_code, _, sealed = run_at_seal(repo, info["seal"], command)
-    current_code, output, current = run_tests(repo, command)
-    print(f"sealed-exit: {sealed_code}")
-    print(f"current-exit: {current_code}")
-    print(output[-4000:])
     if not info["recorded"]:
+        sealed_code, _, _ = run_at_seal(repo, info["seal"], command)
+        current_code, output, _ = run_tests(repo, command)
+        print(f"sealed-exit: {sealed_code}")
+        print(f"current-exit: {current_code}")
+        print(output[-4000:])
         findings = []
         if sealed_code == 0:
             findings.append("vacuous: 受け入れテストが封の時点で既に通っていた。振る舞いを観測していない")
         if current_code != 0:
             findings.append("fail: 受け入れテストが今の tree で落ちる")
         return findings
+    current_code, output, entries = run_tests(repo, command)
+    print(f"current-exit: {current_code}")
+    print(output[-4000:])
+    states = states_by_ac(entries, info["mapping"]) if info["mapping"] else legacy_states_by_ac(entries)
     rule = set(listed(info["rule"]))
     findings = []
     for ac in listed(info["acs"]):
-        kind = "rule" if ac in rule else "non-impact"
-        at_seal, now = outcome(sealed.get(ac)), outcome(current.get(ac))
-        print(f"{ac}: {kind} sealed={at_seal} current={now}")
-        if at_seal == "missing" or now == "missing":
-            findings.append(f"missing: {ac} のテストが{'封の時点' if at_seal == 'missing' else '今の tree'}で実行されなかった")
-            continue
-        if kind == "rule" and at_seal != "fail":
-            findings.append(f"vacuous: {ac} は規則の基準だが、封の時点で落ちなかった")
-        if kind == "non-impact" and at_seal != "pass":
-            findings.append(f"kind: {ac} は非影響の基準だが、封の時点で通らなかった")
-        if now != "pass":
+        now = outcome(states.get(ac))
+        print(f"{ac}: {'rule' if ac in rule else 'non-impact'} current={now}")
+        if now == "missing":
+            findings.append(f"missing: {ac} のテストが今の tree で実行されなかった")
+        elif now != "pass":
             findings.append(f"fail: {ac} が今の tree で通らない")
     return findings
 
@@ -316,6 +372,7 @@ def seal(repo, spec_text):
     subject = str(spec.get("subject") or "test: 受け入れテスト")
     rule_files = list(dict.fromkeys(spec.get("rule") or []))
     non_impact_files = list(dict.fromkeys(spec.get("non_impact") or []))
+    mapping = [{"ac": str(test.get("ac", "")), "file": str(test.get("file", "")), "name": str(test.get("name", ""))} for test in spec.get("tests") or []]
     files = rule_files + non_impact_files
     errors = []
     if set(rule_files) & set(non_impact_files):
@@ -325,21 +382,28 @@ def seal(repo, spec_text):
     missing = [path for path in files if not (Path(repo) / path).is_file()]
     if missing:
         errors.append(f"files: {', '.join(missing)} が無い")
+    if not mapping:
+        errors.append("tests: AC とテストの対応が無い")
+    kinds = {}
+    for test in mapping:
+        if not AC_ID.fullmatch(test["ac"]) or not test["name"] or "\n" in test["name"] or TEST_SEPARATOR in test["file"]:
+            errors.append(f"tests: 対応 {test} の AC-ID かテスト名が読めない")
+            continue
+        if test["file"] not in files:
+            errors.append(f"tests: {test['ac']} のテストのファイル {test['file']} が rule にも non_impact にも無い")
+            continue
+        kind = "rule" if test["file"] in rule_files else "non-impact"
+        if kinds.setdefault(test["ac"], kind) != kind:
+            errors.append(f"kind: {test['ac']} のテストが規則と非影響の両方のファイルにある")
     if errors:
         return errors
-    kinds = {}
-    for kind, paths in (("rule", rule_files), ("non-impact", non_impact_files)):
-        for path in paths:
-            text = (Path(repo) / path).read_text(encoding="utf-8")
-            if not is_test_file(path, text):
-                continue
-            for specifier in import_findings(path, text):
-                errors.append(f"boundary: {path} が土台とテストランナーの外の {specifier} を import している")
-            for ac in sorted(set(AC_ID.findall(text))):
-                if kinds.setdefault(ac, kind) != kind:
-                    errors.append(f"kind: {ac} が規則と非影響の両方のファイルにある")
-    if not kinds:
-        errors.append("files: AC-ID で始まる名前のテストを持つファイルが無い")
+    test_files = sorted({test["file"] for test in mapping})
+    for path in files:
+        if path.endswith(CODE_SUFFIXES) and AC_ID.search((Path(repo) / path).read_text(encoding="utf-8")):
+            errors.append(f"tests: {path} に AC-ID を書かない (AC との対応は封が記録する)")
+    for path in test_files:
+        for specifier in import_findings(path, (Path(repo) / path).read_text(encoding="utf-8")):
+            errors.append(f"boundary: {path} が土台とテストランナーの外の {specifier} を import している")
     found = seals(repo)
     permanent = {path for path, entry in protected_paths(found).items() if entry["permanent"]}
     rewritten = sorted(permanent & set(files))
@@ -347,13 +411,17 @@ def seal(repo, spec_text):
         errors.append(f"supersedes: 恒久に守っている規則の基準 {', '.join(rewritten)} を書き直すには supersedes に置き換える AC-ID と根拠の要求が要る")
     if errors:
         return errors
-    code, output, results = run_tests(repo, test_command)
+    code, output, entries = run_tests(repo, test_command)
+    for entry in entries:
+        if in_files(entry, test_files) and not any(matches(entry, test) for test in mapping):
+            errors.append(f"tests: 対応する AC が無いテスト「{next(name for name in entry['names'] if name)}」がある")
+    states = states_by_ac(entries, mapping)
     for ac, kind in sorted(kinds.items()):
-        state = outcome(results.get(ac))
+        state = outcome(states.get(ac))
         expected = "fail" if kind == "rule" else "pass"
         print(f"{ac}: {kind} now={state}")
         if state == "missing":
-            errors.append(f"missing: {ac} のテストが実行されなかった (import やセットアップの失敗を直す)")
+            errors.append(f"missing: {ac} のテストが実行されなかった (テスト名の対応か、import やセットアップの失敗を直す)")
         elif state != expected:
             errors.append(f"kind: {ac} は{'規則' if kind == 'rule' else '非影響'}の基準だが、今の tree で {state} だった")
     if errors:
@@ -365,6 +433,7 @@ def seal(repo, spec_text):
         *([f"{RULE_TRAILER}: {', '.join(rule_acs)}"] if rule_acs else []),
         *([f"{RULE_FILES_TRAILER}: {', '.join(rule_files)}"] if rule_files else []),
         f"{FILES_TRAILER}: {', '.join(files)}",
+        *[f"{TEST_TRAILER}: {test['ac']} = {test['file']}{TEST_SEPARATOR}{test['name']}" for test in mapping],
         f"{COMMAND_TRAILER}: {test_command}",
         *([f"{SUPERSEDES_TRAILER}: {supersedes}"] if supersedes else []),
     ]
@@ -400,7 +469,7 @@ def run_command(args, stdin):
         return 1
     if info:
         for key, value in info.items():
-            if key != "recorded":
+            if key not in ("recorded", "mapping"):
                 print(f"{key}: {value}")
     for finding in findings:
         print(finding)
