@@ -5,6 +5,15 @@ All notable changes to omokawa-skills will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v20.1.0 - 2026-11-16
+
+### Changed
+
+- **`define-done` 5.1.0:** 受け入れテストのテスト名は観測する振る舞いを業務の言葉で書き、テストと土台のコードに AC-ID を書かない。AC とテストの対応は `seal` に渡す JSON の `tests` に書き、封の trailer `Define-Done-Test: AC-001 = <ファイル> › <テスト名>` に記録する。`seal` は、テストの無い AC、AC の無いテスト、実行されなかったテスト、コードの中の AC-ID を拒む。結果はファイルとテスト名で照合するので、封の外のテストの結果を混ぜない (bun・node・vitest・Playwright の JUnit と RSpec の JSON で確かめた)。
+- **`define-done` 5.1.0:** repo が開発用に示すローカルの DB とコンテナを起動してよく、テスト用の DB へ migration を流してよい。自分が起動したものは最後に止め、ローカルの外への接続と送信、アプリのサーバの起動はしない。`{report}` は repo の root からの相対の path に置き換わり、コマンドは repo の root で流れるので、コンテナの中で流すランナー (sign の `dip rspec` など) でも結果を読める。
+- **`check_seal.py verify`:** 新しい形式の封は、`seal` が封を作るときに測った結果を信じ、今の tree だけを流す。封の時点の tree を `/tmp` に展開して流すと、repo をマウントするコンテナのランナーでは今の tree を流してしまい、規則の基準を「封の時点で通った」と誤判定していた。旧い形式の封は封の時点の tree を流し直す。
+- **eval:** case 18 を `18-db-start-or-unverified` に改め、「DB を起動しない」をやめて、repo が示す手順で起動を試み、起動できなければ未検証に並べることを見る。case 34 (前の封の受け入れテストがあり土台が無い repo) と case 35 (要求が恒久の規則の基準を変える) を足した。何も測っていなかった 28 の 2 grader (Gate で止まるのが正解の case の後段) と、skill に根拠の無い 29 の「Write か Edit で書く」を外した。採点は AC-ID ではなく、土台の外の `*.test.js` を受け入れテストとして流す。全 30 case と足した 3 case を with arm で 3 run ずつ、chain eval 2 case を回した ($64)。新しい case はすべて 3/3、テストを書いた case は 30 の 1 run (無効なテスト 3 本) を除き要件適合度・バグ検出率とも満点。5.0.0 から 2 run 以上下がった grader は 01 `stage-scope-declared` (3/3 → 1/3、旧版の通算 13/18 で今回の変更が触れない段) だけ。
+
 ## v20.0.0 - 2026-11-16
 
 ### Changed
