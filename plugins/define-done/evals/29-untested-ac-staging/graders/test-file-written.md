@@ -1,5 +1,5 @@
 ---
 type: file_exists
-path: "repo/test/bulk-discount.acceptance.test.js"
+path: "repo/test/*.acceptance.test.js"
 exists: true
 ---

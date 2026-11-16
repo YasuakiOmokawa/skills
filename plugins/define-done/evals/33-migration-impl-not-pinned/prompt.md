@@ -125,4 +125,4 @@ git add -A
 git -c user.name=fixture -c user.email=fixture@example.com commit -qm base
 ```
 
-カレントブランチから新しいブランチを切り、`repo/plans/invite.md` の設計を /define-done する。受け入れテストは `repo/test/invite.acceptance.test.js` に `node:test` で書く (`node --test` で流せること)。Gate が ready でなければ止めて報告する。
+カレントブランチから新しいブランチを切り、`repo/plans/invite.md` の設計を /define-done する。受け入れテストは `repo/test/` の下に `*.acceptance.test.js` として `node:test` で書く (`node --test` で流せること)。Gate が ready でなければ止めて報告する。

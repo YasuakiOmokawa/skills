@@ -3,4 +3,4 @@ type: regex
 target: trace
 match: not_contains
 ---
->\s*[^\s"\\]*test/bulk-discount\.acceptance\.test\.js
+>\s*[^\s"\\]*test/(?:harness/|[^\s"\\]*acceptance)[^\s"\\]*

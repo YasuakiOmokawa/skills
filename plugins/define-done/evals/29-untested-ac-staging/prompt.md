@@ -102,4 +102,4 @@ EOF
 git add -A && git commit -qm base
 ```
 
-`repo/` の plans/bulk-discount.md を /define-done して、実装に着手できる状態にしてください。受け入れテストは `repo/test/bulk-discount.acceptance.test.js` に `node:test` で書いてください (`node --test` で流せること)。
+`repo/` の plans/bulk-discount.md を /define-done して、実装に着手できる状態にしてください。受け入れテストは `repo/test/` の下に `*.acceptance.test.js` として `node:test` で書いてください (`node --test` で流せること)。
