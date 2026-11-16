@@ -1,5 +1,151 @@
 {
-  "cases": {},
-  "shipped_sha256": "e89d2dc3f9e7fd928dc07f207fec6292ef70796f596520171f7288a3be29af65",
-  "waived": "変えたのは scripts/check_seal.py の封の見分け方 (trailer に加えて、変えたファイルがすべて受け入れテストか計画であること) と GLOSSARY の 1 文だけで、SKILL.md と references は変えていない。agent が封を作る手順と出力は同じなので eval は回し直していない。script の振る舞いは scripts/test_check_seal.py の 20 件 (squash の commit を模した 2 件を足した) で確かめた。"
+  "cases": {
+    "01-session-store": {
+      "passed": 17,
+      "startedAt": "2026-11-16T07:02:15.432Z",
+      "total": 18
+    },
+    "02-neg-create-plan": {
+      "passed": 9,
+      "startedAt": "2026-11-16T07:02:15.432Z",
+      "total": 9
+    },
+    "03-neg-implement": {
+      "passed": 9,
+      "startedAt": "2026-11-16T07:02:15.432Z",
+      "total": 9
+    },
+    "04-reset-boundaries": {
+      "passed": 15,
+      "startedAt": "2026-11-16T07:02:15.432Z",
+      "total": 15
+    },
+    "05-recommendations-out-of-scope": {
+      "passed": 11,
+      "startedAt": "2026-11-16T07:02:15.432Z",
+      "total": 12
+    },
+    "08-billing-dup-halt": {
+      "passed": 25,
+      "startedAt": "2026-11-16T07:02:15.432Z",
+      "total": 27
+    },
+    "09-invariant-other-writer": {
+      "passed": 9,
+      "startedAt": "2026-11-16T07:02:15.432Z",
+      "total": 9
+    },
+    "10-invariant-writer-tripwire": {
+      "passed": 3,
+      "startedAt": "2026-11-16T07:02:15.432Z",
+      "total": 3
+    },
+    "11-external-dep-anchor": {
+      "passed": 3,
+      "startedAt": "2026-11-16T07:02:15.432Z",
+      "total": 3
+    },
+    "12-absence-fixed-delay": {
+      "passed": 3,
+      "startedAt": "2026-11-16T07:02:15.432Z",
+      "total": 3
+    },
+    "13-write-refused": {
+      "passed": 6,
+      "startedAt": "2026-11-16T07:02:15.432Z",
+      "total": 6
+    },
+    "14-holdout-unverified": {
+      "passed": 10,
+      "startedAt": "2026-11-16T07:02:15.432Z",
+      "total": 12
+    },
+    "15-ac-id-semantic-change": {
+      "passed": 13,
+      "startedAt": "2026-11-16T07:02:15.432Z",
+      "total": 15
+    },
+    "17-convention-not-ac": {
+      "passed": 6,
+      "startedAt": "2026-11-16T07:02:15.432Z",
+      "total": 6
+    },
+    "18-no-external-state-dry-run": {
+      "passed": 6,
+      "startedAt": "2026-11-16T07:02:15.432Z",
+      "total": 6
+    },
+    "19-impl-names-behavior-prohibition": {
+      "passed": 12,
+      "startedAt": "2026-11-16T07:02:15.432Z",
+      "total": 12
+    },
+    "21-ac-from-request-not-decision": {
+      "passed": 15,
+      "startedAt": "2026-11-16T07:02:15.432Z",
+      "total": 15
+    },
+    "22-dependency-premise-refuted": {
+      "passed": 9,
+      "startedAt": "2026-11-16T07:02:15.432Z",
+      "total": 9
+    },
+    "23-acceptance-tests-sealed": {
+      "passed": 15,
+      "startedAt": "2026-11-16T07:02:15.432Z",
+      "total": 15
+    },
+    "24-bulk-discount-existing-code": {
+      "passed": 12,
+      "startedAt": "2026-11-16T07:02:15.432Z",
+      "total": 12
+    },
+    "25-real-bug-admin-mints-owner": {
+      "passed": 3,
+      "startedAt": "2026-11-16T07:02:15.432Z",
+      "total": 3
+    },
+    "26-real-bug-last-used-company": {
+      "passed": 9,
+      "startedAt": "2026-11-16T07:02:15.432Z",
+      "total": 9
+    },
+    "27-real-bug-remove-missing-member": {
+      "passed": 11,
+      "startedAt": "2026-11-16T07:02:15.432Z",
+      "total": 12
+    },
+    "28-existing-guard-string-quantity": {
+      "passed": 3,
+      "startedAt": "2026-11-16T07:02:15.432Z",
+      "total": 15
+    },
+    "29-untested-ac-staging": {
+      "passed": 12,
+      "startedAt": "2026-11-16T07:02:15.432Z",
+      "total": 15
+    },
+    "30-invariant-op-sequence": {
+      "passed": 9,
+      "startedAt": "2026-11-16T07:02:15.432Z",
+      "total": 9
+    },
+    "31-question-back": {
+      "passed": 18,
+      "startedAt": "2026-11-16T07:02:15.432Z",
+      "total": 18
+    },
+    "32-zero-questions": {
+      "passed": 15,
+      "startedAt": "2026-11-16T07:02:15.432Z",
+      "total": 15
+    },
+    "33-migration-impl-not-pinned": {
+      "passed": 15,
+      "startedAt": "2026-11-16T07:02:15.432Z",
+      "total": 15
+    }
+  },
+  "shipped_sha256": "cdcc2fcf59b4554a9621649808fbfc1bed85c1a320db47e7e688f9bbdfccb8f2",
+  "waived": null
 }
