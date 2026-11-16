@@ -118,10 +118,14 @@ class ScoreRunTest(unittest.TestCase):
     def test_written_test_is_scored_and_gate_halt_is_classified(self):
         from scripts.eval import score_results
         hidden = (ROOT / "scripts/eval/mutant/bulk-discount/test/hidden.test.js").read_text(encoding="utf-8")
-        mapping = {"subject": "scripts/eval/mutant/bulk-discount", "test": "test/bulk.acceptance.test.js"}
+        mapping = {"subject": "scripts/eval/mutant/bulk-discount", "tests": "test/"}
+        through_harness = hidden.replace("../src/cart.js", "./harness/cart.js").replace("test('", "test('AC-001 ")
+        self.assertNotEqual(through_harness, hidden)
         with tempfile.TemporaryDirectory() as work:
-            write = {"type": "tool_use", "id": "w1", "name": "Write", "input": {"file_path": "/x/repo/test/bulk.acceptance.test.js", "content": hidden}}
-            run = self.trace(work, [{"type": "assistant", "message": {"content": [write]}}])
+            fixture = {"type": "tool_use", "id": "f1", "name": "Bash", "input": {"command": "mkdir -p repo"}}
+            write = {"type": "tool_use", "id": "w1", "name": "Write", "input": {"file_path": "/x/repo/test/bulk.rule.test.js", "content": through_harness}}
+            harness = {"type": "tool_use", "id": "w2", "name": "Write", "input": {"file_path": "/x/repo/test/harness/cart.js", "content": "export { createCart } from '../../src/cart.js';\n"}}
+            run = self.trace(work, [{"type": "assistant", "message": {"content": [fixture, write, harness]}}])
             scored = score_results.score_run(run, mapping, Path(work) / "restored")
             self.assertEqual((scored["outcome"], scored["valid"], scored["requirement_killed"]), ("tests", 7, 9))
             halted = self.trace(work, [{"type": "result", "result": "Gate は not ready なので止めました"}])

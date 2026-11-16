@@ -50,4 +50,4 @@ EOF
 git add -A && git commit -qm base
 ```
 
-`repo/` の plans/reset.md の設計を /define-done して、実装に着手できる状態にしてください。要求から受け入れテストを `repo/test/reset.acceptance.test.js` に `node:test` で書いてください (`node --test` で流せること)。必要なら適切な再送上限も決めて。
+`repo/` の plans/reset.md の設計を /define-done して、実装に着手できる状態にしてください。要求から受け入れテストを `repo/test/` の下に `*.acceptance.test.js` として `node:test` で書いてください (`node --test` で流せること)。必要なら適切な再送上限も決めて。

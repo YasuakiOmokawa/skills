@@ -1,1 +1,1 @@
-{"subject": "scripts/eval/mutant/reset", "test": "test/reset.acceptance.test.js"}
+{"subject": "scripts/eval/mutant/reset", "tests": "test/"}

@@ -5,6 +5,16 @@ All notable changes to omokawa-skills will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v20.0.0 - 2026-11-16
+
+### Changed
+
+- **`define-done` 5.0.0 (BREAKING):** AC を外から観測できる振る舞いだけにし、計画が新しく作る **規則の基準** (`[規則]`、変更前は成り立たない) と、壊してはならない今の振る舞いの **非影響の基準** (`[非影響]`、変更前から成り立つ) に分けた。`[振る舞い]` と `[禁止]` は廃止し、コードにあってはならないもの・設定・依存・bundle の上限などの規約は、範囲外として enforce-conventions に回す。封は、規則の基準を恒久に、非影響の基準を計画の完了 (封が `origin` の既定の branch から辿れる) まで守る。taimei-auth で封を書き直した 14 本のうち、業務の要求が変わったのは 1〜2 本で、残りは AC やテストが実装・規約・移行の途中の状態を固定していたためだった。
+- **`check_seal.py`:** `seal` を足した。標準入力の JSON で受け入れテストのコマンドと種類ごとのファイルを受け取り、今の tree で流して、規則が落ち非影響が通るときだけ、ファイルと種類を trailer に記録した封の commit を作る。実行されなかったテスト、受け入れテストからの `harness/` (土台) とテストランナーの外の import も拒む。結果は JUnit XML と RSpec の JSON を読む。`verify` は AC ごとに、規則は封の時点で落ちて今通るか、非影響は両方で通るかを判定する。封の commit に入れたファイルはすべて保護し (golden を含む)、記録したファイルの一覧と commit の変更が一致しないもの (squash merge など) は封に数えない。要求が恒久の規則を変えるときは、`supersedes` を付けた封だけが書き直せる。旧い形式の封はこれまでどおり判定する。
+- **受け入れテスト:** 種類ごとに別のファイルに書き、外の境界には土台だけを通して触れる。土台が無ければ define-done が要る分だけ作る。画面は実ブラウザでビルドした画面を開き、通信の契約・認証ライブラリの公開 API・ブラウザの API だけを差し替える。DB やサーバの起動が要るテストは書かずに未検証として返す (起動済みのものは使ってよい)。
+- **GLOSSARY / ADR:** 「受け入れ基準」「封」「保護するパス」を改め、「規則の基準」「非影響の基準」「計画の完了」「土台」を足した。理由は `docs/adr/0001-seal-protects-by-criterion-kind.md`。
+- **eval:** case 06 (不在を探すコマンドの dry-run) を削除し、case 17 を規約を範囲外に返す case (`17-convention-not-ac`) に作り替えた。受け入れテストの置き場所は dir で指定し、`mutant.json` は `"tests"` に dir を書く。採点は dir の下に書かれた受け入れテストと土台をすべて復元する。30 case を with arm で 3 run ずつ回した ($56)。受け入れテストを書いた 7 case は全 run で要件適合度・バグ検出率とも満点で、全 run が `check_seal.py seal` で封を作った。旧版から 2 run 以上下がった grader は 29 の「受け入れテストを Write か Edit で書く」(11/12 → 0/3) だけで、新版は受け入れテストと土台を 1 回の heredoc でまとめて書く。skill の本文に根拠の無い癖の grader で、採点は heredoc から復元できるので、受け入れた損失とした。
+
 ## v19.1.0 - 2026-11-14
 
 ### Fixed
