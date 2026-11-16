@@ -75,7 +75,7 @@ python3 scripts/eval/rejudge.py /tmp/<name>-new.json <NN> plugins/<name>/evals/<
 
 ### 翻訳の質 (define-done)
 
-define-done の受け入れテストは、runner の外で決定論的に採点する (runner には出力にコマンドを流す grader が無い)。題材ごとに `scripts/eval/mutant/<題材>/` に次を置き、eval の case の dir に `mutant.json` (`{"subject": "scripts/eval/mutant/<題材>", "test": "<受け入れテストの相対 path>"}`) を置く。
+define-done の受け入れテストは、runner の外で決定論的に採点する (runner には出力にコマンドを流す grader が無い)。題材ごとに `scripts/eval/mutant/<題材>/` に次を置き、eval の case の dir に `mutant.json` (`{"subject": "scripts/eval/mutant/<題材>", "tests": "<受け入れテストの置き場所の dir>/"}`) を置く。採点は、その dir の下に agent が書いたファイル (受け入れテスト、土台、期待値のファイル) をすべて復元し、AC-ID を含む `*.test.js` だけを流す。
 
 - `subject.json`: `{"target": "<テストが import する製品コードの path>", "references": [...]}`。`references` は省略すると `["reference.js"]`
 - `reference.js` (と `references` に挙げた他の参照実装): 要求どおりの実装。2 つ目以降は、資料が決めていない振る舞い (状態コード、上限、境界ちょうど) だけを変える。テストはすべての参照実装で通るときだけ有効と数え、資料に無い値を期待するテストは、推測が 1 つ目と一致しても無効になる
@@ -91,7 +91,7 @@ python3 -I scripts/eval/mutant_score.py scripts/eval/mutant/<題材> scripts/eva
 python3 -m scripts.eval.score_results /tmp/<name>.json --record
 ```
 
-1 行目は計測器の自己検査で、隠しテストがすべての参照実装で通り、手書きの変種を全部落とすことを確かめる。2 行目は `--keep-temp` を必ず付ける。3 行目は trace から受け入れテストを `<name>.json.restored/` に復元し、arm ごとの表を出し、`evals/mutant-record.json` に shipped の中身の hash ごとに記録する。sandbox を消すのは 3 行目の後にする。見る数は次のとおり。
+1 行目は計測器の自己検査で、隠しテストがすべての参照実装で通り、手書きの変種を全部落とすことを確かめる。2 行目は `--keep-temp` を必ず付ける。3 行目は trace から受け入れテストと土台を `<name>.json.restored/` に復元し、arm ごとの表を出し、`evals/mutant-record.json` に shipped の中身の hash ごとに記録する。sandbox を消すのは 3 行目の後にする。見る数は次のとおり。
 
 - 全テストが有効な run: 資料に無い値や振る舞いを期待するテストを書かなかった run
 - 要件適合度: 有効なテストで落とした手書きの変種 / 全変種

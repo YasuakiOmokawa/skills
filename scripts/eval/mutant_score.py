@@ -100,10 +100,10 @@ def auto_mutants(source):
     return mutants
 
 
-def run_suite(target, source, tests_root, test_paths):
+def run_suite(target, source, tests_root, test_paths, support_paths=()):
     with tempfile.TemporaryDirectory() as work:
         work = Path(work)
-        for rel in test_paths:
+        for rel in [*test_paths, *support_paths]:
             destination = work / rel
             destination.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(tests_root / rel, destination)
@@ -131,14 +131,14 @@ def killers(passing, results):
     return sorted(name for name in passing if not results.get(name, False))
 
 
-def score(subject, tests_root, test_paths):
+def score(subject, tests_root, test_paths, support_paths=()):
     config = json.loads((subject / "subject.json").read_text(encoding="utf-8"))
     target = config["target"]
     reference_names = config.get("references") or ["reference.js"]
     references = [(subject / name).read_text(encoding="utf-8") for name in reference_names]
     reference = references[0]
     mutants = json.loads((subject / "mutants.json").read_text(encoding="utf-8"))
-    run = lambda source: run_suite(target, source, tests_root, test_paths)
+    run = lambda source: run_suite(target, source, tests_root, test_paths, support_paths)
     runs = [run(reference) for _ in range(REPEATS)]
     baseline = runs[0]
     per_reference = [baseline] + [run(source) for source in references[1:]]

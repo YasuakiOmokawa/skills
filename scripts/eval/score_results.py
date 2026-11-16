@@ -10,6 +10,8 @@ from scripts.eval_coverage import shipped_digest
 ROOT = Path(__file__).resolve().parents[2]
 GATE_HALT = re.compile(r"Gate[^\n]{0,80}(?:not ready|ready でない|ready にならな|ready ではな)", re.I)
 RECORD_NAME = "mutant-record.json"
+TEST_FILE = re.compile(r"\.test\.m?js$")
+AC_ID = re.compile(r"AC-\d{3}")
 
 
 def last_message(trace_path):
@@ -38,19 +40,32 @@ def score_code(run, mapping, durable):
     return {"code": "scored", **mutant_score.score_code(subject, source)}
 
 
+def restored_files(trace_path, prefix):
+    restored = {}
+    for relpath in restore_file.written_paths(trace_path, prefix):
+        text = restore_file.cat_output(trace_path, relpath)
+        if text is None:
+            text, _ = restore_file.restore(trace_path, relpath)
+        if text is not None:
+            restored[relpath] = text
+    return restored
+
+
 def score_run(run, mapping, durable):
-    restored = restore_file.cat_output(Path(run["tracePath"]), mapping["test"])
-    if restored is None:
-        restored, _ = restore_file.restore(Path(run["tracePath"]), mapping["test"])
-    if restored is None:
+    trace = Path(run["tracePath"])
+    restored = restored_files(trace, mapping["tests"])
+    tests = [relpath for relpath, text in restored.items() if TEST_FILE.search(relpath) and AC_ID.search(text)]
+    if not tests:
         outcome = "gate" if GATE_HALT.search(last_message(run["tracePath"])) else "no-test"
         code = {"code": "gate"} if outcome == "gate" else score_code(run, mapping, durable)
         return {"outcome": outcome, **(code if mapping.get("code") else {})}
     code = score_code(run, mapping, durable) if mapping.get("code") else {}
-    target = durable / mapping["test"]
-    target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(restored, encoding="utf-8")
-    report = mutant_score.score(ROOT / mapping["subject"], durable, [mapping["test"]])
+    for relpath, text in restored.items():
+        target = durable / relpath
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(text, encoding="utf-8")
+    support = [relpath for relpath in restored if relpath not in tests]
+    report = mutant_score.score(ROOT / mapping["subject"], durable, tests, support)
     return {
         "outcome": "tests",
         "tests": report["tests"],

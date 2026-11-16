@@ -64,6 +64,37 @@ def heredoc_writes(command, relpath):
     return bodies
 
 
+CAT_COMMAND = re.compile(r"^(?:\s*cd\s+\S+\s*&&)?\s*cat\s+(\S+)\s*$")
+
+
+def repo_relative(path):
+    path = "/" + path.replace("\\", "/").lstrip("/")
+    marker = path.rfind("/repo/")
+    return path[marker + len("/repo/"):] if marker >= 0 else path.lstrip("/")
+
+
+def written_paths(trace_path, prefix):
+    paths, fixture_seen = [], False
+    for use in tool_events(trace_path):
+        name, data = use["name"], use.get("input", {})
+        if name == "Bash" and not fixture_seen:
+            fixture_seen = True
+            continue
+        if name == "Bash":
+            command = data.get("command", "")
+            targets = [(m.group("before") or m.group("after")).strip("\"'") for m in HEREDOC.finditer(command)]
+            targets += CAT_COMMAND.findall(command)
+        elif name in ("Write", "Edit"):
+            targets = [str(data.get("file_path", ""))]
+        else:
+            targets = []
+        for target in targets:
+            relpath = repo_relative(target)
+            if relpath.startswith(prefix) and relpath not in paths:
+                paths.append(relpath)
+    return paths
+
+
 def restore(trace_path, relpath, base=None):
     text, bash_writes, fixture_seen = base, 0, base is None
     suffix = "/" + relpath
