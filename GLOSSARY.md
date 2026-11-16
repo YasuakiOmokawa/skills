@@ -75,7 +75,7 @@ python3 scripts/eval/rejudge.py /tmp/<name>-new.json <NN> plugins/<name>/evals/<
 
 ### 翻訳の質 (define-done)
 
-define-done の受け入れテストは、runner の外で決定論的に採点する (runner には出力にコマンドを流す grader が無い)。題材ごとに `scripts/eval/mutant/<題材>/` に次を置き、eval の case の dir に `mutant.json` (`{"subject": "scripts/eval/mutant/<題材>", "tests": "<受け入れテストの置き場所の dir>/"}`) を置く。採点は、その dir の下に agent が書いたファイル (受け入れテスト、土台、期待値のファイル) をすべて復元し、AC-ID を含む `*.test.js` だけを流す。
+define-done の受け入れテストは、runner の外で決定論的に採点する (runner には出力にコマンドを流す grader が無い)。題材ごとに `scripts/eval/mutant/<題材>/` に次を置き、eval の case の dir に `mutant.json` (`{"subject": "scripts/eval/mutant/<題材>", "tests": "<受け入れテストの置き場所の dir>/"}`) を置く。採点は、その dir の下に agent が書いたファイル (受け入れテスト、土台、期待値のファイル) をすべて復元し、土台の外の `*.test.js` を受け入れテストとして流す。
 
 - `subject.json`: `{"target": "<テストが import する製品コードの path>", "references": [...]}`。`references` は省略すると `["reference.js"]`
 - `reference.js` (と `references` に挙げた他の参照実装): 要求どおりの実装。2 つ目以降は、資料が決めていない振る舞い (状態コード、上限、境界ちょうど) だけを変える。テストはすべての参照実装で通るときだけ有効と数え、資料に無い値を期待するテストは、推測が 1 つ目と一致しても無効になる
