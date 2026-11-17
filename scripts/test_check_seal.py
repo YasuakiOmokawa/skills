@@ -403,6 +403,28 @@ class SealCommandTest(unittest.TestCase):
         self.assertIn("tamper:", out)
         self.assertNotIn("src/a.js", out.split("protected:")[1].splitlines()[0])
 
+    def test_resealing_after_fixing_only_the_harness_keeps_check_green(self):
+        self.seal()
+        self.repo.write("test/harness/app.js", HARNESS + "export const fixed = true;\n")
+        code, out = self.seal()
+        self.assertEqual(code, 0, out)
+        self.assertIn("Define-Done-Files: test/harness/app.js\n", self.body())
+        code, out = run("check", str(self.root))
+        self.assertEqual(code, 0, out)
+        self.assertNotIn("tamper:", out)
+
+    def test_seal_records_a_file_whose_name_is_not_ascii(self):
+        self.repo.write("test/harness/日本語.js", "export const name = 'ja';\n")
+        code, out = self.seal(keep=KEEP_FILES + ["test/harness/日本語.js"])
+        self.assertEqual(code, 0, out)
+        self.assertIn("test/harness/日本語.js", self.body().split("Define-Done-Files:")[1].splitlines()[0])
+
+    def test_reseal_with_nothing_changed_is_refused(self):
+        self.seal()
+        code, out = self.seal()
+        self.assertEqual(code, 1)
+        self.assertIn("HEAD から変わっていない", out)
+
     def test_unpushed_seal_on_main_is_in_progress(self):
         self.add_remote_and_push()
         self.seal()
