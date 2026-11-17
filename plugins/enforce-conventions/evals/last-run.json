@@ -1,5 +1,5 @@
 {
   "cases": {},
-  "shipped_sha256": "74d13485cf297cb1957bb78ab4df585ca09c4997a1a1eced26139ed2b878799c",
-  "waived": "SKILL.md の保護するパスの 1 句を「trailer を持つ commit」から「trailer を持つ封の commit」(GLOSSARY の「封」) に変えただけである。eval の fixture には trailer を持つ commit が無く (どの case も init の 1 件)、保護するパスの判定は変わらないので回し直していない。"
+  "shipped_sha256": "4a7d0adbdbb56701dd600823481fbc9c2e8cec45e77f091dacc0b9b8f4d82038",
+  "waived": "SKILL.md の「封の commit」を「凍結の commit」に言い換えただけ。語が変わった grader を持つ case 05 を with arm 3 run で回し、17/18 (sealed-tests-pass-reported が 3/3 から 2/3 の 1 run 差)"
 }

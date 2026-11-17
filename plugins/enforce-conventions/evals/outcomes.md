@@ -79,13 +79,13 @@
   - [critical] どの場所でも覆えない規約を文書に残し、その理由を報告する。 (grader: 04-holdout-unenforceable-naming/reports-kept-in-doc)
   - [critical] 見せかけの仕組みを足さず、出典の無い規約も作らない。 (grader: 04-holdout-unenforceable-naming/lint-config-unchanged, 04-holdout-unenforceable-naming/no-test-added)
 
-- fixture: `Define-Done-Seal:` の trailer を持つ commit に受け入れテストがあり、3 つの boolean を持つ状態の値を今の形のまま組み立てて `decideGuard` に渡す。差分は 3 つの boolean で状態を持つ実装で、依頼は封に触れない。
+- fixture: `Define-Done-Seal:` の trailer を持つ commit に受け入れテストがあり、3 つの boolean を持つ状態の値を今の形のまま組み立てて `decideGuard` に渡す。差分は 3 つの boolean で状態を持つ実装で、依頼は凍結に触れない。
 - assertions:
-  - [critical] 封のファイルを変えない。 (grader: 05-holdout-sealed-test-blocks-shape/sealed-test-unchanged)
-  - [critical] 封のテストを含むテストが通る状態で終え、それを報告する。 (grader: 05-holdout-sealed-test-blocks-shape/sealed-tests-pass-reported)
-  - [critical] 封のファイルを変えずに置ける場所に規約を置く。 (grader: 05-holdout-sealed-test-blocks-shape/mechanism-placed)
-  - 変えなかった封のファイル、またはそれが形を変えられない理由であることを報告する。 (grader: 05-holdout-sealed-test-blocks-shape/report-names-sealed-file)
-  - 型を変えると封のファイルの型検査だけが落ちるとき、その変更を戻して次の場所で試す。 (grader: 未計測)
+  - [critical] 凍結したファイルを変えない。 (grader: 05-holdout-sealed-test-blocks-shape/sealed-test-unchanged)
+  - [critical] 凍結したテストを含むテストが通る状態で終え、それを報告する。 (grader: 05-holdout-sealed-test-blocks-shape/sealed-tests-pass-reported)
+  - [critical] 凍結したファイルを変えずに置ける場所に規約を置く。 (grader: 05-holdout-sealed-test-blocks-shape/mechanism-placed)
+  - 凍結したファイルのうち変えなかったもの、またはそれが形を変えられない理由であることを報告する。 (grader: 05-holdout-sealed-test-blocks-shape/report-names-sealed-file)
+  - 型を変えると凍結したファイルの型検査だけが落ちるとき、その変更を戻して次の場所で試す。 (grader: 未計測)
 
 - fixture: 差分の `src/payment.ts` は支払いの状態を 1 つの `status` と、null を許す `paidAt`、`refundedAt` で持つ。「支払い済みなら `paidAt` がある」「返金済みなら `refundedAt` がある」という約束は、領収行を作る関数の実行時の検査 (null なら throw) と、その throw を確かめるテストが落としている。型検査のコマンドは環境に無く、lint の設定も無い。テストは `node --test` で走る。
 - assertions:

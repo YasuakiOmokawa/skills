@@ -112,4 +112,4 @@ export function discountRateFor(quantity) {
 EOF
 ```
 
-`repo/` の plans/discount.md は前に /define-done で封をしたが、実装の途中で、土台 `test/harness/price.js` が製品コード `src/price.js` を使わず計算を写していると気づいた。作業ツリーには、まだ commit していない実装の途中の変更 (`src/price.js` の変更と、新しい `src/discount-rules.js`) がある。土台を製品コードを使う形に直して、plans/discount.md を /define-done で封をし直してください。実装の変更は commit せず、作業ツリーに残してください。作業の最後に `git show --stat --format=%s HEAD` と `git status --short` を実行して、出力を表示してください。
+`repo/` の plans/discount.md は前に /define-done で凍結したが、実装の途中で、土台 `test/harness/price.js` が製品コード `src/price.js` を使わず計算を写していると気づいた。作業ツリーには、まだ commit していない実装の途中の変更 (`src/price.js` の変更と、新しい `src/discount-rules.js`) がある。土台を製品コードを使う形に直して、plans/discount.md を /define-done で凍結し直してください。実装の変更は commit せず、作業ツリーに残してください。作業の最後に `git show --stat --format=%s HEAD` と `git status --short` を実行して、出力を表示してください。
