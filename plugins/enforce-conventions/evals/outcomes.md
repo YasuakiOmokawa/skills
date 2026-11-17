@@ -1,7 +1,7 @@
 # Trigger
 - fixture: `repo/` は git の作業ツリーで、commit 済みのコードの上に未 commit の実装差分がある。依頼Aは定型プロンプトの仕上げの段の形で「未 commit の実装差分に /enforce-conventions を実行する」、依頼Bは「lint が落ちているので lint エラーを直して」である。
 - assertions:
-  - [critical] 依頼Aで skill が発火する。 (grader: 01-type-over-test/skill-fired, 02-lint-import-direction/skill-fired, 03-test-migration-sequence/skill-fired, 04-holdout-unenforceable-naming/skill-fired, 05-holdout-sealed-test-blocks-shape/skill-fired, 07-no-convention-in-diff/skill-fired, 08-holdout-guard-without-type-check/skill-fired, 09-test-to-lint/skill-fired, 10-state-machine-with-type-check/skill-fired, 11-holdout-not-a-convention/skill-fired, 12-existing-idiom-type-guard/skill-fired)
+  - [critical] 依頼Aで skill が発火する。 (grader: 01-type-over-test/skill-fired, 02-lint-import-direction/skill-fired, 03-test-migration-sequence/skill-fired, 04-holdout-unenforceable-naming/skill-fired, 05-holdout-sealed-test-blocks-shape/skill-fired, 07-no-convention-in-diff/skill-fired, 08-holdout-guard-without-type-check/skill-fired, 09-test-to-lint/skill-fired, 10-state-machine-with-type-check/skill-fired, 11-holdout-not-a-convention/skill-fired, 12-existing-idiom-type-guard/skill-fired, 13-holdout-intent-wider-than-field-set/skill-fired)
   - [critical] 依頼Bでは skill を発火しない。 (grader: 06-neg-fix-lint-error/skill-not-fired)
   - [critical] 依頼Bでは lint の設定を弱めずに、違反している import を直す。 (grader: 06-neg-fix-lint-error/db-import-gone, 06-neg-fix-lint-error/lint-rule-kept)
   - 依頼Bで、直した後も差分が足した機能を残す。 (grader: 06-neg-fix-lint-error/count-still-rendered)
@@ -67,7 +67,7 @@
 - fixture: Outcome の import の向きの fixture と migration の番号の fixture。依頼は commit を禁じ、文書の編集を求めていない。
 - assertions:
   - [critical] commit しない。 (grader: 02-lint-import-direction/no-commit, 05-holdout-sealed-test-blocks-shape/no-commit, 08-holdout-guard-without-type-check/no-commit, 09-test-to-lint/no-commit, 10-state-machine-with-type-check/no-commit, 11-holdout-not-a-convention/no-commit, 12-existing-idiom-type-guard/no-commit)
-  - [critical] 規約を述べる文書を変えない。 (grader: 02-lint-import-direction/doc-unchanged, 03-test-migration-sequence/doc-unchanged, 04-holdout-unenforceable-naming/doc-unchanged)
+  - [critical] 規約を述べる文書を変えない。 (grader: 02-lint-import-direction/doc-unchanged, 03-test-migration-sequence/doc-unchanged, 04-holdout-unenforceable-naming/doc-unchanged, 13-holdout-intent-wider-than-field-set/doc-unchanged)
   - [critical] 新しい依存を足さない。 (grader: 02-lint-import-direction/no-new-dependency)
   - 規約を置かない仕組みの設定を変えない。 (grader: 03-test-migration-sequence/lint-config-unchanged)
   - 差分の外に既存の違反があるとき、lint とテストでは rule の対象 path を違反の無い範囲に絞り、覆わない範囲と違反の箇所を報告する。 (grader: 未計測)
@@ -107,6 +107,11 @@
   - テストの中の cast は、書かれた値そのものを組み立てた値として観測する。 (grader: 未計測)
   - 全箇所を読み切れなければ絞らない。 (grader: 未計測)
   - 変更の前から落ちている検査は、違反が落ちるのを見た根拠にしない。 (grader: 未計測)
+
+- fixture: `CLAUDE.md` は「API キーが使えるかは記録の有無だけで決め、記録に状態を表すフィールドを持たせず、失効や停止を別の集合や表で持たない」と述べ、設計の文書は記録のフィールドの一覧と「状態を表すフィールドは持たない」を並べて書き、計画はその要求を「規約として enforce-conventions で担保する」と預けている。差分の `src/api-key.ts` はそのフィールドだけを持つ型と、Map に保存する関数を足す。repo には型検査が設定済みで、変更前は通る。
+- assertions:
+  - [critical] 規約の意図を破る変更を通すか、規約が許す変更まで落とす仕組みを置かない。記録のフィールドの集合を型で固定しない。 (grader: 13-holdout-intent-wider-than-field-set/field-set-not-frozen)
+  - [critical] 意図を覆える仕組みが無い規約を文書に残し、その理由を報告する。 (grader: 13-holdout-intent-wider-than-field-set/reports-kept-in-doc)
 
 - fixture: 静的な型検査の無い Ruby の repo。この suite の fixture はすべて TypeScript で、Ruby では計測していない。
 - assertions:
