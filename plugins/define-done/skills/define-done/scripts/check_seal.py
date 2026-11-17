@@ -369,6 +369,95 @@ def changed_files(repo, files):
     return [path for path in files if path in dirty]
 
 
+SET_ASIDE_MESSAGE = "define-done seal: 封の外の変更"
+
+
+def outside_paths(repo, files):
+    tracked = git(repo, "diff", "--name-only", "--no-renames", "-z", "HEAD").split("\0")
+    untracked = git(repo, "ls-files", "--others", "--exclude-standard", "-z").split("\0")
+    sealed = set(files)
+    return sorted({path for path in tracked + untracked if path and path not in sealed})
+
+
+def snapshot(repo, paths):
+    state = {}
+    for path in paths:
+        full = Path(repo) / path
+        state[path] = git(repo, "hash-object", "--", path).strip() if full.is_file() else None
+    return state
+
+
+def stash_shas(repo):
+    return git(repo, "stash", "list", "--format=%H").split()
+
+
+class SetAside:
+    def __init__(self, repo, paths):
+        self.repo, self.paths = repo, paths
+        self.before = snapshot(repo, paths)
+        self.sha = None
+        self.applied = True
+
+    def stash(self):
+        if not self.paths:
+            return
+        existing = stash_shas(self.repo)
+        git(self.repo, "stash", "push", "-q", "--include-untracked", "-m", SET_ASIDE_MESSAGE, "--", *self.paths)
+        shas = stash_shas(self.repo)
+        if not shas or shas[0] in existing:
+            raise RuntimeError("封の外の変更を退避できなかった")
+        self.sha, self.applied = shas[0], False
+
+    def apply(self):
+        if self.sha and not self.applied:
+            git(self.repo, "stash", "apply", "-q", "--index", self.sha)
+            self.applied = True
+
+    def restore(self):
+        if not self.sha:
+            return []
+        try:
+            self.apply()
+            if snapshot(self.repo, self.paths) != self.before:
+                raise RuntimeError("戻した変更が退避の前と一致しない")
+            index = stash_shas(self.repo).index(self.sha)
+            git(self.repo, "stash", "drop", "-q", f"stash@{{{index}}}")
+        except (RuntimeError, ValueError) as exc:
+            return [f"set-aside: 封の外の変更を戻せなかった ({exc})。退避は stash に残してある: `git stash apply {self.sha}` で戻す"]
+        return []
+
+
+def run_check(repo, command):
+    completed = subprocess.run(command, shell=True, cwd=repo, capture_output=True, text=True, timeout=1800)
+    if completed.returncode == 0:
+        print("check: pass")
+        return []
+    print((completed.stdout + completed.stderr)[-4000:])
+    return [f"check: check_command が exit {completed.returncode} で落ちた (lint、型、dead code の違反を直す)"]
+
+
+def spike_findings(repo, spike, files):
+    patch = Path(spike)
+    if not patch.is_file():
+        return [f"spike: 試作の実装の patch {spike} が無い"]
+    if Path(repo).resolve() in patch.resolve().parents:
+        return [f"spike: 試作の実装の patch {spike} は repo の外に置く"]
+    numstat = subprocess.run(["git", "-C", str(repo), "apply", "--numstat", str(patch.resolve())], capture_output=True, text=True)
+    if numstat.returncode != 0:
+        return [f"spike: 試作の実装の patch を読めない ({numstat.stderr.strip()})"]
+    touched = {line.split("\t", 2)[2] for line in numstat.stdout.splitlines() if line.count("\t") >= 2}
+    sealed = sorted(touched & set(files))
+    if sealed:
+        return [f"spike: 試作の実装の patch が封のファイル {', '.join(sealed)} を変えている"]
+    if not touched:
+        return ["spike: 試作の実装の patch が何も変えない"]
+    return []
+
+
+def ran_names(entries, path):
+    return [next((name for name in entry["names"] if name), "") for entry in entries if in_files(entry, [path])]
+
+
 def seal(repo, spec_text):
     try:
         spec = json.loads(spec_text)
@@ -376,6 +465,7 @@ def seal(repo, spec_text):
         return [f"spec: 標準入力の JSON を読めない ({exc})"]
     test_command, supersedes = str(spec.get("test_command") or ""), str(spec.get("supersedes") or "")
     subject = str(spec.get("subject") or "test: 受け入れテスト")
+    check_command, spike = str(spec.get("check_command") or ""), str(spec.get("spike") or "")
     rule_files = list(dict.fromkeys(spec.get("rule") or []))
     non_impact_files = list(dict.fromkeys(spec.get("non_impact") or []))
     mapping = [{"ac": str(test.get("ac", "")), "file": str(test.get("file", "")), "name": str(test.get("name", ""))} for test in spec.get("tests") or []]
@@ -417,26 +507,75 @@ def seal(repo, spec_text):
     rewritten = sorted(permanent & set(files))
     if rewritten and not supersedes:
         errors.append(f"supersedes: 恒久に守っている規則の基準 {', '.join(rewritten)} を書き直すには supersedes に置き換える AC-ID と根拠の要求が要る")
+    if spike:
+        errors.extend(spike_findings(repo, spike, files))
+    aside = SetAside(repo, outside_paths(repo, files))
     if errors:
         return errors
+    changed = changed_files(repo, files)
+    try:
+        aside.stash()
+        errors = seal_in_tree(repo, aside, test_command, test_files, mapping, kinds, spike, check_command)
+        if not errors:
+            commit_seal(repo, subject, kinds, rule_files, changed, mapping, test_command, supersedes)
+    except RuntimeError as exc:
+        errors = [f"git: {exc}"]
+    return errors + aside.restore()
+
+
+def kind_states(repo, test_command, test_files, mapping, kinds):
     code, output, entries = run_tests(repo, test_command)
+    errors = []
     for entry in entries:
         if in_files(entry, test_files) and not any(matches(entry, test) for test in mapping):
             errors.append(f"tests: 対応する AC が無いテスト「{next(name for name in entry['names'] if name)}」がある")
     states = states_by_ac(entries, mapping)
-    for ac, kind in sorted(kinds.items()):
-        state = outcome(states.get(ac))
-        expected = "fail" if kind == "rule" else "pass"
-        print(f"{ac}: {kind} now={state}")
+    outcomes = {ac: outcome(states.get(ac)) for ac in kinds}
+    for ac, state in sorted(outcomes.items()):
         if state == "missing":
-            errors.append(f"missing: {ac} のテストが実行されなかった (テスト名の対応か、import やセットアップの失敗を直す)")
-        elif state != expected:
+            files = sorted({test["file"] for test in mapping if test["ac"] == ac})
+            ran = [name for path in files for name in ran_names(entries, path)]
+            hint = f" このファイルで流れたテスト: {'; '.join(ran)}" if ran else ""
+            errors.append(f"missing: {ac} のテストが実行されなかった (テスト名の対応か、import やセットアップの失敗を直す)。{hint}".rstrip("。 "))
+    return outcomes, errors, output
+
+
+def seal_in_tree(repo, aside, test_command, test_files, mapping, kinds, spike, check_command):
+    if check_command and not spike:
+        errors = run_check(repo, check_command)
+        if errors:
+            return errors
+    now, errors, output = kind_states(repo, test_command, test_files, mapping, kinds)
+    proved = {}
+    if spike and not errors:
+        patch = str(Path(spike).resolve())
+        git(repo, "apply", patch)
+        try:
+            proved, errors, spike_output = kind_states(repo, test_command, test_files, mapping, kinds)
+            for ac, state in sorted(proved.items()):
+                if state != "pass" and state != "missing":
+                    errors.append(f"spike: {ac} が試作の実装で通らない (テスト、土台、要求のどれかを確かめる)")
+            if errors:
+                print(spike_output[-4000:])
+            elif check_command:
+                errors = run_check(repo, check_command)
+        finally:
+            git(repo, "apply", "-R", patch)
+        if errors:
+            return errors
+    for ac, kind in sorted(kinds.items()):
+        state = now[ac]
+        expected = "fail" if kind == "rule" else "pass"
+        print(f"{ac}: {kind}{f' spike={proved[ac]}' if spike else ''} now={state}")
+        if state != "missing" and state != expected:
             errors.append(f"kind: {ac} は{'規則' if kind == 'rule' else '非影響'}の基準だが、今の tree で {state} だった")
     if errors:
         print(output[-4000:])
-        return errors
+    return errors
+
+
+def commit_seal(repo, subject, kinds, rule_files, changed, mapping, test_command, supersedes):
     rule_acs = sorted(ac for ac, kind in kinds.items() if kind == "rule")
-    changed = changed_files(repo, files)
     lines = [
         f"{SEAL_TRAILER}: {', '.join(sorted(kinds))}",
         *([f"{RULE_TRAILER}: {', '.join(rule_acs)}"] if rule_acs else []),
@@ -450,7 +589,32 @@ def seal(repo, spec_text):
     git(repo, "add", "--", *changed)
     git_stdin(repo, message, "commit", "-q", "-F", "-", "--", *changed)
     print(f"seal: {git(repo, 'rev-parse', 'HEAD').strip()}")
-    return []
+
+
+def reseal_spec(repo, spec_text):
+    try:
+        overrides = json.loads(spec_text) if spec_text.strip() else {}
+    except json.JSONDecodeError as exc:
+        return None, [f"spec: 標準入力の JSON を読めない ({exc})"]
+    found = [seal for seal in seals(repo) if seal["behavior"] and seal["recorded"] and not seal["completed"]]
+    if not found:
+        return None, ["reseal: 封をし直す元の、進行中の封が HEAD から辿れない"]
+    latest = found[0]
+    rule_files = sorted(latest["rule_files"])
+    sealed = list(dict.fromkeys(path for seal in found for path in seal["files"]))
+    mapping = {(test["ac"], test["file"]): test for test in latest["mapping"]}
+    for test in overrides.get("tests") or []:
+        mapping[(str(test.get("ac", "")), str(test.get("file", "")))] = test
+    rule = list(dict.fromkeys(rule_files + list(overrides.get("rule") or [])))
+    spec = {
+        "test_command": overrides.get("test_command") or latest["values"].get(COMMAND_TRAILER, ""),
+        "rule": rule,
+        "non_impact": list(dict.fromkeys([path for path in sealed if path not in rule] + list(overrides.get("non_impact") or []))),
+        "tests": list(mapping.values()),
+        "subject": overrides.get("subject") or "test: 受け入れテストを直す",
+        **{key: overrides[key] for key in ("supersedes", "spike", "check_command") if key in overrides},
+    }
+    return json.dumps(spec), []
 
 
 def main(argv=None, stdin=None):
@@ -459,6 +623,7 @@ def main(argv=None, stdin=None):
     sub.add_parser("check").add_argument("repo", type=Path)
     sub.add_parser("verify").add_argument("repo", type=Path)
     sub.add_parser("seal").add_argument("repo", type=Path)
+    sub.add_parser("reseal").add_argument("repo", type=Path)
     args = parser.parse_args(argv)
     code = run_command(args, stdin)
     print(f"exit: {code}")
@@ -467,8 +632,12 @@ def main(argv=None, stdin=None):
 
 def run_command(args, stdin):
     try:
-        if args.command == "seal":
-            errors = seal(args.repo, sys.stdin.read() if stdin is None else stdin)
+        if args.command in ("seal", "reseal"):
+            spec_text = sys.stdin.read() if stdin is None else stdin
+            errors = []
+            if args.command == "reseal":
+                spec_text, errors = reseal_spec(args.repo, spec_text)
+            errors = errors or seal(args.repo, spec_text)
             for error in errors:
                 print(error)
             return 1 if errors else 0

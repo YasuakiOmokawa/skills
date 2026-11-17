@@ -5,4 +5,4 @@ match: contains
 flags: s
 weight: 0.5
 ---
-"name":"Bash","input":\{"command":"(?:[^"\\]|\\.)*?check_seal\.py(?:[^"\\]|\\.)*? seal\b
+"name":"Bash","input":\{"command":"(?:[^"\\]|\\.)*?check_seal\.py(?:[^"\\]|\\.)*? (?:re)?seal\b

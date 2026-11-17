@@ -55,9 +55,14 @@ def run(*argv, stdin=""):
     return code, out.getvalue()
 
 
-def seal_spec(command, rule=(), non_impact=(), tests=(), supersedes="", subject="test: plan.md の受け入れテスト"):
+def seal_spec(command, rule=(), non_impact=(), tests=(), supersedes="", subject="test: plan.md の受け入れテスト", spike="", check_command=""):
     mapping = [{"ac": ac, "file": file, "name": name} for ac, file, name in tests]
-    return json.dumps({"test_command": command, "rule": list(rule), "non_impact": list(non_impact), "tests": mapping, "supersedes": supersedes, "subject": subject})
+    spec = {"test_command": command, "rule": list(rule), "non_impact": list(non_impact), "tests": mapping, "supersedes": supersedes, "subject": subject}
+    if spike:
+        spec["spike"] = spike
+    if check_command:
+        spec["check_command"] = check_command
+    return json.dumps(spec)
 
 
 class CheckSealTest(unittest.TestCase):
@@ -413,6 +418,173 @@ class SealCommandTest(unittest.TestCase):
         self.assertEqual(code, 0, out)
         self.assertNotIn("tamper:", out)
 
+    def stash_list(self):
+        return subprocess.run(["git", "-C", str(self.root), "stash", "list", "--format=%H"], capture_output=True, text=True).stdout.split()
+
+    def write_implementation_in_tree(self):
+        self.repo.write("src/a.js", "import { one } from './one.js';\nexport const f = () => one;\n")
+        self.repo.write("src/one.js", "export const one = 1;\n")
+
+    def test_seal_sets_aside_changes_outside_the_seal_and_restores_them(self):
+        self.write_implementation_in_tree()
+        code, out = self.seal()
+        self.assertEqual(code, 0, out)
+        self.assertIn("AC-001: rule now=fail", out)
+        self.assertEqual((self.root / "src/a.js").read_text(), "import { one } from './one.js';\nexport const f = () => one;\n")
+        self.assertEqual((self.root / "src/one.js").read_text(), "export const one = 1;\n")
+        self.assertNotIn("src/", self.body().split("Define-Done-Files:")[1].splitlines()[0])
+        self.assertEqual(self.stash_list(), [])
+
+    def test_seal_with_nothing_outside_the_seal_leaves_an_existing_stash_alone(self):
+        self.repo.write("notes.txt", "draft\n")
+        self.repo.git("stash", "push", "-q", "--include-untracked", "--", "notes.txt")
+        before = self.stash_list()
+        code, out = self.seal()
+        self.assertEqual(code, 0, out)
+        self.assertEqual(self.stash_list(), before)
+        self.assertFalse((self.root / "notes.txt").exists())
+
+    def test_seal_that_sets_aside_changes_keeps_an_existing_stash(self):
+        self.repo.write("notes.txt", "draft\n")
+        self.repo.git("stash", "push", "-q", "--include-untracked", "--", "notes.txt")
+        before = self.stash_list()
+        self.write_implementation_in_tree()
+        code, out = self.seal()
+        self.assertEqual(code, 0, out)
+        self.assertEqual(self.stash_list(), before)
+        self.assertTrue((self.root / "src/one.js").exists())
+
+    def test_refused_seal_restores_changes_outside_the_seal(self):
+        self.write_implementation_in_tree()
+        before = self.head()
+        code, out = self.seal(tests=[("AC-001", "test/a.rule.test.js", "f returns one"), TESTS[1]])
+        self.assertEqual(code, 1)
+        self.assertEqual(self.head(), before)
+        self.assertTrue((self.root / "src/one.js").exists())
+        self.assertEqual(self.stash_list(), [])
+
+    def test_seal_keeps_the_set_aside_changes_in_the_stash_when_it_cannot_restore_them(self):
+        self.write_implementation_in_tree()
+        original = check_seal.run_tests
+
+        def locking_run_tests(cwd, command):
+            result = original(cwd, command)
+            (self.root / ".git" / "index.lock").write_text("")
+            return result
+
+        check_seal.run_tests = locking_run_tests
+        try:
+            code, out = self.seal()
+        finally:
+            check_seal.run_tests = original
+            (self.root / ".git" / "index.lock").unlink(missing_ok=True)
+        self.assertEqual(code, 1)
+        self.assertIn("git stash apply", out)
+        self.assertEqual(len(self.stash_list()), 1)
+        self.repo.git("stash", "pop", "-q")
+        self.assertTrue((self.root / "src/one.js").exists())
+
+    def spike_patch(self, body="import { one } from './one.js';\nexport const f = () => one;\n"):
+        self.repo.write("src/a.js", body)
+        self.repo.write("src/one.js", "export const one = 1;\n")
+        self.repo.git("add", "-N", "src/one.js")
+        diff = subprocess.run(["git", "-C", str(self.root), "diff", "--", "src"], capture_output=True, text=True, check=True).stdout
+        self.repo.git("reset", "-q", "--", "src/one.js")
+        (self.root / "src/one.js").unlink()
+        self.repo.git("checkout", "--", "src/a.js")
+        path = Path(self.tmp.name) / "spike.patch"
+        path.write_text(diff, encoding="utf-8")
+        return str(path)
+
+    def test_spike_confirms_that_the_rule_tests_pass_with_the_trial_implementation(self):
+        patch = self.spike_patch()
+        code, out = run("seal", str(self.root), stdin=seal_spec(REPORT_COMMAND, RULE_FILES, KEEP_FILES, TESTS, spike=patch))
+        self.assertEqual(code, 0, out)
+        self.assertIn("AC-001: rule spike=pass now=fail", out)
+        self.assertIn("AC-002: non-impact spike=pass now=pass", out)
+        self.assertEqual((self.root / "src/a.js").read_text(), "export const f = () => 0;\n")
+        self.assertFalse((self.root / "src/one.js").exists())
+
+    def test_spike_keeps_an_implementation_in_progress(self):
+        patch = self.spike_patch()
+        self.repo.write("src/a.js", "export const f = () => 0; // wip\n")
+        code, out = run("seal", str(self.root), stdin=seal_spec(REPORT_COMMAND, RULE_FILES, KEEP_FILES, TESTS, spike=patch))
+        self.assertEqual(code, 0, out)
+        self.assertEqual((self.root / "src/a.js").read_text(), "export const f = () => 0; // wip\n")
+        self.assertEqual(self.stash_list(), [])
+
+    def test_spike_that_does_not_pass_the_rule_tests_refuses_the_seal(self):
+        patch = self.spike_patch(body="export const f = () => 2;\n")
+        before = self.head()
+        code, out = run("seal", str(self.root), stdin=seal_spec(REPORT_COMMAND, RULE_FILES, KEEP_FILES, TESTS, spike=patch))
+        self.assertEqual(code, 1)
+        self.assertIn("spike: AC-001", out)
+        self.assertEqual(self.head(), before)
+        self.assertEqual((self.root / "src/a.js").read_text(), "export const f = () => 0;\n")
+
+    def test_spike_patch_that_touches_a_sealed_file_is_refused(self):
+        self.repo.write("test/harness/app.js", HARNESS + "export const extra = 1;\n")
+        self.repo.git("add", "-N", "test/harness/app.js")
+        diff = subprocess.run(["git", "-C", str(self.root), "diff", "--", "test/harness/app.js"], capture_output=True, text=True, check=True).stdout
+        self.repo.git("reset", "-q", "--", "test/harness/app.js")
+        self.repo.write("test/harness/app.js", HARNESS)
+        path = Path(self.tmp.name) / "bad.patch"
+        path.write_text(diff, encoding="utf-8")
+        code, out = run("seal", str(self.root), stdin=seal_spec(REPORT_COMMAND, RULE_FILES, KEEP_FILES, TESTS, spike=str(path)))
+        self.assertEqual(code, 1)
+        self.assertIn("spike:", out)
+
+    def test_spike_without_a_patch_file_is_refused(self):
+        missing = str(Path(self.tmp.name) / "none.patch")
+        code, out = run("seal", str(self.root), stdin=seal_spec(REPORT_COMMAND, RULE_FILES, KEEP_FILES, TESTS, spike=missing))
+        self.assertEqual(code, 1)
+        self.assertIn("spike:", out)
+
+    def test_failing_check_command_refuses_the_seal(self):
+        before = self.head()
+        code, out = run("seal", str(self.root), stdin=seal_spec(REPORT_COMMAND, RULE_FILES, KEEP_FILES, TESTS, check_command="node -e \"process.exit(3)\""))
+        self.assertEqual(code, 1)
+        self.assertIn("check:", out)
+        self.assertEqual(self.head(), before)
+
+    def test_check_command_runs_on_the_tree_with_the_trial_implementation(self):
+        patch = self.spike_patch()
+        check = "node -e \"import('./src/a.js').then((m) => process.exit(m.f() === 1 ? 0 : 1))\""
+        code, out = run("seal", str(self.root), stdin=seal_spec(REPORT_COMMAND, RULE_FILES, KEEP_FILES, TESTS, spike=patch, check_command=check))
+        self.assertEqual(code, 0, out)
+        self.assertIn("check: pass", out)
+
+    def test_unmatched_test_name_lists_the_tests_that_ran_in_that_file(self):
+        code, out = self.seal(tests=[("AC-001", "test/a.rule.test.js", "suite > f returns 1"), TESTS[1]])
+        self.assertEqual(code, 1)
+        self.assertIn("missing: AC-001", out)
+        self.assertIn("f returns 1", out.split("missing: AC-001")[1].splitlines()[0])
+
+    def test_reseal_rebuilds_the_spec_from_the_last_seal(self):
+        self.seal()
+        self.repo.write("test/harness/app.js", HARNESS + "export const fixed = true;\n")
+        code, out = run("reseal", str(self.root), stdin=json.dumps({"subject": "test: 土台を直す"}))
+        self.assertEqual(code, 0, out)
+        body = self.body()
+        self.assertTrue(body.startswith("test: 土台を直す"))
+        self.assertIn("Define-Done-Files: test/harness/app.js\n", body)
+        self.assertIn("Define-Done-Test: AC-002 = test/a.keep.test.js › g keeps its text\n", body)
+        code, out = run("check", str(self.root))
+        self.assertEqual(code, 0, out)
+
+    def test_reseal_adds_a_criterion_and_its_test(self):
+        self.seal()
+        self.repo.write("test/a.rule.test.js", RULE_TEST + "test('f is not 0', () => assert.notEqual(f(), 0));\n")
+        extra = {"tests": [{"ac": "AC-003", "file": "test/a.rule.test.js", "name": "f is not 0"}]}
+        code, out = run("reseal", str(self.root), stdin=json.dumps(extra))
+        self.assertEqual(code, 0, out)
+        self.assertIn("Define-Done-Seal: AC-001, AC-002, AC-003", self.body())
+
+    def test_reseal_without_a_seal_is_refused(self):
+        code, out = run("reseal", str(self.root), stdin="")
+        self.assertEqual(code, 1)
+        self.assertIn("reseal:", out)
+
     def test_seal_records_a_file_whose_name_is_not_ascii(self):
         self.repo.write("test/harness/日本語.js", "export const name = 'ja';\n")
         code, out = self.seal(keep=KEEP_FILES + ["test/harness/日本語.js"])
@@ -467,6 +639,7 @@ class SealCommandTest(unittest.TestCase):
         self.push()
         self.repo.write("test/a.rule.test.js", RULE_TEST.replace("returns 1", "returns one"))
         self.repo.write("src/a.js", "export const f = () => 0;\n")
+        self.repo.commit("revert f", "src/a.js")
         rewrite = "node --test --test-reporter=junit --test-reporter-destination={report} test/a.rule.test.js"
         tests = [("AC-003", "test/a.rule.test.js", "f returns one")]
         code, out = run("seal", str(self.root), stdin=seal_spec(rewrite, ["test/a.rule.test.js"], (), tests))

@@ -5,6 +5,16 @@ All notable changes to omokawa-skills will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v20.3.0 - 2026-11-17
+
+### Changed
+
+- **`check_seal.py seal`:** 渡したファイルの外の変更 (実装の途中の変更と追跡していないファイル) を自分で退避して HEAD の製品コードで流し、終わったら戻す。戻した tree が退避の前と一致しなければ、退避を stash に残して戻すコマンドを出す。既存の stash には触れない。規則の基準は、未 commit の製品コードの変更ではなく HEAD の製品コードで落ちることを見る。
+- **`check_seal.py seal`:** JSON に任意の `spike` (repo の外の、試作の実装の patch) と `check_command` を足した。`spike` を当てた tree で `[規則]` と `[非影響]` のテストと `check_command` が通ることを確かめ、外してから封をする (`AC-001: rule spike=pass now=fail`)。名前が一致しないテストには、そのファイルで流れたテスト名を出す。
+- **`check_seal.py reseal`:** 直前の封の trailer から JSON を組み立て、標準入力の JSON (`subject`、足す `tests`、`spike`、`check_command`) で上書きして封をし直す。
+- **`define-done` 5.3.0:** 前提の確認で、決定が頼る値は受け入れテストを流す実行環境で依存先を呼んで観測し、型定義と doc comment を根拠にしない。実行環境で変わる分岐は、CI と本番がどちらに当たるかを挙げる。土台が実行環境の機能に頼るときは CI の実行環境の版でも使えることを確かめる。封の前に試作の実装を一時的な worktree で書き、`spike` と `check_command` を `seal` に渡す。taimei-auth の #486 で、library の既定が実行環境で変わることを doc comment から見落とし、土台が型の上だけの値を読み、lint の違反と CI の Bun の版の違いが封の後に見つかって、封を 4 回作り直したため。
+- **eval:** case 39 (実行環境で変わる依存先の既定)、40 (作業ツリーに実装の途中の変更がある状態での封の作り直し)、41 (封の前に試作の実装と repo の check を通す) を足した。封の grader は `reseal` も受け入れる。全 37 case を with arm で 3 run ずつ回した (新しい 3 case は with-without、$79。旧版での新しい case の基準取りは別に $12)。新しい case はすべて 3/3 (5.2.0 では 41 の `green-before-seal` が 0/3、39 と 40 は 3/3)。5.2.0 から 2 run 以上下がった grader は無い。1 run 下がった 4 grader のうち 17 `convention-out-of-scope` と 24 `existing-interface-used` は判定し直すと 3/3、01 `envvar-covered` と 37 `superseded-ac-recorded` は今回の変更が触れない段の 1 run の差。
+
 ## v20.2.0 - 2026-11-17
 
 ### Changed
