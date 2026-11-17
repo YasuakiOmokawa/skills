@@ -5,6 +5,14 @@ All notable changes to omokawa-skills will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v20.2.0 - 2026-11-17
+
+### Changed
+
+- **`check_seal.py seal`:** 渡したファイルのうち HEAD から変わったものだけを封の `Define-Done-Files` に記録し、commit する。封の後に土台だけを直して流し直すと、変わっていないファイルまで記録して commit の変更と一致せず、`check` が改ざんと報告していた。どのファイルも変わっていなければ拒む。
+- **`define-done` 5.2.0:** 封の前に repo の test command 全体を 1 回流し、新しく落ちたテストが規則の基準のテストだけであることを確かめる。土台が受け入れテストの外と共有する状態 (プロセスの中の store、試行の計数、一時ファイル) は各テストの後に戻す。封の後に受け入れテスト・土台・計画を直したら、実装の変更を退避して同じ JSON で `seal` を流し直す。置き換える基準が既定の branch から辿れる旧い形式の封にあれば、そのテストを封に含めず、AC-ID を `## MECE Review` に書く。taimei-auth の #484/#485 で、土台が IP の試行の計数を残して既存のテストを落とし、直した封が改ざんと判定され、旧い形式の封の行を書き換える手順が無かったため。
+- **eval:** case 36 (封の後に土台を直す)、37 (旧い形式の封の基準を置き換える)、38 (1 プロセスで流す test command と共有する計数) を足した。全 31 case と足した 3 case を with arm で 3 run ずつ回した (case 34 の再実行を含め $74)。新しい case はすべて 3/3。5.1.0 から 2 run 以上下がった grader は 08 `requirements-listed` (3/3 → 1/3、判定し直すと 3/3) と 34 の封の 3 grader (3/3 → 1/3) だけ。34 は新旧を同じ条件で 3 run ずつ流し直すと 5.1.0 も 5.2.0 も 2/3 で、落ちた run はどちらも、要件が適用の入口を名指ししないので Gate を not ready にしていた (今回の変更が触れない 2 段目の判断)。
+
 ## v20.1.0 - 2026-11-16
 
 ### Changed

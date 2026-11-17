@@ -363,6 +363,12 @@ def verify(repo, info):
     return findings
 
 
+def changed_files(repo, files):
+    entries = git(repo, "status", "--porcelain", "-z", "--untracked-files=all", "--", *files).split("\0")
+    dirty = {entry[3:] for entry in entries if len(entry) > 3}
+    return [path for path in files if path in dirty]
+
+
 def seal(repo, spec_text):
     try:
         spec = json.loads(spec_text)
@@ -382,6 +388,8 @@ def seal(repo, spec_text):
     missing = [path for path in files if not (Path(repo) / path).is_file()]
     if missing:
         errors.append(f"files: {', '.join(missing)} が無い")
+    elif files and not changed_files(repo, files):
+        errors.append("files: 渡したファイルがどれも HEAD から変わっていない (封をし直すのは、受け入れテスト・土台・計画を直したときだけ)")
     if not mapping:
         errors.append("tests: AC とテストの対応が無い")
     kinds = {}
@@ -428,18 +436,19 @@ def seal(repo, spec_text):
         print(output[-4000:])
         return errors
     rule_acs = sorted(ac for ac, kind in kinds.items() if kind == "rule")
+    changed = changed_files(repo, files)
     lines = [
         f"{SEAL_TRAILER}: {', '.join(sorted(kinds))}",
         *([f"{RULE_TRAILER}: {', '.join(rule_acs)}"] if rule_acs else []),
         *([f"{RULE_FILES_TRAILER}: {', '.join(rule_files)}"] if rule_files else []),
-        f"{FILES_TRAILER}: {', '.join(files)}",
+        f"{FILES_TRAILER}: {', '.join(changed)}",
         *[f"{TEST_TRAILER}: {test['ac']} = {test['file']}{TEST_SEPARATOR}{test['name']}" for test in mapping],
         f"{COMMAND_TRAILER}: {test_command}",
         *([f"{SUPERSEDES_TRAILER}: {supersedes}"] if supersedes else []),
     ]
     message = f"{subject}\n\n" + "\n".join(lines) + "\n"
-    git(repo, "add", "--", *files)
-    git_stdin(repo, message, "commit", "-q", "-F", "-", "--", *files)
+    git(repo, "add", "--", *changed)
+    git_stdin(repo, message, "commit", "-q", "-F", "-", "--", *changed)
     print(f"seal: {git(repo, 'rev-parse', 'HEAD').strip()}")
     return []
 
