@@ -5,6 +5,13 @@ All notable changes to omokawa-skills will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v20.4.0 - 2026-11-17
+
+### Changed
+
+- **`define-done` 5.4.0:** 受け入れテストと計画を固定する commit の呼び名を「封」から「凍結」に変えた (凍結の commit、凍結の時点、凍結し直す)。「封」は日本語の開発の語として通じにくく、「仕様凍結」の「凍結」なら説明なしで通じるため。`seal`、`reseal`、`Define-Done-Seal:` の trailer、`check_seal.py` の名前は変えないので、既にある凍結の commit はそのまま読める。`check_seal.py` のエラーメッセージ、GLOSSARY、eval の prompt と grader も同じ語に揃えた。
+- **`enforce-conventions` 3.2.0:** 保護するパスの説明の「封の commit」を「凍結の commit」に揃えた。
+
 ## v20.3.0 - 2026-11-17
 
 ### Changed

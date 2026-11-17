@@ -99,4 +99,4 @@ Define-Done-Test: AC-002 = test/discount.keep.acceptance.test.js › 9 個の値
 Define-Done-Test-Command: node --test --test-reporter=junit --test-reporter-destination={report} test/discount.rule.acceptance.test.js test/discount.keep.acceptance.test.js"
 ```
 
-`repo/` の plans/discount.md は前に /define-done で封をしたが、土台 `test/harness/price.js` が製品コード `src/price.js` を使わず、計算を写していた。このままでは実装しても規則の受け入れテストが通らない。土台を製品コードを使う形に直して、plans/discount.md を /define-done で封をし直してください。
+`repo/` の plans/discount.md は前に /define-done で凍結したが、土台 `test/harness/price.js` が製品コード `src/price.js` を使わず、計算を写していた。このままでは実装しても規則の受け入れテストが通らない。土台を製品コードを使う形に直して、plans/discount.md を /define-done で凍結し直してください。

@@ -100,4 +100,4 @@ EOF
 git add -A && git commit -qm base
 ```
 
-`repo/` の plans/invitation.md について、/define-done で要求から受け入れテストを `repo/test/` の下に `*.acceptance.test.js` として `node:test` で書いて実装に着手できる状態にし、続けて、封の commit に入ったファイルを変えずに `repo/src/membership.js` を実装し、define-done の skill の dir にある `scripts/check_seal.py` を `python3 <script> verify repo` で流してください。受け入れテストの封の commit のほかは commit しなくていいです。作業の最後に、`repo/test/` の下に書いた受け入れテストと土台のファイルと `repo/src/membership.js` を、ファイルごとに `cat <path>` で 1 回ずつ実行して内容を表示してください。
+`repo/` の plans/invitation.md について、/define-done で要求から受け入れテストを `repo/test/` の下に `*.acceptance.test.js` として `node:test` で書いて実装に着手できる状態にし、続けて、凍結の commit に入ったファイルを変えずに `repo/src/membership.js` を実装し、define-done の skill の dir にある `scripts/check_seal.py` を `python3 <script> verify repo` で流してください。受け入れテストの凍結の commit のほかは commit しなくていいです。作業の最後に、`repo/test/` の下に書いた受け入れテストと土台のファイルと `repo/src/membership.js` を、ファイルごとに `cat <path>` で 1 回ずつ実行して内容を表示してください。

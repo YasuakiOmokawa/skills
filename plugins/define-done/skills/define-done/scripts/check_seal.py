@@ -192,7 +192,7 @@ def inspect(repo):
     found = seals(repo)
     behavior = [seal for seal in found if seal["behavior"] and not seal["completed"]]
     if not behavior:
-        return None, ["seal: 進行中の `Define-Done-Seal:` の封が HEAD から辿れない"]
+        return None, ["seal: 進行中の `Define-Done-Seal:` の凍結の commit が HEAD から辿れない"]
     latest = behavior[0]
     values = latest["values"]
     findings = []
@@ -209,11 +209,11 @@ def inspect(repo):
             if sha not in seal_set:
                 touched_after_seal.setdefault(sha, []).append(path)
     for sha, paths in touched_after_seal.items():
-        findings.append(f"tamper: {sha[:12]} が封の後に {', '.join(paths)} を変えた")
+        findings.append(f"tamper: {sha[:12]} が凍結の後に {', '.join(paths)} を変えた")
     if protected:
         dirty = git(repo, "status", "--porcelain", "--", *protected).splitlines()
         if dirty:
-            findings.append(f"tamper: 封をしたファイルに未 commit の変更がある ({'; '.join(line.strip() for line in dirty)})")
+            findings.append(f"tamper: 凍結したファイルに未 commit の変更がある ({'; '.join(line.strip() for line in dirty)})")
     for seal in behavior:
         if not seal["recorded"]:
             continue
@@ -343,7 +343,7 @@ def verify(repo, info):
         print(output[-4000:])
         findings = []
         if sealed_code == 0:
-            findings.append("vacuous: 受け入れテストが封の時点で既に通っていた。振る舞いを観測していない")
+            findings.append("vacuous: 受け入れテストが凍結の時点で既に通っていた。振る舞いを観測していない")
         if current_code != 0:
             findings.append("fail: 受け入れテストが今の tree で落ちる")
         return findings
@@ -369,7 +369,7 @@ def changed_files(repo, files):
     return [path for path in files if path in dirty]
 
 
-SET_ASIDE_MESSAGE = "define-done seal: 封の外の変更"
+SET_ASIDE_MESSAGE = "define-done seal: 凍結の外の変更"
 
 
 def outside_paths(repo, files):
@@ -405,7 +405,7 @@ class SetAside:
         git(self.repo, "stash", "push", "-q", "--include-untracked", "-m", SET_ASIDE_MESSAGE, "--", *self.paths)
         shas = stash_shas(self.repo)
         if not shas or shas[0] in existing:
-            raise RuntimeError("封の外の変更を退避できなかった")
+            raise RuntimeError("凍結の外の変更を退避できなかった")
         self.sha, self.applied = shas[0], False
 
     def apply(self):
@@ -423,7 +423,7 @@ class SetAside:
             index = stash_shas(self.repo).index(self.sha)
             git(self.repo, "stash", "drop", "-q", f"stash@{{{index}}}")
         except (RuntimeError, ValueError) as exc:
-            return [f"set-aside: 封の外の変更を戻せなかった ({exc})。退避は stash に残してある: `git stash apply {self.sha}` で戻す"]
+            return [f"set-aside: 凍結の外の変更を戻せなかった ({exc})。退避は stash に残してある: `git stash apply {self.sha}` で戻す"]
         return []
 
 
@@ -448,7 +448,7 @@ def spike_findings(repo, spike, files):
     touched = {line.split("\t", 2)[2] for line in numstat.stdout.splitlines() if line.count("\t") >= 2}
     sealed = sorted(touched & set(files))
     if sealed:
-        return [f"spike: 試作の実装の patch が封のファイル {', '.join(sealed)} を変えている"]
+        return [f"spike: 試作の実装の patch が凍結したファイル {', '.join(sealed)} を変えている"]
     if not touched:
         return ["spike: 試作の実装の patch が何も変えない"]
     return []
@@ -479,7 +479,7 @@ def seal(repo, spec_text):
     if missing:
         errors.append(f"files: {', '.join(missing)} が無い")
     elif files and not changed_files(repo, files):
-        errors.append("files: 渡したファイルがどれも HEAD から変わっていない (封をし直すのは、受け入れテスト・土台・計画を直したときだけ)")
+        errors.append("files: 渡したファイルがどれも HEAD から変わっていない (凍結し直すのは、受け入れテスト・土台・計画を直したときだけ)")
     if not mapping:
         errors.append("tests: AC とテストの対応が無い")
     kinds = {}
@@ -498,7 +498,7 @@ def seal(repo, spec_text):
     test_files = sorted({test["file"] for test in mapping})
     for path in files:
         if path.endswith(CODE_SUFFIXES) and AC_ID.search((Path(repo) / path).read_text(encoding="utf-8")):
-            errors.append(f"tests: {path} に AC-ID を書かない (AC との対応は封が記録する)")
+            errors.append(f"tests: {path} に AC-ID を書かない (AC との対応は凍結の commit が記録する)")
     for path in test_files:
         for specifier in import_findings(path, (Path(repo) / path).read_text(encoding="utf-8")):
             errors.append(f"boundary: {path} が土台とテストランナーの外の {specifier} を import している")
@@ -598,7 +598,7 @@ def reseal_spec(repo, spec_text):
         return None, [f"spec: 標準入力の JSON を読めない ({exc})"]
     found = [seal for seal in seals(repo) if seal["behavior"] and seal["recorded"] and not seal["completed"]]
     if not found:
-        return None, ["reseal: 封をし直す元の、進行中の封が HEAD から辿れない"]
+        return None, ["reseal: 凍結し直す元の、進行中の凍結の commit が HEAD から辿れない"]
     latest = found[0]
     rule_files = sorted(latest["rule_files"])
     sealed = list(dict.fromkeys(path for seal in found for path in seal["files"]))
