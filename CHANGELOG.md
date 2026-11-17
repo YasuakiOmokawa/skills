@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **`define-done` 5.4.0:** 受け入れテストと計画を固定する commit の呼び名を「封」から「凍結」に変えた (凍結の commit、凍結の時点、凍結し直す)。「封」は日本語の開発の語として通じにくく、「仕様凍結」の「凍結」なら説明なしで通じるため。`seal`、`reseal`、`Define-Done-Seal:` の trailer、`check_seal.py` の名前は変えないので、既にある凍結の commit はそのまま読める。`check_seal.py` のエラーメッセージ、GLOSSARY、eval の prompt と grader も同じ語に揃えた。
 - **`enforce-conventions` 3.2.0:** 保護するパスの説明の「封の commit」を「凍結の commit」に揃えた。
+- **eval:** 語が変わった prompt と grader を持つ define-done の 10 case、chain 2 case、enforce-conventions の case 05 を with arm 3 run で回した ($36、main での比較 run を含む)。5.3.0 から 2 run 以上下がった grader は 27 の凍結まわり (3/3→1/3) と chain-string-quantity の `acceptance-test-written` (2/3→0/3) で、落ちた run はどれも計画の D1 のバグを見つけて Gate で止まっていた。main でも回すと 27 は 2/3、chain-string-quantity は 0/3 で、今回の変更による低下ではない。全 suite は回さず、`last-run.json` は理由付きで waive した。
 
 ## v20.3.0 - 2026-11-17
 
