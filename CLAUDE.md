@@ -33,4 +33,5 @@ tag / GitHub Release は release-on-version-bump.yml が marketplace.json の pu
 
 - skill 変更後は `python3 scripts/validate_skills.py` をローカル実行 (CI でも PR ごとに実行)
 - 新規 plugin 追加・改名時、機械検証外の 2 点を grep で確認: 他 plugin / README 本文の `/<旧名>` 言及、README の一覧行とリンク
-- 公開前に機密情報 (Cloud ID, API キー等) と組織固有名 (ラベル・環境・リポジトリ名) の残存を grep でスキャン
+- 秘密情報 (API キー・トークン等) は CI の gitleaks (`secret-scan.yml`、全 PR で全履歴を走査) が止める。ローカルでは `gitleaks git . --redact` で事前に確認できる
+- gitleaks が検出しない Cloud ID と組織固有名 (ラベル・環境・リポジトリ名) は、公開前に grep で残存をスキャン
