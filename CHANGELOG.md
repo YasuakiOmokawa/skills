@@ -5,6 +5,20 @@ All notable changes to omokawa-skills will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v20.5.0 - 2026-11-18
+
+### Changed
+
+- **`check_seal.py seal`:** 凍結の前に計画を読み、整合を確かめる。確かめるのは、Gate が ready であること、`- AC IDs:` の行が基準の AC-ID と一致すること、テストを対応させた AC が計画にあり種類の印がファイルの種類と合うこと、基準の出典の `R-n` が要求にあること、要求の表の各行がその要求を出典に挙げる AC-ID か `未検証:`・`範囲外:`・`不足情報:` で始まること。食い違えば exit 1 で凍結しない。計画は凍結するファイルの中から探し、repo の外の計画は JSON の `plan` で渡す。
+- **`check_seal.py seal`:** commit の subject を計画の path から作る (`test: plans/tags.md の受け入れテスト`、repo の外の計画は末尾の 2 要素)。`reseal` は末尾に「を直す」を付ける。JSON の `subject` は省ける。計画のファイル名だけを使う雛形では、`<issue の dir>/design.md` に置いた計画の凍結の commit がどれも同じ subject になっていた。
+- **`check_seal.py seal`:** 渡したファイルのほかの凍結済みのファイルに未 commit の変更があれば、テストを流す前に拒む。これまでは凍結に成功し、その後の `check` で初めて改ざんと分かった。
+- **`check_seal.py spike-open` / `spike-close`:** 試作の実装を書く一時的な複製を作る subcommand を足した。`spike-open` は HEAD の worktree を repo の外に作り、gitignore された依存の dir (`node_modules`、`.venv`、`vendor/bundle`) を link し、渡した受け入れテストと土台を写す。`spike-close` は試作の実装の差分だけを repo の外の patch に出して複製を消す。写したファイルが複製の中でだけ変わっていれば拒む。env の file は link も複写もしない。
+- **`define-done` 5.5.0:** 要求にするのは、完了したときに製品か文書に成り立つ結果だけにした。作業の進め方の指示は従うだけにし、repo の検査コマンドが通ることは `check_command` に渡し、依頼が今回は作らないと述べたものは計画の範囲外の宣言と突き合わせる。資料が値を決めていない要求は、要求の表に `不足情報:` と書く。
+- **`define-done` 5.5.0:** `## MECE Review` に残ったリスクの表を足した。`## Ground Review` が反証できずに残したリスクごとに、守る先 (AC、実装のテスト、規約、未検証) を書く。`実装のテスト` の行は、最終回答に実装が足すテストとして並べる。
+- **`define-done` 5.5.0:** 最終回答を、依頼の後続の作業 (実装など) へ移る前に出す (完了条件にも入れた)。AC ごとのテスト名と要求ごとの対応は、凍結の commit と計画にあるので回答から外し、種類別の AC 数、試作の実装の patch の path (実装はこの patch を当てて始めてよい)、実装が足すテスト、enforce-conventions に渡す規約を返す。
+- 上の 7 点は taimei-auth の #489 の振り返りから来ている。残ったリスク 1 件にテストが付かないまま実装が終わり、「すべて推奨で決める」が要求になって対応する AC の無い行が Gate を通り、凍結の直後の回答を飛ばして実装へ進み、試作の worktree の準備に往復がかかった。
+- **eval:** case 42 (作業の進め方の指示、作らないものの宣言、検査コマンドの通過を要求にしない) と 43 (凍結の後、実装へ進む前に要求の一覧を返す) を足し、case 01 に残ったリスクの守る先、case 41 に `spike-open` の利用と patch の path の返却の grader を足した。`check_seal.py` の unit test は 16 件を足して 86 件。全 39 case を with arm で 3 run ずつ回し、chain 2 case も回した ($98。旧版での新しい case の基準取り、pilot、流し直しを含む)。新しい grader は、旧版 → 新版で、01 `residual-risk-destination` 0/3 → 3/3、41 `spike-by-script` 0/3 → 3/3、41 `patch-path-returned` 1/3 → 3/3、42 `no-check-command-requirement` 0/3 → 3/3、42 `no-non-goal-requirement` 2/3 → 3/3、43 `report-before-implementing` 0/3 → 2/3 (完了条件に入れる前の中身でも 2/3。最終の中身で落ちた 1 run は、回答を先に出すと述べたうえで、実装の道具の呼び出しが回答より先に出た)。旧版の値は、01 が 5.3.0 の run の計画を同じ基準で判定し直したもの、41 が 5.3.0 の trace に同じ regex を当てたもの、42 と 43 が 5.4.0 で回したもの。42 `no-process-requirement` は旧版でも 3/3 で、この fixture では差が出ない。5.3.0 から 2 run 以上下がった grader は 05 `purpose-covered` (2/3 → 0/3) だけで、同じ中身で流し直すと 3/3 だった (5.2.0 では 1/3。計画の「仕様」の節から要求を引くかで合否が割れる、前からの揺れ)。1 run 下がった 14 `retry-unverified` と 15 `new-criterion-semantics` は、判定し直すとどちらも PASS だった。14 `billing-decided` は最終回答を見る grader で、1/3 → 0/3 に下がった。請求作成の対応の判定は計画に書いてあり、新しい最終回答は要求ごとの対応を写さないので、grader の見る先を計画に替えて case 14 を流し直した。替えた grader は、旧版の run の計画でも新版でも 3/3。受け入れテストの変異の採点は前の版と同じ水準で、30 の 1 run はテストを書いて凍結したが、trace から復元できず採点できなかった。chain は `chain-invite-owner` が 3/3 (コードも隠しテストを全部通す)、`chain-string-quantity` は 3 run とも計画の D1 のバグを理由に Gate で止まった。
+
 ## v20.4.0 - 2026-11-17
 
 ### Changed

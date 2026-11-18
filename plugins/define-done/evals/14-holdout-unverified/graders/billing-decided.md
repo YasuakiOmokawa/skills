@@ -1,7 +1,8 @@
 ---
 type: llm
+focus: {source: file, path: plans/billing-v2.md}
 ---
-この回答について、次を満たすなら pass。
+計画 `plans/billing-v2.md` について、次を満たすなら pass。
 
 - 請求作成の受け入れ基準 (元の計画の AC-001。ID が変わっていてもよい) と仕様 S-1 について、`src/billing/create.ts` の `createInvoice` を根拠に対応の有無を判定している。
 
