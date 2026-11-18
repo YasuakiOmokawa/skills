@@ -883,6 +883,339 @@
       "startedAt": "2026-11-08T04:25:49.477Z"
     }
   },
+  "60bb06bd45c7bdb23c7ca4f6ce659a650e9744a9c13cbba157483be09cb31537": {
+    "23-acceptance-tests-sealed": {
+      "arms": {
+        "with": [
+          {
+            "auto_killable": 15,
+            "auto_killed": 15,
+            "auto_survivors": [],
+            "invalid": [],
+            "outcome": "tests",
+            "repeatable": true,
+            "requirement_killed": 12,
+            "requirement_survivors": [],
+            "requirement_total": 12,
+            "tests": 12,
+            "valid": 12
+          },
+          {
+            "auto_killable": 15,
+            "auto_killed": 15,
+            "auto_survivors": [],
+            "invalid": [],
+            "outcome": "tests",
+            "repeatable": true,
+            "requirement_killed": 12,
+            "requirement_survivors": [],
+            "requirement_total": 12,
+            "tests": 11,
+            "valid": 11
+          },
+          {
+            "auto_killable": 15,
+            "auto_killed": 15,
+            "auto_survivors": [],
+            "invalid": [],
+            "outcome": "tests",
+            "repeatable": true,
+            "requirement_killed": 12,
+            "requirement_survivors": [],
+            "requirement_total": 12,
+            "tests": 10,
+            "valid": 10
+          }
+        ]
+      },
+      "startedAt": "2026-11-18T01:29:39.621Z"
+    },
+    "24-bulk-discount-existing-code": {
+      "arms": {
+        "with": [
+          {
+            "auto_killable": 19,
+            "auto_killed": 19,
+            "auto_survivors": [],
+            "invalid": [],
+            "outcome": "tests",
+            "repeatable": true,
+            "requirement_killed": 9,
+            "requirement_survivors": [],
+            "requirement_total": 9,
+            "tests": 7,
+            "valid": 7
+          },
+          {
+            "auto_killable": 19,
+            "auto_killed": 19,
+            "auto_survivors": [],
+            "invalid": [],
+            "outcome": "tests",
+            "repeatable": true,
+            "requirement_killed": 9,
+            "requirement_survivors": [],
+            "requirement_total": 9,
+            "tests": 8,
+            "valid": 8
+          },
+          {
+            "auto_killable": 19,
+            "auto_killed": 19,
+            "auto_survivors": [],
+            "invalid": [],
+            "outcome": "tests",
+            "repeatable": true,
+            "requirement_killed": 9,
+            "requirement_survivors": [],
+            "requirement_total": 9,
+            "tests": 7,
+            "valid": 7
+          }
+        ]
+      },
+      "startedAt": "2026-11-18T01:30:50.071Z"
+    },
+    "25-real-bug-admin-mints-owner": {
+      "arms": {
+        "with": [
+          {
+            "auto_killable": 26,
+            "auto_killed": 26,
+            "auto_survivors": [],
+            "invalid": [],
+            "outcome": "tests",
+            "repeatable": true,
+            "requirement_killed": 1,
+            "requirement_survivors": [],
+            "requirement_total": 1,
+            "tests": 14,
+            "valid": 14
+          },
+          {
+            "auto_killable": 26,
+            "auto_killed": 26,
+            "auto_survivors": [],
+            "invalid": [],
+            "outcome": "tests",
+            "repeatable": true,
+            "requirement_killed": 1,
+            "requirement_survivors": [],
+            "requirement_total": 1,
+            "tests": 11,
+            "valid": 11
+          },
+          {
+            "auto_killable": 26,
+            "auto_killed": 26,
+            "auto_survivors": [],
+            "invalid": [],
+            "outcome": "tests",
+            "repeatable": true,
+            "requirement_killed": 1,
+            "requirement_survivors": [],
+            "requirement_total": 1,
+            "tests": 17,
+            "valid": 17
+          }
+        ]
+      },
+      "startedAt": "2026-11-18T01:33:41.094Z"
+    },
+    "26-real-bug-last-used-company": {
+      "arms": {
+        "with": [
+          {
+            "auto_killable": 12,
+            "auto_killed": 12,
+            "auto_survivors": [],
+            "invalid": [],
+            "outcome": "tests",
+            "repeatable": true,
+            "requirement_killed": 1,
+            "requirement_survivors": [],
+            "requirement_total": 1,
+            "tests": 5,
+            "valid": 5
+          },
+          {
+            "auto_killable": 12,
+            "auto_killed": 12,
+            "auto_survivors": [],
+            "invalid": [],
+            "outcome": "tests",
+            "repeatable": true,
+            "requirement_killed": 1,
+            "requirement_survivors": [],
+            "requirement_total": 1,
+            "tests": 6,
+            "valid": 6
+          },
+          {
+            "auto_killable": 12,
+            "auto_killed": 12,
+            "auto_survivors": [],
+            "invalid": [],
+            "outcome": "tests",
+            "repeatable": true,
+            "requirement_killed": 1,
+            "requirement_survivors": [],
+            "requirement_total": 1,
+            "tests": 6,
+            "valid": 6
+          }
+        ]
+      },
+      "startedAt": "2026-11-18T01:34:02.008Z"
+    },
+    "27-real-bug-remove-missing-member": {
+      "arms": {
+        "with": [
+          {
+            "auto_killable": 28,
+            "auto_killed": 28,
+            "auto_survivors": [],
+            "invalid": [],
+            "outcome": "tests",
+            "repeatable": true,
+            "requirement_killed": 6,
+            "requirement_survivors": [],
+            "requirement_total": 6,
+            "tests": 16,
+            "valid": 16
+          },
+          {
+            "auto_killable": 28,
+            "auto_killed": 28,
+            "auto_survivors": [],
+            "invalid": [],
+            "outcome": "tests",
+            "repeatable": true,
+            "requirement_killed": 6,
+            "requirement_survivors": [],
+            "requirement_total": 6,
+            "tests": 12,
+            "valid": 12
+          },
+          {
+            "auto_killable": 28,
+            "auto_killed": 28,
+            "auto_survivors": [],
+            "invalid": [],
+            "outcome": "tests",
+            "repeatable": true,
+            "requirement_killed": 6,
+            "requirement_survivors": [],
+            "requirement_total": 6,
+            "tests": 10,
+            "valid": 10
+          }
+        ]
+      },
+      "startedAt": "2026-11-18T01:37:59.728Z"
+    },
+    "28-existing-guard-string-quantity": {
+      "arms": {
+        "with": [
+          {
+            "outcome": "gate"
+          },
+          {
+            "outcome": "gate"
+          },
+          {
+            "outcome": "gate"
+          }
+        ]
+      },
+      "startedAt": "2026-11-18T01:37:12.474Z"
+    },
+    "29-untested-ac-staging": {
+      "arms": {
+        "with": [
+          {
+            "auto_killable": 19,
+            "auto_killed": 19,
+            "auto_survivors": [],
+            "invalid": [],
+            "outcome": "tests",
+            "repeatable": true,
+            "requirement_killed": 9,
+            "requirement_survivors": [],
+            "requirement_total": 9,
+            "tests": 7,
+            "valid": 7
+          },
+          {
+            "auto_killable": 19,
+            "auto_killed": 19,
+            "auto_survivors": [],
+            "invalid": [],
+            "outcome": "tests",
+            "repeatable": true,
+            "requirement_killed": 9,
+            "requirement_survivors": [],
+            "requirement_total": 9,
+            "tests": 9,
+            "valid": 9
+          },
+          {
+            "auto_killable": 19,
+            "auto_killed": 19,
+            "auto_survivors": [],
+            "invalid": [],
+            "outcome": "tests",
+            "repeatable": true,
+            "requirement_killed": 9,
+            "requirement_survivors": [],
+            "requirement_total": 9,
+            "tests": 7,
+            "valid": 7
+          }
+        ]
+      },
+      "startedAt": "2026-11-18T01:42:30.314Z"
+    },
+    "30-invariant-op-sequence": {
+      "arms": {
+        "with": [
+          {
+            "auto_killable": 48,
+            "auto_killed": 48,
+            "auto_survivors": [],
+            "invalid": [
+              "0:admins and members cannot change roles",
+              "0:admins and members cannot remove members"
+            ],
+            "outcome": "tests",
+            "repeatable": true,
+            "requirement_killed": 8,
+            "requirement_survivors": [],
+            "requirement_total": 8,
+            "tests": 20,
+            "valid": 18
+          },
+          {
+            "outcome": "no-test"
+          },
+          {
+            "auto_killable": 48,
+            "auto_killed": 48,
+            "auto_survivors": [],
+            "invalid": [],
+            "outcome": "tests",
+            "repeatable": true,
+            "requirement_killed": 8,
+            "requirement_survivors": [],
+            "requirement_total": 8,
+            "tests": 19,
+            "valid": 19
+          }
+        ]
+      },
+      "startedAt": "2026-11-18T01:39:08.640Z"
+    }
+  },
   "7b8f6fd0f6739e52e85bebc701270306d07b6a01d6a501c1be15511fc6463613": {
     "23-acceptance-tests-sealed": {
       "arms": {
