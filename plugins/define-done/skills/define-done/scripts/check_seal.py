@@ -3,6 +3,7 @@ import json
 import os
 import posixpath
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -42,6 +43,20 @@ JS_IMPORT = re.compile(
 )
 PY_IMPORT = re.compile(r"^\s*(?:from\s+(\.*[\w.]*)\s+import|import\s+([\w.]+))", re.M)
 RB_REQUIRE = re.compile(r"""^\s*(require|require_relative)\s*\(?\s*['"]([^'"]+)['"]""", re.M)
+PLAN_SECTIONS = ("Requirements", "Ground Review", "Acceptance Criteria", "MECE Review")
+PLAN_HEADING = re.compile(r"^## Acceptance Criteria[ \t]*$", re.M)
+REQUIREMENT_LINE = re.compile(r"^- (R-\d+):", re.M)
+REQUIREMENT_ID = re.compile(r"R-\d+")
+CRITERION_LINE = re.compile(r"^- (?:\[[ xX]\] )?(AC-\d{3}):[ \t]*(?:\[(規則|非影響)\])?(.*)$", re.M)
+ROW_WITHOUT_CRITERION = re.compile(r"\s*(?:未検証|範囲外|不足情報)")
+REQUIREMENT_ROW = re.compile(r"^\|[ \t]*(R-\d+)[ \t]*\|(.*)\|[ \t]*$", re.M)
+GATE_LINE = re.compile(r"^- Gate:[ \t]*(.*)$", re.M)
+GATE_READY = re.compile(r"ready(?:\s*[(（].*)?")
+AC_IDS_LINE = re.compile(r"^- AC IDs:[ \t]*(.*)$", re.M)
+SOURCE_NOTE = "(出典:"
+KIND_LABELS = {"rule": "規則", "non-impact": "非影響"}
+DEPENDENCY_DIRS = ("node_modules", ".venv", "vendor/bundle")
+SPIKE_RECORD = "define-done-spike-paths"
 LEGACY_TEST_OR_PLAN = re.compile(r"\.md$|(^|/)(tests?|__tests__|specs?|e2e)/|(^|/)test_[^/]*$|[._-](test|spec)\.[^/]+$")
 
 
@@ -454,6 +469,132 @@ def spike_findings(repo, spike, files):
     return []
 
 
+def plan_sections(text):
+    found = {}
+    for chunk in re.split(r"^(?=## )", text, flags=re.M):
+        title, _, body = chunk.partition("\n")
+        if title.startswith("## "):
+            found.setdefault(title[3:].strip(), []).append(body)
+    return found
+
+
+def locate_plan(repo, named, files):
+    if named:
+        path = Path(named).expanduser()
+        return (path if path.is_absolute() else Path(repo) / path), []
+    candidates = [path for path in files if path.endswith(".md") and PLAN_HEADING.search((Path(repo) / path).read_text(encoding="utf-8"))]
+    if len(candidates) == 1:
+        return Path(repo) / candidates[0], []
+    if candidates:
+        return None, [f"plan: 計画の候補が複数ある ({', '.join(candidates)})。`plan` に計画の path を渡す"]
+    return None, ["plan: 計画が凍結するファイルに無い (repo の中の計画は non_impact に入れ、repo の外の計画は `plan` に path を渡す)"]
+
+
+def plan_label(repo, plan):
+    resolved, root = plan.resolve(), Path(repo).resolve()
+    return resolved.relative_to(root).as_posix() if root in resolved.parents else "/".join(resolved.parts[-2:])
+
+
+def plan_findings(plan, kinds):
+    try:
+        sections = plan_sections(plan.read_text(encoding="utf-8"))
+    except OSError:
+        return [f"plan: 計画 {plan} を読めない"]
+    counts = {title: len(sections.get(title, [])) for title in PLAN_SECTIONS}
+    if any(count != 1 for count in counts.values()):
+        return [f"plan: 計画に `## {title}` の節が {count} 個ある (それぞれ 1 つにする)" for title, count in counts.items() if count != 1]
+    requirements = sorted(set(REQUIREMENT_LINE.findall(sections["Requirements"][0])), key=lambda name: int(name[2:]))
+    criteria = {}
+    for ac, kind, rest in CRITERION_LINE.findall(sections["Acceptance Criteria"][0]):
+        _, noted, sources = rest.rpartition(SOURCE_NOTE)
+        criteria[ac] = {"kind": kind, "sources": set(REQUIREMENT_ID.findall(sources)) if noted else None}
+    review = sections["MECE Review"][0]
+    errors = []
+    gates = GATE_LINE.findall(review)
+    if len(gates) != 1:
+        errors.append(f"plan: `## MECE Review` に `- Gate:` の行が {len(gates)} 個ある")
+    elif not GATE_READY.fullmatch(gates[0].strip()):
+        errors.append(f"plan: Gate が ready でない計画は凍結しない (`- Gate: {gates[0].strip()}`)")
+    listed_ids = AC_IDS_LINE.findall(review)
+    if len(listed_ids) != 1:
+        errors.append(f"plan: `## MECE Review` に `- AC IDs:` の行が {len(listed_ids)} 個ある")
+    elif set(AC_ID.findall(listed_ids[0])) != set(criteria):
+        differing = sorted(set(AC_ID.findall(listed_ids[0])) ^ set(criteria))
+        errors.append(f"plan: `- AC IDs:` の行と `## Acceptance Criteria` の基準が {', '.join(differing)} で食い違う (AC-ID を 1 つずつ並べる)")
+    if not requirements:
+        errors.append("plan: `## Requirements` に `- R-n:` の行が無い")
+    for ac, kind in sorted(kinds.items()):
+        entry = criteria.get(ac)
+        if entry is None:
+            errors.append(f"plan: テストを対応させた {ac} が計画の `## Acceptance Criteria` に無い")
+            continue
+        if entry["kind"] != KIND_LABELS[kind]:
+            errors.append(f"plan: {ac} は計画で {'[' + entry['kind'] + ']' if entry['kind'] else '種類の印が無い'} だが、テストは{KIND_LABELS[kind]}のファイルにある")
+        if entry["sources"] is None:
+            errors.append(f"plan: {ac} の行に `(出典: ...)` が無い")
+    for ac, entry in sorted(criteria.items()):
+        unknown = sorted((entry["sources"] or set()) - set(requirements))
+        if unknown:
+            errors.append(f"plan: {ac} の出典 {', '.join(unknown)} が `## Requirements` に無い")
+    rows = {}
+    for requirement, cell in REQUIREMENT_ROW.findall(review):
+        rows[requirement] = f"{rows.get(requirement, '')} {cell}"
+    for requirement in requirements:
+        cell = rows.get(requirement)
+        if cell is None:
+            errors.append(f"plan: {requirement} が `## MECE Review` の要求の表に無い")
+            continue
+        if ROW_WITHOUT_CRITERION.match(cell):
+            continue
+        named = AC_ID.findall(cell)
+        if not named:
+            errors.append(f"plan: 要求の表の {requirement} の行が、対応する AC でも `未検証:`、`範囲外:`、`不足情報:` でも始まらない")
+        elif not any(requirement in (criteria.get(ac, {}).get("sources") or ()) for ac in named):
+            errors.append(f"plan: 要求の表は {requirement} を {', '.join(named)} に対応させているが、そのどれも出典に {requirement} を挙げていない (出典に足すか、行を `未検証:`、`範囲外:`、`不足情報:` のどれかにする)")
+    return errors
+
+
+def spike_open(repo, files):
+    missing = [path for path in files if not (Path(repo) / path).is_file()]
+    if missing:
+        return [f"spike: {', '.join(missing)} が repo に無い"]
+    work = Path(tempfile.mkdtemp(prefix="define-done-spike-")) / "tree"
+    git(repo, "worktree", "add", "-q", "--detach", str(work), "HEAD")
+    ignored = git(repo, "ls-files", "--others", "--ignored", "--exclude-standard", "--directory", "-z").split("\0")
+    linked = [path.rstrip("/") for path in ignored if path.endswith("/") and any(path.rstrip("/") == name or path.rstrip("/").endswith("/" + name) for name in DEPENDENCY_DIRS)]
+    for path in linked:
+        (work / path).parent.mkdir(parents=True, exist_ok=True)
+        (work / path).symlink_to((Path(repo) / path).resolve())
+    for path in files:
+        (work / path).parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(Path(repo) / path, work / path)
+    record = Path(git(work, "rev-parse", "--absolute-git-dir").strip()) / SPIKE_RECORD
+    record.write_text(json.dumps({"linked": linked, "copied": list(files)}), encoding="utf-8")
+    print(f"worktree: {work}")
+    return []
+
+
+def spike_close(repo, work):
+    work = Path(work)
+    try:
+        record = json.loads((Path(git(work, "rev-parse", "--absolute-git-dir").strip()) / SPIKE_RECORD).read_text(encoding="utf-8"))
+    except (RuntimeError, OSError, json.JSONDecodeError):
+        return [f"spike: {work} は `spike-open` が作った複製でない"]
+    stale = [path for path in record["copied"] if not ((work / path).is_file() and (Path(repo) / path).is_file() and (work / path).read_bytes() == (Path(repo) / path).read_bytes())]
+    if stale:
+        return [f"spike: 複製の {', '.join(stale)} が repo と食い違う (受け入れテストと土台は repo で直し、複製へ写し直す)"]
+    scope = [".", *[f":(exclude){path}" for path in record["linked"] + record["copied"]]]
+    git(work, "add", "-N", "--", *scope)
+    diff = git(work, "diff", "--binary", "HEAD", "--", *scope)
+    if not diff.strip():
+        return ["spike: 複製に試作の実装の変更が無い"]
+    patch = work.parent / "spike.patch"
+    patch.write_text(diff, encoding="utf-8")
+    git(repo, "worktree", "remove", "--force", str(work))
+    print(f"spike: {patch}")
+    return []
+
+
 def ran_names(entries, path):
     return [next((name for name in entry["names"] if name), "") for entry in entries if in_files(entry, [path])]
 
@@ -464,7 +605,6 @@ def seal(repo, spec_text):
     except json.JSONDecodeError as exc:
         return [f"spec: 標準入力の JSON を読めない ({exc})"]
     test_command, supersedes = str(spec.get("test_command") or ""), str(spec.get("supersedes") or "")
-    subject = str(spec.get("subject") or "test: 受け入れテスト")
     check_command, spike = str(spec.get("check_command") or ""), str(spec.get("spike") or "")
     rule_files = list(dict.fromkeys(spec.get("rule") or []))
     non_impact_files = list(dict.fromkeys(spec.get("non_impact") or []))
@@ -495,6 +635,11 @@ def seal(repo, spec_text):
             errors.append(f"kind: {test['ac']} のテストが規則と非影響の両方のファイルにある")
     if errors:
         return errors
+    plan, errors = locate_plan(repo, str(spec.get("plan") or ""), files)
+    if errors:
+        return errors
+    errors = plan_findings(plan, kinds)
+    subject = str(spec.get("subject") or f"test: {plan_label(repo, plan)} の受け入れテスト{'を直す' if spec.get('resealed') else ''}")
     test_files = sorted({test["file"] for test in mapping})
     for path in files:
         if path.endswith(CODE_SUFFIXES) and AC_ID.search((Path(repo) / path).read_text(encoding="utf-8")):
@@ -502,8 +647,12 @@ def seal(repo, spec_text):
     for path in test_files:
         for specifier in import_findings(path, (Path(repo) / path).read_text(encoding="utf-8")):
             errors.append(f"boundary: {path} が土台とテストランナーの外の {specifier} を import している")
-    found = seals(repo)
-    permanent = {path for path, entry in protected_paths(found).items() if entry["permanent"]}
+    protected = protected_paths(seals(repo))
+    frozen = sorted(set(protected) - set(files))
+    dirty = git(repo, "status", "--porcelain", "--", *frozen).splitlines() if frozen else []
+    if dirty:
+        errors.append(f"tamper: 凍結したファイルに未 commit の変更がある ({'; '.join(line.strip() for line in dirty)})。戻してから凍結する")
+    permanent = {path for path, entry in protected.items() if entry["permanent"]}
     rewritten = sorted(permanent & set(files))
     if rewritten and not supersedes:
         errors.append(f"supersedes: 恒久に守っている規則の基準 {', '.join(rewritten)} を書き直すには supersedes に置き換える AC-ID と根拠の要求が要る")
@@ -611,8 +760,8 @@ def reseal_spec(repo, spec_text):
         "rule": rule,
         "non_impact": list(dict.fromkeys([path for path in sealed if path not in rule] + list(overrides.get("non_impact") or []))),
         "tests": list(mapping.values()),
-        "subject": overrides.get("subject") or "test: 受け入れテストを直す",
-        **{key: overrides[key] for key in ("supersedes", "spike", "check_command") if key in overrides},
+        "resealed": True,
+        **{key: overrides[key] for key in ("subject", "plan", "supersedes", "spike", "check_command") if key in overrides},
     }
     return json.dumps(spec), []
 
@@ -624,6 +773,12 @@ def main(argv=None, stdin=None):
     sub.add_parser("verify").add_argument("repo", type=Path)
     sub.add_parser("seal").add_argument("repo", type=Path)
     sub.add_parser("reseal").add_argument("repo", type=Path)
+    spike_open_parser = sub.add_parser("spike-open")
+    spike_open_parser.add_argument("repo", type=Path)
+    spike_open_parser.add_argument("files", nargs="*")
+    spike_close_parser = sub.add_parser("spike-close")
+    spike_close_parser.add_argument("repo", type=Path)
+    spike_close_parser.add_argument("worktree", type=Path)
     args = parser.parse_args(argv)
     code = run_command(args, stdin)
     print(f"exit: {code}")
@@ -638,6 +793,11 @@ def run_command(args, stdin):
             if args.command == "reseal":
                 spec_text, errors = reseal_spec(args.repo, spec_text)
             errors = errors or seal(args.repo, spec_text)
+            for error in errors:
+                print(error)
+            return 1 if errors else 0
+        if args.command in ("spike-open", "spike-close"):
+            errors = spike_open(args.repo, args.files) if args.command == "spike-open" else spike_close(args.repo, args.worktree)
             for error in errors:
                 print(error)
             return 1 if errors else 0

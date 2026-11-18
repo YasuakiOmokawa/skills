@@ -55,9 +55,49 @@ def run(*argv, stdin=""):
     return code, out.getvalue()
 
 
-def seal_spec(command, rule=(), non_impact=(), tests=(), supersedes="", subject="test: plan.md の受け入れテスト", spike="", check_command=""):
+def plan_text(criteria, gate="ready", rows=None, ids=None, sources="R-1", requirements=("R-1",)):
+    criteria = [(*criterion, sources)[:3] for criterion in criteria]
+    listed = ", ".join(ac for ac, _, _ in criteria) if ids is None else ids
+    table = rows if rows is not None else [f"| R-1 | {listed} |"]
+    return "\n".join([
+        "# plan",
+        "",
+        "## Requirements",
+        "",
+        *[f"- {requirement}: f は 1 を返す (「f は 1 を返す」 依頼)" for requirement in requirements],
+        "",
+        "## Ground Review",
+        "",
+        "無い",
+        "",
+        "## Acceptance Criteria",
+        "",
+        *[f"- {ac}: [{kind}] 振る舞い (出典: {cited})" for ac, kind, cited in criteria],
+        "",
+        "## MECE Review",
+        "",
+        f"- AC IDs: {listed}",
+        f"- Gate: {gate}",
+        "",
+        "### 要求の表",
+        "",
+        "| 要求 | 対応 |",
+        "|---|---|",
+        *table,
+        "",
+    ])
+
+
+PLAN = plan_text([("AC-001", "規則"), ("AC-002", "非影響")])
+
+
+def seal_spec(command, rule=(), non_impact=(), tests=(), supersedes="", subject="", spike="", check_command="", plan=""):
     mapping = [{"ac": ac, "file": file, "name": name} for ac, file, name in tests]
-    spec = {"test_command": command, "rule": list(rule), "non_impact": list(non_impact), "tests": mapping, "supersedes": supersedes, "subject": subject}
+    spec = {"test_command": command, "rule": list(rule), "non_impact": list(non_impact), "tests": mapping, "supersedes": supersedes}
+    if subject:
+        spec["subject"] = subject
+    if plan:
+        spec["plan"] = plan
     if spike:
         spec["spike"] = spike
     if check_command:
@@ -253,7 +293,7 @@ class SealCommandTest(unittest.TestCase):
         self.repo.write("test/golden/g.txt", "kept")
         self.repo.write("test/a.rule.test.js", RULE_TEST)
         self.repo.write("test/a.keep.test.js", KEEP_TEST)
-        self.repo.write("plan.md", "# plan\n")
+        self.repo.write("plan.md", PLAN)
 
     def tearDown(self):
         self.tmp.cleanup()
@@ -317,6 +357,7 @@ class SealCommandTest(unittest.TestCase):
 
     def test_seal_refuses_a_rule_test_that_already_passes(self):
         before = self.head()
+        self.repo.write("plan.md", plan_text([("AC-001", "規則"), ("AC-002", "規則")]))
         code, out = self.seal(["test/a.rule.test.js", "test/a.keep.test.js"], ["test/golden/g.txt", "test/harness/app.js", "plan.md"])
         self.assertEqual(code, 1)
         self.assertIn("kind: AC-002", out)
@@ -324,6 +365,7 @@ class SealCommandTest(unittest.TestCase):
 
     def test_seal_refuses_a_non_impact_test_that_fails(self):
         before = self.head()
+        self.repo.write("plan.md", plan_text([("AC-001", "非影響"), ("AC-002", "非影響")]))
         code, out = self.seal([], ["test/a.rule.test.js", *KEEP_FILES])
         self.assertEqual(code, 1)
         self.assertIn("kind: AC-001", out)
@@ -575,6 +617,7 @@ class SealCommandTest(unittest.TestCase):
     def test_reseal_adds_a_criterion_and_its_test(self):
         self.seal()
         self.repo.write("test/a.rule.test.js", RULE_TEST + "test('f is not 0', () => assert.notEqual(f(), 0));\n")
+        self.repo.write("plan.md", plan_text([("AC-001", "規則"), ("AC-002", "非影響"), ("AC-003", "規則")]))
         extra = {"tests": [{"ac": "AC-003", "file": "test/a.rule.test.js", "name": "f is not 0"}]}
         code, out = run("reseal", str(self.root), stdin=json.dumps(extra))
         self.assertEqual(code, 0, out)
@@ -590,6 +633,160 @@ class SealCommandTest(unittest.TestCase):
         code, out = self.seal(keep=KEEP_FILES + ["test/harness/日本語.js"])
         self.assertEqual(code, 0, out)
         self.assertIn("test/harness/日本語.js", self.body().split("Define-Done-Files:")[1].splitlines()[0])
+
+    def refused_plan(self, text):
+        self.repo.write("plan.md", text)
+        before = self.head()
+        code, out = self.seal()
+        self.assertEqual(code, 1, out)
+        self.assertEqual(self.head(), before)
+        return out
+
+    def test_seal_refuses_a_plan_whose_gate_is_not_ready(self):
+        out = self.refused_plan(plan_text([("AC-001", "規則"), ("AC-002", "非影響")], gate="blocked (D1 が R-1 と矛盾する)"))
+        self.assertIn("plan: Gate が ready でない", out)
+
+    def test_seal_refuses_ac_ids_that_differ_from_the_criteria(self):
+        out = self.refused_plan(plan_text([("AC-001", "規則"), ("AC-002", "非影響")], ids="AC-001", rows=["| R-1 | AC-001 |"]))
+        self.assertIn("plan: `- AC IDs:`", out)
+        self.assertIn("AC-002", out)
+
+    def test_seal_refuses_a_test_whose_criterion_is_not_in_the_plan(self):
+        out = self.refused_plan(plan_text([("AC-001", "規則")]))
+        self.assertIn("plan: テストを対応させた AC-002", out)
+
+    def test_seal_refuses_a_criterion_whose_kind_differs_from_its_test_file(self):
+        out = self.refused_plan(plan_text([("AC-001", "非影響"), ("AC-002", "非影響")]))
+        self.assertIn("plan: AC-001 は計画で [非影響]", out)
+
+    def test_seal_refuses_a_source_that_is_not_a_requirement(self):
+        out = self.refused_plan(plan_text([("AC-001", "規則", "R-1, R-9"), ("AC-002", "非影響")]))
+        self.assertIn("plan: AC-001 の出典 R-9", out)
+
+    def test_seal_refuses_a_requirement_row_whose_criteria_do_not_cite_it(self):
+        rows = ["| R-1 | AC-001 |", "| R-2 | AC-002 (推奨の帰結を観測する) |"]
+        out = self.refused_plan(plan_text([("AC-001", "規則"), ("AC-002", "非影響")], rows=rows, requirements=("R-1", "R-2")))
+        self.assertIn("plan: 要求の表は R-2 を AC-002 に対応させているが", out)
+        self.assertNotIn("R-1 を", out)
+
+    def test_seal_refuses_a_requirement_missing_from_the_table(self):
+        out = self.refused_plan(plan_text([("AC-001", "規則"), ("AC-002", "非影響")], requirements=("R-1", "R-2")))
+        self.assertIn("plan: R-2 が `## MECE Review` の要求の表に無い", out)
+
+    def test_seal_refuses_a_requirement_row_without_a_criterion_or_a_label(self):
+        rows = ["| R-1 | AC-001, AC-002 |", "| R-2 | 実装で確かめる |"]
+        out = self.refused_plan(plan_text([("AC-001", "規則"), ("AC-002", "非影響")], rows=rows, requirements=("R-1", "R-2")))
+        self.assertIn("plan: 要求の表の R-2 の行", out)
+
+    def test_seal_accepts_unverified_and_out_of_scope_rows_and_a_row_naming_a_related_criterion(self):
+        rows = [
+            "| R-1 | AC-001 (値が user の id であることは AC-002 の観測に現れる) |",
+            "| R-2 | 未検証: 外から観測する手段が無い |",
+            "| R-3 | 範囲外: 規約として enforce-conventions で担保する (描画の結果は AC-002 で守る) |",
+            "| R-4 | 不足情報: 上限の値を資料が決めていない (既定: 決めない、行き先: 要求の持ち主) |",
+        ]
+        criteria = [("AC-001", "規則"), ("AC-002", "非影響", "test/b.test.js")]
+        self.repo.write("plan.md", plan_text(criteria, rows=rows, requirements=("R-1", "R-2", "R-3", "R-4")))
+        code, out = self.seal()
+        self.assertEqual(code, 0, out)
+
+    def test_seal_reads_a_plan_outside_the_repo_and_names_it_in_the_subject(self):
+        (self.root / "plan.md").unlink()
+        outside = Path(self.tmp.name) / "489-registration" / "design.md"
+        outside.parent.mkdir()
+        outside.write_text(PLAN, encoding="utf-8")
+        keep = [path for path in KEEP_FILES if path != "plan.md"]
+        code, out = run("seal", str(self.root), stdin=seal_spec(REPORT_COMMAND, RULE_FILES, keep, TESTS))
+        self.assertEqual(code, 1)
+        self.assertIn("plan: 計画が凍結するファイルに無い", out)
+        code, out = run("seal", str(self.root), stdin=seal_spec(REPORT_COMMAND, RULE_FILES, keep, TESTS, plan=str(outside)))
+        self.assertEqual(code, 0, out)
+        self.assertTrue(self.body().startswith("test: 489-registration/design.md の受け入れテスト\n"))
+
+    def test_subject_names_the_plan_and_a_reseal_says_it_fixes_the_tests(self):
+        self.seal()
+        self.assertTrue(self.body().startswith("test: plan.md の受け入れテスト\n"))
+        self.repo.write("test/harness/app.js", HARNESS + "export const fixed = true;\n")
+        code, out = run("reseal", str(self.root), stdin="")
+        self.assertEqual(code, 0, out)
+        self.assertTrue(self.body().startswith("test: plan.md の受け入れテストを直す\n"))
+
+    def test_seal_refuses_before_running_when_a_frozen_file_outside_it_is_dirty(self):
+        self.seal()
+        self.repo.write("test/a.keep.test.js", KEEP_TEST.replace("keeps", "still keeps"))
+        before = self.head()
+        original = check_seal.run_tests
+        calls = []
+        check_seal.run_tests = lambda cwd, command: calls.append(command) or original(cwd, command)
+        try:
+            code, out = self.start_next_plan()
+        finally:
+            check_seal.run_tests = original
+        self.assertEqual(code, 1)
+        self.assertIn("tamper: 凍結したファイルに未 commit の変更がある (M test/a.keep.test.js)", out)
+        self.assertEqual(calls, [])
+        self.assertEqual(self.head(), before)
+
+    def open_spike(self, *files):
+        code, out = run("spike-open", str(self.root), *files)
+        self.assertEqual(code, 0, out)
+        return Path(out.split("worktree: ")[1].splitlines()[0])
+
+    def test_spike_worktree_links_dependencies_and_copies_the_given_files(self):
+        self.repo.write(".gitignore", "node_modules/\n")
+        self.repo.commit("ignore", ".gitignore")
+        self.repo.write("node_modules/dep/index.js", "export const dep = 1;\n")
+        self.repo.write("packages/web/node_modules/dep/index.js", "export const dep = 2;\n")
+        work = self.open_spike("test/a.rule.test.js", "test/harness/app.js")
+        self.addCleanup(shutil.rmtree, work.parent, True)
+        self.assertNotIn(self.root.resolve(), work.resolve().parents)
+        self.assertTrue((work / "node_modules").is_symlink())
+        self.assertEqual((work / "packages/web/node_modules/dep/index.js").read_text(), "export const dep = 2;\n")
+        self.assertEqual((work / "test/a.rule.test.js").read_text(), RULE_TEST)
+        self.assertEqual((work / "src/a.js").read_text(), "export const f = () => 0;\n")
+        self.assertFalse((work / "test/a.keep.test.js").exists())
+
+    def test_spike_close_writes_a_patch_of_the_trial_implementation_only_and_seal_accepts_it(self):
+        self.repo.write(".gitignore", "node_modules/\n")
+        self.repo.commit("ignore", ".gitignore")
+        self.repo.write("node_modules/dep/index.js", "export const dep = 1;\n")
+        files = [path for path in RULE_FILES + KEEP_FILES if path != "plan.md"]
+        work = self.open_spike(*files)
+        self.addCleanup(shutil.rmtree, work.parent, True)
+        (work / "src/a.js").write_text("import { one } from './one.js';\nexport const f = () => one;\n")
+        (work / "src/one.js").write_text("export const one = 1;\n")
+        code, out = run("spike-close", str(self.root), str(work))
+        self.assertEqual(code, 0, out)
+        patch = Path(out.split("spike: ")[1].splitlines()[0])
+        self.assertFalse(work.exists())
+        self.assertNotIn(self.root.resolve(), patch.resolve().parents)
+        text = patch.read_text()
+        self.assertIn("src/a.js", text)
+        self.assertIn("src/one.js", text)
+        self.assertNotIn("node_modules", text)
+        self.assertNotIn("test/", text)
+        self.assertTrue((self.root / "node_modules/dep/index.js").exists())
+        self.assertEqual((self.root / "src/a.js").read_text(), "export const f = () => 0;\n")
+        code, out = run("seal", str(self.root), stdin=seal_spec(REPORT_COMMAND, RULE_FILES, KEEP_FILES, TESTS, spike=str(patch)))
+        self.assertEqual(code, 0, out)
+        self.assertIn("AC-001: rule spike=pass now=fail", out)
+
+    def test_spike_close_refuses_a_copied_file_edited_only_in_the_worktree(self):
+        work = self.open_spike("test/a.rule.test.js", "test/harness/app.js")
+        self.addCleanup(shutil.rmtree, work.parent, True)
+        (work / "src/a.js").write_text("export const f = () => 1;\n")
+        (work / "test/a.rule.test.js").write_text(RULE_TEST.replace("f(), 1", "f(), 2"))
+        code, out = run("spike-close", str(self.root), str(work))
+        self.assertEqual(code, 1)
+        self.assertIn("spike: 複製の test/a.rule.test.js が repo と食い違う", out)
+        self.assertTrue(work.exists())
+        self.repo.git("worktree", "remove", "--force", str(work))
+
+    def test_spike_close_refuses_a_directory_that_spike_open_did_not_make(self):
+        code, out = run("spike-close", str(self.root), str(self.root))
+        self.assertEqual(code, 1)
+        self.assertIn("spike:", out)
+        self.assertTrue((self.root / "src/a.js").exists())
 
     def test_reseal_with_nothing_changed_is_refused(self):
         self.seal()
@@ -608,8 +805,9 @@ class SealCommandTest(unittest.TestCase):
 
     def start_next_plan(self):
         self.repo.write("test/c.rule.test.js", RULE_TEST.replace("assert.equal(f(), 1)", "assert.equal(f(), 2)").replace("f returns 1", "f returns 2"))
+        self.repo.write("plans/next.md", plan_text([("AC-101", "規則")]))
         command = "node --test --test-reporter=junit --test-reporter-destination={report} test/c.rule.test.js"
-        return run("seal", str(self.root), stdin=seal_spec(command, ["test/c.rule.test.js"], (), [("AC-101", "test/c.rule.test.js", "f returns 2")]))
+        return run("seal", str(self.root), stdin=seal_spec(command, ["test/c.rule.test.js"], ["plans/next.md"], [("AC-101", "test/c.rule.test.js", "f returns 2")]))
 
     def test_completed_seal_keeps_only_rule_files(self):
         self.add_remote_and_push()
@@ -642,10 +840,11 @@ class SealCommandTest(unittest.TestCase):
         self.repo.commit("revert f", "src/a.js")
         rewrite = "node --test --test-reporter=junit --test-reporter-destination={report} test/a.rule.test.js"
         tests = [("AC-003", "test/a.rule.test.js", "f returns one")]
-        code, out = run("seal", str(self.root), stdin=seal_spec(rewrite, ["test/a.rule.test.js"], (), tests))
+        self.repo.write("plan.md", plan_text([("AC-002", "非影響"), ("AC-003", "規則")]))
+        code, out = run("seal", str(self.root), stdin=seal_spec(rewrite, ["test/a.rule.test.js"], ["plan.md"], tests))
         self.assertEqual(code, 1)
         self.assertIn("supersedes:", out)
-        code, out = run("seal", str(self.root), stdin=seal_spec(rewrite, ["test/a.rule.test.js"], (), tests, supersedes="AC-001 (R-1)"))
+        code, out = run("seal", str(self.root), stdin=seal_spec(rewrite, ["test/a.rule.test.js"], ["plan.md"], tests, supersedes="AC-001 (R-1)"))
         self.assertEqual(code, 0, out)
         self.assertIn("Define-Done-Supersedes: AC-001 (R-1)", self.body())
 
@@ -721,9 +920,10 @@ class ReportTest(unittest.TestCase):
             repo.write("spec/acceptance/harness/app.rb", RSPEC_HARNESS)
             repo.write("spec/acceptance/a_rule_spec.rb", RSPEC_RULE)
             repo.write("spec/acceptance/a_keep_spec.rb", RSPEC_KEEP)
+            repo.write("plan.md", PLAN)
             command = "rspec spec/acceptance/a_rule_spec.rb spec/acceptance/a_keep_spec.rb --format json --out {report}"
             tests = [("AC-001", "spec/acceptance/a_rule_spec.rb", "returns 1"), ("AC-002", "spec/acceptance/a_keep_spec.rb", "keeps its text")]
-            code, out = run("seal", str(root), stdin=seal_spec(command, ["spec/acceptance/a_rule_spec.rb"], ["spec/acceptance/a_keep_spec.rb", "spec/acceptance/harness/app.rb"], tests))
+            code, out = run("seal", str(root), stdin=seal_spec(command, ["spec/acceptance/a_rule_spec.rb"], ["spec/acceptance/a_keep_spec.rb", "spec/acceptance/harness/app.rb", "plan.md"], tests))
             self.assertEqual(code, 0, out)
             repo.write("lib/a.rb", "F = -> { 1 }\nG = -> { 'kept' }\n")
             repo.commit("impl")
