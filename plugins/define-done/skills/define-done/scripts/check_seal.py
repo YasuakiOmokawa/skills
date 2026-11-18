@@ -1,4 +1,5 @@
 import argparse
+import hashlib
 import json
 import os
 import posixpath
@@ -57,6 +58,16 @@ SOURCE_NOTE = "(出典:"
 KIND_LABELS = {"rule": "規則", "non-impact": "非影響"}
 DEPENDENCY_DIRS = ("node_modules", ".venv", "vendor/bundle")
 SPIKE_RECORD = "define-done-spike-paths"
+PLAN_BASELINE = "Define-Done-Plan-Outside"
+PLAN_BASELINE_LINE = re.compile(rf"^{PLAN_BASELINE}: ([0-9a-f]{{64}})$", re.M)
+REJECTED_DECISIONS = "検査が拒んだ決定"
+TABLE_RULE = re.compile(r"^\|[\s:|-]+\|$")
+PROTECTION_NOTES = {
+    "permanent": "恒久に守る規則の基準 (書き直すには凍結に含めて supersedes を渡す)",
+    "in-progress": "計画の完了まで守る (直したら reseal)",
+    "released": "保護は解けている (凍結に含めずに変えてよい)",
+    "unsealed": "凍結したファイルでない",
+}
 LEGACY_TEST_OR_PLAN = re.compile(r"\.md$|(^|/)(tests?|__tests__|specs?|e2e)/|(^|/)test_[^/]*$|[._-](test|spec)\.[^/]+$")
 
 
@@ -478,6 +489,54 @@ def plan_sections(text):
     return found
 
 
+def outside_digest(text):
+    kept = [chunk.rstrip() for chunk in re.split(r"^(?=## )", text, flags=re.M) if chunk.partition("\n")[0][3:].strip() not in PLAN_SECTIONS or not chunk.startswith("## ")]
+    return hashlib.sha256("\n".join(kept).encode("utf-8")).hexdigest()
+
+
+def baseline_findings(plan, spike):
+    preamble = Path(spike).read_text(encoding="utf-8", errors="replace").split("diff --git", 1)[0]
+    recorded = PLAN_BASELINE_LINE.search(preamble)
+    if recorded is None or recorded.group(1) == outside_digest(plan.read_text(encoding="utf-8")):
+        return []
+    return [f"plan: 計画の 4 節の外が `spike-open` の後に変わっている。計画の本文は元に戻し、検査が拒んだ決定は `## MECE Review` の `### {REJECTED_DECISIONS}` に書く (計画の本文を直すのは呼び出し側。直した後の計画で凍結するなら `spike-open` からやり直す)"]
+
+
+def table_rows(text):
+    rows = []
+    for line in text.splitlines():
+        line = line.strip()
+        if line.startswith("|") and not TABLE_RULE.match(line):
+            rows.append((line, [cell.strip() for cell in line.strip("|").split("|")]))
+    return rows
+
+
+def final_answer(plan, rule_count, non_impact_count, sha, files):
+    sections = plan_sections(plan.read_text(encoding="utf-8"))
+    review = sections["MECE Review"][0]
+    rows = table_rows(review)
+    rejected = re.split(r"^### ", review, flags=re.M)
+    rejected = next((chunk.partition("\n")[2] for chunk in rejected if chunk.partition("\n")[0].strip() == REJECTED_DECISIONS), "")
+    groups = [
+        ("基準の無い要求", [line for line, cells in rows if len(cells) > 1 and REQUIREMENT_ID.fullmatch(cells[0]) and ROW_WITHOUT_CRITERION.match(cells[1])]),
+        ("実装が足すテスト", [line for line, cells in rows if len(cells) > 1 and cells[1].startswith("実装のテスト")]),
+        ("未検証", [line for line, cells in rows if len(cells) > 1 and not REQUIREMENT_ID.fullmatch(cells[0]) and cells[1].startswith("未検証")]),
+        (REJECTED_DECISIONS, [line for line, _ in table_rows(rejected)[1:]]),
+    ]
+    lines = [
+        "要求:",
+        *[line for line in sections["Requirements"][0].splitlines() if REQUIREMENT_LINE.match(line)],
+        f"Gate: {GATE_LINE.findall(review)[0].strip()}",
+        f"AC: 規則 {rule_count} 件、非影響 {non_impact_count} 件",
+        f"凍結: {sha}",
+        f"ファイル: {', '.join(files)}",
+    ]
+    for title, found in groups:
+        if found:
+            lines += [f"{title}:", *found]
+    return lines
+
+
 def locate_plan(repo, named, files):
     if named:
         path = Path(named).expanduser()
@@ -557,7 +616,13 @@ def plan_findings(plan, kinds):
 def spike_open(repo, files):
     missing = [path for path in files if not (Path(repo) / path).is_file()]
     if missing:
-        return [f"spike: {', '.join(missing)} が repo に無い"]
+        return [f"spike: {', '.join(missing)} が無い"]
+    texts = {path: (Path(repo) / path).read_text(encoding="utf-8") for path in files if path.endswith(".md")}
+    plans = [path for path, text in texts.items() if PLAN_HEADING.search(text)]
+    if len(plans) > 1:
+        return [f"plan: 計画の候補が複数ある ({', '.join(plans)})。計画は 1 つだけ渡す"]
+    baseline = outside_digest(texts[plans[0]]) if plans else ""
+    files = [path for path in files if path not in plans]
     work = Path(tempfile.mkdtemp(prefix="define-done-spike-")) / "tree"
     git(repo, "worktree", "add", "-q", "--detach", str(work), "HEAD")
     ignored = git(repo, "ls-files", "--others", "--ignored", "--exclude-standard", "--directory", "-z").split("\0")
@@ -569,7 +634,7 @@ def spike_open(repo, files):
         (work / path).parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(Path(repo) / path, work / path)
     record = Path(git(work, "rev-parse", "--absolute-git-dir").strip()) / SPIKE_RECORD
-    record.write_text(json.dumps({"linked": linked, "copied": list(files)}), encoding="utf-8")
+    record.write_text(json.dumps({"linked": linked, "copied": list(files), "plan": baseline}), encoding="utf-8")
     print(f"worktree: {work}")
     return []
 
@@ -589,7 +654,8 @@ def spike_close(repo, work):
     if not diff.strip():
         return ["spike: 複製に試作の実装の変更が無い"]
     patch = work.parent / "spike.patch"
-    patch.write_text(diff, encoding="utf-8")
+    baseline = record.get("plan")
+    patch.write_text((f"{PLAN_BASELINE}: {baseline}\n" if baseline else "") + diff, encoding="utf-8")
     git(repo, "worktree", "remove", "--force", str(work))
     print(f"spike: {patch}")
     return []
@@ -658,6 +724,8 @@ def seal(repo, spec_text):
         errors.append(f"supersedes: 恒久に守っている規則の基準 {', '.join(rewritten)} を書き直すには supersedes に置き換える AC-ID と根拠の要求が要る")
     if spike:
         errors.extend(spike_findings(repo, spike, files))
+        if not errors and not spec.get("resealed"):
+            errors.extend(baseline_findings(plan, spike))
     aside = SetAside(repo, outside_paths(repo, files))
     if errors:
         return errors
@@ -766,10 +834,41 @@ def reseal_spec(repo, spec_text):
     return json.dumps(spec), []
 
 
+def report(repo, named_plan):
+    found = [seal for seal in seals(repo) if seal["behavior"] and seal["recorded"] and not seal["completed"]]
+    if not found:
+        return ["seal: 進行中の `Define-Done-Seal:` の凍結の commit が HEAD から辿れない"]
+    latest = found[0]
+    sealed = list(dict.fromkeys(path for seal in found for path in seal["files"] if (Path(repo) / path).is_file()))
+    plan, errors = locate_plan(repo, named_plan, sealed)
+    if errors:
+        return errors
+    acs, rule = listed(latest["values"].get(SEAL_TRAILER)), listed(latest["values"].get(RULE_TRAILER))
+    try:
+        print("\n".join(final_answer(plan, len(rule), len(acs) - len(rule), latest["sha"], latest["files"])))
+    except (OSError, KeyError, IndexError):
+        return [f"plan: 計画 {plan} から最終回答を組み立てられない (4 節と `- Gate:` の行を確かめる)"]
+    return []
+
+
+def protection(repo, paths):
+    found = seals(repo)
+    protected = protected_paths(found)
+    sealed = {path for seal in found for path in seal["files"]}
+    for path in paths:
+        state = ("permanent" if protected[path]["permanent"] else "in-progress") if path in protected else "released" if path in sealed else "unsealed"
+        print(f"protection: {path} = {state}: {PROTECTION_NOTES[state]}")
+
+
 def main(argv=None, stdin=None):
     parser = argparse.ArgumentParser(prog="check_seal.py")
     sub = parser.add_subparsers(dest="command", required=True)
-    sub.add_parser("check").add_argument("repo", type=Path)
+    check_parser = sub.add_parser("check")
+    check_parser.add_argument("repo", type=Path)
+    check_parser.add_argument("paths", nargs="*")
+    report_parser = sub.add_parser("report")
+    report_parser.add_argument("repo", type=Path)
+    report_parser.add_argument("plan", nargs="?", default="")
     sub.add_parser("verify").add_argument("repo", type=Path)
     sub.add_parser("seal").add_argument("repo", type=Path)
     sub.add_parser("reseal").add_argument("repo", type=Path)
@@ -801,6 +900,13 @@ def run_command(args, stdin):
             for error in errors:
                 print(error)
             return 1 if errors else 0
+        if args.command == "report":
+            errors = report(args.repo, args.plan)
+            for error in errors:
+                print(error)
+            return 1 if errors else 0
+        if args.command == "check" and args.paths:
+            protection(args.repo, args.paths)
         info, findings = inspect(args.repo)
     except RuntimeError as exc:
         print(f"git: {exc}")

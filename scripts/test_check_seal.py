@@ -782,6 +782,136 @@ class SealCommandTest(unittest.TestCase):
         self.assertTrue(work.exists())
         self.repo.git("worktree", "remove", "--force", str(work))
 
+    DECIDED_PLAN = PLAN.replace("# plan\n", "# plan\n\n## 決定\n\n- D1: f が 1 を返す\n", 1)
+    REJECTED_DECISION = "\n### 検査が拒んだ決定\n\n| 決定 | 拒んだ検査 | 試作が取った形 |\n|---|---|---|\n| D1 | lint の no-magic が 1 を拒んだ | 定数 ONE を返す |\n"
+
+    def spike_patch_with_plan(self, edit_plan):
+        self.repo.write("plan.md", self.DECIDED_PLAN)
+        files = [path for path in RULE_FILES + KEEP_FILES if path != "plan.md"]
+        code, out = run("spike-open", str(self.root), "plan.md", *files)
+        self.assertEqual(code, 0, out)
+        work = Path(out.split("worktree: ")[1].splitlines()[0])
+        self.addCleanup(shutil.rmtree, work.parent, True)
+        (work / "src/a.js").write_text("export const f = () => 1;\n")
+        self.repo.write("plan.md", edit_plan(self.DECIDED_PLAN))
+        code, out = run("spike-close", str(self.root), str(work))
+        self.assertEqual(code, 0, out)
+        return out.split("spike: ")[1].splitlines()[0]
+
+    def test_seal_refuses_a_plan_whose_decisions_changed_after_spike_open(self):
+        patch = self.spike_patch_with_plan(lambda plan: plan.replace("- D1: f が 1 を返す", "- D1: f が定数 ONE を返す"))
+        before = self.head()
+        code, out = run("seal", str(self.root), stdin=seal_spec(REPORT_COMMAND, RULE_FILES, KEEP_FILES, TESTS, spike=patch))
+        self.assertEqual(code, 1)
+        self.assertIn("plan: 計画の 4 節の外が `spike-open` の後に変わっている", out)
+        self.assertIn("検査が拒んだ決定", out)
+        self.assertEqual(self.head(), before)
+
+    def test_seal_accepts_a_plan_that_records_the_rejected_decision_in_the_review(self):
+        patch = self.spike_patch_with_plan(lambda plan: plan + self.REJECTED_DECISION)
+        code, out = run("seal", str(self.root), stdin=seal_spec(REPORT_COMMAND, RULE_FILES, KEEP_FILES, TESTS, spike=patch))
+        self.assertEqual(code, 0, out)
+        code, out = run("report", str(self.root))
+        self.assertEqual(code, 0, out)
+        self.assertIn("検査が拒んだ決定:\n| D1 | lint の no-magic が 1 を拒んだ | 定数 ONE を返す |", out)
+
+    def test_patch_with_the_plan_baseline_still_applies_as_a_starting_point(self):
+        patch = self.spike_patch_with_plan(lambda plan: plan)
+        self.assertTrue(Path(patch).read_text().startswith("Define-Done-Plan-Outside: "))
+        self.repo.git("apply", patch)
+        self.assertEqual((self.root / "src/a.js").read_text(), "export const f = () => 1;\n")
+
+    def test_reseal_does_not_compare_the_plan_with_the_baseline_of_the_spike(self):
+        patch = self.spike_patch_with_plan(lambda plan: plan)
+        code, out = run("seal", str(self.root), stdin=seal_spec(REPORT_COMMAND, RULE_FILES, KEEP_FILES, TESTS, spike=patch))
+        self.assertEqual(code, 0, out)
+        self.repo.write("plan.md", self.DECIDED_PLAN.replace("- D1: f が 1 を返す", "- D1: f が定数 ONE を返す"))
+        code, out = run("reseal", str(self.root), stdin=json.dumps({"spike": patch}))
+        self.assertEqual(code, 0, out)
+
+    def test_spike_open_reads_a_plan_outside_the_repo_and_does_not_copy_it(self):
+        outside = Path(self.tmp.name) / "plans" / "design.md"
+        outside.parent.mkdir()
+        outside.write_text(self.DECIDED_PLAN, encoding="utf-8")
+        code, out = run("spike-open", str(self.root), str(outside), "test/a.rule.test.js", "test/harness/app.js")
+        self.assertEqual(code, 0, out)
+        work = Path(out.split("worktree: ")[1].splitlines()[0])
+        self.addCleanup(shutil.rmtree, work.parent, True)
+        (work / "src/a.js").write_text("export const f = () => 1;\n")
+        self.assertEqual(outside.read_text(encoding="utf-8"), self.DECIDED_PLAN)
+        code, out = run("spike-close", str(self.root), str(work))
+        self.assertEqual(code, 0, out)
+        patch = Path(out.split("spike: ")[1].splitlines()[0])
+        self.assertTrue(patch.read_text().startswith("Define-Done-Plan-Outside: "))
+        self.assertNotIn("design.md", patch.read_text())
+
+    def test_spike_open_refuses_two_plans(self):
+        self.repo.write("plans/other.md", PLAN)
+        code, out = run("spike-open", str(self.root), "plan.md", "plans/other.md", "test/a.rule.test.js")
+        self.assertEqual(code, 1)
+        self.assertIn("plan: 計画の候補が複数ある", out)
+
+    REPORTED_PLAN = plan_text(
+        [("AC-001", "規則"), ("AC-002", "非影響")],
+        rows=["| R-1 | AC-001, AC-002 |", "| R-2 | 範囲外: 規約として enforce-conventions で担保する |"],
+        requirements=("R-1", "R-2"),
+    ) + "\n### 残ったリスクの表\n\n| リスク | 守る先 |\n|---|---|\n| f が負の数を返す | AC-001 |\n| 空の入力で落ちる | 実装のテスト: 空の入力で 0 を返す |\n| 本番の時計がずれる | 未検証: staging の log |\n"
+
+    def test_report_extracts_the_final_answer_from_the_plan(self):
+        self.repo.write("plan.md", self.REPORTED_PLAN)
+        self.seal()
+        sha = self.head()
+        code, answer = run("report", str(self.root))
+        self.assertEqual(code, 0, answer)
+        self.assertIn("要求:\n- R-1: f は 1 を返す (「f は 1 を返す」 依頼)\n- R-2: f は 1 を返す (「f は 1 を返す」 依頼)\n", answer)
+        self.assertIn("Gate: ready\n", answer)
+        self.assertIn("AC: 規則 1 件、非影響 1 件\n", answer)
+        self.assertIn(f"凍結: {sha}\n", answer)
+        self.assertIn("基準の無い要求:\n| R-2 | 範囲外: 規約として enforce-conventions で担保する |\n", answer)
+        self.assertIn("実装が足すテスト:\n| 空の入力で落ちる | 実装のテスト: 空の入力で 0 を返す |\n", answer)
+        self.assertIn("未検証:\n| 本番の時計がずれる | 未検証: staging の log |\n", answer)
+        self.assertNotIn("f が負の数を返す", answer)
+        self.assertNotIn("検査が拒んだ決定", answer)
+
+    def test_report_still_answers_after_the_implementation_is_committed(self):
+        self.repo.write("plan.md", self.REPORTED_PLAN)
+        self.seal()
+        sha = self.head()
+        self.implement()
+        code, out = run("report", str(self.root))
+        self.assertEqual(code, 0, out)
+        self.assertIn("要求:\n- R-1: f は 1 を返す (「f は 1 を返す」 依頼)\n", out)
+        self.assertIn("AC: 規則 1 件、非影響 1 件\n", out)
+        self.assertIn(f"凍結: {sha}\n", out)
+        self.assertIn("実装が足すテスト:\n| 空の入力で落ちる | 実装のテスト: 空の入力で 0 を返す |\n", out)
+
+    def test_report_reads_a_plan_outside_the_repo_from_the_given_path(self):
+        outside = Path(self.tmp.name) / "plans" / "design.md"
+        outside.parent.mkdir()
+        outside.write_text(self.REPORTED_PLAN, encoding="utf-8")
+        (self.root / "plan.md").unlink()
+        keep = [path for path in KEEP_FILES if path != "plan.md"]
+        code, out = run("seal", str(self.root), stdin=seal_spec(REPORT_COMMAND, RULE_FILES, keep, TESTS, plan=str(outside)))
+        self.assertEqual(code, 0, out)
+        code, out = run("report", str(self.root))
+        self.assertEqual(code, 1)
+        self.assertIn("plan: ", out)
+        code, out = run("report", str(self.root), str(outside))
+        self.assertEqual(code, 0, out)
+        self.assertIn("要求:\n- R-1: ", out)
+
+    def test_check_names_the_protection_of_each_given_file(self):
+        self.add_remote_and_push()
+        self.seal()
+        code, out = run("check", str(self.root), "test/a.rule.test.js", "src/a.js")
+        self.assertEqual(code, 0, out)
+        self.assertIn("protection: test/a.rule.test.js = in-progress", out)
+        self.assertIn("protection: src/a.js = unsealed", out)
+        self.push()
+        code, out = run("check", str(self.root), "test/a.rule.test.js", "test/a.keep.test.js")
+        self.assertIn("protection: test/a.rule.test.js = permanent", out)
+        self.assertIn("protection: test/a.keep.test.js = released", out)
+
     def test_spike_close_refuses_a_directory_that_spike_open_did_not_make(self):
         code, out = run("spike-close", str(self.root), str(self.root))
         self.assertEqual(code, 1)

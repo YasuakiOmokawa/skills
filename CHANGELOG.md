@@ -5,6 +5,20 @@ All notable changes to omokawa-skills will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v20.6.0 - 2026-11-18
+
+### Changed
+
+- **`define-done` 5.6.0 (Gate の規則が変わる):** 計画の決定が選んだ形 (名前、export、置き場所、書き方) を repo の検査 (lint、型検査、dead code の検査) が拒んでも、次の 3 つがすべて成り立てば Gate を止めず、`## MECE Review` の `### 検査が拒んだ決定` の表に書いて凍結まで進む。(1) その形で書いたコードに検査を流して拒まれるのを見た。(2) その形をやめてもすべての要求を満たせる。(3) やめた形で、基準も外から観測できるものも変わらない。1 つでも成り立たなければ、これまでどおり必要な上流の修正に書いて Gate を止める。計画の 4 節の外は直さず、決定を直すのは呼び出し側である。これまでは、どの段で気づいても必要な上流の修正として Gate を止めていた (新しい case 44 で、旧版は 3 run とも `## Ground Review` で気づいて止まる)。
+- **`check_seal.py spike-open` / `seal`:** `spike-open` に計画の path を渡すと、その時点の計画の 4 節の外の hash を patch の先頭行 (`Define-Done-Plan-Outside:`) に記録する。`seal` は、凍結する計画の 4 節の外がその hash と食い違えば凍結しない (`reseal` では比べない)。見るのは `spike-open` より後の書き換えだけで、それより前の書き換えは見ない。先頭行があっても patch は `git apply` でそのまま当たる。
+- **`check_seal.py report`:** 進行中の凍結と計画から、最終回答の材料 (引用付きの要求の行、Gate、種類別の AC 数、凍結の SHA、基準の無い要求、実装が足すテスト、未検証、検査が拒んだ決定) を抜き出す subcommand を足した。repo の外の計画は path を続けて渡す。
+- **`check_seal.py check`:** file の path を続けて渡すと、file ごとに保護の状態 (`permanent`、`in-progress`、`released`、`unsealed`) を出す。旧い形式の凍結で保護が解けているかを、script の source を読まずに確かめられる。
+- **`define-done` 5.6.0:** 残ったリスクの表の `実装のテスト` は、守る実装を外すと結果が変わる入力と、その結果で書く (基準が条件を場合分けしているなら、どの場合かを名指しする)。
+- **`define-done` 5.6.0:** `references/acceptance-tests.md` の「凍結」の 1 段落を、`seal` に渡す JSON、`seal` が確かめること、凍結した後に使う command、番号付きの凍結の手順に割った。最終回答で凍結の SHA と patch の path を返す 2 句は、同じことを定める SKILL.md の最終回答の規定に任せて外した。ほかの文は移しただけである。
+
+- **eval:** case 44 (repo の lint が計画の決定どおりの形を拒むが、その形をやめても要求を満たせる) を足した。`check_seal.py` の unit test は 10 件を足して 96 件。全 40 case を with arm で 3 run ずつ回し、chain 2 case も回した (全 suite $89、chain $4、旧版での case 44 の基準取り、Gate まわりの 7 case の試し流し、case 43 の比較で $29)。case 44 は旧版 → 新版で `sealed` 0/3 → 3/3 (旧版は 3 run とも `## Ground Review` で衝突に気づいて Gate を止める)、`plan-body-kept` と `overturned-decision-reported` はどちらの版も 3/3。Gate を止める case (08、14、22、28) の grader は旧版と同じ。5.5.0 から 2 run 以上下がった grader は無い。1 run 下がった 18 `not-run-recorded` と 24 `existing-interface-used` は判定し直すと 3 票とも PASS、01 `envvar-covered` は 2/3 → 1/3 (判定し直しても FAIL)。上がったのは 05 `purpose-covered` 0/3 → 3/3 (前からの揺れ)、08 `permission-branch` 1/3 → 2/3、15 `new-criterion-semantics` 2/3 → 3/3、37 `superseded-ac-recorded` 2/3 → 3/3。受け入れテストの変異の採点は前の版と同じ水準。chain は `chain-invite-owner` が 3/3 (コードも隠しテストを全部通す)、`chain-string-quantity` は前の版と同じく 3 run とも Gate で止まった。
+- **eval (届かなかった改善):** 43 `report-before-implementing` (凍結の後、実装へ進む前に要求の一覧を返す) は 2/3 のままで、上げられなかった。`seal` が最終回答の中身を出力に出す版は 0/3 (agent は報告済みと受け取って実装へ進む)、`seal` と `check` が「実装の前に最終回答を文章で返す」の 1 行だけを出す版は 2/6、凍結の手順を文書の末尾に置いて完了の条件を書き足した版は 3/6 で、どれも旧版 (2 回測って 4/6) を上回らなかった。`seal` と `check` の出力は変えず、材料を抜き出す `report` だけを残した。「実装が足すテストを、守る実装を外すと結果が変わる入力で書く」は測る題材が無く、`outcomes.md` で未計測とした。
+
 ## v20.5.0 - 2026-11-18
 
 ### Changed
