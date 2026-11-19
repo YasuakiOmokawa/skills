@@ -893,9 +893,6 @@ class SealCommandTest(unittest.TestCase):
         keep = [path for path in KEEP_FILES if path != "plan.md"]
         code, out = run("seal", str(self.root), stdin=seal_spec(REPORT_COMMAND, RULE_FILES, keep, TESTS, plan=str(outside)))
         self.assertEqual(code, 0, out)
-        code, out = run("report", str(self.root))
-        self.assertEqual(code, 1)
-        self.assertIn("plan: ", out)
         code, out = run("report", str(self.root), str(outside))
         self.assertEqual(code, 0, out)
         self.assertIn("要求:\n- R-1: ", out)
@@ -1086,6 +1083,207 @@ class SealCommandTest(unittest.TestCase):
         self.assertEqual(code, 1)
         self.assertIn("tamper:", out)
         self.assertIn("test/a.rule.test.js", out)
+
+    TWO_TESTS = RULE_TEST + "test('f is not 0', () => assert.notEqual(f(), 0));\n"
+
+    def seal_two_tests_of_one_criterion(self):
+        self.repo.write("test/a.rule.test.js", self.TWO_TESTS)
+        code, out = self.seal(tests=[*TESTS, ("AC-001", "test/a.rule.test.js", "f is not 0")])
+        self.assertEqual(code, 0, out)
+
+    def test_reseal_keeps_every_test_of_a_criterion(self):
+        self.seal_two_tests_of_one_criterion()
+        self.repo.write("test/harness/app.js", HARNESS + "export const fixed = true;\n")
+        code, out = run("reseal", str(self.root))
+        self.assertEqual(code, 0, out)
+        body = self.body()
+        self.assertIn("Define-Done-Test: AC-001 = test/a.rule.test.js › f returns 1\n", body)
+        self.assertIn("Define-Done-Test: AC-001 = test/a.rule.test.js › f is not 0\n", body)
+
+    def test_reseal_replaces_the_tests_of_a_criterion_in_a_file_with_the_given_ones(self):
+        self.seal_two_tests_of_one_criterion()
+        self.repo.write("test/a.rule.test.js", self.TWO_TESTS.replace("f is not 0", "f is positive"))
+        given = {"tests": [{"ac": "AC-001", "file": "test/a.rule.test.js", "name": name} for name in ("f returns 1", "f is positive")]}
+        code, out = run("reseal", str(self.root), stdin=json.dumps(given))
+        self.assertEqual(code, 0, out)
+        body = self.body()
+        self.assertIn("Define-Done-Test: AC-001 = test/a.rule.test.js › f returns 1\n", body)
+        self.assertIn("Define-Done-Test: AC-001 = test/a.rule.test.js › f is positive\n", body)
+        self.assertNotIn("f is not 0", body)
+        self.assertIn("Define-Done-Test: AC-002 = test/a.keep.test.js › g keeps its text\n", body)
+
+    def outside_state(self):
+        return [
+            subprocess.run(["git", "-C", str(self.root), *args, "--", "src"], capture_output=True, text=True, check=True).stdout
+            for args in (["status", "--porcelain", "--untracked-files=all"], ["diff", "--cached"], ["diff"])
+        ]
+
+    def stage_every_kind_of_change(self):
+        for name in ("c", "d", "e"):
+            self.repo.write(f"src/{name}.js", f"export const {name} = 0;\n")
+        self.repo.commit("more", "src")
+        self.repo.git("mv", "src/b.js", "src/renamed.js")
+        self.repo.git("rm", "-q", "src/c.js")
+        self.repo.git("rm", "-q", "--cached", "src/d.js")
+        self.repo.write("src/e.js", "export const e = 1;\n")
+        self.repo.git("add", "src/e.js")
+        self.repo.write("src/e.js", "export const e = 2;\n")
+        self.repo.write("src/added.js", "export const added = 1;\n")
+        self.repo.git("add", "src/added.js")
+
+    def test_seal_sets_aside_staged_renames_and_deletions_and_restores_the_index(self):
+        self.stage_every_kind_of_change()
+        before = self.outside_state()
+        self.assertIn("R  src/b.js -> src/renamed.js", before[0])
+        code, out = self.seal()
+        self.assertEqual(code, 0, out)
+        self.assertIn("AC-002: non-impact now=pass", out)
+        self.assertEqual(self.outside_state(), before)
+        self.assertEqual(self.stash_list(), [])
+
+    def test_refused_seal_restores_staged_renames_and_deletions(self):
+        self.stage_every_kind_of_change()
+        before = self.outside_state()
+        code, out = self.seal(tests=[("AC-001", "test/a.rule.test.js", "f returns one"), TESTS[1]])
+        self.assertEqual(code, 1)
+        self.assertIn("missing: AC-001", out)
+        self.assertEqual(self.outside_state(), before)
+        self.assertEqual(self.stash_list(), [])
+
+    def test_seal_restores_a_change_that_is_only_in_the_index(self):
+        self.repo.write("src/b.js", "export const g = () => 'staged';\n")
+        self.repo.git("add", "src/b.js")
+        self.repo.write("src/b.js", "export const g = () => 'kept';\n")
+        before = self.outside_state()
+        self.assertIn("MM src/b.js", before[0])
+        code, out = self.seal()
+        self.assertEqual(code, 0, out)
+        self.assertEqual(self.outside_state(), before)
+        self.assertEqual(self.stash_list(), [])
+
+    def test_seal_with_only_an_index_deletion_outside_it_runs_on_the_head_tree(self):
+        self.repo.git("rm", "-q", "--cached", "src/b.js")
+        before = self.outside_state()
+        code, out = self.seal()
+        self.assertEqual(code, 0, out)
+        self.assertEqual(self.outside_state(), before)
+        self.assertEqual(self.stash_list(), [])
+
+    def test_seal_drops_the_stash_that_a_failed_set_aside_left_with_the_tree_untouched(self):
+        self.write_implementation_in_tree()
+        before = self.outside_state()
+        original = check_seal.git
+
+        def failing_after_storing(repo, *args):
+            if args[:2] == ("stash", "push"):
+                original(repo, "stash", "store", "-q", "-m", "left behind", original(repo, "stash", "create").strip())
+                raise RuntimeError("fatal: pathspec did not match any files")
+            return original(repo, *args)
+
+        check_seal.git = failing_after_storing
+        try:
+            code, out = self.seal()
+        finally:
+            check_seal.git = original
+        self.assertEqual(code, 1)
+        self.assertIn("git: fatal: pathspec", out)
+        self.assertEqual(self.outside_state(), before)
+        self.assertEqual(self.stash_list(), [])
+
+    def test_missing_test_with_changes_set_aside_points_to_what_the_sealed_files_rely_on(self):
+        self.write_implementation_in_tree()
+        code, out = self.seal(tests=[("AC-001", "test/a.rule.test.js", "f returns one"), TESTS[1]])
+        self.assertEqual(code, 1)
+        self.assertIn("missing: 凍結の外の変更 (2 件) は退避して流している", out)
+        code, out = self.seal(tests=[("AC-001", "test/a.rule.test.js", "f returns one"), TESTS[1]])
+        self.assertEqual(code, 1)
+        self.repo.git("checkout", "--", "src/a.js")
+        (self.root / "src/one.js").unlink()
+        code, out = self.seal(tests=[("AC-001", "test/a.rule.test.js", "f returns one"), TESTS[1]])
+        self.assertNotIn("退避して流している", out)
+
+    def test_seal_refuses_a_requirement_that_only_says_a_check_command_passes(self):
+        plan = plan_text([("AC-001", "規則"), ("AC-002", "非影響")], rows=["| R-1 | AC-001, AC-002 |", "| R-2 | 範囲外: 規約として enforce-conventions で担保する |"], requirements=("R-1", "R-2"))
+        self.repo.write("plan.md", plan.replace("- R-2: f は 1 を返す (「f は 1 を返す」 依頼)", "- R-2: `npm run check` が通る (「`npm run check` が通る」 issue#1)"))
+        code, out = self.seal()
+        self.assertEqual(code, 1)
+        self.assertIn("plan: R-2 は検査コマンドが通ることだけを述べている", out)
+        self.assertNotIn("R-1 は", out)
+
+    def test_seal_refuses_a_requirement_that_says_what_is_not_built_yet(self):
+        plan = plan_text([("AC-001", "規則"), ("AC-002", "非影響")], rows=["| R-1 | AC-001, AC-002 |", "| R-2 | 範囲外: 規約として enforce-conventions で担保する |"], requirements=("R-1", "R-2"))
+        for text in ("画面はまだ作らない", "管理画面での一覧は今回は作らない"):
+            self.repo.write("plan.md", plan.replace("- R-2: f は 1 を返す (「f は 1 を返す」 依頼)", f"- R-2: {text} (「{text} (#2)。」 issue#1)"))
+            code, out = self.seal()
+            self.assertEqual(code, 1, text)
+            self.assertIn("plan: R-2 は今回は作らないものを述べている", out)
+
+    def test_seal_accepts_requirements_that_state_outcomes_with_similar_words(self):
+        plan = plan_text([("AC-001", "規則"), ("AC-002", "非影響")], sources="R-1, R-2, R-3", rows=["| R-1 | AC-001, AC-002 |", "| R-2 | AC-001 |", "| R-3 | AC-001 |"], requirements=("R-1", "R-2", "R-3"))
+        plan = plan.replace("- R-2: f は 1 を返す (「f は 1 を返す」 依頼)", "- R-2: 許可した `https://app.example.com` は検査を通る (「許可した origin は通る」 依頼)")
+        plan = plan.replace("- R-3: f は 1 を返す (「f は 1 を返す」 依頼)", "- R-3: まだ有効な招待があれば新しい招待を作らない (「有効な招待があれば作らない」 依頼)")
+        self.repo.write("plan.md", plan)
+        code, out = self.seal()
+        self.assertEqual(code, 0, out)
+
+    def seal_with_plan_outside(self):
+        outside = Path(self.tmp.name) / "plans" / "design.md"
+        outside.parent.mkdir()
+        outside.write_text(self.REPORTED_PLAN, encoding="utf-8")
+        (self.root / "plan.md").unlink()
+        keep = [path for path in KEEP_FILES if path != "plan.md"]
+        code, out = run("seal", str(self.root), stdin=seal_spec(REPORT_COMMAND, RULE_FILES, keep, TESTS, plan=str(outside)))
+        self.assertEqual(code, 0, out)
+        return outside
+
+    def test_report_finds_the_plan_outside_the_repo_that_the_seal_was_given(self):
+        self.seal_with_plan_outside()
+        code, out = run("report", str(self.root))
+        self.assertEqual(code, 0, out)
+        self.assertIn("要求:\n- R-1: ", out)
+
+    def test_reseal_finds_the_plan_outside_the_repo_and_the_next_report_still_does(self):
+        self.seal_with_plan_outside()
+        self.repo.write("test/harness/app.js", HARNESS + "export const fixed = true;\n")
+        code, out = run("reseal", str(self.root))
+        self.assertEqual(code, 0, out)
+        self.assertIn("plans/design.md の受け入れテストを直す", self.body())
+        code, out = run("report", str(self.root))
+        self.assertEqual(code, 0, out)
+
+    def test_report_without_a_path_fails_once_the_remembered_plan_is_gone(self):
+        self.seal_with_plan_outside().unlink()
+        code, out = run("report", str(self.root))
+        self.assertEqual(code, 1)
+        self.assertIn("plan: ", out)
+
+    def test_spike_open_names_the_ignored_env_files_that_the_worktree_lacks(self):
+        self.repo.write(".gitignore", ".env*\n!.env.example\n")
+        self.repo.write(".env.example", "DATABASE_URL=\n")
+        self.repo.commit("ignore", ".gitignore", ".env.example")
+        code, out = run("spike-open", str(self.root), "test/a.rule.test.js", "test/harness/app.js")
+        self.assertEqual(code, 0, out)
+        self.addCleanup(shutil.rmtree, Path(out.split("worktree: ")[1].splitlines()[0]).parent, True)
+        self.assertNotIn("env:", out)
+        self.repo.write(".env", "DATABASE_URL=postgres://localhost/test\n")
+        self.repo.write(".env.test", "DATABASE_URL=postgres://localhost/test\n")
+        code, out = run("spike-open", str(self.root), "test/a.rule.test.js", "test/harness/app.js")
+        self.assertEqual(code, 0, out)
+        self.addCleanup(shutil.rmtree, Path(out.split("worktree: ")[1].splitlines()[0]).parent, True)
+        self.assertIn("env: .env, .env.test は複製に無い", out)
+
+    def test_check_lists_only_the_seals_in_progress(self):
+        self.add_remote_and_push()
+        self.seal()
+        first = self.head()
+        self.push()
+        self.repo.write("test/harness/app.js", HARNESS + "export const fixed = true;\n")
+        code, out = self.seal(supersedes="AC-001 (R-1)")
+        self.assertEqual(code, 0, out)
+        code, out = run("check", str(self.root))
+        self.assertEqual(code, 0, out)
+        self.assertIn(f"seals: {self.head()[:12]} (ほか完了済み 1 件)\n", out)
+        self.assertNotIn(first[:12], out.split("seals: ")[1])
 
 
 RSPEC_HARNESS = "require_relative '../../../lib/a'\n"

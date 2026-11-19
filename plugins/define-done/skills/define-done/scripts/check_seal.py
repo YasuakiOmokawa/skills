@@ -62,6 +62,11 @@ PLAN_BASELINE = "Define-Done-Plan-Outside"
 PLAN_BASELINE_LINE = re.compile(rf"^{PLAN_BASELINE}: ([0-9a-f]{{64}})$", re.M)
 REJECTED_DECISIONS = "検査が拒んだ決定"
 SPIKE_PATCHES = "define-done-spike-patches"
+PLAN_PATHS = "define-done-plans"
+CHECK_COMMAND_REQUIREMENT = re.compile(r"`[^`]+`\s*(?:が|も)\s*(?:すべて|全部)?\s*(?:通る|成功する)[。.]?")
+NON_GOAL_REQUIREMENT = re.compile(r"(?:まだ|今回は|(?:この|本) ?(?:issue|PR|計画) ?では)\s*(?:作ら|実装し|扱わ|含め|入れ)ない")
+REQUIREMENT_TEXT = re.compile(r"^- (R-\d+):[ \t]*(.*)$", re.M)
+QUOTE_OPENING = "(「"
 REPORT_REMINDER = "report: 最後の報告の先頭に、`check_seal.py report` が出す最終回答 (引用付きの要求の一覧) を置く"
 RESIDUAL_RISKS = "残ったリスク"
 RISK_DESTINATIONS = ("`AC-NNN`", "`実装のテスト:`", "`既存のテスト:`", "`規約`", "`未検証:`")
@@ -234,6 +239,7 @@ def inspect(repo):
     elif latest["recorded"] and REPORT_PLACEHOLDER not in command:
         findings.append(f"seal: {latest['sha'][:12]} の `{COMMAND_TRAILER}:` に {REPORT_PLACEHOLDER} が無い")
     protected = protected_paths(found)
+    completed = sum(seal["completed"] for seal in found)
     seal_set = {seal["sha"] for seal in found}
     touched_after_seal = {}
     for path, entry in protected.items():
@@ -259,7 +265,7 @@ def inspect(repo):
         "test-command": command,
         "protected": ", ".join(protected),
         "permanent": ", ".join(path for path, entry in protected.items() if entry["permanent"]),
-        "seals": ", ".join(seal["sha"][:12] for seal in found),
+        "seals": ", ".join(seal["sha"][:12] for seal in found if not seal["completed"]) + (f" (ほか完了済み {completed} 件)" if completed else ""),
     }
     return {**info, "recorded": latest["recorded"], "mapping": latest["mapping"]}, findings
 
@@ -429,16 +435,30 @@ class SetAside:
         self.before = snapshot(repo, paths)
         self.sha = None
         self.applied = True
+        self.staged_deletions = []
 
     def stash(self):
         if not self.paths:
             return
         existing = stash_shas(self.repo)
-        git(self.repo, "stash", "push", "-q", "--include-untracked", "-m", SET_ASIDE_MESSAGE, "--", *self.paths)
-        shas = stash_shas(self.repo)
-        if not shas or shas[0] in existing:
+        deleted = set(git(self.repo, "diff", "--cached", "--name-only", "--no-renames", "--diff-filter=D", "-z", "HEAD").split("\0"))
+        self.staged_deletions = [path for path in self.paths if path in deleted]
+        if self.staged_deletions:
+            git(self.repo, "reset", "-q", "--", *self.staged_deletions)
+        pending = self.status()
+        if not pending.strip():
+            return
+        try:
+            git(self.repo, "stash", "push", "-q", "--include-untracked", "-m", SET_ASIDE_MESSAGE, "--", *self.paths)
+        finally:
+            shas = stash_shas(self.repo)
+            if shas and shas[0] not in existing:
+                self.sha, self.applied = shas[0], self.status() == pending
+        if self.sha is None:
             raise RuntimeError("凍結の外の変更を退避できなかった")
-        self.sha, self.applied = shas[0], False
+
+    def status(self):
+        return git(self.repo, "status", "--porcelain", "--untracked-files=all", "--", *self.paths)
 
     def apply(self):
         if self.sha and not self.applied:
@@ -446,16 +466,19 @@ class SetAside:
             self.applied = True
 
     def restore(self):
-        if not self.sha:
-            return []
         try:
-            self.apply()
-            if snapshot(self.repo, self.paths) != self.before:
-                raise RuntimeError("戻した変更が退避の前と一致しない")
-            index = stash_shas(self.repo).index(self.sha)
-            git(self.repo, "stash", "drop", "-q", f"stash@{{{index}}}")
+            if self.sha:
+                self.apply()
+                if snapshot(self.repo, self.paths) != self.before:
+                    raise RuntimeError("戻した変更が退避の前と一致しない")
+                index = stash_shas(self.repo).index(self.sha)
+                git(self.repo, "stash", "drop", "-q", f"stash@{{{index}}}")
+            if self.staged_deletions:
+                git(self.repo, "rm", "-q", "--cached", "--ignore-unmatch", "--", *self.staged_deletions)
+                self.staged_deletions = []
         except (RuntimeError, ValueError) as exc:
-            return [f"set-aside: 凍結の外の変更を戻せなかった ({exc})。退避は stash に残してある: `git stash apply {self.sha}` で戻す"]
+            kept = f"退避は stash に残してある: `git stash apply {self.sha}` で戻す" if self.sha else "stage していた削除を `git rm --cached` で stage し直す"
+            return [f"set-aside: 凍結の外の変更を戻せなかった ({exc})。{kept}"]
         return []
 
 
@@ -604,6 +627,12 @@ def plan_findings(plan, kinds):
         errors.append(f"plan: `- AC IDs:` の行と `## Acceptance Criteria` の基準が {', '.join(differing)} で食い違う (AC-ID を 1 つずつ並べる)")
     if not requirements:
         errors.append("plan: `## Requirements` に `- R-n:` の行が無い")
+    for requirement, line in REQUIREMENT_TEXT.findall(sections["Requirements"][0]):
+        stated = line.split(QUOTE_OPENING, 1)[0].strip()
+        if CHECK_COMMAND_REQUIREMENT.fullmatch(stated):
+            errors.append(f"plan: {requirement} は検査コマンドが通ることだけを述べている。要求にせず `check_command` に渡す (`## Requirements` と要求の表から行を外す)")
+        elif NON_GOAL_REQUIREMENT.search(stated):
+            errors.append(f"plan: {requirement} は今回は作らないものを述べている。要求にせず、計画の範囲外の宣言と突き合わせる (`## Requirements` と要求の表から行を外す)")
     for ac, kind in sorted(kinds.items()):
         entry = criteria.get(ac)
         if entry is None:
@@ -670,6 +699,9 @@ def spike_open(repo, files):
     record = Path(git(work, "rev-parse", "--absolute-git-dir").strip()) / SPIKE_RECORD
     record.write_text(json.dumps({"linked": linked, "copied": list(files), "plan": baseline}), encoding="utf-8")
     print(f"worktree: {work}")
+    env_files = sorted(path for path in ignored if posixpath.basename(path).startswith(".env"))
+    if env_files:
+        print(f"env: {', '.join(env_files)} は複製に無い (git が無視する file)。複製の中でテストを流すときは、runner の flag で repo の file を指す")
     return []
 
 
@@ -695,21 +727,26 @@ def spike_close(repo, work):
     return []
 
 
-def spike_patches(repo):
-    record = Path(repo) / git(repo, "rev-parse", "--git-common-dir").strip() / SPIKE_PATCHES
+def remembered(repo, name):
+    record = Path(repo) / git(repo, "rev-parse", "--git-common-dir").strip() / name
     try:
         return record, json.loads(record.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         return record, {}
 
 
-def remember_spike(repo, spike):
-    record, patches = spike_patches(repo)
-    patches[git(repo, "rev-parse", "HEAD").strip()] = str(Path(spike).absolute())
+def remember(repo, name, path):
+    record, paths = remembered(repo, name)
+    paths[git(repo, "rev-parse", "HEAD").strip()] = str(Path(path).expanduser().absolute())
     try:
-        record.write_text(json.dumps(patches), encoding="utf-8")
+        record.write_text(json.dumps(paths), encoding="utf-8")
     except OSError:
         pass
+
+
+def remembered_file(repo, name, found):
+    paths = remembered(repo, name)[1]
+    return next((paths[seal["sha"]] for seal in found if Path(paths.get(seal["sha"]) or repo).is_file()), "")
 
 
 def ran_names(entries, path):
@@ -787,7 +824,9 @@ def seal(repo, spec_text):
         if not errors:
             commit_seal(repo, subject, kinds, rule_files, changed, mapping, test_command, supersedes)
             if spike:
-                remember_spike(repo, spike)
+                remember(repo, SPIKE_PATCHES, spike)
+            if spec.get("plan"):
+                remember(repo, PLAN_PATHS, plan)
     except RuntimeError as exc:
         errors = [f"git: {exc}"]
     return errors + aside.restore()
@@ -816,6 +855,8 @@ def seal_in_tree(repo, aside, test_command, test_files, mapping, kinds, spike, c
         if errors:
             return errors
     now, errors, output = kind_states(repo, test_command, test_files, mapping, kinds)
+    if aside.sha and any(error.startswith("missing:") for error in errors):
+        errors.append(f"missing: 凍結の外の変更 ({len(aside.paths)} 件) は退避して流している。凍結するファイルが、凍結に含めない変更に頼っていないかを確かめる")
     proved = {}
     if spike and not errors:
         patch = str(Path(spike).resolve())
@@ -872,16 +913,18 @@ def reseal_spec(repo, spec_text):
     latest = found[0]
     rule_files = sorted(latest["rule_files"])
     sealed = list(dict.fromkeys(path for seal in found for path in seal["files"]))
-    mapping = {(test["ac"], test["file"]): test for test in latest["mapping"]}
-    for test in overrides.get("tests") or []:
-        mapping[(str(test.get("ac", "")), str(test.get("file", "")))] = test
+    given = list(overrides.get("tests") or [])
+    replaced = {(str(test.get("ac", "")), str(test.get("file", ""))) for test in given}
+    tests = [test for test in latest["mapping"] if (test["ac"], test["file"]) not in replaced] + given
+    plan = remembered_file(repo, PLAN_PATHS, found[:1])
     rule = list(dict.fromkeys(rule_files + list(overrides.get("rule") or [])))
     spec = {
         "test_command": overrides.get("test_command") or latest["values"].get(COMMAND_TRAILER, ""),
         "rule": rule,
         "non_impact": list(dict.fromkeys([path for path in sealed if path not in rule] + list(overrides.get("non_impact") or []))),
-        "tests": list(mapping.values()),
+        "tests": tests,
         "resealed": True,
+        **({"plan": plan} if plan else {}),
         **{key: overrides[key] for key in ("subject", "plan", "supersedes", "spike", "check_command") if key in overrides},
     }
     return json.dumps(spec), []
@@ -893,12 +936,11 @@ def report(repo, named_plan):
         return ["seal: 進行中の `Define-Done-Seal:` の凍結の commit が HEAD から辿れない"]
     latest = found[0]
     sealed = list(dict.fromkeys(path for seal in found for path in seal["files"] if (Path(repo) / path).is_file()))
-    plan, errors = locate_plan(repo, named_plan, sealed)
+    plan, errors = locate_plan(repo, named_plan or remembered_file(repo, PLAN_PATHS, found[:1]), sealed)
     if errors:
         return errors
     acs, rule = listed(latest["values"].get(SEAL_TRAILER)), listed(latest["values"].get(RULE_TRAILER))
-    patches = spike_patches(repo)[1]
-    patch = next((patches[seal["sha"]] for seal in found if Path(patches.get(seal["sha"]) or repo).is_file()), "")
+    patch = remembered_file(repo, SPIKE_PATCHES, found)
     try:
         print("\n".join(final_answer(plan, len(rule), len(acs) - len(rule), latest["sha"], sealed, patch)))
     except (OSError, KeyError, IndexError):

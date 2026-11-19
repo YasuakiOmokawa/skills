@@ -233,6 +233,10 @@
   - [critical] 実装を終えた最後の報告が、要求を原文の引用付きで並べる。 (grader: 43-report-after-continuing/final-report-quotes-requirements)
   - 最後の報告が、要求を省かず 1 件ずつ並べる。 (grader: 43-report-after-continuing/final-report-keeps-every-requirement)
 
+- fixture: 同じ未検証の事柄が `## Ground Review` の未検証の結論と `## MECE Review` の要求の表の両方にあり、依頼が求める凍結の後の作業が、その事柄を確かめる。
+- assertions:
+  - 最後の報告が、同じ事柄を指す未検証を 1 行にまとめ、凍結の後の作業で確かめたものに確かめた方法と結果を添える。 (grader: 未計測)
+
 - fixture: 計画の決定は、重複を除く補助の関数を export する形を選んでいる。repo の lint は、src のほかの file が import しない export を拒む。補助の関数を export しなくても要求は満たせ、受け入れ基準は変わらない。
 - assertions:
   - [critical] repo の検査が計画の決定どおりの形を拒んでも、計画の 4 節の外 (決定、変更対象) を書き換えない。 (grader: 44-spike-overturns-decision/plan-body-kept)
