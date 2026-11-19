@@ -16,7 +16,7 @@
   - [critical] `## MECE Review` が、Stage 2 と Stage 3 が非目標として宣言されていなければ欠落として挙げ、`config/env.example` への伝播がタスクに無ければ欠落として挙げるか、規約として範囲外に返す。 (grader: 01-session-store/stage-scope-declared, 01-session-store/envvar-covered)
   - [critical] `## MECE Review` に現在の AC-ID の集合を書く `- AC IDs:` 行と `- Gate:` 行が一つずつある。 (grader: 01-session-store/gate-recorded)
   - [critical] `## Acceptance Criteria` 節は空行と `- AC-NNN:` (または `- [ ] AC-NNN:`) の行だけから成る。 (grader: 01-session-store/ac-rows)
-  - `## MECE Review` が、`## Ground Review` に残したリスクごとに、それを守る先 (基準、実装のテスト、規約、未検証のどれか) を表の行に書く。 (grader: 01-session-store/residual-risk-destination)
+  - `## MECE Review` が、`## Ground Review` に残したリスクごとに、それを守る先 (基準、実装のテスト、既存のテスト、規約、未検証のどれか) を表の行に書く。 (grader: 01-session-store/residual-risk-destination)
 
 - fixture: パスワード再設定の仕様は、登録済みと未登録のメールで同じ受付画面を見せ、リンクは発行後三十分まで有効、初回利用で既存セッションを維持すると定める。再送回数の上限は資料に無い。計画の別の節には、セキュリティレビューの推奨 (監査ログ、レート制限) が書かれている。
 - assertions:
@@ -219,9 +219,19 @@
   - 依頼が今回は作らないと述べたものを `## Requirements` の行にしない。 (grader: 42-requirements-are-outcomes/no-non-goal-requirement)
   - repo の検査コマンドが通ることを `## Requirements` の行にしない。 (grader: 42-requirements-are-outcomes/no-check-command-requirement)
 
+- fixture: 正本の issue は「やること」と「受け入れ条件」の 2 つの節を持つ。「記事が無ければ空の一覧を返す」は両方の節にあり、受け入れ条件の「同じタグは 1 回だけ現れる」は、やることの「重複なく返す」と同じ結果に、大文字と小文字を区別するという細目を足している。受け入れ条件には「`npm test` が通る」も並び、issue の冒頭は「管理画面でのタグの一覧はまだ作らない」と述べる。
+- assertions:
+  - 受け入れ条件の節に並んでいても、repo の検査コマンドが通ることを `## Requirements` の行にしない。 (grader: 45-requirements-from-issue/no-check-command-requirement)
+  - issue がまだ作らないと述べたものを `## Requirements` の行にしない。 (grader: 45-requirements-from-issue/no-non-goal-requirement)
+  - 2 つの節が同じ文で述べる結果を、`## Requirements` の 1 行にする。 (grader: 45-requirements-from-issue/same-outcome-listed-once)
+  - 2 つの節が違う文で述べる同じ結果 (「重複なく返す」と「1 回だけ現れる」) を、`## Requirements` の 1 行にする。 (grader: 45-requirements-from-issue/paraphrased-outcome-listed-once)
+  - [critical] 同じ結果を述べる文をまとめても、細目のある文の引用を `## Requirements` に残す。 (grader: 45-requirements-from-issue/specific-clause-kept)
+  - [critical] 細目 (大文字と小文字の区別) を受け入れ基準が確かめる。 (grader: 45-requirements-from-issue/specific-clause-has-criterion)
+
 - fixture: 依頼は、計画を define-done した後、Gate が ready なら続けて製品コードを実装するところまでを 1 つの依頼で求める。
 - assertions:
-  - [critical] 凍結の後、実装へ進む前に、引用付きの要求の一覧を利用者に返す。 (grader: 43-report-before-continuing/report-before-implementing)
+  - [critical] 実装を終えた最後の報告が、要求を原文の引用付きで並べる。 (grader: 43-report-after-continuing/final-report-quotes-requirements)
+  - 最後の報告が、要求を省かず 1 件ずつ並べる。 (grader: 43-report-after-continuing/final-report-keeps-every-requirement)
 
 - fixture: 計画の決定は、重複を除く補助の関数を export する形を選んでいる。repo の lint は、src のほかの file が import しない export を拒む。補助の関数を export しなくても要求は満たせ、受け入れ基準は変わらない。
 - assertions:
