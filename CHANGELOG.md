@@ -5,6 +5,23 @@ All notable changes to omokawa-skills will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v20.7.0 - 2026-11-19
+
+### Changed
+
+- **`define-done` 5.7.0 (最終回答の置き場所が変わる):** 依頼が凍結の後の作業 (実装など) まで求めているときは、最終回答をその作業を終えた最後の報告の先頭に置く。凍結の直後に返してから実装へ移る、という 5.5.0 の規定は外した (eval で 2/3 のまま上げられず、taimei-auth の #499 でも凍結の直後は 1 行だけで実装へ進んだ)。凍結で終わる依頼は、これまでどおり凍結の後に最終回答を返す。最終回答は `check_seal.py report` の出力を写して書く。
+- **`check_seal.py report`:** `## Ground Review` の `### 未決の判断` と `### 未検証の結論` の行、`## MECE Review` の `- 未検証` で始まる箇条を抜き出す (「無い」「なし」の行は出さない)。凍結し直した後も、進行中の凍結が記録した全ファイルを出す (これまでは直近の凍結の commit のファイルだけだった)。試作の patch の path を出す。
+- **`check_seal.py seal`:** `spike` を渡して凍結したとき、patch の path を repo の git dir の `define-done-spike-patches` に記録する (`report` が読む)。commit の trailer には書かない (手元の一時 dir の path が push される履歴に残るため)。patch が消えていれば `report` は path を出さない。
+- **`check_seal.py seal` (拒む計画が増える):** `## MECE Review` の残ったリスクの表 (`### 残ったリスク` を含む見出しの下) の守る先が、`AC-NNN`、`実装のテスト:`、`既存のテスト:`、`規約`、`未検証:` のどれでも始まらない行と、計画に無い AC-ID を守る先にした行を拒む。`reseal` でも照合する。
+- **`check_seal.py verify`:** 通ったとき、最後の報告の先頭に `report` の最終回答を置くよう促す 1 行を出す。
+- **`check_seal.py check <repo> <ファイル>...`:** ファイルを渡したときは保護の状態だけを出し、exit 0 を返す。これまでは、凍結の前に流すと「進行中の凍結の commit が HEAD から辿れない」で exit 1 になった。
+- **`define-done` 5.7.0:** 引用元の複数の文が同じ結果を述べるとき (issue の「やること」と「受け入れ条件」など) は 1 件の要求にし、それぞれの原文を引用に並べる。片方の文が細目を足していれば、要求はその細目まで述べる。taimei-auth の #499 で、同じ結果が別々の要求になって 18 件に膨らみ、最終回答が 7 件を 1 行に畳んで引用を落としたため。
+- **`define-done` 5.7.0:** 残ったリスクの守る先に `既存のテスト: <ファイル>` (変更の前からあるテストがそのリスクで落ちるもの) を足した。`## Ground Review` の未決の判断と未検証の結論は、`### 未決の判断` と `### 未検証の結論` の見出しの下に 1 件 1 行で書く。
+
+- **eval:** case 43 を、凍結の後の実装まで求める依頼で「最後の報告が要求を引用付きで省かず並べる」ことを測る形に書き直し (`43-report-after-continuing`)、case 45 (正本の issue が「やること」と「受け入れ条件」の 2 節で同じ結果を述べ、受け入れ条件に検査コマンドの通過が並ぶ) を足した。`check_seal.py` の unit test は 9 件を足して 105 件。全 41 case を with arm で 3 run ずつ回し、chain 2 case も回した (全 suite $91、chain $5、旧版での基準取りと試し流しで $13、認証の失敗で流し直した 2 case で $5、下の case 25 の切り分けで $24)。旧版 → 新版で、43 の 2 つの grader は 2/3 → 3/3 (試し流しを足すと、出す版は 9/9、`verify` の 1 行が無い版は 6/6。5.6.0 の全 suite の run に同じ grader を当てると 0/3)、45 `paraphrased-outcome-listed-once` は 0/3 → 3/3 (旧版は、旧版の run が書いた計画に同じ regex を当てた値)。45 のほかの 5 つの grader は旧版でも 3/3 で、検査コマンドの通過と作らないものが要求になる #499 の取りこぼしは、この形の fixture では再現しなかった (文言は変えていない)。5.6.0 から 2 run 以上下がった grader は無い。Gate を止める case (08、14、22、28) の grader は、08 `permission-branch` (2/3 → 1/3。判定し直すと 3 票とも PASS) を除いて旧版と同じ。1 run 下がった 04 `unresolved-reported` は判定し直すと PASS、15 `new-criterion-semantics` と 29 `untested-ac-listed` は判定し直しても FAIL、27 の凍結まわりの 3 つは 1 run が計画のバグを見つけて Gate で止まった (前からの揺れ)。上がったのは 01 `envvar-covered` 1/3 → 3/3、14 `retry-unverified` 2/3 → 3/3、18 `not-run-recorded` 2/3 → 3/3。残ったリスクの守る先の照合が凍結を拒んだ run は無く、凍結まで進んだ 63 run のうち 18 run が `既存のテスト:` の行を書いた。chain は `chain-invite-owner` が 3/3 (コードも隠しテストを全部通す)、`chain-string-quantity` は前の版と同じく 3 run とも Gate で止まった。
+- **eval (受け入れテストの変異の採点):** 25 `real-bug-admin-mints-owner` の「全テストが有効な run」が 3/3 → 1/3 に下がった (要件適合度とバグ検出率は満点のまま)。無効なテストはどれも「ADMIN の招待を既存の OWNER が受諾しても OWNER のまま」で、資料が決めていない振る舞いを基準にしている。同じ日の旧版でも同じ率で出るので、版の差とは言えない。同じ日に旧版 (5.6.0) を 9 run 流すと、テストを書いた 7 run のうち 2 run が同じテストを書いた (5.0.0 からの 5 回の記録では、テストを書いた 14 run 中 0)。新版は 9 run 流してテストを書いた 8 run のうち 3 run、要求の抜き出しの文を外した版は 4 run 中 1 run、残ったリスクの文を外した版は 5 run 中 2 run だった。前の日までの記録との差が何から来たかは分かっていない (CLI の版と model の ID は同じ)。ほかの題材 (23、24、26、29、30) は前の版と同じ値。
+- **eval (測っていないもの):** `verify` が出す 1 行は、有る版も無い版も case 43 が 6/6 で、効果を測れていない (会話が要約された後に最終回答を書けるかは、eval で再現していない)。case 43 の要求は 2 件で、#499 で起きた形 (18 件の要求を最後の報告が畳み、引用を落とす) も再現していない。chain の採点の `--record` は、記録先の `evals/mutant-record.json` が repo の root に無く失敗するので、chain の値は記録していない (前の版も同じ)。
+
 ## v20.6.0 - 2026-11-18
 
 ### Changed

@@ -61,6 +61,12 @@ SPIKE_RECORD = "define-done-spike-paths"
 PLAN_BASELINE = "Define-Done-Plan-Outside"
 PLAN_BASELINE_LINE = re.compile(rf"^{PLAN_BASELINE}: ([0-9a-f]{{64}})$", re.M)
 REJECTED_DECISIONS = "検査が拒んだ決定"
+SPIKE_PATCHES = "define-done-spike-patches"
+REPORT_REMINDER = "report: 最後の報告の先頭に、`check_seal.py report` が出す最終回答 (引用付きの要求の一覧) を置く"
+RESIDUAL_RISKS = "残ったリスク"
+RISK_DESTINATIONS = ("`AC-NNN`", "`実装のテスト:`", "`既存のテスト:`", "`規約`", "`未検証:`")
+RISK_DESTINATION = re.compile(r"AC-\d{3}|(?:実装のテスト|既存のテスト|未検証)[:：]|規約")
+NOTHING_NOTED = re.compile(r"-?\s*(?:無い|無し|なし|ない|該当なし|該当無し)(?:[\s。.、(（].*)?")
 TABLE_RULE = re.compile(r"^\|[\s:|-]+\|$")
 PROTECTION_NOTES = {
     "permanent": "恒久に守る規則の基準 (書き直すには凍結に含めて supersedes を渡す)",
@@ -511,16 +517,31 @@ def table_rows(text):
     return rows
 
 
-def final_answer(plan, rule_count, non_impact_count, sha, files):
+def subsections(body):
+    return [(chunk.partition("\n")[0].strip(), chunk.partition("\n")[2]) for chunk in re.split(r"^### ", body, flags=re.M)[1:]]
+
+
+def noted_lines(body, titled):
+    return [line for title, text in subsections(body) if titled(title) for line in text.splitlines() if line.strip() and not NOTHING_NOTED.fullmatch(line.strip())]
+
+
+def final_answer(plan, rule_count, non_impact_count, sha, files, patch):
     sections = plan_sections(plan.read_text(encoding="utf-8"))
     review = sections["MECE Review"][0]
+    ground = sections.get("Ground Review", [""])[0]
     rows = table_rows(review)
-    rejected = re.split(r"^### ", review, flags=re.M)
-    rejected = next((chunk.partition("\n")[2] for chunk in rejected if chunk.partition("\n")[0].strip() == REJECTED_DECISIONS), "")
+    rejected = next((text for title, text in subsections(review) if title == REJECTED_DECISIONS), "")
+    unverified = [
+        *noted_lines(ground, lambda title: title.startswith("未検証")),
+        *[line for line in review.splitlines() if line.startswith("- 未検証")],
+        *[line for line in noted_lines(review, lambda title: "未検証" in title) if not line.startswith("|")],
+        *[line for line, cells in rows if len(cells) > 1 and not REQUIREMENT_ID.fullmatch(cells[0]) and cells[1].startswith("未検証")],
+    ]
     groups = [
         ("基準の無い要求", [line for line, cells in rows if len(cells) > 1 and REQUIREMENT_ID.fullmatch(cells[0]) and ROW_WITHOUT_CRITERION.match(cells[1])]),
         ("実装が足すテスト", [line for line, cells in rows if len(cells) > 1 and cells[1].startswith("実装のテスト")]),
-        ("未検証", [line for line, cells in rows if len(cells) > 1 and not REQUIREMENT_ID.fullmatch(cells[0]) and cells[1].startswith("未検証")]),
+        ("未決の判断", noted_lines(ground, lambda title: title.startswith("未決"))),
+        ("未検証", list(dict.fromkeys(unverified))),
         (REJECTED_DECISIONS, [line for line, _ in table_rows(rejected)[1:]]),
     ]
     lines = [
@@ -530,6 +551,7 @@ def final_answer(plan, rule_count, non_impact_count, sha, files):
         f"AC: 規則 {rule_count} 件、非影響 {non_impact_count} 件",
         f"凍結: {sha}",
         f"ファイル: {', '.join(files)}",
+        *([f"試作の patch: {patch}"] if patch else []),
     ]
     for title, found in groups:
         if found:
@@ -610,6 +632,18 @@ def plan_findings(plan, kinds):
             errors.append(f"plan: 要求の表の {requirement} の行が、対応する AC でも `未検証:`、`範囲外:`、`不足情報:` でも始まらない")
         elif not any(requirement in (criteria.get(ac, {}).get("sources") or ()) for ac in named):
             errors.append(f"plan: 要求の表は {requirement} を {', '.join(named)} に対応させているが、そのどれも出典に {requirement} を挙げていない (出典に足すか、行を `未検証:`、`範囲外:`、`不足情報:` のどれかにする)")
+    for title, text in subsections(review):
+        if RESIDUAL_RISKS not in title:
+            continue
+        for _, cells in table_rows(text)[1:]:
+            if len(cells) < 2:
+                continue
+            destination = cells[1].lstrip("`* ")
+            unknown = sorted(set(AC_ID.findall(destination)) - set(criteria)) if AC_ID.match(destination) else []
+            if not RISK_DESTINATION.match(destination):
+                errors.append(f"plan: 残ったリスクの表の「{cells[0]}」の守る先が {'、'.join(RISK_DESTINATIONS)} のどれでも始まらない")
+            elif unknown:
+                errors.append(f"plan: 残ったリスクの表の「{cells[0]}」の守る先 {', '.join(unknown)} が `## Acceptance Criteria` に無い")
     return errors
 
 
@@ -659,6 +693,23 @@ def spike_close(repo, work):
     git(repo, "worktree", "remove", "--force", str(work))
     print(f"spike: {patch}")
     return []
+
+
+def spike_patches(repo):
+    record = Path(repo) / git(repo, "rev-parse", "--git-common-dir").strip() / SPIKE_PATCHES
+    try:
+        return record, json.loads(record.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return record, {}
+
+
+def remember_spike(repo, spike):
+    record, patches = spike_patches(repo)
+    patches[git(repo, "rev-parse", "HEAD").strip()] = str(Path(spike).absolute())
+    try:
+        record.write_text(json.dumps(patches), encoding="utf-8")
+    except OSError:
+        pass
 
 
 def ran_names(entries, path):
@@ -735,6 +786,8 @@ def seal(repo, spec_text):
         errors = seal_in_tree(repo, aside, test_command, test_files, mapping, kinds, spike, check_command)
         if not errors:
             commit_seal(repo, subject, kinds, rule_files, changed, mapping, test_command, supersedes)
+            if spike:
+                remember_spike(repo, spike)
     except RuntimeError as exc:
         errors = [f"git: {exc}"]
     return errors + aside.restore()
@@ -844,8 +897,10 @@ def report(repo, named_plan):
     if errors:
         return errors
     acs, rule = listed(latest["values"].get(SEAL_TRAILER)), listed(latest["values"].get(RULE_TRAILER))
+    patches = spike_patches(repo)[1]
+    patch = next((patches[seal["sha"]] for seal in found if Path(patches.get(seal["sha"]) or repo).is_file()), "")
     try:
-        print("\n".join(final_answer(plan, len(rule), len(acs) - len(rule), latest["sha"], latest["files"])))
+        print("\n".join(final_answer(plan, len(rule), len(acs) - len(rule), latest["sha"], sealed, patch)))
     except (OSError, KeyError, IndexError):
         return [f"plan: 計画 {plan} から最終回答を組み立てられない (4 節と `- Gate:` の行を確かめる)"]
     return []
@@ -907,6 +962,7 @@ def run_command(args, stdin):
             return 1 if errors else 0
         if args.command == "check" and args.paths:
             protection(args.repo, args.paths)
+            return 0
         info, findings = inspect(args.repo)
     except RuntimeError as exc:
         print(f"git: {exc}")
@@ -921,7 +977,7 @@ def run_command(args, stdin):
         return 1
     if args.command == "verify":
         failures = verify(args.repo, info)
-        for failure in failures:
+        for failure in failures or [REPORT_REMINDER]:
             print(failure)
         return 1 if failures else 0
     return 0

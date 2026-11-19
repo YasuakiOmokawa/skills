@@ -909,8 +909,102 @@ class SealCommandTest(unittest.TestCase):
         self.assertIn("protection: src/a.js = unsealed", out)
         self.push()
         code, out = run("check", str(self.root), "test/a.rule.test.js", "test/a.keep.test.js")
+        self.assertEqual(code, 0, out)
         self.assertIn("protection: test/a.rule.test.js = permanent", out)
         self.assertIn("protection: test/a.keep.test.js = released", out)
+
+    def test_verify_points_to_the_report_only_when_it_passes(self):
+        self.seal()
+        code, out = run("verify", str(self.root))
+        self.assertEqual(code, 1)
+        self.assertNotIn("report:", out)
+        self.implement()
+        code, out = run("verify", str(self.root))
+        self.assertEqual(code, 0, out)
+        self.assertIn("report: 最後の報告の先頭に、`check_seal.py report` が出す最終回答", out)
+
+    def test_check_with_files_before_any_seal_names_the_protection_and_succeeds(self):
+        code, out = run("check", str(self.root), "test/a.rule.test.js")
+        self.assertEqual(code, 0, out)
+        self.assertIn("protection: test/a.rule.test.js = unsealed", out)
+        self.assertNotIn("seal:", out)
+
+    def test_report_lists_every_sealed_file_after_a_reseal(self):
+        self.repo.write("plan.md", self.REPORTED_PLAN)
+        self.seal()
+        self.repo.write("test/harness/app.js", HARNESS + "export const fixed = true;\n")
+        code, out = run("reseal", str(self.root))
+        self.assertEqual(code, 0, out)
+        code, out = run("report", str(self.root))
+        self.assertEqual(code, 0, out)
+        listed = out.split("ファイル: ")[1].splitlines()[0].split(", ")
+        self.assertEqual(sorted(listed), sorted(RULE_FILES + KEEP_FILES))
+
+    GROUND_REVIEWED_PLAN = REPORTED_PLAN.replace(
+        "## Ground Review\n\n無い\n",
+        "## Ground Review\n\n### 重要なリスクと影響\n\n- f が負の数を返す\n\n### 未決の判断\n\n- 上限の値。既定は決めない。行き先は仕様の持ち主\n\n### 未検証の結論\n\n- 実 browser の応答の形\n  - endpoint ができてから確かめる\n",
+    ) + "\n### 指摘\n\n- 確認済み: 全 R-n が基準に対応する\n- 未検証: staging の設定\n"
+
+    def test_report_lists_the_open_decisions_and_unverified_conclusions_of_the_ground_review(self):
+        self.repo.write("plan.md", self.GROUND_REVIEWED_PLAN)
+        self.seal()
+        code, out = run("report", str(self.root))
+        self.assertEqual(code, 0, out)
+        self.assertIn("未決の判断:\n- 上限の値。既定は決めない。行き先は仕様の持ち主\n", out)
+        self.assertIn("未検証:\n- 実 browser の応答の形\n  - endpoint ができてから確かめる\n- 未検証: staging の設定\n| 本番の時計がずれる | 未検証: staging の log |\n", out)
+        self.assertNotIn("確認済み", out)
+        self.assertNotIn("重要なリスク", out)
+
+    def test_report_omits_ground_review_subsections_that_say_there_is_nothing(self):
+        plan = self.GROUND_REVIEWED_PLAN.replace("- 上限の値。既定は決めない。行き先は仕様の持ち主", "- 無い").replace("- 実 browser の応答の形\n  - endpoint ができてから確かめる", "なし (grilling で確定済み)")
+        self.repo.write("plan.md", plan)
+        self.seal()
+        code, out = run("report", str(self.root))
+        self.assertEqual(code, 0, out)
+        self.assertNotIn("未決の判断", out)
+        self.assertIn("未検証:\n- 未検証: staging の設定\n", out)
+        self.assertNotIn("grilling", out)
+
+    def test_report_names_the_spike_patch_of_an_earlier_seal_while_the_patch_exists(self):
+        patch = self.spike_patch_with_plan(lambda plan: plan)
+        code, out = run("seal", str(self.root), stdin=seal_spec(REPORT_COMMAND, RULE_FILES, KEEP_FILES, TESTS, spike=patch))
+        self.assertEqual(code, 0, out)
+        self.assertNotIn(patch, self.body())
+        self.repo.write("test/harness/app.js", HARNESS + "export const fixed = true;\n")
+        code, out = run("reseal", str(self.root))
+        self.assertEqual(code, 0, out)
+        code, out = run("report", str(self.root))
+        self.assertEqual(code, 0, out)
+        self.assertIn(f"試作の patch: {patch}\n", out)
+        Path(patch).unlink()
+        code, out = run("report", str(self.root))
+        self.assertEqual(code, 0, out)
+        self.assertNotIn("試作の patch", out)
+
+    def residual_risk_plan(self, destination):
+        return PLAN + f"\n### 残ったリスクの表\n\n| リスク | 守る先 |\n|---|---|\n| f が負の数を返す | AC-001, AC-002 |\n| 設定の名前がずれる | 規約 |\n| g の文が変わる | {destination} |\n"
+
+    def test_seal_refuses_a_residual_risk_whose_destination_is_not_a_known_form(self):
+        before = self.head()
+        self.repo.write("plan.md", self.residual_risk_plan("`test/a.keep.test.js` の恒久の規則"))
+        code, out = self.seal()
+        self.assertEqual(code, 1)
+        self.assertIn("plan: 残ったリスクの表の「g の文が変わる」の守る先", out)
+        self.assertIn("既存のテスト:", out)
+        self.assertNotIn("f が負の数を返す", out)
+        self.assertNotIn("設定の名前がずれる", out)
+        self.assertEqual(self.head(), before)
+
+    def test_seal_accepts_a_residual_risk_guarded_by_an_existing_test(self):
+        self.repo.write("plan.md", self.residual_risk_plan("既存のテスト: test/a.keep.test.js"))
+        code, out = self.seal()
+        self.assertEqual(code, 0, out)
+
+    def test_seal_refuses_a_residual_risk_guarded_by_a_criterion_that_is_not_in_the_plan(self):
+        self.repo.write("plan.md", self.residual_risk_plan("AC-009"))
+        code, out = self.seal()
+        self.assertEqual(code, 1)
+        self.assertIn("plan: 残ったリスクの表の「g の文が変わる」の守る先 AC-009 が", out)
 
     def test_spike_close_refuses_a_directory_that_spike_open_did_not_make(self):
         code, out = run("spike-close", str(self.root), str(self.root))
