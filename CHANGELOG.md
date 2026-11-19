@@ -5,6 +5,24 @@ All notable changes to omokawa-skills will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v20.8.0 - 2026-11-19
+
+### Changed
+
+- **`check_seal.py reseal` (不具合の修正):** 1 つの AC に同じファイルの複数のテストを対応させた凍結を、凍結し直せる。これまでは対応を AC とファイルの組で引いていたので 2 本目のテストが落ち、「対応する AC が無いテスト」で拒まれた (標準入力の `tests` に全部を渡しても同じだった)。標準入力の `tests` に渡した AC とファイルの組は、その組のテストが渡したものに置き換わる (テスト名を変えたら、その組のテストをすべて渡す)。taimei-auth の #500 で、`seal` を流し直して回避したため。
+- **`check_seal.py seal` と `reseal` (不具合の修正):** 凍結の外の変更の退避が、stage した改名と削除で壊れない。これまでは `git stash push -- <path>` が、index からも作業ツリーからも消えた path で exit 128 になり、stash が 1 つ残って、復旧の案内も出なかった。stage した削除は退避の前に index へ戻し、復元の後に stage し直す。index からだけ消して file を残した変更 (`git rm --cached`) でも、HEAD の製品コードで流す。退避が失敗して stash だけが残り、作業ツリーが変わっていなければ、その stash を消す。
+- **`check_seal.py seal` (拒む計画が増える):** `## Requirements` の行のうち、要求の文 (引用の前) が検査コマンドの通過だけを述べる行 (`` `<コマンド>` が通る``) と、今回は作らないものを述べる行 (「まだ作らない」「今回は作らない」など) を拒む。`reseal` でも照合する。`requirements.md` はこの 2 つを要求にしないと定めているが、taimei-auth の #487、#488、#489、#499、#500 の計画で 9 行が要求になっていた。
+- **`check_seal.py seal`:** 標準入力の `plan` に渡した計画の path を、repo の git dir の `define-done-plans` に記録する。`reseal` と `report` は、計画が repo の外にあっても path 無しで読む (5.7.0 の PR が次の版で直すとした点)。記録した計画が消えていれば、これまでどおり path を求める。
+- **`check_seal.py spike-open`:** git が無視する `.env*` が repo にあれば、複製に無いことと、runner の flag で repo の file を指すことを 1 行出す。#500 では文書の同じ指示を読み落とし、複製の中の 1 回目のテストが DB に接続できずに全部落ちた。
+- **`check_seal.py seal`:** テストが実行されず、凍結の外の変更を退避していたときは、凍結するファイルが凍結に含めない変更に頼っていないかを確かめる 1 行を足す。
+- **`check_seal.py check` と `verify`:** `seals:` の行は進行中の凍結だけを並べ、完了済みは件数にする (taimei-auth では 53 個の SHA が毎回出ていた)。
+- **`define-done` 5.8.0:** 最終回答の未検証は、同じ事柄を指す行を 1 行にまとめ、凍結の後の作業で確かめたものには確かめた方法と結果を添える。#500 では、1 つの未検証が `report` の出力に 3 行で出た。凍結の後の `/security-audit` が確かめた後も `report` は未検証のまま出すので、最後の報告で手で言い直した。
+
+- **見送ったもの:** 試作が覆した決定のうち検査が理由でないものに、Gate を止めない行き先を足す案は入れていない。#500 の 2 件に当てはめると、1 件 (challenge を消す順) は外から観測できる振る舞いが変わるので「検査が拒んだ決定」の条件 (3) を満たさず、計画を直して `spike-open` からやり直す今の規則が正しい行き先だった。もう 1 件 (試行枠の数え方) は、`## Ground Review` の前提の確認で依存先の値を実行環境で観測していれば見つかった。
+- **eval:** `check_seal.py` の unit test は 16 件を足して 121 件 (うち 13 件は旧 script で落ち、3 件は誤って拒まないことの番)。全 41 case を with arm で 3 run ずつ回し、chain 2 case も回した (全 suite $91、chain $5、case 01 と 08 の同じ日の流し直しで $17、下の試し流しで $5)。5.7.0 から通過率は 0.979 → 0.972。2 run 以上下がった grader は 01 `envvar-covered` (3/3 → 1/3) だけで、同じ日に流し直すと旧版 1/6、新版 4/6 だった (この grader は 5.6.0 から 1/3 → 3/3 → 1/3 と揺れていて、版の差とは言えない)。1 run 下がった grader のうち、01 `stage-scope-declared`、14 `retry-unverified`、27 `bug-caught` は判定し直すと PASS、40 `impl-not-sealed` は grader の誤検知 (凍結の commit に実装は入っていない。同じ呼び出しの `git diff --stat` の出力に regex が当たった)、05 `purpose-covered`、17 `convention-out-of-scope`、35 `supersedes-recorded` は FAIL のまま。08 `permission-branch` は 1/3 → 0/3 で、同じ日の流し直しは旧版も新版も 1/3。04、15、24、29 と 27 の凍結まわり 3 つは 2/3 → 3/3 に上がった。chain は invite-owner が 3/3 (コードも隠しテストを全部通す)、string-quantity は旧版と同じく 3 run とも Gate で停止。受け入れテストの変異の採点は前の版と同じ値 (25 の「全テストが有効な run」は 1/3 のまま)。
+- **eval (再現しなかったもの):** 検査コマンドの通過と作らないものが要求になる取りこぼしは、この形の要求を持つ前の計画を隣に置き、計画が「形はそれに合わせる」と名指しする fixture でも、旧版 3/3、新版 3/3 で再現しなかった (前の計画の本文は fixture の作成で 6 run とも文脈にあり、うち 2 run は file を開き直した)。旧版と新版を区別できないので、この case は suite に足していない。`seal` の検査の根拠は unit test と、過去の計画と eval の要求 3,629 行への照合 (当たるのは上の 9 行だけ) である。
+- **eval (測っていないもの):** 最終回答の未検証の扱い (同じ事柄を 1 行に、確かめた方法を添える) は、`outcomes.md` に assertion を足したが grader が無い。case 01 の新版の流し直しで `residual-risk-destination` が 6 run 中 2 run 落ちた (全 suite は 3/3、同じ日の旧版は 6/6)。今回変えた文は残ったリスクの表に触れていないので版の差とは見ていないが、切り分けはしていない。
+
 ## v20.7.0 - 2026-11-19
 
 ### Changed
