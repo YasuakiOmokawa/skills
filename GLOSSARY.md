@@ -26,7 +26,7 @@ API key、access token、passwordはこの領域へ保存しない。
 - Skillは別skillを暗黙起動せず、必要な後続作業を結果として返す。
 - PoC、プロトタイプ、Design Docの受け渡しは、出力先直下の案件ディレクトリ（`<案件slug>/`）にある `poc.md` のパスで行う。`poc.md` の見出し（問い、星取表、結論、PR、申し送り、Prototype）と `design-doc.md` は後続skillが読むmachine contract。
 - 固定見出し、ID、列、状態値は、skill外のconsumerが実際に読む場合だけmachine contractとする。
-- `define-done` が計画に書く 4 節の見出し、`- R-n:` と `- AC-NNN:` の行、`[規則]`・`[非影響]` の印、`(出典: ...)`、`- AC IDs:`、`- Gate:`、要求の表の `| R-n | ... |` の行は、`check_seal.py seal` が凍結の前に読むmachine contract。
+- `define-done` が計画に書く 4 節の見出し、`- R-n:` と `- AC-NNN:` の行、`[規則]`・`[非影響]` の印、`(出典: ...)`、`- AC IDs:`、`- Gate:`、要求の表の `| R-n | ... |` の行は、`check_seal.py seal` が凍結の前に読むmachine contract。`- AC-NNN:` の行の本文 (種類の印と出典を除く) と `- R-n:` の行の要求の文 (引用の前) は、凍結の commit が計画の path とともに hash を記録し (`Define-Done-Plan`、`Define-Done-Criteria`、`Define-Done-Requirements`)、同じ計画を凍結し直すときに照合する。
 - `check-pr` の検査結果ブロック (マーカー、`検査した commit` の行、表の列、判定の値) は、CIが読むmachine contract。
 - 外部状態の変更と破壊的操作は、正確な対象と変更内容が依頼で承認された場合だけ行う。例外として、`build-poc` と `build-prototype` の起動は、検証用ブランチのpushと、元のブランチをbaseとするdraft PRの作成の承認を含む。`define-done` の起動は、受け入れテスト・土台・計画と、要求が変える既存の規則の基準の書き直しだけを含む凍結の commit を作る承認と、repo が開発用に示すローカルの DB とコンテナの起動・停止とテスト用の DB への migration の承認と、凍結の前に試作の実装を書く一時的な worktree と repo の外の patch file の作成の承認を含む (push は含まない)。PRのURLは後続skillが読む。依頼が外部状態の変更を禁じる場合は行わない。
 

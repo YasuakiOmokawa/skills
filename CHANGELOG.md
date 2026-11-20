@@ -5,6 +5,26 @@ All notable changes to omokawa-skills will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v20.9.0 - 2026-11-20
+
+### Changed
+
+- **`check_seal.py reseal` (凍結の後に基準を減らせる):** 計画の `## Acceptance Criteria` から消えた基準は、`reseal` がテストの対応を外し、`dropped: AC-NNN` を出す。これまでは前の凍結の対応を必ず引き継ぐので「テストを対応させた AC-NNN が計画に無い」で拒まれ、基準を減らせなかった。taimei-auth の #504 で、利用者が凍結の後に要求を 2 度変え、`check_seal.py` の source を読んで、文書に無い `"resealed": true` を付けた `seal` に全部の対応を渡し直して回避したため。
+- **`check_seal.py seal` と `reseal` (拒む計画が増える):** 凍結の commit に、計画の path (`Define-Done-Plan`)、基準ごとの本文の hash (`Define-Done-Criteria`)、要求ごとの文の hash (`Define-Done-Requirements`) を記録する。同じ計画の進行中の凍結がこれを持つとき、次の 3 つを拒む。(1) 同じ AC-ID で本文が変わった基準。(2) 前の凍結の基準と同じ本文で、AC-ID だけが新しい基準。(3) 同じ文で番号だけが変わった要求。hash は、種類の印、`(出典: ...)`、`- [ ]`、空白を除いて取る。計画から消えた基準の hash は次の凍結へ引き継ぐので、一度外した AC-ID を別の基準に使うことも拒む。言い回しだけを直した基準は標準入力の `"reworded": ["AC-NNN"]` に挙げ、`Define-Done-Reworded` として commit に残る (本文が変わっていない AC-ID を挙げると拒む)。hash を持たない凍結 (これまでの凍結) と、別の計画の凍結とは照合しない。#504 で、要求を変えたときに AC-001〜AC-013 と R-1〜R-22 を振り直し、「意味の変わらない基準と要求は番号を保つ」規則を破ったまま 2 回凍結できたため。
+- **`check_seal.py seal` と `reseal` (読み込めない規則のテスト):** 規則の基準のテストが変更前の tree で結果を 1 つも出さなかった (skip ではない) ときは、実装のある tree でそのテストが通っていれば、落ちたものと数え、`unloaded: AC-NNN` を出す。実装のある tree は、`spike` を渡せば試作の実装を当てた tree、渡さなければ退避する前の作業ツリーである。その tree の実行に、対応する AC の無いテストか実行されないテストが 1 つでもあれば数えない。非影響の基準のテストは、これまでどおり実行されなければ拒む。これまでは、土台が変更前の tree に無い module を静的に import すると「実行されなかった」で拒まれた。#504 では、受け入れテストだけが使う遅延 import の土台が製品の repo に残った。
+- **`check_seal.py seal` と `reseal` (実行が 1 回増える):** `spike` を渡さず、凍結の外に変更がある凍結は、上の確かめのために、退避の前に受け入れテストを 1 回多く流す。
+- **`check_seal.py seal`:** Node のテストランナーが読み込めないファイルに付ける、ファイルの path を名前にした結果を、「対応する AC が無いテスト」に数えない。
+- **`define-done` 5.9.0:** `acceptance-tests.md` に「要求が変わったとき」を足した。変えた要求は利用者の発言を引用して場所を `依頼` にし、意味の変わらない要求と基準は番号を保ち、変えた要求が正本と食い違うなら正本の更新を未決の判断に書く。土台の遅延 import が要るのは、試作の実装を渡さない最初の凍結だけ、と書いた。
+
+- **残る制限:** 基準がすべて消えた凍結済みのファイルを消すことは、`seal` が「ファイルが無い」で拒むので、まだできない (#504 では起きていない)。
+- **残る制限 (読み込めないテストの扱い):** unit test は Node のテストランナーだけで確かめた。bun は、2 つのテストファイルの片方が読み込めないとき、読めたファイルの結果だけを報告に書くことを手で確かめた (bun 1.4.4)。退避の前の実行が凍結の外のファイルを書き換えるテストコマンドでは、凍結の commit を作った後に、戻した変更が退避の前と一致しないと報告する。テストの名前がテストファイルの path か拡張子を除いた名前と同じ結果 (pytest の `tests/test_cart.py` の `test_cart` など) は、「対応する AC が無いテスト」の検査に掛からない。
+- **見送ったもの:** #504 の retro で挙げた 5 件のうち、凍結し直した理由を commit に残す、`report` が凍結し直した後も古い試作の patch を出す、`seal` と `reseal` の `--help` が入力の key を出さない、の 3 件は入れていない。
+- **retro の提案と違う点:** 基準を減らす手段は、提案の「対応を全部置き換える入力を足す」でなく、計画から消えた基準を `reseal` が自動で外す形にした。計画が基準の集合を既に持つので入力が要らず、渡し忘れが起きないためである。
+- **eval:** `check_seal.py` の unit test は 20 件を足して 141 件 (うち 15 件は旧 script で落ち、5 件は誤って拒まないことの番)。case 47 (`47-requirement-changed-after-seal`、凍結の後に要求を 2 つ変えて凍結し直す) を足した。全 42 case を with arm で 3 run ずつ回し、chain 2 case も回した (全 suite $98.5、chain $4.9、case 47 の fixture を直す前後の試し流しで $9)。5.8.0 から通過率は 0.972 → 0.978。2 run 以上下がった grader は 24 `existing-interface-used` (3/3 → 1/3) だけで、落ちた 2 run を判定し直すと 3 票とも PASS だった (trace でも、受け入れテストは土台を通して既存の `createCart`・`add`・`total` で観測している)。1 run 下がったのは 08 `requirements-listed` と 18 `not-run-recorded` (どちらも 3/3 → 2/3、判定し直していない)。上がったのは 08 `permission-branch` 0/3 → 2/3 と、01 `stage-scope-declared`、05 `purpose-covered`、17 `convention-out-of-scope`、35 `supersedes-recorded` の 2/3 → 3/3。chain は invite-owner が 3/3 (コードも隠しテストを全部通す)、string-quantity は前の版と同じく 3 run とも Gate で停止。受け入れテストの変異の採点は、25 の「全テストが有効な run」が 1/3 → 2/3 になったほかは前の版と同じ値。
+- **eval (版を区別しないもの):** case 47 は、旧版も新版も 8 つの grader がすべて 3/3 だった。違いは経路で、旧版は 3 run とも `reseal` を使わず全部の対応を渡し直す `seal` で凍結し、新版は 3 run とも `reseal` が 1 回で通った。旧版の agent も AC-ID を振り直さなかったので、ID の照合が拒む場面は eval では起きていない (根拠は unit test)。この case は、hash を持つ凍結を凍結し直す経路の回帰の番として残す。
+- **eval (fixture の直し):** case 47 の最初の fixture は、計画の 4 節の外 (変更対象の表) が古い要求のままで、旧版も新版も 6 run すべてが規則どおり Gate を止めた。4 節の外は利用者が直してある設定に改めた。
+- **eval (測っていないもの):** 読み込めない規則のテストの扱いと、試作を渡さない凍結での土台の遅延 import は、`outcomes.md` に assertion を足したが grader が無い (根拠は unit test)。
+
 ## v20.8.0 - 2026-11-19
 
 ### Changed

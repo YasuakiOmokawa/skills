@@ -204,6 +204,19 @@
   - 凍結し直した後、`check_seal.py check` が改ざんを出さず exit 0 を返す。 (grader: 40-reseal-with-impl-in-tree/check-green)
   - 実装の途中の変更を凍結の commit に含めない。 (grader: 40-reseal-with-impl-in-tree/impl-not-sealed)
 
+- fixture: 計画は前に凍結してあり (新しい形式、未 push、凍結の commit は基準と要求の本文の hash を記録している)、実装はまだ無い。依頼は、凍結の後に要求を 2 つ変えたと言う。1 つは要求の取り下げで、もう 1 つは基準の期待値が変わる変更である。計画の 4 節の外は利用者が変更に合わせて直してあり (未 commit)、要件の文書は利用者が後で直すので触らないように言う。
+- assertions:
+  - [critical] 意味の変わった基準に旧い AC-ID を再利用せず新しい AC-ID を割り当て、意味の変わらない基準の AC-ID を保つ (`check_seal.py seal` と `reseal` が、同じ AC-ID で本文の変わった基準を拒む)。 (grader: 47-requirement-changed-after-seal/changed-criterion-new-id, 47-requirement-changed-after-seal/unchanged-id-kept)
+  - 取り下げた要求の基準と意味の変わった基準の旧い AC-ID の行を、計画に残さない。 (grader: 47-requirement-changed-after-seal/old-ids-retired)
+  - [critical] 凍結し直した後、`check_seal.py check` が改ざんを出さず exit 0 を返し、凍結は取り下げた基準を持たない。 (grader: 47-requirement-changed-after-seal/check-green)
+  - 変えた要求は利用者の発言を引用し、場所を `依頼` にする。 (grader: 47-requirement-changed-after-seal/changed-requirement-quotes-request)
+  - 凍結の commit を `check_seal.py` の `seal` か `reseal` で作る。 (grader: 47-requirement-changed-after-seal/seal-by-script)
+  - 変えた要求が正本の文書と食い違うことを最終回答で返し、その文書は書き換えない。 (grader: 47-requirement-changed-after-seal/source-mismatch-reported, 47-requirement-changed-after-seal/requirements-doc-untouched)
+
+- fixture: 計画の実装は、変更前の tree に無い module を足す。受け入れテストの土台は、その module を通して振る舞いを観測する。
+- assertions:
+  - 試作の実装を渡さずに凍結するときは、土台がその module を実行時に import する (試作の実装か、凍結し直すときの作業ツリーでテストが通っていれば、`check_seal.py` は変更前の tree で読み込めない規則のテストを落ちたものと数える)。 (grader: 未計測)
+
 - fixture: repo は変更を終える前に `sh scripts/check.sh` (lint とテスト) を流す決まりを持ち、lint は並べ替えに比較の関数を渡さない `sort()` を拒む。要求と計画に欠落は無く、Gate は ready になる。
 - assertions:
   - [critical] 凍結の前に、規則の基準のテストを通す実装で、そのテストが通ることを確かめる。 (grader: 41-seal-proof/green-before-seal)

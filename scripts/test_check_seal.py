@@ -55,8 +55,9 @@ def run(*argv, stdin=""):
     return code, out.getvalue()
 
 
-def plan_text(criteria, gate="ready", rows=None, ids=None, sources="R-1", requirements=("R-1",)):
+def plan_text(criteria, gate="ready", rows=None, ids=None, sources="R-1", requirements=("R-1",), bodies=None, requirement_texts=None):
     criteria = [(*criterion, sources)[:3] for criterion in criteria]
+    bodies, requirement_texts = bodies or {}, requirement_texts or {}
     listed = ", ".join(ac for ac, _, _ in criteria) if ids is None else ids
     table = rows if rows is not None else [f"| R-1 | {listed} |"]
     return "\n".join([
@@ -64,7 +65,7 @@ def plan_text(criteria, gate="ready", rows=None, ids=None, sources="R-1", requir
         "",
         "## Requirements",
         "",
-        *[f"- {requirement}: f は 1 を返す (「f は 1 を返す」 依頼)" for requirement in requirements],
+        *[f"- {requirement}: {requirement_texts.get(requirement, 'f は 1 を返す')} (「f は 1 を返す」 依頼)" for requirement in requirements],
         "",
         "## Ground Review",
         "",
@@ -72,7 +73,7 @@ def plan_text(criteria, gate="ready", rows=None, ids=None, sources="R-1", requir
         "",
         "## Acceptance Criteria",
         "",
-        *[f"- {ac}: [{kind}] 振る舞い (出典: {cited})" for ac, kind, cited in criteria],
+        *[f"- {ac}: [{kind}] {bodies.get(ac, '振る舞い')} (出典: {cited})" for ac, kind, cited in criteria],
         "",
         "## MECE Review",
         "",
@@ -511,7 +512,8 @@ class SealCommandTest(unittest.TestCase):
 
         def locking_run_tests(cwd, command):
             result = original(cwd, command)
-            (self.root / ".git" / "index.lock").write_text("")
+            if self.stash_list():
+                (self.root / ".git" / "index.lock").write_text("")
             return result
 
         check_seal.run_tests = locking_run_tests
@@ -1284,6 +1286,232 @@ class SealCommandTest(unittest.TestCase):
         self.assertEqual(code, 0, out)
         self.assertIn(f"seals: {self.head()[:12]} (ほか完了済み 1 件)\n", out)
         self.assertNotIn(first[:12], out.split("seals: ")[1])
+
+    BODIES = {"AC-001": "f は 1 を返す", "AC-002": "g は変わらない"}
+    NAMED_PLAN = plan_text([("AC-001", "規則"), ("AC-002", "非影響")], bodies=BODIES)
+
+    def seal_named_plan(self):
+        self.repo.write("plan.md", self.NAMED_PLAN)
+        code, out = self.seal()
+        self.assertEqual(code, 0, out)
+
+    def seal_three_criteria(self):
+        self.repo.write("test/a.rule.test.js", self.TWO_TESTS)
+        self.repo.write("plan.md", plan_text([("AC-001", "規則"), ("AC-002", "非影響"), ("AC-003", "規則")], bodies={**self.BODIES, "AC-003": "f は 0 でない"}))
+        code, out = self.seal(tests=[*TESTS, ("AC-003", "test/a.rule.test.js", "f is not 0")])
+        self.assertEqual(code, 0, out)
+
+    def test_seal_records_the_plan_and_a_digest_of_each_criterion_and_requirement(self):
+        code, out = self.seal()
+        self.assertEqual(code, 0, out)
+        body = self.body()
+        self.assertIn("Define-Done-Plan: plan.md\n", body)
+        self.assertRegex(body, r"Define-Done-Criteria: AC-001=[0-9a-f]{10}, AC-002=[0-9a-f]{10}\n")
+        self.assertRegex(body, r"Define-Done-Requirements: R-1=[0-9a-f]{10}\n")
+
+    def test_reseal_drops_the_tests_of_a_criterion_that_left_the_plan(self):
+        self.seal_three_criteria()
+        self.repo.write("test/a.rule.test.js", RULE_TEST)
+        self.repo.write("plan.md", self.NAMED_PLAN)
+        code, out = run("reseal", str(self.root))
+        self.assertEqual(code, 0, out)
+        self.assertIn("dropped: AC-003", out)
+        body = self.body()
+        self.assertIn("Define-Done-Seal: AC-001, AC-002\n", body)
+        self.assertNotIn("f is not 0", body)
+        code, out = run("check", str(self.root))
+        self.assertEqual(code, 0, out)
+
+    def test_reseal_refuses_a_retired_id_given_to_another_criterion(self):
+        self.seal_three_criteria()
+        self.repo.write("test/a.rule.test.js", RULE_TEST)
+        self.repo.write("plan.md", self.NAMED_PLAN)
+        code, out = run("reseal", str(self.root))
+        self.assertEqual(code, 0, out)
+        self.repo.write("test/a.rule.test.js", RULE_TEST + "test('f is odd', () => assert.equal(f() % 2, 1));\n")
+        self.repo.write("plan.md", plan_text([("AC-001", "規則"), ("AC-002", "非影響"), ("AC-003", "規則")], bodies={**self.BODIES, "AC-003": "f は奇数を返す"}))
+        given = {"tests": [{"ac": "AC-003", "file": "test/a.rule.test.js", "name": "f is odd"}]}
+        code, out = run("reseal", str(self.root), stdin=json.dumps(given))
+        self.assertEqual(code, 1)
+        self.assertIn("criteria: AC-003", out)
+
+    def test_reseal_refuses_a_criterion_whose_text_changed_under_the_same_id(self):
+        self.seal_named_plan()
+        before = self.head()
+        self.repo.write("plan.md", plan_text([("AC-001", "規則"), ("AC-002", "非影響")], bodies={**self.BODIES, "AC-001": "f は 2 を返す"}))
+        code, out = run("reseal", str(self.root))
+        self.assertEqual(code, 1)
+        line = next(line for line in out.splitlines() if line.startswith("criteria: AC-001"))
+        self.assertIn("新しい ID", line)
+        self.assertIn('"reworded"', line)
+        self.assertEqual(self.head(), before)
+
+    def test_seal_over_a_seal_of_the_same_plan_also_refuses_a_changed_criterion(self):
+        self.seal_named_plan()
+        self.repo.write("plan.md", plan_text([("AC-001", "規則"), ("AC-002", "非影響")], bodies={**self.BODIES, "AC-001": "f は 2 を返す"}))
+        code, out = self.seal()
+        self.assertEqual(code, 1)
+        self.assertIn("criteria: AC-001", out)
+
+    def test_reseal_accepts_a_reworded_criterion_and_records_the_claim(self):
+        self.seal_named_plan()
+        self.repo.write("plan.md", plan_text([("AC-001", "規則"), ("AC-002", "非影響")], bodies={**self.BODIES, "AC-001": "f が 1 を返す"}))
+        code, out = run("reseal", str(self.root), stdin=json.dumps({"reworded": ["AC-001"]}))
+        self.assertEqual(code, 0, out)
+        self.assertIn("Define-Done-Reworded: AC-001\n", self.body())
+
+    def test_reseal_refuses_a_reworded_claim_for_a_criterion_that_did_not_change(self):
+        self.seal_named_plan()
+        self.repo.write("plan.md", plan_text([("AC-001", "規則"), ("AC-002", "非影響")], bodies={**self.BODIES, "AC-001": "f が 1 を返す"}))
+        code, out = run("reseal", str(self.root), stdin=json.dumps({"reworded": ["AC-001", "AC-002"]}))
+        self.assertEqual(code, 1)
+        self.assertIn("reworded: AC-002", out)
+
+    def test_reseal_does_not_count_the_kind_mark_the_sources_or_a_checkbox_as_a_changed_criterion(self):
+        self.seal_named_plan()
+        rows = ["| R-1 | AC-001, AC-002 |", "| R-2 | AC-001, AC-002 |"]
+        changed = plan_text([("AC-001", "規則"), ("AC-002", "非影響")], bodies=self.BODIES, sources="R-1, R-2", requirements=("R-1", "R-2"), rows=rows)
+        self.repo.write("plan.md", changed.replace("- AC-001: [規則] ", "- [ ] AC-001: [規則]   "))
+        code, out = run("reseal", str(self.root))
+        self.assertEqual(code, 0, out)
+
+    def test_reseal_refuses_a_criterion_that_only_moved_to_a_new_id(self):
+        self.seal_named_plan()
+        moved = plan_text([("AC-002", "非影響"), ("AC-003", "規則")], bodies={**self.BODIES, "AC-003": self.BODIES["AC-001"]})
+        self.repo.write("plan.md", moved)
+        given = {"tests": [{"ac": "AC-003", "file": "test/a.rule.test.js", "name": "f returns 1"}]}
+        code, out = run("reseal", str(self.root), stdin=json.dumps(given))
+        self.assertEqual(code, 1)
+        line = next(line for line in out.splitlines() if line.startswith("criteria: AC-003"))
+        self.assertIn("AC-001", line)
+
+    def test_reseal_refuses_a_requirement_that_only_moved_to_a_new_number(self):
+        self.seal_named_plan()
+        moved = plan_text([("AC-001", "規則"), ("AC-002", "非影響")], bodies=self.BODIES, sources="R-2", requirements=("R-2",), rows=["| R-2 | AC-001, AC-002 |"])
+        self.repo.write("plan.md", moved)
+        code, out = run("reseal", str(self.root))
+        self.assertEqual(code, 1)
+        line = next(line for line in out.splitlines() if line.startswith("requirements: R-2"))
+        self.assertIn("R-1", line)
+
+    def test_reseal_accepts_a_requirement_revised_under_its_number(self):
+        self.seal_named_plan()
+        self.repo.write("plan.md", plan_text([("AC-001", "規則"), ("AC-002", "非影響")], bodies=self.BODIES, requirement_texts={"R-1": "f は常に 1 を返す"}))
+        code, out = run("reseal", str(self.root))
+        self.assertEqual(code, 0, out)
+
+    def test_seal_of_another_plan_is_not_compared_with_the_seal_before_it(self):
+        self.seal_named_plan()
+        self.repo.write("other/plan.md", plan_text([("AC-001", "規則"), ("AC-002", "非影響")], bodies={"AC-001": "別の計画の規則", "AC-002": "別の計画の非影響"}))
+        self.repo.write("test/harness/app.js", HARNESS + "export const fixed = true;\n")
+        keep = [path if path != "plan.md" else "other/plan.md" for path in KEEP_FILES]
+        code, out = self.seal(keep=keep)
+        self.assertEqual(code, 0, out)
+        self.assertIn("Define-Done-Plan: other/plan.md\n", self.body())
+
+    def test_reseal_after_a_seal_without_digests_does_not_compare_the_criteria(self):
+        self.seal_named_plan()
+        kept = "\n".join(line for line in self.body().splitlines() if not line.startswith(("Define-Done-Plan:", "Define-Done-Criteria:", "Define-Done-Requirements:")))
+        self.repo.git("commit", "-q", "--amend", "-m", kept)
+        self.repo.write("plan.md", plan_text([("AC-001", "規則"), ("AC-002", "非影響")], bodies={**self.BODIES, "AC-001": "f は 2 を返す"}))
+        code, out = run("reseal", str(self.root))
+        self.assertEqual(code, 0, out)
+
+    NEW_HARNESS = "export { one } from '../../src/one.js';\n"
+    RULE_TEST_ON_NEW_MODULE = "import { test } from 'node:test';\nimport assert from 'node:assert/strict';\nimport { f } from './harness/app.js';\nimport { one } from './harness/new.js';\ntest('f returns 1', () => assert.equal(f(), one));\n"
+
+    def write_rule_test_on_a_module_that_head_lacks(self):
+        self.repo.write("test/harness/new.js", self.NEW_HARNESS)
+        self.repo.write("test/a.rule.test.js", self.RULE_TEST_ON_NEW_MODULE)
+
+    def sealed_names(self):
+        return set(subprocess.run(["git", "-C", str(self.root), "show", "--name-only", "--format=", "HEAD"], capture_output=True, text=True).stdout.split())
+
+    def test_reseal_counts_a_rule_test_that_cannot_load_before_the_change_as_failing_when_it_passes_in_the_working_tree(self):
+        self.seal()
+        self.write_rule_test_on_a_module_that_head_lacks()
+        self.write_implementation_in_tree()
+        before = self.outside_state()
+        code, out = run("reseal", str(self.root), stdin=json.dumps({"non_impact": ["test/harness/new.js"]}))
+        self.assertEqual(code, 0, out)
+        self.assertIn("unloaded: AC-001", out)
+        self.assertIn("AC-001: rule now=fail", out)
+        self.assertEqual(self.sealed_names(), {"test/a.rule.test.js", "test/harness/new.js"})
+        self.assertEqual(self.outside_state(), before)
+        self.assertEqual(self.stash_list(), [])
+        code, out = run("verify", str(self.root))
+        self.assertEqual(code, 0, out)
+
+    def test_seal_counts_a_rule_test_that_cannot_load_before_the_change_as_failing_when_it_passes_with_the_trial_implementation(self):
+        patch = self.spike_patch()
+        self.write_rule_test_on_a_module_that_head_lacks()
+        keep = [*KEEP_FILES, "test/harness/new.js"]
+        code, out = run("seal", str(self.root), stdin=seal_spec(REPORT_COMMAND, RULE_FILES, keep, TESTS, spike=patch))
+        self.assertEqual(code, 0, out)
+        self.assertIn("unloaded: AC-001", out)
+        self.assertIn("AC-001: rule spike=pass now=fail", out)
+        self.assertFalse((self.root / "src/one.js").exists())
+
+    def test_seal_refuses_a_rule_test_that_cannot_load_when_no_tree_shows_it_passing(self):
+        self.write_rule_test_on_a_module_that_head_lacks()
+        code, out = self.seal(keep=[*KEEP_FILES, "test/harness/new.js"])
+        self.assertEqual(code, 1)
+        line = next(line for line in out.splitlines() if line.startswith("missing: AC-001"))
+        self.assertIn("spike", line)
+
+    def test_reseal_refuses_a_rule_test_that_does_not_run_in_the_working_tree_either(self):
+        self.seal()
+        self.write_rule_test_on_a_module_that_head_lacks()
+        self.write_implementation_in_tree()
+        before = self.outside_state()
+        given = {"non_impact": ["test/harness/new.js"], "tests": [{"ac": "AC-001", "file": "test/a.rule.test.js", "name": "f returns one"}]}
+        code, out = run("reseal", str(self.root), stdin=json.dumps(given))
+        self.assertEqual(code, 1)
+        self.assertIn("missing: AC-001", out)
+        self.assertEqual(self.outside_state(), before)
+        self.assertEqual(self.stash_list(), [])
+
+    def test_reseal_refuses_a_skipped_rule_test_even_when_the_working_tree_passes(self):
+        self.seal()
+        self.repo.write("test/a.rule.test.js", RULE_TEST.replace("test('f returns 1', () =>", "test('f returns 1', { skip: process.env.SKIP_RULE === '1' }, () =>"))
+        self.write_implementation_in_tree()
+        runs = []
+        original = check_seal.run_tests
+
+        def skipping_after_the_first_run(cwd, command):
+            runs.append(command)
+            return original(cwd, command if len(runs) == 1 else f"SKIP_RULE=1 {command}")
+
+        check_seal.run_tests = skipping_after_the_first_run
+        try:
+            code, out = run("reseal", str(self.root))
+        finally:
+            check_seal.run_tests = original
+        self.assertEqual(code, 1)
+        self.assertIn("missing: AC-001", out)
+
+    def test_reseal_refuses_a_non_impact_test_that_cannot_load_before_the_change(self):
+        self.seal()
+        self.repo.write("test/harness/new.js", self.NEW_HARNESS)
+        self.repo.write("test/a.keep.test.js", KEEP_TEST.replace("import { g, expected } from './harness/app.js';", "import { g, expected } from './harness/app.js';\nimport './harness/new.js';"))
+        self.write_implementation_in_tree()
+        code, out = run("reseal", str(self.root), stdin=json.dumps({"non_impact": ["test/harness/new.js"]}))
+        self.assertEqual(code, 1)
+        self.assertIn("missing: AC-002", out)
+
+    def test_reseal_keeps_staged_changes_outside_it_when_the_working_tree_proves_the_rule_tests(self):
+        self.seal()
+        self.stage_every_kind_of_change()
+        self.repo.write("src/b.js", "export const g = () => 'kept';\n")
+        self.write_rule_test_on_a_module_that_head_lacks()
+        self.repo.write("src/one.js", "export const one = 1;\n")
+        self.repo.write("src/a.js", "import { one } from './one.js';\nexport const f = () => one;\n")
+        before = self.outside_state()
+        code, out = run("reseal", str(self.root), stdin=json.dumps({"non_impact": ["test/harness/new.js"]}))
+        self.assertEqual(code, 0, out)
+        self.assertEqual(self.outside_state(), before)
+        self.assertEqual(self.stash_list(), [])
+        self.assertEqual(self.sealed_names(), {"test/a.rule.test.js", "test/harness/new.js"})
 
 
 RSPEC_HARNESS = "require_relative '../../../lib/a'\n"

@@ -18,6 +18,11 @@ FILES_TRAILER = "Define-Done-Files"
 TEST_TRAILER = "Define-Done-Test"
 COMMAND_TRAILER = "Define-Done-Test-Command"
 SUPERSEDES_TRAILER = "Define-Done-Supersedes"
+PLAN_TRAILER = "Define-Done-Plan"
+CRITERIA_TRAILER = "Define-Done-Criteria"
+REQUIREMENTS_TRAILER = "Define-Done-Requirements"
+REWORDED_TRAILER = "Define-Done-Reworded"
+DIGEST_ENTRY = re.compile(r"(AC-\d{3}|R-\d+)=([0-9a-f]{10})")
 TEST_SEPARATOR = " › "
 REPORT_PLACEHOLDER = "{report}"
 COMPLETION_REFS = ("refs/remotes/origin/HEAD", "refs/remotes/origin/main", "refs/remotes/origin/master")
@@ -676,6 +681,60 @@ def plan_findings(plan, kinds):
     return errors
 
 
+def digest(text):
+    return hashlib.sha256("".join(text.split()).encode("utf-8")).hexdigest()[:10]
+
+
+def plan_digests(plan):
+    sections = plan_sections(plan.read_text(encoding="utf-8"))
+    criteria = {}
+    for ac, _, rest in CRITERION_LINE.findall(sections["Acceptance Criteria"][0]):
+        body, noted, _ = rest.rpartition(SOURCE_NOTE)
+        criteria[ac] = digest(body if noted else rest)
+    requirements = {name: digest(line.split(QUOTE_OPENING, 1)[0]) for name, line in REQUIREMENT_TEXT.findall(sections["Requirements"][0])}
+    return criteria, requirements
+
+
+def recorded_digests(value):
+    return dict(DIGEST_ENTRY.findall(value or ""))
+
+
+def moved_from(name, value, known, current):
+    return sorted(old for old, recorded in known.items() if recorded == value and old != name and current.get(old) != value)
+
+
+def identity_findings(earlier, criteria, requirements, reworded):
+    known = recorded_digests(earlier["values"].get(CRITERIA_TRAILER))
+    known_requirements = recorded_digests(earlier["values"].get(REQUIREMENTS_TRAILER))
+    seal = earlier["sha"][:12]
+    errors = []
+    for ac, value in sorted(criteria.items()):
+        moved = moved_from(ac, value, known, criteria)
+        if ac in known and known[ac] != value and ac not in reworded:
+            same = f" (今の本文は、前の凍結の {', '.join(moved)} と同じ)" if moved else ""
+            errors.append(f"criteria: {ac} の本文が、前の凍結 {seal} から変わっている{same}。意味が変わったなら、旧い ID を使わず新しい ID の基準にする。言い回しだけを直したなら、標準入力の JSON の \"reworded\" に {ac} を挙げる")
+        elif ac not in known and moved:
+            errors.append(f"criteria: {ac} は、前の凍結 {seal} の {', '.join(moved)} と同じ本文である。意味の変わらない基準は ID を保つ ({', '.join(moved)} のまま書く)")
+    for ac in reworded:
+        if known.get(ac) == criteria.get(ac) or ac not in criteria:
+            errors.append(f"reworded: {ac} は、前の凍結 {seal} から本文が変わっていない (\"reworded\" には、言い回しだけを直した基準を挙げる)")
+    for name, value in sorted(requirements.items(), key=lambda item: int(item[0][2:])):
+        moved = moved_from(name, value, known_requirements, requirements)
+        if moved and known_requirements.get(name) != value:
+            errors.append(f"requirements: {name} は、前の凍結 {seal} の {', '.join(moved)} と同じ文である。意味の変わらない要求は番号を保つ ({', '.join(moved)} のまま書く)")
+    return errors
+
+
+def carried(current, earlier, trailer):
+    known = recorded_digests(earlier["values"].get(trailer)) if earlier else {}
+    return {**{name: value for name, value in known.items() if name not in current}, **current}
+
+
+def digest_line(entries):
+    order = lambda name: (name[:2], int(name.split("-")[1]))
+    return ", ".join(f"{name}={entries[name]}" for name in sorted(entries, key=order))
+
+
 def spike_open(repo, files):
     missing = [path for path in files if not (Path(repo) / path).is_file()]
     if missing:
@@ -759,6 +818,7 @@ def seal(repo, spec_text):
     except json.JSONDecodeError as exc:
         return [f"spec: 標準入力の JSON を読めない ({exc})"]
     test_command, supersedes = str(spec.get("test_command") or ""), str(spec.get("supersedes") or "")
+    reworded = [str(ac) for ac in spec.get("reworded") or []]
     check_command, spike = str(spec.get("check_command") or ""), str(spec.get("spike") or "")
     rule_files = list(dict.fromkeys(spec.get("rule") or []))
     non_impact_files = list(dict.fromkeys(spec.get("non_impact") or []))
@@ -793,6 +853,20 @@ def seal(repo, spec_text):
     if errors:
         return errors
     errors = plan_findings(plan, kinds)
+    found = seals(repo)
+    label = plan_label(repo, plan)
+    earlier = next((seal for seal in found if seal["behavior"] and not seal["completed"] and seal["values"].get(PLAN_TRAILER) == label and CRITERIA_TRAILER in seal["values"]), None)
+    criteria, requirements = ({}, {}) if errors else plan_digests(plan)
+    if earlier and not errors:
+        errors = identity_findings(earlier, criteria, requirements, reworded)
+    elif reworded and not errors:
+        errors = ["reworded: 同じ計画の前の凍結が本文を記録していないので、\"reworded\" は要らない"]
+    recorded = {
+        PLAN_TRAILER: label,
+        CRITERIA_TRAILER: digest_line(carried(criteria, earlier, CRITERIA_TRAILER)),
+        REQUIREMENTS_TRAILER: digest_line(carried(requirements, earlier, REQUIREMENTS_TRAILER)),
+        **({REWORDED_TRAILER: ", ".join(reworded)} if reworded else {}),
+    }
     subject = str(spec.get("subject") or f"test: {plan_label(repo, plan)} の受け入れテスト{'を直す' if spec.get('resealed') else ''}")
     test_files = sorted({test["file"] for test in mapping})
     for path in files:
@@ -801,7 +875,7 @@ def seal(repo, spec_text):
     for path in test_files:
         for specifier in import_findings(path, (Path(repo) / path).read_text(encoding="utf-8")):
             errors.append(f"boundary: {path} が土台とテストランナーの外の {specifier} を import している")
-    protected = protected_paths(seals(repo))
+    protected = protected_paths(found)
     frozen = sorted(set(protected) - set(files))
     dirty = git(repo, "status", "--porcelain", "--", *frozen).splitlines() if frozen else []
     if dirty:
@@ -819,10 +893,11 @@ def seal(repo, spec_text):
         return errors
     changed = changed_files(repo, files)
     try:
+        passing = passing_criteria(kind_states(repo, test_command, test_files, mapping, kinds)) if aside.paths and not spike else set()
         aside.stash()
-        errors = seal_in_tree(repo, aside, test_command, test_files, mapping, kinds, spike, check_command)
+        errors = seal_in_tree(repo, aside, test_command, test_files, mapping, kinds, spike, check_command, passing)
         if not errors:
-            commit_seal(repo, subject, kinds, rule_files, changed, mapping, test_command, supersedes)
+            commit_seal(repo, subject, kinds, rule_files, changed, mapping, test_command, supersedes, recorded)
             if spike:
                 remember(repo, SPIKE_PATCHES, spike)
             if spec.get("plan"):
@@ -832,48 +907,73 @@ def seal(repo, spec_text):
     return errors + aside.restore()
 
 
+def is_file_entry(entry, test_files):
+    return any(same_file(name, path) for name in entry["names"] if name for path in test_files)
+
+
 def kind_states(repo, test_command, test_files, mapping, kinds):
     code, output, entries = run_tests(repo, test_command)
-    errors = []
+    unmatched = []
     for entry in entries:
-        if in_files(entry, test_files) and not any(matches(entry, test) for test in mapping):
-            errors.append(f"tests: 対応する AC が無いテスト「{next(name for name in entry['names'] if name)}」がある")
+        if in_files(entry, test_files) and not is_file_entry(entry, test_files) and not any(matches(entry, test) for test in mapping):
+            unmatched.append(f"tests: 対応する AC が無いテスト「{next(name for name in entry['names'] if name)}」がある")
     states = states_by_ac(entries, mapping)
     outcomes = {ac: outcome(states.get(ac)) for ac in kinds}
+    missing = {}
     for ac, state in sorted(outcomes.items()):
         if state == "missing":
             files = sorted({test["file"] for test in mapping if test["ac"] == ac})
             ran = [name for path in files for name in ran_names(entries, path)]
             hint = f" このファイルで流れたテスト: {'; '.join(ran)}" if ran else ""
-            errors.append(f"missing: {ac} のテストが実行されなかった (テスト名の対応か、import やセットアップの失敗を直す)。{hint}".rstrip("。 "))
-    return outcomes, errors, output
+            missing[ac] = f"missing: {ac} のテストが実行されなかった (テスト名の対応か、import やセットアップの失敗を直す)。{hint}".rstrip("。 ")
+    never_ran = {ac for ac in missing if "skipped" not in states.get(ac, [])}
+    return {"outcomes": outcomes, "unmatched": unmatched, "missing": missing, "never_ran": never_ran, "output": output}
 
 
-def seal_in_tree(repo, aside, test_command, test_files, mapping, kinds, spike, check_command):
+def passing_criteria(run):
+    if run["unmatched"] or run["missing"]:
+        return set()
+    return {ac for ac, state in run["outcomes"].items() if state == "pass"}
+
+
+UNLOADED_HINT = "変更前の tree に無い module を土台が静的に import していると、テストは落ちずに実行されない。試作の実装の patch を `spike` に渡すか、土台がその module を実行時に import する"
+
+
+def seal_in_tree(repo, aside, test_command, test_files, mapping, kinds, spike, check_command, passing):
     if check_command and not spike:
         errors = run_check(repo, check_command)
         if errors:
             return errors
-    now, errors, output = kind_states(repo, test_command, test_files, mapping, kinds)
-    if aside.sha and any(error.startswith("missing:") for error in errors):
-        errors.append(f"missing: 凍結の外の変更 ({len(aside.paths)} 件) は退避して流している。凍結するファイルが、凍結に含めない変更に頼っていないかを確かめる")
+    run = kind_states(repo, test_command, test_files, mapping, kinds)
+    now, output = run["outcomes"], run["output"]
+    unloaded = {ac for ac in run["never_ran"] if kinds[ac] == "rule"}
+    errors = run["unmatched"] + [message for ac, message in run["missing"].items() if ac not in unloaded]
     proved = {}
     if spike and not errors:
         patch = str(Path(spike).resolve())
         git(repo, "apply", patch)
         try:
-            proved, errors, spike_output = kind_states(repo, test_command, test_files, mapping, kinds)
+            trial = kind_states(repo, test_command, test_files, mapping, kinds)
+            proved, passing = trial["outcomes"], passing_criteria(trial)
+            errors = trial["unmatched"] + list(trial["missing"].values())
             for ac, state in sorted(proved.items()):
                 if state != "pass" and state != "missing":
                     errors.append(f"spike: {ac} が試作の実装で通らない (テスト、土台、要求のどれかを確かめる)")
             if errors:
-                print(spike_output[-4000:])
+                print(trial["output"][-4000:])
             elif check_command:
                 errors = run_check(repo, check_command)
         finally:
             git(repo, "apply", "-R", patch)
         if errors:
             return errors
+    for ac in sorted(unloaded - passing):
+        errors.append(f"{run['missing'][ac]}。{UNLOADED_HINT}")
+    if aside.sha and any(error.startswith("missing:") for error in errors):
+        errors.append(f"missing: 凍結の外の変更 ({len(aside.paths)} 件) は退避して流している。凍結するファイルが、凍結に含めない変更に頼っていないかを確かめる")
+    for ac in sorted(unloaded & passing):
+        now[ac] = "fail"
+        print(f"unloaded: {ac} のテストは変更前の tree で読み込めず実行されなかった。実装のある tree では通ったので、落ちたものと数える")
     for ac, kind in sorted(kinds.items()):
         state = now[ac]
         expected = "fail" if kind == "rule" else "pass"
@@ -885,7 +985,7 @@ def seal_in_tree(repo, aside, test_command, test_files, mapping, kinds, spike, c
     return errors
 
 
-def commit_seal(repo, subject, kinds, rule_files, changed, mapping, test_command, supersedes):
+def commit_seal(repo, subject, kinds, rule_files, changed, mapping, test_command, supersedes, recorded):
     rule_acs = sorted(ac for ac, kind in kinds.items() if kind == "rule")
     lines = [
         f"{SEAL_TRAILER}: {', '.join(sorted(kinds))}",
@@ -895,11 +995,23 @@ def commit_seal(repo, subject, kinds, rule_files, changed, mapping, test_command
         *[f"{TEST_TRAILER}: {test['ac']} = {test['file']}{TEST_SEPARATOR}{test['name']}" for test in mapping],
         f"{COMMAND_TRAILER}: {test_command}",
         *([f"{SUPERSEDES_TRAILER}: {supersedes}"] if supersedes else []),
+        *[f"{trailer}: {value}" for trailer, value in recorded.items() if value],
     ]
     message = f"{subject}\n\n" + "\n".join(lines) + "\n"
     git(repo, "add", "--", *changed)
     git_stdin(repo, message, "commit", "-q", "-F", "-", "--", *changed)
     print(f"seal: {git(repo, 'rev-parse', 'HEAD').strip()}")
+
+
+def planned_criteria(repo, named, sealed):
+    try:
+        plan, errors = locate_plan(repo, named, [path for path in sealed if (Path(repo) / path).is_file()])
+        if errors:
+            return set()
+        body = plan_sections(plan.read_text(encoding="utf-8")).get("Acceptance Criteria", [""])[0]
+    except OSError:
+        return set()
+    return {ac for ac, _, _ in CRITERION_LINE.findall(body)}
 
 
 def reseal_spec(repo, spec_text):
@@ -917,6 +1029,11 @@ def reseal_spec(repo, spec_text):
     replaced = {(str(test.get("ac", "")), str(test.get("file", ""))) for test in given}
     tests = [test for test in latest["mapping"] if (test["ac"], test["file"]) not in replaced] + given
     plan = remembered_file(repo, PLAN_PATHS, found[:1])
+    kept = planned_criteria(repo, str(overrides.get("plan") or plan), sealed)
+    if kept:
+        for ac in sorted({test["ac"] for test in tests} - kept):
+            print(f"dropped: {ac} は計画の `## Acceptance Criteria` に無いので、テストの対応を外した")
+        tests = [test for test in tests if test["ac"] in kept]
     rule = list(dict.fromkeys(rule_files + list(overrides.get("rule") or [])))
     spec = {
         "test_command": overrides.get("test_command") or latest["values"].get(COMMAND_TRAILER, ""),
@@ -925,7 +1042,7 @@ def reseal_spec(repo, spec_text):
         "tests": tests,
         "resealed": True,
         **({"plan": plan} if plan else {}),
-        **{key: overrides[key] for key in ("subject", "plan", "supersedes", "spike", "check_command") if key in overrides},
+        **{key: overrides[key] for key in ("subject", "plan", "supersedes", "spike", "check_command", "reworded") if key in overrides},
     }
     return json.dumps(spec), []
 
