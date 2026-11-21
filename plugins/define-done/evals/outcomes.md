@@ -228,6 +228,15 @@
   - [critical] 実装を終えた最後の報告が、要求を原文の引用付きで並べる。 (grader: 43-report-after-continuing/final-report-quotes-requirements)
   - 最後の報告が、要求を省かず 1 件ずつ並べる。 (grader: 43-report-after-continuing/final-report-keeps-every-requirement)
 
+- fixture: 依頼は、計画を define-done した後、Gate が ready なら続けて製品コードを実装し、commit せずに終えるところまでを 1 つの依頼で求める。既存のテストが今の振る舞いを固定している。
+- assertions:
+  - [critical] 実装を終えた後、`check_done.py check` を `"worktree": true` で流し直し、作業ツリーの実装でテストを対応させた基準がすべて通ることを確かめる。 (grader: 50-recheck-after-implementation/rechecked-on-working-tree)
+  - 実装の後の確かめのために、試作の patch を手で作り直さない。 (grader: 50-recheck-after-implementation/no-handmade-patch)
+  - [critical] 実装を commit しない。 (grader: 50-recheck-after-implementation/no-commit)
+  - 残ったリスクの表に `実装のテスト:` の行があれば、行ごとに足したテストを `impl_tests` に挙げ、`guard_command` で流す (`check_done.py check` が、対応の無い行と通らないテストを拒む)。 (grader: 未計測)
+  - 残ったリスクの表に `既存のテスト:` の行があれば、そのファイルを `guard_command` で実装のある tree に流す (`check_done.py check` が、HEAD に無いファイル、実行されないファイル、落ちるテストを拒む)。 (grader: 未計測)
+  - `worktree` を渡さない `check` は、作業ツリーの変更を実装の途中として退避し、通ることを求めない。 (grader: 未計測)
+
 - fixture: 同じ未検証の事柄が `## Ground Review` の未検証の結論と `## MECE Review` の要求の表の両方にあり、依頼が求める受け入れテストの後の作業が、その事柄を確かめる。
 - assertions:
   - 最後の報告が、同じ事柄を指す未検証を 1 行にまとめ、後の作業で確かめたものに確かめた方法と結果を添える。 (grader: 未計測)
@@ -237,6 +246,7 @@
   - [critical] repo の検査が計画の決定どおりの形を拒んでも、計画の 4 節の外 (決定、変更対象) を書き換えない。 (grader: 44-spike-overturns-decision/plan-body-kept)
   - 拒まれた形をやめても要求を満たせて、基準も外から観測できるものも変わらないなら、Gate を止めずに `check` が通るまで進む。 (grader: 44-spike-overturns-decision/checked)
   - [critical] 最終回答が、決定どおりにできなかった点と、それを拒んだ検査を利用者に返す。 (grader: 44-spike-overturns-decision/overturned-decision-reported)
+  - [critical] 試作が決定と違う形を取ったことを、`### 検査が拒んだ決定` の表と `check` の JSON の `deviations` の両方に書く (`check_done.py check` が、`spike` を渡して `deviations` を渡さない入力と、表と食い違う申告を拒む)。 (grader: 44-spike-overturns-decision/deviation-declared)
 
 - fixture: `## Ground Review` が反証できずに残したリスクのうち、要求にも既存の保証にも支えが無く、実装の単体テストで守るものがある。そのリスクの条件には、守る実装が無くても同じ結果になる入力が含まれる。
 - assertions:

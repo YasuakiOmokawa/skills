@@ -2,210 +2,215 @@
   "cases": {
     "01-session-store": {
       "passed": 19,
-      "startedAt": "2026-11-21T00:27:22.158Z",
+      "startedAt": "2026-11-21T11:16:24.260Z",
       "total": 21
     },
     "02-neg-create-plan": {
       "passed": 9,
-      "startedAt": "2026-11-21T00:27:22.158Z",
+      "startedAt": "2026-11-21T11:16:24.260Z",
       "total": 9
     },
     "03-neg-implement": {
       "passed": 9,
-      "startedAt": "2026-11-21T00:27:22.158Z",
+      "startedAt": "2026-11-21T11:16:24.260Z",
       "total": 9
     },
     "04-reset-boundaries": {
       "passed": 15,
-      "startedAt": "2026-11-21T00:27:22.158Z",
+      "startedAt": "2026-11-21T11:16:24.260Z",
       "total": 15
     },
     "05-recommendations-out-of-scope": {
-      "passed": 12,
-      "startedAt": "2026-11-21T00:27:22.158Z",
+      "passed": 11,
+      "startedAt": "2026-11-21T11:16:24.260Z",
       "total": 12
     },
     "08-billing-dup-halt": {
-      "passed": 26,
-      "startedAt": "2026-11-21T00:27:22.158Z",
+      "passed": 25,
+      "startedAt": "2026-11-21T11:16:24.260Z",
       "total": 27
     },
     "09-invariant-other-writer": {
       "passed": 9,
-      "startedAt": "2026-11-21T00:27:22.158Z",
+      "startedAt": "2026-11-21T11:16:24.260Z",
       "total": 9
     },
     "10-invariant-writer-tripwire": {
       "passed": 3,
-      "startedAt": "2026-11-21T00:27:22.158Z",
+      "startedAt": "2026-11-21T11:16:24.260Z",
       "total": 3
     },
     "11-external-dep-anchor": {
       "passed": 3,
-      "startedAt": "2026-11-21T00:27:22.158Z",
+      "startedAt": "2026-11-21T11:16:24.260Z",
       "total": 3
     },
     "12-absence-fixed-delay": {
       "passed": 3,
-      "startedAt": "2026-11-21T00:27:22.158Z",
+      "startedAt": "2026-11-21T11:16:24.260Z",
       "total": 3
     },
     "13-write-refused": {
       "passed": 6,
-      "startedAt": "2026-11-21T00:27:22.158Z",
+      "startedAt": "2026-11-21T11:16:24.260Z",
       "total": 6
     },
     "14-holdout-unverified": {
-      "passed": 11,
-      "startedAt": "2026-11-21T00:27:22.158Z",
+      "passed": 10,
+      "startedAt": "2026-11-21T11:16:24.260Z",
       "total": 12
     },
     "15-ac-id-semantic-change": {
-      "passed": 14,
-      "startedAt": "2026-11-21T00:27:22.158Z",
+      "passed": 15,
+      "startedAt": "2026-11-21T11:16:24.260Z",
       "total": 15
     },
     "17-convention-not-ac": {
       "passed": 6,
-      "startedAt": "2026-11-21T00:27:22.158Z",
+      "startedAt": "2026-11-21T11:16:24.260Z",
       "total": 6
     },
     "18-db-start-or-unverified": {
       "passed": 3,
-      "startedAt": "2026-11-21T00:27:22.158Z",
+      "startedAt": "2026-11-21T11:16:24.260Z",
       "total": 3
     },
     "19-impl-names-behavior-prohibition": {
       "passed": 12,
-      "startedAt": "2026-11-21T00:27:22.158Z",
+      "startedAt": "2026-11-21T11:16:24.260Z",
       "total": 12
     },
     "21-ac-from-request-not-decision": {
       "passed": 15,
-      "startedAt": "2026-11-21T00:27:22.158Z",
+      "startedAt": "2026-11-21T11:16:24.260Z",
       "total": 15
     },
     "22-dependency-premise-refuted": {
       "passed": 9,
-      "startedAt": "2026-11-21T00:27:22.158Z",
+      "startedAt": "2026-11-21T11:16:24.260Z",
       "total": 9
     },
     "23-acceptance-tests-sealed": {
       "passed": 18,
-      "startedAt": "2026-11-21T00:27:22.158Z",
+      "startedAt": "2026-11-21T11:16:24.260Z",
       "total": 18
     },
     "24-bulk-discount-existing-code": {
-      "passed": 12,
-      "startedAt": "2026-11-21T00:27:22.158Z",
+      "passed": 11,
+      "startedAt": "2026-11-21T11:16:24.260Z",
       "total": 12
     },
     "25-real-bug-admin-mints-owner": {
       "passed": 3,
-      "startedAt": "2026-11-21T00:27:22.158Z",
+      "startedAt": "2026-11-21T11:16:24.260Z",
       "total": 3
     },
     "26-real-bug-last-used-company": {
       "passed": 9,
-      "startedAt": "2026-11-21T00:27:22.158Z",
+      "startedAt": "2026-11-21T11:16:24.260Z",
       "total": 9
     },
     "27-real-bug-remove-missing-member": {
       "passed": 11,
-      "startedAt": "2026-11-21T00:27:22.158Z",
+      "startedAt": "2026-11-21T11:16:24.260Z",
       "total": 12
     },
     "28-existing-guard-string-quantity": {
       "passed": 3,
-      "startedAt": "2026-11-21T00:27:22.158Z",
+      "startedAt": "2026-11-21T11:16:24.260Z",
       "total": 3
     },
     "29-untested-ac-staging": {
       "passed": 11,
-      "startedAt": "2026-11-21T00:27:22.158Z",
+      "startedAt": "2026-11-21T11:16:24.260Z",
       "total": 12
     },
     "30-invariant-op-sequence": {
       "passed": 9,
-      "startedAt": "2026-11-21T00:27:22.158Z",
+      "startedAt": "2026-11-21T11:16:24.260Z",
       "total": 9
     },
     "31-question-back": {
-      "passed": 18,
-      "startedAt": "2026-11-21T00:27:22.158Z",
+      "passed": 17,
+      "startedAt": "2026-11-21T11:16:24.260Z",
       "total": 18
     },
     "32-zero-questions": {
       "passed": 13,
-      "startedAt": "2026-11-21T00:27:22.158Z",
+      "startedAt": "2026-11-21T11:16:24.260Z",
       "total": 15
     },
     "33-migration-impl-not-pinned": {
       "passed": 15,
-      "startedAt": "2026-11-21T00:27:22.158Z",
+      "startedAt": "2026-11-21T11:16:24.260Z",
       "total": 15
     },
     "34-existing-acceptance-tests": {
-      "passed": 12,
-      "startedAt": "2026-11-21T00:27:22.158Z",
+      "passed": 10,
+      "startedAt": "2026-11-21T11:16:24.260Z",
       "total": 12
     },
     "35-rule-rewrite-supersedes": {
       "passed": 9,
-      "startedAt": "2026-11-21T01:48:28.695Z",
+      "startedAt": "2026-11-21T11:16:24.260Z",
       "total": 9
     },
     "38-shared-state-full-suite": {
       "passed": 9,
-      "startedAt": "2026-11-21T00:27:22.158Z",
+      "startedAt": "2026-11-21T11:16:24.260Z",
       "total": 9
     },
     "39-runtime-dependent-default": {
       "passed": 6,
-      "startedAt": "2026-11-21T00:27:22.158Z",
+      "startedAt": "2026-11-21T11:16:24.260Z",
       "total": 6
     },
     "41-seal-proof": {
       "passed": 15,
-      "startedAt": "2026-11-21T00:27:22.158Z",
+      "startedAt": "2026-11-21T11:16:24.260Z",
       "total": 15
     },
     "42-requirements-are-outcomes": {
       "passed": 12,
-      "startedAt": "2026-11-21T00:27:22.158Z",
+      "startedAt": "2026-11-21T11:16:24.260Z",
       "total": 12
     },
     "43-report-after-continuing": {
       "passed": 6,
-      "startedAt": "2026-11-21T00:27:22.158Z",
+      "startedAt": "2026-11-21T11:16:24.260Z",
       "total": 6
     },
     "44-spike-overturns-decision": {
-      "passed": 9,
-      "startedAt": "2026-11-21T00:27:22.158Z",
-      "total": 9
+      "passed": 12,
+      "startedAt": "2026-11-21T11:16:24.260Z",
+      "total": 12
     },
     "45-requirements-from-issue": {
       "passed": 18,
-      "startedAt": "2026-11-21T00:27:22.158Z",
+      "startedAt": "2026-11-21T11:16:24.260Z",
       "total": 18
     },
     "47-requirement-changed-after-seal": {
       "passed": 24,
-      "startedAt": "2026-11-21T00:27:22.158Z",
+      "startedAt": "2026-11-21T11:16:24.260Z",
       "total": 24
     },
     "48-follow-existing-tests": {
       "passed": 12,
-      "startedAt": "2026-11-21T00:27:22.158Z",
+      "startedAt": "2026-11-21T11:16:24.260Z",
       "total": 12
     },
     "49-no-test-location": {
       "passed": 9,
-      "startedAt": "2026-11-21T00:27:22.158Z",
+      "startedAt": "2026-11-21T11:16:24.260Z",
+      "total": 9
+    },
+    "50-recheck-after-implementation": {
+      "passed": 9,
+      "startedAt": "2026-11-21T11:16:24.260Z",
       "total": 9
     }
   },
-  "shipped_sha256": "d2ac3c270ba342552da26d7de80f6b64fc114661444539bac182ca615459cf5a",
+  "shipped_sha256": "cbe6f2dc55dcba5636e0de77bfa344ba394c328ab3b8edbf2e6e264be6b0fd9d",
   "waived": null
 }
