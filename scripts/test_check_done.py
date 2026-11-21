@@ -84,12 +84,18 @@ def plan_text(criteria, gate="ready", rows=None, ids=None, sources="R-1", requir
 PLAN = plan_text([("AC-001", "規則"), ("AC-002", "非影響")])
 
 
-def check_spec(command, rule=(), non_impact=(), tests=(), spike="", check_command="", plan="", rewrites=(), new_dirs=(), implemented=()):
+NO_DEVIATION = ()
+
+
+def check_spec(command, rule=(), non_impact=(), tests=(), spike="", check_command="", plan="", rewrites=(), new_dirs=(), implemented=(), worktree=False, guard_command="", impl_tests=(), deviations=NO_DEVIATION):
     mapping = [{"ac": ac, "file": file, "name": name} for ac, file, name in tests]
     spec = {"test_command": command, "files": [*rule, *non_impact], "tests": mapping}
-    for key, value in (("plan", plan), ("spike", spike), ("check_command", check_command), ("rewrites", list(rewrites)), ("new_dirs", list(new_dirs)), ("implemented", list(implemented))):
+    given = [{"risk": risk, "file": file, "name": name} for risk, file, name in impl_tests]
+    for key, value in (("plan", plan), ("spike", spike), ("check_command", check_command), ("rewrites", list(rewrites)), ("new_dirs", list(new_dirs)), ("implemented", list(implemented)), ("worktree", worktree), ("guard_command", guard_command), ("impl_tests", given)):
         if value:
             spec[key] = value
+    if deviations is not None and (spike or deviations):
+        spec["deviations"] = list(deviations)
     return json.dumps(spec)
 
 
@@ -597,7 +603,7 @@ class CheckCommandTest(unittest.TestCase):
 
     def test_check_accepts_a_plan_that_records_the_rejected_decision_in_the_review(self):
         patch = self.spike_patch_with_plan(lambda plan: plan + self.REJECTED_DECISION)
-        code, out = run("check", str(self.root), stdin=check_spec(REPORT_COMMAND, RULE_FILES, KEEP_FILES, TESTS, spike=patch))
+        code, out = run("check", str(self.root), stdin=check_spec(REPORT_COMMAND, RULE_FILES, KEEP_FILES, TESTS, spike=patch, deviations=["D1"]))
         self.assertEqual(code, 0, out)
         code, out = run("report", str(self.root))
         self.assertEqual(code, 0, out)
@@ -718,10 +724,214 @@ class CheckCommandTest(unittest.TestCase):
         self.assertNotIn("設定の名前がずれる", out)
         self.assertEqual(self.head(), before)
 
+    GUARD_TEST = "import { test } from 'node:test';\nimport assert from 'node:assert/strict';\nimport * as a from '../src/a.js';\ntest('a exports only f', () => assert.deepEqual(Object.keys(a), ['f']));\n"
+    GUARD_COMMAND = "node --test --test-reporter=junit --test-reporter-destination={report} test/guard.test.js"
+    IMPL_TEST = "import { test } from 'node:test';\nimport assert from 'node:assert/strict';\nimport { f } from '../src/a.js';\ntest('f is exactly 1', () => assert.equal(f(), 1));\n"
+    IMPL_COMMAND = "node --test --test-reporter=junit --test-reporter-destination={report} test/impl.test.js"
+    IMPL_RISK = "f が 2 を返す"
+
+    def commit_guard_test(self):
+        self.repo.write("test/guard.test.js", self.GUARD_TEST)
+        self.repo.commit("guard test", "test/guard.test.js")
+
+    def guarded_plan(self):
+        self.commit_guard_test()
+        self.repo.write("plan.md", self.residual_risk_plan("既存のテスト: `test/guard.test.js`"))
+
+    def implement_in_the_working_tree(self, body="export const f = () => 1;\n"):
+        self.repo.write("src/a.js", body)
+
+    def impl_plan(self):
+        self.repo.write("plan.md", self.residual_risk_plan("実装のテスト: f に 1 以外を返させる変更で落ちる").replace("g の文が変わる", self.IMPL_RISK))
+        self.repo.write("test/impl.test.js", self.IMPL_TEST)
+
     def test_check_accepts_a_residual_risk_guarded_by_an_existing_test(self):
-        self.repo.write("plan.md", self.residual_risk_plan("既存のテスト: test/a.keep.test.js"))
+        self.guarded_plan()
         code, out = self.check()
         self.assertEqual(code, 0, out)
+
+    def test_check_refuses_an_existing_test_of_the_risk_table_that_is_not_at_head(self):
+        self.repo.write("plan.md", self.residual_risk_plan("既存のテスト: test/none.test.js"))
+        code, out = self.check()
+        self.assertEqual(code, 1)
+        self.assertIn("guard: 残ったリスクの表の「g の文が変わる」の守る先の既存のテストが HEAD に無い", out)
+
+    def test_spike_with_an_existing_test_in_the_risk_table_and_no_guard_command_is_refused(self):
+        self.guarded_plan()
+        code, out = self.check(spike=self.spike_patch())
+        self.assertEqual(code, 1)
+        self.assertIn("guard: 残ったリスクの表の既存のテストと実装のテストを実装のある tree で流すコマンドを `guard_command` に渡す", out)
+
+    def test_spike_runs_the_existing_tests_of_the_risk_table_on_the_trial_implementation(self):
+        self.guarded_plan()
+        code, out = self.check(spike=self.spike_patch(), guard_command=self.GUARD_COMMAND)
+        self.assertEqual(code, 0, out)
+        self.assertIn("guard: pass (試作の実装)", out)
+
+    def test_spike_that_breaks_an_existing_test_of_the_risk_table_refuses_the_check(self):
+        self.guarded_plan()
+        patch = self.spike_patch(body="import { one } from './one.js';\nexport const f = () => one;\nexport const extra = 1;\n")
+        code, out = self.check(spike=patch, guard_command=self.GUARD_COMMAND)
+        self.assertEqual(code, 1)
+        self.assertIn("guard: 既存のテスト test/guard.test.js が試作の実装で落ちた", out)
+        self.assertEqual((self.root / "src/a.js").read_text(), "export const f = () => 0;\n")
+
+    def test_guard_command_that_does_not_run_the_existing_test_refuses_the_check(self):
+        self.guarded_plan()
+        code, out = self.check(spike=self.spike_patch(), guard_command=REPORT_COMMAND)
+        self.assertEqual(code, 1)
+        self.assertIn("guard: 既存のテスト test/guard.test.js が試作の実装で実行されなかった", out)
+
+    def test_guard_command_without_report_output_is_refused(self):
+        self.guarded_plan()
+        code, out = self.check(spike=self.spike_patch(), guard_command="node --test test/guard.test.js")
+        self.assertEqual(code, 1)
+        self.assertIn("command: guard_command に結果の出力先 {report} が無い", out)
+
+    def test_spike_without_a_deviation_declaration_is_refused(self):
+        code, out = self.check(spike=self.spike_patch(), deviations=None)
+        self.assertEqual(code, 1)
+        self.assertIn('deviations: 試作が計画の決定と違う形を取ったかを申告する。違わなければ `"deviations": []` を渡す', out)
+
+    def test_a_declared_deviation_that_the_review_does_not_record_is_refused(self):
+        code, out = self.check(spike=self.spike_patch(), deviations=["D1"])
+        self.assertEqual(code, 1)
+        self.assertIn("deviations: D1 を申告したが、`## MECE Review` の `### 検査が拒んだ決定` の表に行が無い", out)
+
+    def test_a_rejected_decision_of_the_review_that_is_not_declared_is_refused(self):
+        patch = self.spike_patch_with_plan(lambda plan: plan + self.REJECTED_DECISION)
+        code, out = run("check", str(self.root), stdin=check_spec(REPORT_COMMAND, RULE_FILES, KEEP_FILES, TESTS, spike=patch))
+        self.assertEqual(code, 1)
+        self.assertIn('deviations: `### 検査が拒んだ決定` の表に D1 があるが、標準入力の JSON の "deviations" に挙げていない', out)
+
+    def test_spike_close_asks_for_the_deviation_declaration(self):
+        work = self.open_spike("test/a.rule.test.js", "test/harness/app.js")
+        self.addCleanup(shutil.rmtree, work.parent, True)
+        (work / "src/a.js").write_text("export const f = () => 1;\n")
+        code, out = run("spike-close", str(self.root), str(work))
+        self.assertEqual(code, 0, out)
+        self.assertIn('deviations: 試作が計画の決定と違う形を取ったなら、`## MECE Review` の `### 検査が拒んだ決定` の表に書き、`check` の JSON の "deviations" に決定の ID を挙げる', out)
+
+    def test_worktree_confirms_every_criterion_on_the_implementation_in_the_working_tree(self):
+        self.implement_in_the_working_tree()
+        code, out = self.check(worktree=True)
+        self.assertEqual(code, 0, out)
+        self.assertIn("AC-001: rule worktree=pass now=fail", out)
+        self.assertIn("AC-002: non-impact worktree=pass now=pass", out)
+        self.assertEqual((self.root / "src/a.js").read_text(), "export const f = () => 1;\n")
+        self.assertEqual(self.stash_list(), [])
+        code, answer = run("report", str(self.root))
+        self.assertIn("実装: 作業ツリーの実装で、テストを対応させた基準がすべて通った", answer)
+
+    def test_worktree_refuses_an_implementation_that_fails_a_criterion_and_keeps_it(self):
+        self.implement_in_the_working_tree("export const f = () => 2;\n")
+        code, out = self.check(worktree=True)
+        self.assertEqual(code, 1)
+        self.assertIn("worktree: AC-001 が作業ツリーの実装で通らない", out)
+        self.assertEqual((self.root / "src/a.js").read_text(), "export const f = () => 2;\n")
+        self.assertEqual(self.stash_list(), [])
+
+    def test_check_without_worktree_does_not_require_an_implementation_in_progress_to_pass(self):
+        self.implement_in_the_working_tree("export const f = () => 2;\n")
+        code, out = self.check()
+        self.assertEqual(code, 0, out)
+        self.assertIn("AC-001: rule now=fail", out)
+
+    def test_worktree_runs_the_check_command_on_the_working_tree_and_not_on_the_head_tree(self):
+        self.implement_in_the_working_tree()
+        check = "node -e \"import('./src/a.js').then((m) => process.exit(m.f() === 1 ? 0 : 1))\""
+        code, out = self.check(worktree=True, check_command=check)
+        self.assertEqual(code, 0, out)
+        self.assertEqual(out.count("check: pass"), 1)
+
+    def test_worktree_with_a_spike_is_refused(self):
+        self.implement_in_the_working_tree()
+        code, out = self.check(worktree=True, spike=str(Path(self.tmp.name) / "none.patch"))
+        self.assertEqual(code, 1)
+        self.assertIn("worktree: `worktree` と `spike` は一緒に渡さない", out)
+
+    def test_worktree_without_a_change_outside_the_given_files_is_refused_and_points_to_implemented(self):
+        code, out = self.check(worktree=True)
+        self.assertEqual(code, 1)
+        self.assertIn("worktree: 渡したファイルの外に変更が無い", out)
+        self.assertIn('"implemented"', out)
+
+    def test_worktree_refuses_an_implementation_test_row_without_a_mapped_test(self):
+        self.impl_plan()
+        self.implement_in_the_working_tree()
+        code, out = self.check(worktree=True, guard_command=self.IMPL_COMMAND)
+        self.assertEqual(code, 1)
+        self.assertIn("impl_tests: 残ったリスクの表の「f が 2 を返す」を守る実装のテストの対応が無い", out)
+
+    def test_worktree_confirms_the_mapped_implementation_tests_and_the_report_lists_them(self):
+        self.impl_plan()
+        self.implement_in_the_working_tree()
+        code, out = self.check(worktree=True, guard_command=self.IMPL_COMMAND, impl_tests=[(self.IMPL_RISK, "test/impl.test.js", "f is exactly 1")])
+        self.assertEqual(code, 0, out)
+        self.assertIn("guard: pass (作業ツリーの実装)", out)
+        self.assertTrue((self.root / "test/impl.test.js").exists())
+        code, answer = run("report", str(self.root))
+        self.assertIn("実装のテストの対応 (作業ツリーの実装で通った):\nf が 2 を返す: test/impl.test.js「f is exactly 1」\n", answer)
+
+    def test_worktree_refuses_a_mapped_implementation_test_that_did_not_run(self):
+        self.impl_plan()
+        self.implement_in_the_working_tree()
+        code, out = self.check(worktree=True, guard_command=self.IMPL_COMMAND, impl_tests=[(self.IMPL_RISK, "test/impl.test.js", "f is never 2")])
+        self.assertEqual(code, 1)
+        self.assertIn("guard: 実装のテスト「f is never 2」(test/impl.test.js) が作業ツリーの実装で実行されなかった", out)
+
+    def test_worktree_refuses_a_mapped_implementation_test_that_fails(self):
+        self.impl_plan()
+        self.repo.write("test/impl.test.js", self.IMPL_TEST.replace("f(), 1", "f(), 3"))
+        self.implement_in_the_working_tree()
+        code, out = self.check(worktree=True, guard_command=self.IMPL_COMMAND, impl_tests=[(self.IMPL_RISK, "test/impl.test.js", "f is exactly 1")])
+        self.assertEqual(code, 1)
+        self.assertIn("guard: 実装のテスト「f is exactly 1」(test/impl.test.js) が作業ツリーの実装で通らない", out)
+
+    def test_an_implementation_test_mapped_to_a_risk_that_the_table_does_not_guard_by_one_is_refused(self):
+        self.impl_plan()
+        self.implement_in_the_working_tree()
+        code, out = self.check(worktree=True, guard_command=self.IMPL_COMMAND, impl_tests=[(self.IMPL_RISK, "test/impl.test.js", "f is exactly 1"), ("設定の名前がずれる", "test/impl.test.js", "f is exactly 1")])
+        self.assertEqual(code, 1)
+        self.assertIn("impl_tests: 「設定の名前がずれる」は、残ったリスクの表の守る先が `実装のテスト:` の行のリスクでない", out)
+
+    def test_worktree_accepts_an_implementation_test_written_in_a_new_acceptance_test_file(self):
+        self.impl_plan()
+        (self.root / "test/impl.test.js").unlink()
+        self.repo.write("test/a.rule.test.js", RULE_TEST + "test('f is exactly 1', () => assert.equal(f(), 1));\n")
+        self.implement_in_the_working_tree()
+        code, out = self.check(worktree=True, guard_command=REPORT_COMMAND, impl_tests=[(self.IMPL_RISK, "test/a.rule.test.js", "f is exactly 1")])
+        self.assertEqual(code, 0, out)
+        self.assertNotIn("対応する AC が無い", out)
+
+    def test_an_existing_test_path_followed_by_japanese_text_without_a_space_is_refused_as_not_at_head(self):
+        self.commit_guard_test()
+        self.repo.write("plan.md", self.residual_risk_plan("既存のテスト: test/guard.test.jsが落ちる"))
+        code, out = self.check()
+        self.assertEqual(code, 1)
+        self.assertIn("guard: 残ったリスクの表の「g の文が変わる」の守る先の既存のテストが HEAD に無い (`既存のテスト:` の後に、変更の前からあるテストのファイルを repo からの相対 path で書く)", out)
+
+    def test_an_existing_test_path_followed_by_text_after_a_space_is_read(self):
+        self.commit_guard_test()
+        self.repo.write("plan.md", self.residual_risk_plan("既存のテスト: test/guard.test.js が落ちる"))
+        code, out = self.check()
+        self.assertEqual(code, 0, out)
+
+    def test_worktree_with_a_check_command_that_rewrites_a_file_outside_the_given_files_reports_the_mismatch(self):
+        self.implement_in_the_working_tree()
+        rewrite = "node -e \"require('fs').appendFileSync('src/a.js', '// formatted\\n')\""
+        code, out = self.check(worktree=True, check_command=rewrite)
+        self.assertEqual(code, 1, out)
+        self.assertIn("set-aside: 受け入れテストの外の変更を戻せなかった (戻した変更が退避の前と一致しない)", out)
+        self.assertIn("export const f = () => 1;", (self.root / "src/a.js").read_text())
+        self.assertEqual(len(self.stash_list()), 1)
+
+    def test_worktree_runs_the_existing_tests_of_the_risk_table_on_the_working_tree(self):
+        self.guarded_plan()
+        self.implement_in_the_working_tree("export const f = () => 1;\nexport const extra = 1;\n")
+        code, out = self.check(worktree=True, guard_command=self.GUARD_COMMAND)
+        self.assertEqual(code, 1)
+        self.assertIn("guard: 既存のテスト test/guard.test.js が作業ツリーの実装で落ちた", out)
 
     def test_check_refuses_a_residual_risk_guarded_by_a_criterion_that_is_not_in_the_plan(self):
         self.repo.write("plan.md", self.residual_risk_plan("AC-009"))
