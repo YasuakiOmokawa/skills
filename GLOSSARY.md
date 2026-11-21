@@ -26,9 +26,9 @@ API key、access token、passwordはこの領域へ保存しない。
 - Skillは別skillを暗黙起動せず、必要な後続作業を結果として返す。
 - PoC、プロトタイプ、Design Docの受け渡しは、出力先直下の案件ディレクトリ（`<案件slug>/`）にある `poc.md` のパスで行う。`poc.md` の見出し（問い、星取表、結論、PR、申し送り、Prototype）と `design-doc.md` は後続skillが読むmachine contract。
 - 固定見出し、ID、列、状態値は、skill外のconsumerが実際に読む場合だけmachine contractとする。
-- `define-done` が計画に書く 4 節の見出し、`- R-n:` と `- AC-NNN:` の行、`[規則]`・`[非影響]` の印、`(出典: ...)`、`- AC IDs:`、`- Gate:`、要求の表の `| R-n | ... |` の行は、`check_seal.py seal` が凍結の前に読むmachine contract。`- AC-NNN:` の行の本文 (種類の印と出典を除く) と `- R-n:` の行の要求の文 (引用の前) は、凍結の commit が計画の path とともに hash を記録し (`Define-Done-Plan`、`Define-Done-Criteria`、`Define-Done-Requirements`)、同じ計画を凍結し直すときに照合する。
+- `define-done` が計画に書く 4 節の見出し、`- R-n:` と `- AC-NNN:` の行、`[規則]`・`[非影響]` の印、`(出典: ...)`、`- AC IDs:`、`- Gate:`、要求の表の `| R-n | ... |` の行は、`check_done.py check` が受け入れテストを確かめる前に読むmachine contract。
 - `check-pr` の検査結果ブロック (マーカー、`検査した commit` の行、表の列、判定の値) は、CIが読むmachine contract。
-- 外部状態の変更と破壊的操作は、正確な対象と変更内容が依頼で承認された場合だけ行う。例外として、`build-poc` と `build-prototype` の起動は、検証用ブランチのpushと、元のブランチをbaseとするdraft PRの作成の承認を含む。`define-done` の起動は、受け入れテスト・土台・計画と、要求が変える既存の規則の基準の書き直しだけを含む凍結の commit を作る承認と、repo が開発用に示すローカルの DB とコンテナの起動・停止とテスト用の DB への migration の承認と、凍結の前に試作の実装を書く一時的な worktree と repo の外の patch file の作成の承認を含む (push は含まない)。PRのURLは後続skillが読む。依頼が外部状態の変更を禁じる場合は行わない。
+- 外部状態の変更と破壊的操作は、正確な対象と変更内容が依頼で承認された場合だけ行う。例外として、`build-poc` と `build-prototype` の起動は、検証用ブランチのpushと、元のブランチをbaseとするdraft PRの作成の承認を含む。`define-done` の起動は、repo の test command と開発の手順がローカルで起動するもの (DB、コンテナ、アプリのサーバ) の起動・停止とテスト用の DB への migration の承認と、試作の実装を書く一時的な worktree と repo の外の patch file の作成の承認を含む (commit と push は含まない)。PRのURLは後続skillが読む。依頼が外部状態の変更を禁じる場合は行わない。
 
 ## Evaluation
 
@@ -76,7 +76,7 @@ python3 scripts/eval/rejudge.py /tmp/<name>-new.json <NN> plugins/<name>/evals/<
 
 ### 翻訳の質 (define-done)
 
-define-done の受け入れテストは、runner の外で決定論的に採点する (runner には出力にコマンドを流す grader が無い)。題材ごとに `scripts/eval/mutant/<題材>/` に次を置き、eval の case の dir に `mutant.json` (`{"subject": "scripts/eval/mutant/<題材>", "tests": "<受け入れテストの置き場所の dir>/"}`) を置く。採点は、その dir の下に agent が書いたファイル (受け入れテスト、土台、期待値のファイル) をすべて復元し、土台の外の `*.test.js` を受け入れテストとして流す。
+define-done の受け入れテストは、runner の外で決定論的に採点する (runner には出力にコマンドを流す grader が無い)。題材ごとに `scripts/eval/mutant/<題材>/` に次を置き、eval の case の dir に `mutant.json` (`{"subject": "scripts/eval/mutant/<題材>", "tests": "<受け入れテストの置き場所の dir>/"}`) を置く。採点は、その dir の下に agent が書いたファイル (受け入れテスト、補助、期待値のファイル) をすべて復元し、`*.test.js` を受け入れテストとして流す。
 
 - `subject.json`: `{"target": "<テストが import する製品コードの path>", "references": [...]}`。`references` は省略すると `["reference.js"]`
 - `reference.js` (と `references` に挙げた他の参照実装): 要求どおりの実装。2 つ目以降は、資料が決めていない振る舞い (状態コード、上限、境界ちょうど) だけを変える。テストはすべての参照実装で通るときだけ有効と数え、資料に無い値を期待するテストは、推測が 1 つ目と一致しても無効になる
@@ -92,7 +92,7 @@ python3 -I scripts/eval/mutant_score.py scripts/eval/mutant/<題材> scripts/eva
 python3 -m scripts.eval.score_results /tmp/<name>.json --record
 ```
 
-1 行目は計測器の自己検査で、隠しテストがすべての参照実装で通り、手書きの変種を全部落とすことを確かめる。2 行目は `--keep-temp` を必ず付ける。3 行目は trace から受け入れテストと土台を `<name>.json.restored/` に復元し、arm ごとの表を出し、`evals/mutant-record.json` に shipped の中身の hash ごとに記録する。sandbox を消すのは 3 行目の後にする。見る数は次のとおり。
+1 行目は計測器の自己検査で、隠しテストがすべての参照実装で通り、手書きの変種を全部落とすことを確かめる。2 行目は `--keep-temp` を必ず付ける。3 行目は trace から受け入れテストと補助を `<name>.json.restored/` に復元し、arm ごとの表を出し、`evals/mutant-record.json` に shipped の中身の hash ごとに記録する。sandbox を消すのは 3 行目の後にする。見る数は次のとおり。
 
 - 全テストが有効な run: 資料に無い値や振る舞いを期待するテストを書かなかった run
 - 要件適合度: 有効なテストで落とした手書きの変種 / 全変種
@@ -158,11 +158,11 @@ plugin の `skills/` か `commands/` を変えた PR は、`plugins/<name>/evals
 _Avoid_: 完了条件 (SKILL.md の節名と紛れる)、`[禁止]` (規約を AC として書いていた旧い種類)
 
 **規則の基準**:
-計画が新しく作る振る舞いの AC。実装の前には成り立っておらず、凍結して恒久に守る。
+計画が新しく作る振る舞いの AC。実装の前には成り立っていない。
 _Avoid_: 恒久の AC、新規の基準
 
 **非影響の基準**:
-計画の変更で壊してはならない今の振る舞いの AC。実装の前から成り立っており、凍結して守るのは計画の完了までで、その後は普通の回帰テストとして残る。
+計画の変更で壊してはならない今の振る舞いの AC。実装の前から成り立っている。
 _Avoid_: 一時的な AC、ガード、移行の基準
 
 **要求**:
@@ -181,23 +181,15 @@ _Avoid_: 根拠 (Ground Review の根拠と紛れる)、出どころ
 _Avoid_: 設計判断
 
 **受け入れテスト**:
-define-done が各 AC から翻訳した、実行できるテスト。テスト名は観測する振る舞いを業務の言葉で書き、AC-ID を含めない。AC との対応は凍結の commit が記録する。テストがそのまま oracle であり、散文の oracle は書かない。
+define-done が各 AC から翻訳した、実行できるテスト。**手本** と見分けがつかない形で、既存のテストのファイルか、手本と同じ置き場所の新しいファイルに書く。テスト名は観測する振る舞いを業務の言葉で書き、AC-ID を含めない。AC との対応は `check_done.py check` に渡す。テストがそのまま oracle であり、散文の oracle は書かない。
 _Avoid_: 検証の対応付け、Verification Plan (散文の oracle を指す)
 
+**手本**:
+受け入れテストが形を取る元。repo の文書が決めるテストの書き方と、AC が観測する外の境界を通る既存のテストを指す。置き場所、ファイル名の形、ランナーとその設定、補助、外の境界の通り方をここから取る。実装の選択を固定する試験は手本にしない。
+_Avoid_: 土台、harness (受け入れテスト専用の入口を作っていた旧い仕組み)
+
 **凍結** (seal、旧称: 封):
-受け入れテストと計画を、AC ごとの種類 (規則の基準・非影響の基準) とともに固定する commit。凍結したものを後から変えると改ざんとして検出される。規則の基準は恒久に、非影響の基準は計画の完了まで守る。完了は、凍結が破られておらず、規則の基準が凍結の時点で成り立たず今は成り立ち、非影響の基準が凍結の時点でも今も成り立つときである。後の計画の要求が守っている規則の基準を変えるときは、その計画の凍結の commit の中で、置き換える AC-ID と根拠の要求を記録して書き直す。
-_Avoid_: fingerprint (計画の中に書く hash を指す)
-
-**保護するパス**:
-凍結の commit に入ったファイルのうち、まだ守っている基準のもの。規則の基準のファイルは恒久に、非影響の基準のファイルは計画の完了まで含まれる。1 つのファイルには 1 つの種類の基準だけを書き、期待値のファイル (golden など) はそれを使う基準の種類に付く。実装は変えない。
-
-**計画の完了**:
-計画の凍結の commit が既定の branch (main) から辿れるようになったこと。統合用の branch に入っただけでは完了しない。
-_Avoid_: merge (どの branch への merge かが曖昧)
-
-**土台**:
-受け入れテストが外の境界に触れるための入口の集まり (アプリの入口と差し替え口、画面の配信、時計、通信の契約の差し替え、コマンドの実行)。受け入れテストが import できるのは土台とテストランナーだけで、内部に触れてよいのは土台だけである。土台が触れてよい内部は、実行時の入口と、既存の試験が使っている差し替え口に限る。無ければ define-done が要る分だけ作り、凍結に含めて計画の完了まで守る。
-_Avoid_: harness、fixture (試験のデータを指す)
+define-done 5.x までが、受け入れテストと計画を固定するために作っていた commit (`Define-Done-Seal:` の trailer を持つ)。6.0.0 からは作らない。enforce-conventions は、過去の凍結の commit のファイルを保護するパスとして扱い続ける。
 
 ### 規約の担保 (enforce-conventions)
 

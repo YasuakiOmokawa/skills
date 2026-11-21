@@ -117,13 +117,13 @@ Define-Done-Test-Command: node --test --test-reporter=junit --test-reporter-dest
 Define-Done-Plan: plans/discount.md
 Define-Done-Criteria: AC-001=de58a60277, AC-002=963eee75ab, AC-003=dfd0f198ce
 Define-Done-Requirements: R-1=e3893c4718, R-2=a773ba7b84, R-3=cd08919b05"
-sed -i.bak -e 's/^要件 `docs\/requirements\/discount.md` (正本) を満たす。$/要件 `docs\/requirements\/discount.md` (正本) を、凍結の後に依頼が変えた 2 点を除いて満たす。/' -e 's/10 個以上なら 1 割、100 個以上なら 2 割引く/10 個以上なら 15% 引く/' plans/discount.md && rm plans/discount.md.bak
+sed -i.bak -e 's/^要件 `docs\/requirements\/discount.md` (正本) を満たす。$/要件 `docs\/requirements\/discount.md` (正本) を、受け入れテストを書いた後に依頼が変えた 2 点を除いて満たす。/' -e 's/10 個以上なら 1 割、100 個以上なら 2 割引く/10 個以上なら 15% 引く/' plans/discount.md && rm plans/discount.md.bak
 git status --short
 ```
 
-`repo/` の plans/discount.md は前に /define-done で凍結した (実装はまだ始めていない)。その後、要求を 2 つ変えることにした。
+`repo/` の plans/discount.md は、前に /define-done で受け入れテストを書いて commit した (実装はまだ始めていない)。その後、要求を 2 つ変えることにした。
 
 1. 100 個以上の 2 割引はやめる。
 2. 10 個以上の割引は、1 割ではなく 15% にする (10 個で 850 円)。
 
-計画の「1. 目的」と「2. 変更対象」は、この変更に合わせて直してある (未 commit)。要件の文書 docs/requirements/discount.md は後で自分が直すので、触らないでほしい。plans/discount.md を /define-done で、この変更に合わせて凍結し直してください。
+計画の「1. 目的」と「2. 変更対象」は、この変更に合わせて直してある (未 commit)。要件の文書 docs/requirements/discount.md は後で自分が直すので、触らないでほしい。plans/discount.md と受け入れテストを /define-done で、この変更に合わせて直してください。

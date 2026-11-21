@@ -5,6 +5,28 @@ All notable changes to omokawa-skills will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v21.0.0 - 2026-11-21
+
+### Changed
+
+- **`define-done` 6.0.0 (破壊的変更: 凍結の commit をやめる):** 受け入れテストを凍結の commit で守る仕組みと、専用の入口 (土台、`harness/`) を通して書かせる規則を削除した。受け入れテストは repo の既存のテスト (手本) と見分けがつかない形で書く。置き場所、ファイル名の形、ランナーとその設定、補助、外の境界の通り方を手本から取り、既存のテストのファイルと補助のファイルに足してよい。commit は作らない。理由は `docs/adr/0002-acceptance-tests-follow-existing-tests.md` に書いた。
+- **`check_seal.py` を `check_done.py` に置き換えた:** command は `check`、`report`、`spike-open`、`spike-close` の 4 つ。`seal`、`reseal`、`verify`、改ざんを見る旧い `check` は無い。実装の完了は repo の test command が通ることで判定する。
+- **`check_done.py check` が確かめること:** 計画の整合 (これまでの `seal` と同じ)、渡したファイルの置き場所が HEAD にあること、HEAD にあるファイルへの変更が行の追加だけであること (import と require の行は数えない)、足した行に AC-ID が無いこと、今の tree で `[規則]` が落ち `[非影響]` が通ること、試作の実装で全部通ること。種類は計画の印から読み、同じファイルの既存のテストは数えない。
+- **`check` の入力:** `rule` と `non_impact` を `files` 1 つにまとめた。`rewrites` (要求が振る舞いを変えるので書き直した既存のテスト)、`new_dirs` (repo の規則か依頼の名指しが求めた新しいディレクトリ)、`implemented` (実装がすでに HEAD にある規則の基準) を足した。3 つとも理由を添え、`report` が最終回答に並べる。
+- **ローカルの起動の範囲を広げた:** repo の test command と開発の手順がローカルで起動するものは、アプリのサーバも含めて起動してよい。接続と送信はローカルの中に限る。
+- **受け入れテストのファイル名:** repo の機能の語で付け、issue の番号や計画の名前を入れない。
+
+- **無くなった検査:** 凍結したファイルの改ざんの検出、受け入れテストが土台とランナーだけを import する検査、同じ AC-ID で本文の変わった基準を拒む照合 (v20.9.0)、種類ごとのファイル分け。受け入れテストを後から弱めても検出しない。
+- **文の規則だけになったもの:** 実装の選択を固定する既存の試験 (内部の message を語彙にする部品のテストなど) を手本にしないことと、外の境界を通る既存のテストが無い AC を未検証で返すことは、機械の検査が無い。eval の case も無い。
+- **移行:** 前の版の凍結の commit と `acceptance/` のテストは、普通の commit と普通のテストとして残る。新しい版は凍結を読まない。
+- **eval:** `check_done.py` の unit test は 84 件 (旧 141 件から、凍結の command の 71 件を除き、新しい検査の 14 件を足した)。case は 41 (凍結の機構だけを測る 36、37、40 を削除し、48 `follow-existing-tests` と 49 `no-test-location` を足した)。全 41 case を with arm で 3 run ずつ回した。名前の変わらない grader で、旧版から 2 run 以上下がったものは無い (1 run の差は 4 個が下がり 2 個が上がった)。24 の `existing-interface-used` は 1/3 から 3/3 に上がった。名前を変えた grader (`seal-by-script` → `check-by-script`、`seal-commit` → `check-passed` など) と新しい case の grader は、35 の `rewrite-declared` を除いてすべて 3/3 だった。
+- **eval (計測器の直し):** 35 の `rewrite-declared` は 1/3 だったが、3 run とも `rewrites` を渡して既存のテストを書き直していた。grader がファイル名の literal を求めていて、shell の変数で渡した 2 run を落としていたので、grader を直して 35 だけ回し直し、`rewrite-declared` と `rule-rewrite-reported` はどちらも 3/3 だった。35 の fixture は、既存のテストが空のカートを試していて要求が変える振る舞いに当たらなかったので、カートにある商品を試す形に直した。47 の `check-green` は trace を読む llm grader が正しい run を落としたので regex に改めた。
+- **eval (翻訳の質):** 変異の題材 8 つは旧版と同じ水準だった。23、24、26、27、29 は 3 run とも全テストが有効で、手書きの変種と自動の変異をすべて落とした。25 はテストを書いた run が 2/3 から 3/3 に増え、資料に無い期待を 1 件書いた run が 0 から 2 に増えた (過去 14 回の記録では 0 が 7 回、1 が 4 回、2 が 3 回で、揺れの範囲にある)。30 は全テストが有効な run が 2/3 のままで、無効なテストを持つ 1 run が手書きの変種 8 個中 2 個と自動の変異 48 個中 4 個を逃した。28 は旧版と同じく 3 run とも Gate で止まった。
+- **eval (chain):** `chain-invite-owner` は with arm の 3 run とも全テストが有効で (旧版 2/3)、コードは 3 run とも採点用テストを全部通した。`chain-string-quantity` は旧版と同じく 3 run とも D1 を理由に Gate で止まった (`score_results` は最終回答の言い回しの違いで 1 run を Gate の停止に数えない)。
+- **eval (新しい補助):** テストを書いた 61 run の trace で、agent が新しい補助のファイルか `harness/` を作った run は 0 だった (Write、Edit、heredoc の書き込み先で数えた)。48 は試走を含む 4 run とも、既存の `test/cart.test.js` か `test/support.js` に足した。
+- **eval (測っていないもの):** 手本の無い AC を未検証に回すこと、repo の規則が求める新しいディレクトリ、`implemented`、ファイル名に issue の番号を入れないことは、`outcomes.md` に assertion を足したが grader が無い (`rewrites`・`new_dirs`・`implemented` の根拠は unit test)。Ruby と、サーバを起動する e2e を手本にする repo では回していない。
+- **ルーティンから外れた点:** skill の文は、grader と fixture を読んだ本人が書いた (改善ルーティンの 3 番は、編集する agent に `prompt.md` と `graders/` を渡さないと決めている)。
+
 ## v20.9.0 - 2026-11-20
 
 ### Changed
