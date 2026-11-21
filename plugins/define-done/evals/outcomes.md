@@ -1,7 +1,7 @@
 # Trigger
 - fixture: 要件 `docs/requirements/session-store.md`、ADR、既存コード、既存の設計 `plans/session-store.md` があり、計画の更新が許可されている。依頼Aは「plans/session-store.md の設計を確定して、実装に着手できる状態にして」、依頼Bは「要件から実装計画を一から作って、回答として返して」、依頼Cは「準備済みの計画 plans/session-store.md を実装して」である。
 - assertions:
-  - [critical] 依頼Aでは `plans/session-store.md` に `## Requirements`、`## Ground Review`、`## Acceptance Criteria`、`## MECE Review` を書き、Gate が ready なら受け入れテストを書いて凍結の commit を作る。 (grader: 01-session-store/ground-review-section)
+  - [critical] 依頼Aでは `plans/session-store.md` に `## Requirements`、`## Ground Review`、`## Acceptance Criteria`、`## MECE Review` を書き、Gate が ready なら受け入れテストを書いて `check_done.py check` で確かめる。 (grader: 01-session-store/ground-review-section)
   - [critical] 依頼Bでは既存の計画に 4 節を書かない。 (grader: 02-neg-create-plan/is-a-plan, 02-neg-create-plan/no-gate-verdict)
   - [critical] 依頼Cでは define-done を発火させず、計画に従って製品コードを変更し、4 節を書き換えない。 (grader: 03-neg-implement/implements, 03-neg-implement/skill-not-fired, 03-neg-implement/vp-intact)
   - [critical] 依頼Bでは define-done を発火させない。 (grader: 02-neg-create-plan/skill-not-fired)
@@ -31,44 +31,44 @@
 - fixture: パスワード再設定の仕様が公開 interface (`createReset({ users, mailer, now })`) と画面の値を名指しし、再送の上限は資料に無い。依頼は受け入れテストの置き場所を名指しし、「必要なら適切な再送上限も決めて」と言う。repo は git で管理され、base の commit がある。
 - assertions:
   - [critical] Gate が ready なら、依頼が名指しした置き場所の下に受け入れテストを書く。 (grader: 23-acceptance-tests-sealed/test-file-written)
-  - [critical] 受け入れテストと土台と計画だけを含む凍結の commit を `check_seal.py seal` で作る。 (grader: 23-acceptance-tests-sealed/seal-commit, 23-acceptance-tests-sealed/seal-by-script)
+  - [critical] 受け入れテストを `check_done.py check` で確かめ、commit を作らない。 (grader: 23-acceptance-tests-sealed/check-passed, 23-acceptance-tests-sealed/check-by-script, 23-acceptance-tests-sealed/no-commit)
   - [critical] 資料に無い再送の上限を、受け入れテストの期待値にしない。 (grader: 23-acceptance-tests-sealed/no-invented-limit-test)
   - 計画に、受け入れテストとは別の散文の oracle や検証の対応付けを書かない。 (grader: 未計測)
   - 受け入れテストは、参照実装で全件 pass し、要求を 1 件ずつ破った変種をそれぞれ落とす (`python3 -m scripts.eval.score_results <result.json> --record` で数え、`evals/mutant-record.json` に記録する)。 (grader: 未計測)
 
 - fixture: まとめ買い割引の要件は振る舞いだけを書き、端数の扱い (割引後の小計を商品ごとに切り捨てる) まで決め、interface を名指ししない。既存の `src/cart.js` と既存の試験 `test/cart.test.js` が `createCart`・`add`・`total` を固定している。計画の決定は割引後の小計を `Math.floor(小計 * 0.9)` で求めると言う。依頼は受け入れテストの置き場所を名指しする。repo は git で管理され、base の commit がある。
 - assertions:
-  - [critical] 依頼が名指しした置き場所の下に受け入れテストを書き、受け入れテストと土台と計画だけを含む凍結の commit を `check_seal.py seal` で作る。 (grader: 24-bulk-discount-existing-code/test-file-written, 24-bulk-discount-existing-code/seal-commit, 24-bulk-discount-existing-code/seal-by-script)
-  - 受け入れテストのテスト名は振る舞いを業務の言葉で書き、テストと土台のコードに AC-ID を書かない (`check_seal.py seal` が拒む)。 (grader: 未計測)
+  - [critical] 依頼が名指しした置き場所の下に受け入れテストを書き、受け入れテストを `check_done.py check` で確かめる。 (grader: 24-bulk-discount-existing-code/test-file-written, 24-bulk-discount-existing-code/check-passed, 24-bulk-discount-existing-code/check-by-script)
+  - 受け入れテストのテスト名は振る舞いを業務の言葉で書き、足した行に AC-ID を書かない (`check_done.py check` が拒む)。 (grader: 未計測)
   - [critical] 受け入れテストは、既存の試験が固定している interface を通して観測する。 (grader: 24-bulk-discount-existing-code/existing-interface-used)
   - 受け入れテストは、参照実装で全件 pass し、要求を破った変種と、隠しテストが落とせる自動の変異をそれぞれ落とす (`python3 -m scripts.eval.score_results <result.json> --record` で数え、`evals/mutant-record.json` に記録する)。 (grader: 未計測)
 
 - fixture: 招待の計画は作成・受諾・二度受諾の拒否を仕様に持つ。計画が従うと名指しする用語集は「ADMIN は OWNER を作れず」と定める (taimei-auth #108 の修正前と同じ状況)。既存の `src/membership.js` は role の変更を持ち、招待は未実装。
 - assertions:
-  - [critical] ADMIN が OWNER を作れることを、受け入れテストで落とす形にして凍結するか、計画と用語集の食い違いとして Gate を止める理由に挙げる。 (grader: 25-real-bug-admin-mints-owner/bug-caught)
+  - [critical] ADMIN が OWNER を作れることを、受け入れテストで落とす形にするか、計画と用語集の食い違いとして Gate を止める理由に挙げる。 (grader: 25-real-bug-admin-mints-owner/bug-caught)
   - 受け入れテストは、ADMIN が OWNER の招待を作れることを落とす (修正前の実バグの mutant を落とす。`scripts.eval.score_results` で数え、`evals/mutant-record.json` に記録する)。 (grader: 未計測)
 
 - fixture: 招待の受諾の計画は、所属することと二度受諾の拒否だけを仕様に持つ。計画が従うと名指しする用語集は、session の `currentCompanyId` が `null` なのは所属が 0 件の時などに限ると定め、新しい session は user の `lastUsedCompanyId` を写すと定める (taimei-auth #223 の修正前と同じ状況)。
 - assertions:
-  - [critical] 依頼が名指しした置き場所の下に受け入れテストを書き、受け入れテストと土台と計画だけを含む凍結の commit を `check_seal.py seal` で作る。 (grader: 26-real-bug-last-used-company/test-file-written, 26-real-bug-last-used-company/seal-commit, 26-real-bug-last-used-company/seal-by-script)
+  - [critical] 依頼が名指しした置き場所の下に受け入れテストを書き、受け入れテストを `check_done.py check` で確かめる。 (grader: 26-real-bug-last-used-company/test-file-written, 26-real-bug-last-used-company/check-passed, 26-real-bug-last-used-company/check-by-script)
   - 受け入れテストは、初めての所属が招待の受諾だった利用者の次の session が事業所未選択になることを落とす (修正前の実バグの mutant を落とす。`scripts.eval.score_results` で数え、`evals/mutant-record.json` に記録する)。 (grader: 未計測)
 
 - fixture: 除名と OWNER の委譲の計画は、権限と委譲の結果を仕様に持つ。計画が従うと名指しする分析の文書は「既に除名済みメンバーへ remove → 404」「委譲先が所属していない transfer → 404、role も監査ログも無変更」を確かめる観点として挙げる。計画の決定は除名を `roles.delete` と監査ログへの追記で行う (taimei-auth #193 の修正前と同じ状況)。
 - assertions:
-  - [critical] 計画の決定が生むバグを、受け入れテストで落とす形にして凍結するか、Gate を止める理由に挙げる。 (grader: 27-real-bug-remove-missing-member/bug-caught)
-  - Gate が ready なら、依頼が名指しした置き場所の下に受け入れテストを書き、受け入れテストと土台と計画だけを含む凍結の commit を `check_seal.py seal` で作る。 (grader: 27-real-bug-remove-missing-member/test-file-written, 27-real-bug-remove-missing-member/seal-commit, 27-real-bug-remove-missing-member/seal-by-script)
+  - [critical] 計画の決定が生むバグを、受け入れテストで落とす形にするか、Gate を止める理由に挙げる。 (grader: 27-real-bug-remove-missing-member/bug-caught)
+  - Gate が ready なら、依頼が名指しした置き場所の下に受け入れテストを書き、受け入れテストを `check_done.py check` で確かめる。 (grader: 27-real-bug-remove-missing-member/test-file-written, 27-real-bug-remove-missing-member/check-passed, 27-real-bug-remove-missing-member/check-by-script)
   - 受け入れテストは、居ない所属者の除名と委譲が監査ログを残して 200 を返すことを落とす (修正前の実バグの変種を落とす。`scripts.eval.score_results` で数え、`evals/mutant-record.json` に記録する)。 (grader: 未計測)
 
 - fixture: 要件は `add` が正の整数を表す 10 進の文字列も受け付けると言う。既存の `src/cart.js` は数量が正の整数でなければ拒み、既存の試験は 0 の拒否を固定する。計画の決定は `Number.parseInt(quantity, 10)` で数値に変えると言い、そのまま実装すると 1.5 が 1 として通る。
 - assertions:
-  - [critical] 計画の決定が生むバグを、受け入れテストで落とす形にして凍結するか、Gate を止める理由に挙げる。 (grader: 28-existing-guard-string-quantity/bug-caught)
-  - Gate が ready なら、依頼が名指しした置き場所の下に受け入れテストを書き、受け入れテストと土台と計画だけを含む凍結の commit を `check_seal.py seal` で作る。 (grader: 未計測)
+  - [critical] 計画の決定が生むバグを、受け入れテストで落とす形にするか、Gate を止める理由に挙げる。 (grader: 28-existing-guard-string-quantity/bug-caught)
+  - Gate が ready なら、依頼が名指しした置き場所の下に受け入れテストを書き、受け入れテストを `check_done.py check` で確かめる。 (grader: 未計測)
   - 受け入れテストは、変更で既存の guard (正の整数でない数量を拒む) が壊れることを `[非影響]` のテストで落とす (`scripts.eval.score_results` で数え、`evals/mutant-record.json` に記録する)。 (grader: 未計測)
   - 文字列の数量を受け付ける `[規則]` のテストと、既存の guard を守る `[非影響]` のテストを別のファイルに書く。 (grader: 未計測)
 
 - fixture: 用語集は「事業所には OWNER が常に 1 人以上いる。最後の OWNER を外す操作は 409 last_owner で拒否する」と定め、計画の仕様は OWNER による role の変更と除名 (自分も対象にできる) を持つ。計画の決定は OWNER の人数を `ownerCount` で持ち、増減のたびに更新すると言う (派生した状態があることを計画が示す)。人数の更新漏れは 1 回の操作では観測できず、OWNER を除名・降格・昇格した後で最後の OWNER を外す操作の列でだけ不変条件が破れる。居ない所属者の扱いと、403 と 409 のどちらを先に返すかは資料に無い。
 - assertions:
-  - [critical] Gate が ready なら、依頼が名指しした置き場所の下に受け入れテストを書き、受け入れテストと土台と計画だけを含む凍結の commit を `check_seal.py seal` で作る。 (grader: 30-invariant-op-sequence/test-file-written, 30-invariant-op-sequence/seal-commit, 30-invariant-op-sequence/seal-by-script)
+  - [critical] Gate が ready なら、依頼が名指しした置き場所の下に受け入れテストを書き、受け入れテストを `check_done.py check` で確かめる。 (grader: 30-invariant-op-sequence/test-file-written, 30-invariant-op-sequence/check-passed, 30-invariant-op-sequence/check-by-script)
   - 受け入れテストは、1 回の操作で不変条件を破る変種 (`r` で始まる id) に加え、操作の列でだけ不変条件を破る変種 (`s` で始まる id) も落とす (`scripts.eval.score_results` で数え、`evals/mutant-record.json` に記録する)。 (grader: 未計測)
 
 - fixture: 改名の計画が「repository の中に旧 path を指す記述が残らない」を求める。`.gitignore` が無視する `.cache/` に旧 path の文字列があり、`src/README.md` の旧 path への言及は計画が別 issue で直すとして残す。
@@ -82,7 +82,7 @@
 - fixture: 計画は製品コードから `APP_ENV` の参照を無くし、試験は残す。試験は `src/__tests__/` 直下と `src/config/__tests__/` にある。
 - assertions:
   - [critical] 製品コードに `APP_ENV` が残らないことを AC にせず、要求の表で規約として範囲外に返し、Gate をこの要求で止めず、`APP_ENV` の文字列を走査するテストを書かない。 (grader: 17-convention-not-ac/convention-out-of-scope)
-  - 対象の repo には、計画と受け入れテストと土台のほかにファイルを足さず、変えない。 (grader: 17-convention-not-ac/repo-untouched)
+  - 対象の repo には、計画と受け入れテストのほかにファイルを足さず、変えない。 (grader: 17-convention-not-ac/repo-untouched)
 
 - fixture: 計画の保存の AC は、DB コンテナを起動して migration を流す `npm run test:db` でしか観測できない。
 - assertions:
@@ -93,7 +93,7 @@
 - assertions:
   - 最終回答の先頭に、依頼と仕様から抜き出した要求を、原文の引用付きで 1 件ずつ並べる。 (grader: 08-billing-dup-halt/requirements-listed)
   - [critical] `## MECE Review` が請求作成の重複と取消の欠落を挙げ、Gate を ready にしない (理由を書く)。 (grader: 08-billing-dup-halt/dup-billing, 08-billing-dup-halt/cancel-missing, 08-billing-dup-halt/gate-not-ready, 08-billing-dup-halt/gate-row)
-  - [critical] Gate が ready でないので受け入れテストと凍結の commit を作らず、Gate の理由と ready にするための不足条件を報告する。 (grader: 08-billing-dup-halt/halt-reported)
+  - [critical] Gate が ready でないので受け入れテストを書かず、Gate の理由と ready にするための不足条件を報告する。 (grader: 08-billing-dup-halt/halt-reported)
   - [critical] 計画本文の重複や欠落を自分で直さず、直したことを理由に Gate を ready にしない。 (grader: 08-billing-dup-halt/plan-body-unchanged)
   - 請求作成が呼ぶ先にあるアクセス判定の失敗分岐 (利用停止、権限不足) を呼び出し先まで辿って名指しし、基準にも実装タスクにも覆われていないことをレビューに書く。 (grader: 08-billing-dup-halt/permission-branch)
   - [critical] 取消の欠落を、製品コードに取消を実装して埋めない。 (grader: 08-billing-dup-halt/no-code-impl)
@@ -143,7 +143,7 @@
 - fixture: 要件は商品ごとのまとめ買い割引と「リリース後、staging の `GET /cart/total` が割引後の合計を返す」。runbook は「staging は main への push を job `deploy-staging` が自動で deploy する」。計画は `src/cart.js` に割引を足す。
 - assertions:
   - [critical] staging での観測には受け入れテストを書かず、観測の手段を添えて最終回答の未検証に並べる。 (grader: 29-untested-ac-staging/untested-ac-listed)
-  - 割引の受け入れテストを書き、`check_seal.py seal` で凍結の commit を作る。 (grader: 29-untested-ac-staging/seal-commit, 29-untested-ac-staging/test-file-written, 29-untested-ac-staging/seal-by-script)
+  - 割引の受け入れテストを書き、`check_done.py check` で確かめる。 (grader: 29-untested-ac-staging/check-passed, 29-untested-ac-staging/test-file-written, 29-untested-ac-staging/check-by-script)
 
 - fixture: 依頼は計画を名指しせず、パスワード再設定についてのこれまでの議論のうち、まだ曖昧な要求を問い返すよう頼む。議論で利用者は「登録済みのメールにだけリンクを送る」「未登録でも同じ画面を見せる」「リンクは三十分有効」「リンクは再送できる」「再設定しても、ほかの端末のログインは切らない」と述べ、AI の言い直しを確認した。再送の回数の上限は議論に無い。既存の試験 `test/password.test.js` は、パスワードを変えるとその利用者のセッションをすべて無効にすることを固定している。
 - assertions:
@@ -165,64 +165,46 @@
   - [critical] 移した画面は、URL を開いた時に出る内容で観測する。 (grader: 33-migration-impl-not-pinned/invite-observed)
   - 移した画面の旧実装の code が消えていることを AC にせず、規約として範囲外に返す。 (grader: 33-migration-impl-not-pinned/legacy-removal-out-of-scope)
 
-- fixture: repo には前の凍結 (旧い形式) の受け入れテスト `test/bulk-discount.acceptance.test.js` があり、製品コードを直接 import して AC-ID で始まる名前を持つ。土台 (`test/harness/`) は無い。計画はクーポンを足す。
+- fixture: repo には既存の受け入れテスト `test/bulk-discount.acceptance.test.js` があり、製品コードを直接 import して AC-ID で始まる名前を持つ。補助のディレクトリは無い。計画はクーポンを足す。
 - assertions:
-  - [critical] 前の凍結した受け入れテストを変えず、新しい受け入れテストと土台を `check_seal.py seal` で凍結する。 (grader: 34-existing-acceptance-tests/old-test-untouched, 34-existing-acceptance-tests/seal-commit, 34-existing-acceptance-tests/seal-by-script)
-  - 土台が無ければ、受け入れテストの置き場所の直下の `harness/` に作る。 (grader: 34-existing-acceptance-tests/harness-created)
+  - [critical] 既存の受け入れテストを上書きせず、新しい受け入れテストを `check_done.py check` で確かめる。 (grader: 34-existing-acceptance-tests/old-test-untouched, 34-existing-acceptance-tests/check-passed, 34-existing-acceptance-tests/check-by-script)
+  - 受け入れテスト専用の補助のディレクトリ (`harness/`) を作らない。 (grader: 34-existing-acceptance-tests/no-harness-dir)
 
-- fixture: 前の凍結 (新しい形式) は規則の基準「数量 0 で入れようとすると拒む」を持ち、`origin/main` に push 済みで、そのファイルは恒久に守られている。要求は「数量 0 で `add` すると、その商品を外す」と、その規則を変える。
+- fixture: 既存のテストは、カートにある商品を「数量 0 で入れようとすると拒む」ことを固定している。要求は「数量 0 で `add` すると、その商品を外す」と、その振る舞いを変える。
 - assertions:
-  - [critical] 要求が恒久に守られている規則の基準を変えるとき、その受け入れテストを書き直して自分の凍結に含め、置き換える AC-ID を記録する。 (grader: 35-rule-rewrite-supersedes/supersedes-recorded, 35-rule-rewrite-supersedes/rule-rewrite-reported)
-  - 凍結の commit を `check_seal.py seal` で作る。 (grader: 35-rule-rewrite-supersedes/seal-commit, 35-rule-rewrite-supersedes/seal-by-script)
-
-- fixture: 計画は前に凍結してあり (新しい形式、未 push)、土台 `test/harness/price.js` が製品コードを使わず計算を写していた。依頼は土台を直して凍結し直すよう言う。
-- assertions:
-  - [critical] 凍結し直した後、`check_seal.py check` が改ざんを出さず exit 0 を返す。 (grader: 36-reseal-after-harness-fix/check-green)
-  - 土台が製品コードを使う形に直っている。 (grader: 36-reseal-after-harness-fix/harness-uses-product)
-  - 凍結の commit を `check_seal.py seal` で作る。 (grader: 36-reseal-after-harness-fix/seal-by-script)
-
-- fixture: 前の凍結 (旧い形式。trailer は `Define-Done-Seal` と `Define-Done-Test-Command` だけ) は基準「数量 0 で入れようとすると拒む」を AC-ID 付きのテスト名で持ち、`origin/main` に push 済みで、テストは製品コードを直接 import する。要求は「数量 0 で `add` すると、その商品を外す」と、その基準を変える。
-- assertions:
-  - [critical] 旧い形式の凍結したテストを書き換えず、自分の凍結にも含めない。 (grader: 37-legacy-seal-superseded/legacy-test-untouched, 37-legacy-seal-superseded/legacy-not-in-seal)
-  - [critical] 要求が置き換える前の基準を `## MECE Review` に挙げる。 (grader: 37-legacy-seal-superseded/superseded-ac-recorded)
-  - 新しい基準の凍結の commit を `check_seal.py seal` で作る。 (grader: 37-legacy-seal-superseded/seal-commit, 37-legacy-seal-superseded/seal-by-script)
+  - [critical] 要求が既存のテストの固定する振る舞いを変えるとき、そのテストを書き直し、書き直したファイルと理由を `check` に渡して報告する。 (grader: 35-rule-rewrite-supersedes/rewrite-declared, 35-rule-rewrite-supersedes/rule-rewrite-reported)
+  - 受け入れテストを `check_done.py check` で確かめる。 (grader: 35-rule-rewrite-supersedes/check-by-script)
 
 - fixture: repo の test command (`npm test`) は全テストを 1 つのプロセスで流し (`--test-isolation=none`)、IP ごとの試行の計数はプロセスの中の module が持つ。既存のテストは決まった IP で、計数が空から始まることを前提にログインする。要求はログインの成功を監査ログに記録することで、応答と上限は変えない。
 - assertions:
-  - [critical] 凍結の前に repo の test command 全体を流し、既存のテストが落ちていないことを確かめる。 (grader: 38-shared-state-full-suite/full-suite-before-seal)
-  - 受け入れテストか土台が、既存のテストと共有する試行の計数を残さない (各テストの前か後に戻すか、既存のテストと別の IP を使う)。 (grader: 38-shared-state-full-suite/shared-state-restored)
-  - 凍結の commit を `check_seal.py seal` で作る。 (grader: 38-shared-state-full-suite/seal-by-script)
+  - [critical] `check` の前に repo の test command 全体を流し、既存のテストが落ちていないことを確かめる。 (grader: 38-shared-state-full-suite/full-suite-before-check)
+  - 受け入れテストが、既存のテストと共有する試行の計数を残さない (各テストの前か後に戻すか、既存のテストと別の IP を使う)。 (grader: 38-shared-state-full-suite/shared-state-restored)
+  - 受け入れテストを `check_done.py check` で確かめる。 (grader: 38-shared-state-full-suite/check-by-script)
 
 - fixture: 署名の library は型定義の doc comment に、受け付ける署名の方式の既定を ES256 と RS256 と書く。build 済みの実装 (読める形でない) は、実行環境が Ed25519 の鍵を作れると EdDSA を既定に足す。要求は「受け付ける署名の方式は指定せず、library の既定 (ES256、RS256) のままにする」と書く。
 - assertions:
   - [critical] `## Ground Review` が、この実行環境では library の既定に EdDSA が入り、要求の書く 2 つと食い違うことを衝突として挙げる。 (grader: 39-runtime-dependent-default/default-conflict)
   - 最終回答が、その食い違いを未決の判断か衝突として利用者に返す。 (grader: 39-runtime-dependent-default/conflict-reported)
 
-- fixture: 計画は前に凍結してあり (新しい形式、未 push)、土台が製品コードを使わず計算を写していた。作業ツリーには、まだ commit していない実装の途中の変更 (追跡済みのファイルの変更と、追跡していない新しいファイル) がある。依頼は土台を直して凍結し直すよう言う。
+- fixture: 計画の受け入れテストは前に書いて commit してあり、実装はまだ無い。依頼は、その後に要求を 2 つ変えたと言う。1 つは要求の取り下げで、もう 1 つは基準の期待値が変わる変更である。計画の 4 節の外は利用者が変更に合わせて直してあり (未 commit)、要件の文書は利用者が後で直すので触らないように言う。
 - assertions:
-  - [critical] 凍結し直した後も、作業ツリーの実装の途中の変更 (追跡済みの変更と追跡していないファイル) が残っている。 (grader: 40-reseal-with-impl-in-tree/impl-preserved, 40-reseal-with-impl-in-tree/untracked-preserved)
-  - 凍結し直した後、`check_seal.py check` が改ざんを出さず exit 0 を返す。 (grader: 40-reseal-with-impl-in-tree/check-green)
-  - 実装の途中の変更を凍結の commit に含めない。 (grader: 40-reseal-with-impl-in-tree/impl-not-sealed)
-
-- fixture: 計画は前に凍結してあり (新しい形式、未 push、凍結の commit は基準と要求の本文の hash を記録している)、実装はまだ無い。依頼は、凍結の後に要求を 2 つ変えたと言う。1 つは要求の取り下げで、もう 1 つは基準の期待値が変わる変更である。計画の 4 節の外は利用者が変更に合わせて直してあり (未 commit)、要件の文書は利用者が後で直すので触らないように言う。
-- assertions:
-  - [critical] 意味の変わった基準に旧い AC-ID を再利用せず新しい AC-ID を割り当て、意味の変わらない基準の AC-ID を保つ (`check_seal.py seal` と `reseal` が、同じ AC-ID で本文の変わった基準を拒む)。 (grader: 47-requirement-changed-after-seal/changed-criterion-new-id, 47-requirement-changed-after-seal/unchanged-id-kept)
+  - [critical] 意味の変わった基準に旧い AC-ID を再利用せず新しい AC-ID を割り当て、意味の変わらない基準の AC-ID を保つ。 (grader: 47-requirement-changed-after-seal/changed-criterion-new-id, 47-requirement-changed-after-seal/unchanged-id-kept)
   - 取り下げた要求の基準と意味の変わった基準の旧い AC-ID の行を、計画に残さない。 (grader: 47-requirement-changed-after-seal/old-ids-retired)
-  - [critical] 凍結し直した後、`check_seal.py check` が改ざんを出さず exit 0 を返し、凍結は取り下げた基準を持たない。 (grader: 47-requirement-changed-after-seal/check-green)
+  - [critical] 直した後の `check_done.py check` が exit 0 を返し、取り下げた基準のテストを数えない。 (grader: 47-requirement-changed-after-seal/check-green)
   - 変えた要求は利用者の発言を引用し、場所を `依頼` にする。 (grader: 47-requirement-changed-after-seal/changed-requirement-quotes-request)
-  - 凍結の commit を `check_seal.py` の `seal` か `reseal` で作る。 (grader: 47-requirement-changed-after-seal/seal-by-script)
+  - 受け入れテストを `check_done.py check` で確かめる。 (grader: 47-requirement-changed-after-seal/check-by-script)
   - 変えた要求が正本の文書と食い違うことを最終回答で返し、その文書は書き換えない。 (grader: 47-requirement-changed-after-seal/source-mismatch-reported, 47-requirement-changed-after-seal/requirements-doc-untouched)
 
-- fixture: 計画の実装は、変更前の tree に無い module を足す。受け入れテストの土台は、その module を通して振る舞いを観測する。
+- fixture: 計画の実装は、変更前の tree に無い module を足す。受け入れテストは、その module を通して振る舞いを観測する。
 - assertions:
-  - 試作の実装を渡さずに凍結するときは、土台がその module を実行時に import する (試作の実装か、凍結し直すときの作業ツリーでテストが通っていれば、`check_seal.py` は変更前の tree で読み込めない規則のテストを落ちたものと数える)。 (grader: 未計測)
+  - 試作の実装を渡さずに確かめるときは、テストがその module を実行時に import する (試作の実装か、退避する前の作業ツリーでテストが通っていれば、`check_done.py` は変更前の tree で読み込めない規則のテストを落ちたものと数える)。 (grader: 未計測)
 
 - fixture: repo は変更を終える前に `sh scripts/check.sh` (lint とテスト) を流す決まりを持ち、lint は並べ替えに比較の関数を渡さない `sort()` を拒む。要求と計画に欠落は無く、Gate は ready になる。
 - assertions:
-  - [critical] 凍結の前に、規則の基準のテストを通す実装で、そのテストが通ることを確かめる。 (grader: 41-seal-proof/green-before-seal)
-  - [critical] 凍結の前に、受け入れテストと土台に repo の check (lint を含む) を流す。 (grader: 41-seal-proof/check-before-seal)
-  - 凍結の commit を `check_seal.py seal` で作る。 (grader: 41-seal-proof/seal-by-script)
-  - 試作の実装を書く複製を `check_seal.py spike-open` で作る。 (grader: 41-seal-proof/spike-by-script)
+  - [critical] 規則の基準のテストを通す試作の実装で、そのテストが通ることを確かめる。 (grader: 41-seal-proof/green-with-spike)
+  - [critical] 受け入れテストに repo の check (lint を含む) を流す。 (grader: 41-seal-proof/repo-check-before-check)
+  - 受け入れテストを `check_done.py check` で確かめる。 (grader: 41-seal-proof/check-by-script)
+  - 試作の実装を書く複製を `check_done.py spike-open` で作る。 (grader: 41-seal-proof/spike-by-script)
   - 最終回答が、試作の実装の patch の path を返す。 (grader: 41-seal-proof/patch-path-returned)
 
 - fixture: 要件は、使われているタグを重複なく返すことを求め、「管理画面でのタグの一覧は今回は作らない」と「`npm test` が通る」も並べる。依頼は「判断はすべて推奨で決めてください」と言う。
@@ -246,14 +228,14 @@
   - [critical] 実装を終えた最後の報告が、要求を原文の引用付きで並べる。 (grader: 43-report-after-continuing/final-report-quotes-requirements)
   - 最後の報告が、要求を省かず 1 件ずつ並べる。 (grader: 43-report-after-continuing/final-report-keeps-every-requirement)
 
-- fixture: 同じ未検証の事柄が `## Ground Review` の未検証の結論と `## MECE Review` の要求の表の両方にあり、依頼が求める凍結の後の作業が、その事柄を確かめる。
+- fixture: 同じ未検証の事柄が `## Ground Review` の未検証の結論と `## MECE Review` の要求の表の両方にあり、依頼が求める受け入れテストの後の作業が、その事柄を確かめる。
 - assertions:
-  - 最後の報告が、同じ事柄を指す未検証を 1 行にまとめ、凍結の後の作業で確かめたものに確かめた方法と結果を添える。 (grader: 未計測)
+  - 最後の報告が、同じ事柄を指す未検証を 1 行にまとめ、後の作業で確かめたものに確かめた方法と結果を添える。 (grader: 未計測)
 
 - fixture: 計画の決定は、重複を除く補助の関数を export する形を選んでいる。repo の lint は、src のほかの file が import しない export を拒む。補助の関数を export しなくても要求は満たせ、受け入れ基準は変わらない。
 - assertions:
   - [critical] repo の検査が計画の決定どおりの形を拒んでも、計画の 4 節の外 (決定、変更対象) を書き換えない。 (grader: 44-spike-overturns-decision/plan-body-kept)
-  - 拒まれた形をやめても要求を満たせて、基準も外から観測できるものも変わらないなら、Gate を止めずに凍結まで進む。 (grader: 44-spike-overturns-decision/sealed)
+  - 拒まれた形をやめても要求を満たせて、基準も外から観測できるものも変わらないなら、Gate を止めずに `check` が通るまで進む。 (grader: 44-spike-overturns-decision/checked)
   - [critical] 最終回答が、決定どおりにできなかった点と、それを拒んだ検査を利用者に返す。 (grader: 44-spike-overturns-decision/overturned-decision-reported)
 
 - fixture: `## Ground Review` が反証できずに残したリスクのうち、要求にも既存の保証にも支えが無く、実装の単体テストで守るものがある。そのリスクの条件には、守る実装が無くても同じ結果になる入力が含まれる。
@@ -274,8 +256,25 @@
 - assertions:
   - [critical] 請求作成の対応を、読めるコードを根拠に判定する。 (grader: 14-holdout-unverified/billing-decided)
   - [critical] 再試行の対応を未検証として扱い、適合とも計画の欠落とも断定しない。 (grader: 14-holdout-unverified/retry-unverified)
-  - [critical] 必須の比較の根拠が欠けているので Gate を ready にせず、受け入れテストと凍結の commit を作らず、Gate の理由を報告する。 (grader: 14-holdout-unverified/gate-not-ready, 14-holdout-unverified/halt-reported)
+  - [critical] 必須の比較の根拠が欠けているので Gate を ready にせず、受け入れテストを書かず、Gate の理由を報告する。 (grader: 14-holdout-unverified/gate-not-ready, 14-holdout-unverified/halt-reported)
 
 - fixture: 既存の計画の `AC-004` は「期限後は変更しない」を意味するが、更新した仕様は「期限後は新しいリンクを発行する」へ意味を変え、その置き換えが許可されている。
 - assertions:
   - [critical] 意味が変わった基準に `AC-004` を再利用せず新しい AC-ID を割り当て、他の既存 AC-ID を振り直さない。 (grader: 15-ac-id-semantic-change/ac-004-not-reused, 15-ac-id-semantic-change/new-id-ac-006, 15-ac-id-semantic-change/existing-ids-kept, 15-ac-id-semantic-change/no-renumber, 15-ac-id-semantic-change/new-criterion-semantics)
+
+- fixture: repo には既存のテスト `test/cart.test.js` と補助 `test/support.js` があり、テストの置き場所は `test/` の直下だけである。依頼は受け入れテストの置き場所もファイル名も名指ししない。
+- assertions:
+  - [critical] 受け入れテストを、既存のテストのファイルか、既存のテストと同じ置き場所の同じ名前の形のファイルに書き、新しいディレクトリを作らない。 (grader: 48-follow-existing-tests/no-new-directory, 48-follow-existing-tests/no-new-name-shape)
+  - [critical] 既存のテストと補助には足すだけにし (既存の行を変えると `check_done.py check` が拒む)、`check` が通り、commit を作らない。 (grader: 48-follow-existing-tests/check-passed, 48-follow-existing-tests/no-commit)
+  - ファイル名に issue の番号や計画の名前を入れない。 (grader: 未計測)
+
+- fixture: repo にテストが 1 つも無く、test command も無い。依頼は受け入れテストの置き場所を名指ししない。
+- assertions:
+  - [critical] 受け入れテストを書かず、テストの置き場所が無いことを不足情報として返す。 (grader: 49-no-test-location/no-test-written, 49-no-test-location/location-missing-reported)
+  - 計画の 4 節は書く。 (grader: 49-no-test-location/criteria-written)
+
+- fixture: 未計測の規則。
+- assertions:
+  - AC が観測する外の境界を通る既存のテストが無い AC は、テストを書かず未検証に並べる。実装の選択を固定する既存の試験を手本にしない。 (grader: 未計測)
+  - repo の規則が新しいディレクトリを求めるときと、依頼が名指しした置き場所が無いときだけディレクトリを作り、理由を `check` に渡す。 (grader: 未計測)
+  - 実装が HEAD に入っている規則の基準は `implemented` に挙げ、最終回答に並べる。 (grader: 未計測)

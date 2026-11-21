@@ -52,4 +52,4 @@ EOF
 git add -A && git commit -qm base
 ```
 
-`repo/` の plans/tags.md を /define-done してください。受け入れテストは `repo/test/` の下に `*.acceptance.test.js` として `node:test` で書いてください。Gate が ready なら、続けて `repo/src/tags.js` を受け入れテストが通るまで実装してください。commit は凍結の commit だけにしてください。
+`repo/` の plans/tags.md を /define-done してください。受け入れテストは `repo/test/` の下に `*.acceptance.test.js` として `node:test` で書いてください。Gate が ready なら、続けて `repo/src/tags.js` を受け入れテストが通るまで実装してください。commit はしないでください。

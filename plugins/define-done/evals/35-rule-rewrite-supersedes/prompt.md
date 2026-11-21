@@ -44,16 +44,13 @@ import { createCart } from './harness/cart.js';
 const catalog = new Map([['pen', 120]]);
 
 test('数量 0 で入れようとすると拒む', () => {
-  assert.throws(() => createCart({ catalog }).add('pen', 0));
+  const cart = createCart({ catalog });
+  cart.add('pen', 2);
+  assert.throws(() => cart.add('pen', 0));
 });
 EOF
 git add test/harness/cart.js test/quantity.rule.acceptance.test.js
-git commit -qm "test: quantity.md の受け入れテスト" -m "Define-Done-Seal: AC-001
-Define-Done-Rule: AC-001
-Define-Done-Rule-Files: test/quantity.rule.acceptance.test.js
-Define-Done-Files: test/quantity.rule.acceptance.test.js, test/harness/cart.js
-Define-Done-Test: AC-001 = test/quantity.rule.acceptance.test.js › 数量 0 で入れようとすると拒む
-Define-Done-Test-Command: node --test --test-reporter=junit --test-reporter-destination={report} test/quantity.rule.acceptance.test.js"
+git commit -qm "test: 数量 0 を拒むテスト"
 git push -q origin main
 cat > docs/requirements/remove-by-zero.md <<'EOF'
 # 数量 0 で商品を外す
