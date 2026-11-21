@@ -38,6 +38,9 @@ QUOTE_OPENING = "(「"
 RESIDUAL_RISKS = "残ったリスク"
 RISK_DESTINATIONS = ("`AC-NNN`", "`実装のテスト:`", "`既存のテスト:`", "`規約`", "`未検証:`")
 RISK_DESTINATION = re.compile(r"AC-\d{3}|(?:実装のテスト|既存のテスト|未検証)[:：]|規約")
+IMPLEMENTATION_TEST_ROW = re.compile(r"実装のテスト[:：]")
+EXISTING_TEST_ROW = re.compile(r"既存のテスト[:：](.*)")
+PATH_TOKEN = re.compile(r"[\w@.+\-/]+")
 NOTHING_NOTED = re.compile(r"-?\s*(?:無い|無し|なし|ない|該当なし|該当無し)(?:[\s。.、(（].*)?")
 TABLE_RULE = re.compile(r"^\|[\s:|-]+\|$")
 IMPORT_LINE = re.compile(r"\s*(?:import\b|from\s+\S+\s+import\b|require(?:_relative)?\b|(?:const|let|var)\s[^=]*=\s*require\()")
@@ -300,6 +303,7 @@ def final_answer(plan, checked):
         ("実装の後に確かめた基準 (実装の前に落ちることは確かめていない)", checked.get("implemented", [])),
         ("基準の無い要求", [line for line, cells in rows if len(cells) > 1 and REQUIREMENT_ID.fullmatch(cells[0]) and ROW_WITHOUT_CRITERION.match(cells[1])]),
         ("実装が足すテスト", [line for line, cells in rows if len(cells) > 1 and cells[1].startswith("実装のテスト")]),
+        ("実装のテストの対応 (作業ツリーの実装で通った)", [f"{test['risk']}: {test['file']}「{test['name']}」" for test in checked.get("impl_tests", [])]),
         ("未決の判断", noted_lines(ground, lambda title: title.startswith("未決"))),
         ("未検証", list(dict.fromkeys(unverified))),
         (REJECTED_DECISIONS, [line for line, _ in table_rows(rejected)[1:]]),
@@ -312,6 +316,7 @@ def final_answer(plan, checked):
         f"テストを確かめた AC: {', '.join(checked['acs'])}" if checked.get("acs") else "テストを確かめた AC: 無い (`check` が通っていない)",
         *([f"ファイル: {', '.join(checked['files'])}"] if checked.get("files") else []),
         *([f"試作の patch: {patch}"] if patch and Path(patch).is_file() else []),
+        *(["実装: 作業ツリーの実装で、テストを対応させた基準がすべて通った"] if checked.get("worktree") else []),
     ]
     for title, found in groups:
         if found:
@@ -459,7 +464,79 @@ def spike_close(repo, work):
     patch.write_text((f"{PLAN_BASELINE}: {baseline}\n" if baseline else "") + diff, encoding="utf-8")
     git(repo, "worktree", "remove", "--force", str(work))
     print(f"spike: {patch}")
+    print(f"deviations: 試作が計画の決定と違う形を取ったなら、`## MECE Review` の `### {REJECTED_DECISIONS}` の表に書き、`check` の JSON の \"deviations\" に決定の ID を挙げる (違わなければ空の配列)")
     return []
+
+
+def risk_rows(review):
+    rows = []
+    for title, text in subsections(review):
+        if RESIDUAL_RISKS in title:
+            rows.extend((cells[0], cells[1].lstrip("`* ")) for _, cells in table_rows(text)[1:] if len(cells) > 1)
+    return rows
+
+
+def guarded_risks(repo, review):
+    errors, files, implementation_risks = [], [], []
+    for risk, destination in risk_rows(review):
+        existing = EXISTING_TEST_ROW.match(destination)
+        if IMPLEMENTATION_TEST_ROW.match(destination):
+            implementation_risks.append(risk)
+        elif existing:
+            named = [token.strip(".") for token in PATH_TOKEN.findall(existing.group(1)) if "/" in token or "." in token.strip(".")]
+            tracked = [path for path in named if tracked_at_head(repo, path)]
+            if not tracked:
+                errors.append(f"guard: 残ったリスクの表の「{risk}」の守る先の既存のテストが HEAD に無い (`既存のテスト:` の後に、変更の前からあるテストのファイルを repo からの相対 path で書く)")
+            files.extend(tracked)
+    return errors, list(dict.fromkeys(files)), implementation_risks
+
+
+def decision_findings(review, deviations):
+    if deviations is None:
+        return []
+    rejected = next((text for title, text in subsections(review) if title == REJECTED_DECISIONS), "")
+    recorded = {cells[0].strip("`* ") for _, cells in table_rows(rejected)[1:] if cells and cells[0].strip("`* ")}
+    declared = {str(decision).strip() for decision in deviations}
+    errors = [f"deviations: {decision} を申告したが、`## MECE Review` の `### {REJECTED_DECISIONS}` の表に行が無い (`| <決定の ID> | <拒んだ検査とその理由> | <代わりに取る形> |` を書く)" for decision in sorted(declared - recorded)]
+    errors += [f"deviations: `### {REJECTED_DECISIONS}` の表に {decision} があるが、標準入力の JSON の \"deviations\" に挙げていない" for decision in sorted(recorded - declared)]
+    return errors
+
+
+def implementation_test_findings(implementation_tests, implementation_risks, complete):
+    errors = []
+    for test in implementation_tests:
+        if not test["risk"] or not test["file"] or not test["name"] or "\n" in test["name"]:
+            errors.append(f"impl_tests: 対応 {test} の risk、file、name のどれかが読めない")
+        elif test["risk"] not in implementation_risks:
+            errors.append(f"impl_tests: 「{test['risk']}」は、残ったリスクの表の守る先が `実装のテスト:` の行のリスクでない (表のリスクの文をそのまま渡す)")
+    if complete:
+        mapped = {test["risk"] for test in implementation_tests}
+        errors.extend(f"impl_tests: 残ったリスクの表の「{risk}」を守る実装のテストの対応が無い (標準入力の JSON の \"impl_tests\" に risk、file、name を挙げる)" for risk in implementation_risks if risk not in mapped)
+    return errors
+
+
+def guard_findings(repo, guard_command, guard_files, implementation_tests, tree):
+    if not guard_command or not (guard_files or implementation_tests):
+        return []
+    _, output, entries = run_tests(repo, guard_command)
+    errors = []
+    for path in guard_files:
+        states = [entry["state"] for entry in entries if in_files(entry, [path])]
+        if "fail" in states:
+            errors.append(f"guard: 既存のテスト {path} が{tree}で落ちた (実装が既存の保証を壊していないかを確かめる)")
+        elif "pass" not in states:
+            errors.append(f"guard: 既存のテスト {path} が{tree}で実行されなかった (guard_command がそのファイルを流し、結果を {REPORT_PLACEHOLDER} に書くようにする)")
+    for test in implementation_tests:
+        states = [entry["state"] for entry in entries if matches(entry, test)]
+        if not states:
+            errors.append(f"guard: 実装のテスト「{test['name']}」({test['file']}) が{tree}で実行されなかった (guard_command がそのファイルを流し、テスト名の対応を確かめる)")
+        elif any(state != "pass" for state in states):
+            errors.append(f"guard: 実装のテスト「{test['name']}」({test['file']}) が{tree}で通らない")
+    if errors:
+        print(output[-4000:])
+    else:
+        print(f"guard: pass ({tree})")
+    return errors
 
 
 def remembered(repo):
@@ -534,9 +611,19 @@ def check(repo, spec_text):
     mapping = [{"ac": str(test.get("ac", "")), "file": str(test.get("file", "")), "name": str(test.get("name", ""))} for test in spec.get("tests") or []]
     rewrites, new_dirs = noted(spec.get("rewrites"), "file"), noted(spec.get("new_dirs"), "path")
     implemented = sorted({str(ac) for ac in spec.get("implemented") or []})
+    worktree, guard_command, deviations = spec.get("worktree") is True, str(spec.get("guard_command") or ""), spec.get("deviations")
+    implementation_tests = [{"risk": str(test.get("risk", "")).strip(), "file": str(test.get("file", "")), "name": str(test.get("name", ""))} for test in spec.get("impl_tests") or [] if isinstance(test, dict)]
     errors = []
     if REPORT_PLACEHOLDER not in test_command:
         errors.append(f"command: test_command に結果の出力先 {REPORT_PLACEHOLDER} が無い")
+    if guard_command and REPORT_PLACEHOLDER not in guard_command:
+        errors.append(f"command: guard_command に結果の出力先 {REPORT_PLACEHOLDER} が無い")
+    if worktree and spike:
+        errors.append("worktree: `worktree` と `spike` は一緒に渡さない (実装の前は試作の patch を `spike` に、実装の後は `\"worktree\": true` を渡す)")
+    if deviations is not None and not isinstance(deviations, list):
+        errors.append("deviations: 決定の ID の配列で渡す (違う形を取った決定が無ければ空の配列)")
+    elif spike and deviations is None:
+        errors.append(f"deviations: 試作が計画の決定と違う形を取ったかを申告する。違わなければ `\"deviations\": []` を渡す。違えば決定の ID を挙げ、`## MECE Review` の `### {REJECTED_DECISIONS}` の表に書く (計画の 4 節の外は直さない)")
     missing = [path for path in files if not (Path(repo) / path).is_file()]
     if missing:
         errors.append(f"files: {', '.join(missing)} が無い")
@@ -565,31 +652,62 @@ def check(repo, spec_text):
         errors.extend(spike_findings(repo, spike, files))
         if not errors:
             errors.extend(baseline_findings(plan, spike))
+    guard_files, implementation_risks = [], []
+    if not errors:
+        review = plan_sections(plan.read_text(encoding="utf-8"))["MECE Review"][0]
+        found, guard_files, implementation_risks = guarded_risks(repo, review)
+        errors += found + decision_findings(review, deviations) + implementation_test_findings(implementation_tests, implementation_risks, worktree)
+        if not guard_command and ((spike or worktree) and guard_files or worktree and implementation_tests):
+            errors.append(f"guard: 残ったリスクの表の既存のテストと実装のテストを実装のある tree で流すコマンドを `guard_command` に渡す (結果を {REPORT_PLACEHOLDER} に JUnit XML か RSpec の JSON で書く)")
     aside = SetAside(repo, outside_paths(repo, files))
+    if worktree and not errors and not aside.paths:
+        errors.append("worktree: 渡したファイルの外に変更が無い (実装が作業ツリーに無い。実装が HEAD に入っているなら `worktree` を渡さず、標準入力の JSON の \"implemented\" に基準を挙げる)")
     if errors:
         return errors
     new_files = sorted({test["file"] for test in mapping if not tracked_at_head(repo, test["file"])})
+    guard = {"command": guard_command, "files": guard_files, "tests": implementation_tests}
     try:
-        passing = passing_criteria(kind_states(repo, test_command, new_files, mapping, kinds)) if aside.paths and not spike else set()
-        aside.stash()
-        errors = check_in_tree(repo, aside, test_command, new_files, mapping, kinds, spike, check_command, passing, implemented)
+        proved, passing = {}, set()
+        if worktree:
+            errors, proved = worktree_findings(repo, test_command, new_files, mapping, kinds, check_command, guard)
+            passing = {ac for ac, state in proved.items() if state == "pass"}
+        elif aside.paths and not spike:
+            passing = passing_criteria(kind_states(repo, test_command, new_files, mapping, kinds, implementation_tests))
+        if not errors:
+            aside.stash()
+            errors = check_in_tree(repo, aside, test_command, new_files, mapping, kinds, spike, "" if worktree else check_command, passing, implemented, guard, proved)
         if not errors:
             print(f"checked: {', '.join(sorted(kinds))}")
-            remember(repo, plan, {"acs": sorted(kinds), "files": written, "rewrites": rewrites, "new_dirs": new_dirs, "implemented": implemented, "spike": str(Path(spike).expanduser().absolute()) if spike else ""})
+            remember(repo, plan, {"acs": sorted(kinds), "files": written, "rewrites": rewrites, "new_dirs": new_dirs, "implemented": implemented, "spike": str(Path(spike).expanduser().absolute()) if spike else "", "worktree": worktree, "impl_tests": implementation_tests if worktree else []})
     except RuntimeError as exc:
         errors = [f"git: {exc}"]
     return errors + aside.restore()
+
+
+def worktree_findings(repo, test_command, new_files, mapping, kinds, check_command, guard):
+    trial = kind_states(repo, test_command, new_files, mapping, kinds, guard["tests"])
+    errors = trial["unmatched"] + list(trial["missing"].values())
+    for ac, state in sorted(trial["outcomes"].items()):
+        if state != "pass" and state != "missing":
+            errors.append(f"worktree: {ac} が作業ツリーの実装で通らない (実装を直す。実装の途中で種類だけを確かめるなら `worktree` を渡さない)")
+    if errors:
+        print(trial["output"][-4000:])
+        return errors, trial["outcomes"]
+    errors = run_check(repo, check_command) if check_command else []
+    if not errors:
+        errors = guard_findings(repo, guard["command"], guard["files"], guard["tests"], "作業ツリーの実装")
+    return errors, trial["outcomes"]
 
 
 def is_file_entry(entry, test_files):
     return any(same_file(name, path) for name in entry["names"] if name for path in test_files)
 
 
-def kind_states(repo, test_command, new_files, mapping, kinds):
+def kind_states(repo, test_command, new_files, mapping, kinds, implementation_tests=()):
     code, output, entries = run_tests(repo, test_command)
     unmatched = []
     for entry in entries:
-        if in_files(entry, new_files) and not is_file_entry(entry, new_files) and not any(matches(entry, test) for test in mapping):
+        if in_files(entry, new_files) and not is_file_entry(entry, new_files) and not any(matches(entry, test) for test in [*mapping, *implementation_tests]):
             unmatched.append(f"tests: 対応する AC が無いテスト「{next(name for name in entry['names'] if name)}」がある")
     states = states_by_ac(entries, mapping)
     outcomes = {ac: outcome(states.get(ac)) for ac in kinds}
@@ -613,16 +731,16 @@ def passing_criteria(run):
 UNLOADED_HINT = "変更前の tree に無い module をテストが静的に import していると、テストは落ちずに実行されない。試作の実装の patch を `spike` に渡すか、その module を実行時に import する"
 
 
-def check_in_tree(repo, aside, test_command, new_files, mapping, kinds, spike, check_command, passing, implemented):
+def check_in_tree(repo, aside, test_command, new_files, mapping, kinds, spike, check_command, passing, implemented, guard, proved):
     if check_command and not spike:
         errors = run_check(repo, check_command)
         if errors:
             return errors
-    run = kind_states(repo, test_command, new_files, mapping, kinds)
+    run = kind_states(repo, test_command, new_files, mapping, kinds, guard["tests"])
     now, output = run["outcomes"], run["output"]
     unloaded = {ac for ac in run["never_ran"] if kinds[ac] == "rule"}
     errors = run["unmatched"] + [message for ac, message in run["missing"].items() if ac not in unloaded]
-    proved = {}
+    implementation = "spike" if spike else "worktree" if proved else ""
     if spike and not errors:
         patch = str(Path(spike).resolve())
         git(repo, "apply", patch)
@@ -637,6 +755,8 @@ def check_in_tree(repo, aside, test_command, new_files, mapping, kinds, spike, c
                 print(trial["output"][-4000:])
             elif check_command:
                 errors = run_check(repo, check_command)
+            if not errors:
+                errors = guard_findings(repo, guard["command"], guard["files"], [], "試作の実装")
         finally:
             git(repo, "apply", "-R", patch)
         if errors:
@@ -651,7 +771,7 @@ def check_in_tree(repo, aside, test_command, new_files, mapping, kinds, spike, c
     for ac, kind in sorted(kinds.items()):
         state = now[ac]
         expected = "fail" if kind == "rule" and ac not in implemented else "pass"
-        print(f"{ac}: {kind}{' implemented' if ac in implemented else ''}{f' spike={proved[ac]}' if spike else ''} now={state}")
+        print(f"{ac}: {kind}{' implemented' if ac in implemented else ''}{f' {implementation}={proved[ac]}' if implementation else ''} now={state}")
         if state != "missing" and state != expected:
             hint = " (実装が HEAD に入っているなら、標準入力の JSON の \"implemented\" に挙げる)" if kind == "rule" and state == "pass" else ""
             errors.append(f"kind: {ac} は{'規則' if kind == 'rule' else '非影響'}の基準だが、今の tree で {state} だった{hint}")
