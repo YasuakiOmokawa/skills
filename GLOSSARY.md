@@ -189,7 +189,7 @@ _Avoid_: 検証の対応付け、Verification Plan (散文の oracle を指す)
 _Avoid_: 土台、harness (受け入れテスト専用の入口を作っていた旧い仕組み)
 
 **凍結** (seal、旧称: 封):
-define-done 5.x までが、受け入れテストと計画を固定するために作っていた commit (`Define-Done-Seal:` の trailer を持つ)。6.0.0 からは作らない。enforce-conventions は、過去の凍結の commit のファイルを保護するパスとして扱い続ける。
+define-done 5.x までが、受け入れテストと計画を固定するために作っていた commit (`Define-Done-Seal:` の trailer を持つ)。6.0.0 からは作らない。
 
 ### 規約の担保 (enforce-conventions)
 
