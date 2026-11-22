@@ -114,6 +114,11 @@ def in_files(entry, paths):
     return any(same_file(candidate, path) for candidate in entry["files"] for path in paths)
 
 
+def at_path(entry, paths):
+    reported = [candidate.replace("\\", "/").removeprefix("./") for candidate in entry["files"]]
+    return any(candidate == path or candidate.endswith("/" + path) for candidate in reported for path in paths)
+
+
 def matches(entry, test):
     return in_files(entry, [test["file"]]) and any(name == test["name"] or name.endswith(test["name"]) for name in entry["names"] if name)
 
@@ -397,7 +402,7 @@ def plan_findings(plan, tested):
         if ROW_WITHOUT_CRITERION.match(cell):
             continue
         named = AC_ID.findall(cell)
-        if not named:
+        if not AC_ID.match(cell.lstrip(" \t`*")):
             errors.append(f"plan: 要求の表の {requirement} の行が、対応する AC でも `未検証:`、`範囲外:`、`不足情報:` でも始まらない")
         elif not any(requirement in (criteria.get(ac, {}).get("sources") or ()) for ac in named):
             errors.append(f"plan: 要求の表は {requirement} を {', '.join(named)} に対応させているが、そのどれも出典に {requirement} を挙げていない (出典に足すか、行を `未検証:`、`範囲外:`、`不足情報:` のどれかにする)")
@@ -664,7 +669,7 @@ def check(repo, spec_text):
         errors.append("worktree: 渡したファイルの外に変更が無い (実装が作業ツリーに無い。実装が HEAD に入っているなら `worktree` を渡さず、標準入力の JSON の \"implemented\" に基準を挙げる)")
     if errors:
         return errors
-    new_files = sorted({test["file"] for test in mapping if not tracked_at_head(repo, test["file"])})
+    new_files = [path for path in written if not tracked_at_head(repo, path)]
     guard = {"command": guard_command, "files": guard_files, "tests": implementation_tests}
     try:
         proved, passing = {}, set()
@@ -681,6 +686,12 @@ def check(repo, spec_text):
             remember(repo, plan, {"acs": sorted(kinds), "files": written, "rewrites": rewrites, "new_dirs": new_dirs, "implemented": implemented, "spike": str(Path(spike).expanduser().absolute()) if spike else "", "worktree": worktree, "impl_tests": implementation_tests if worktree else []})
     except RuntimeError as exc:
         errors = [f"git: {exc}"]
+    except subprocess.TimeoutExpired as exc:
+        errors = [f"command: {exc.timeout:.0f} 秒で終わらなかった ({exc.cmd})"]
+    except BaseException:
+        for error in aside.restore():
+            print(error)
+        raise
     return errors + aside.restore()
 
 
@@ -706,8 +717,12 @@ def is_file_entry(entry, test_files):
 def kind_states(repo, test_command, new_files, mapping, kinds, implementation_tests=()):
     code, output, entries = run_tests(repo, test_command)
     unmatched = []
+    mapped_files = {test["file"] for test in mapping}
+    mapped_new_files = [path for path in new_files if path in mapped_files]
+    unmapped_new_files = [path for path in new_files if path not in mapped_files]
     for entry in entries:
-        if in_files(entry, new_files) and not is_file_entry(entry, new_files) and not any(matches(entry, test) for test in [*mapping, *implementation_tests]):
+        in_new_file = in_files(entry, mapped_new_files) or at_path(entry, unmapped_new_files)
+        if in_new_file and not is_file_entry(entry, new_files) and not any(matches(entry, test) for test in [*mapping, *implementation_tests]):
             unmatched.append(f"tests: 対応する AC が無いテスト「{next(name for name in entry['names'] if name)}」がある")
     states = states_by_ac(entries, mapping)
     outcomes = {ac: outcome(states.get(ac)) for ac in kinds}
@@ -719,7 +734,7 @@ def kind_states(repo, test_command, new_files, mapping, kinds, implementation_te
             hint = f" このファイルで流れたテスト: {'; '.join(ran)}" if ran else ""
             missing[ac] = f"missing: {ac} のテストが実行されなかった (テスト名の対応か、import やセットアップの失敗を直す)。{hint}".rstrip("。 ")
     never_ran = {ac for ac in missing if "skipped" not in states.get(ac, [])}
-    return {"outcomes": outcomes, "unmatched": unmatched, "missing": missing, "never_ran": never_ran, "output": output}
+    return {"outcomes": outcomes, "states": states, "unmatched": unmatched, "missing": missing, "never_ran": never_ran, "output": output}
 
 
 def passing_criteria(run):
@@ -740,12 +755,11 @@ def check_in_tree(repo, aside, test_command, new_files, mapping, kinds, spike, c
     now, output = run["outcomes"], run["output"]
     unloaded = {ac for ac in run["never_ran"] if kinds[ac] == "rule"}
     errors = run["unmatched"] + [message for ac, message in run["missing"].items() if ac not in unloaded]
-    implementation = "spike" if spike else "worktree" if proved else ""
     if spike and not errors:
         patch = str(Path(spike).resolve())
         git(repo, "apply", patch)
         try:
-            trial = kind_states(repo, test_command, new_files, mapping, kinds)
+            trial = kind_states(repo, test_command, new_files, mapping, kinds, guard["tests"])
             proved, passing = trial["outcomes"], passing_criteria(trial)
             errors = trial["unmatched"] + list(trial["missing"].values())
             for ac, state in sorted(proved.items()):
@@ -761,12 +775,13 @@ def check_in_tree(repo, aside, test_command, new_files, mapping, kinds, spike, c
             git(repo, "apply", "-R", patch)
         if errors:
             return errors
+    implementation = ("spike" if spike else "worktree") if proved else ""
     for ac in sorted(unloaded - passing):
         errors.append(f"{run['missing'][ac]}。{UNLOADED_HINT}")
     if aside.sha and any(error.startswith("missing:") for error in errors):
         errors.append(f"missing: 渡したファイルの外の変更 ({len(aside.paths)} 件) は退避して流している。受け入れテストが、渡していない変更に頼っていないかを確かめる")
     for ac in sorted(unloaded & passing):
-        now[ac] = "fail"
+        now[ac] = outcome(["fail" if state == "missing" else state for state in run["states"][ac]])
         print(f"unloaded: {ac} のテストは変更前の tree で読み込めず実行されなかった。実装のある tree では通ったので、落ちたものと数える")
     for ac, kind in sorted(kinds.items()):
         state = now[ac]
