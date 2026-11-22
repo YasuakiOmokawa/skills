@@ -1132,6 +1132,142 @@ class CheckCommandTest(unittest.TestCase):
         self.assertIn("spike", line)
 
 
+    def test_spike_with_a_test_name_that_does_not_match_states_the_reason_and_the_exit_code(self):
+        patch = self.spike_patch()
+        tests = [TESTS[0], ("AC-002", "test/a.keep.test.js", "g keeps its texts")]
+        code, out = run("check", str(self.root), stdin=check_spec(REPORT_COMMAND, RULE_FILES, KEEP_FILES, tests, spike=patch))
+        self.assertEqual(code, 1)
+        self.assertIn("missing: AC-002", out)
+        self.assertIn("exit: 1", out)
+
+    def test_spike_refused_before_the_trial_restores_changes_outside_the_given_files(self):
+        patch = self.spike_patch()
+        self.repo.write("src/a.js", "export const f = () => 0; // wip\n")
+        tests = [TESTS[0], ("AC-002", "test/a.keep.test.js", "g keeps its texts")]
+        code, out = run("check", str(self.root), stdin=check_spec(REPORT_COMMAND, RULE_FILES, KEEP_FILES, tests, spike=patch))
+        self.assertEqual(code, 1)
+        self.assertEqual(self.stash_list(), [])
+        self.assertEqual((self.root / "src/a.js").read_text(), "export const f = () => 0; // wip\n")
+
+    def check_with_a_test_run_that_raises_after_the_set_aside(self, error):
+        self.write_implementation_in_tree()
+        original = check_done.run_tests
+
+        def raising_run_tests(cwd, command):
+            if self.stash_list():
+                raise error
+            return original(cwd, command)
+
+        check_done.run_tests = raising_run_tests
+        try:
+            return self.check()
+        finally:
+            check_done.run_tests = original
+
+    def test_test_command_that_times_out_after_the_set_aside_states_the_reason_and_restores_the_changes(self):
+        code, out = self.check_with_a_test_run_that_raises_after_the_set_aside(subprocess.TimeoutExpired("node --test", 1800))
+        self.assertEqual(code, 1)
+        self.assertIn("command: 1800 秒で終わらなかった (node --test)", out)
+        self.assertEqual(self.stash_list(), [])
+        self.assertTrue((self.root / "src/one.js").exists())
+
+    def test_an_interrupt_after_the_set_aside_restores_the_changes_before_it_propagates(self):
+        with self.assertRaises(KeyboardInterrupt):
+            self.check_with_a_test_run_that_raises_after_the_set_aside(KeyboardInterrupt())
+        self.assertEqual(self.stash_list(), [])
+        self.assertTrue((self.root / "src/one.js").exists())
+
+    VACUOUS_TEST = "test('g is a function', () => assert.equal(typeof g, 'function'));\n"
+
+    def test_check_refuses_a_rule_with_a_test_that_passes_before_the_change_and_a_test_that_cannot_load(self):
+        patch = self.spike_patch()
+        self.write_rule_test_on_a_module_that_head_lacks()
+        self.repo.write("test/a.keep.test.js", KEEP_TEST + self.VACUOUS_TEST)
+        tests = [*TESTS, ("AC-001", "test/a.keep.test.js", "g is a function")]
+        code, out = run("check", str(self.root), stdin=check_spec(REPORT_COMMAND, RULE_FILES, [*KEEP_FILES, "test/harness/new.js"], tests, spike=patch))
+        self.assertEqual(code, 1)
+        self.assertIn("kind: AC-001 は規則の基準だが、今の tree で mixed だった", out)
+
+    def test_check_counts_a_rule_with_a_failing_test_and_a_test_that_cannot_load_as_failing(self):
+        patch = self.spike_patch()
+        self.repo.write("test/harness/new.js", self.NEW_HARNESS)
+        self.repo.write("test/a.new.test.js", "import { test } from 'node:test';\nimport assert from 'node:assert/strict';\nimport { one } from './harness/new.js';\ntest('one is 1', () => assert.equal(one, 1));\n")
+        tests = [*TESTS, ("AC-001", "test/a.new.test.js", "one is 1")]
+        spec = check_spec(REPORT_COMMAND + " test/a.new.test.js", [*RULE_FILES, "test/a.new.test.js"], [*KEEP_FILES, "test/harness/new.js"], tests, spike=patch)
+        code, out = run("check", str(self.root), stdin=spec)
+        self.assertEqual(code, 0, out)
+        self.assertIn("unloaded: AC-001", out)
+        self.assertIn("AC-001: rule spike=pass now=fail", out)
+
+    def test_check_refuses_a_new_test_file_whose_tests_have_no_criterion(self):
+        self.repo.write("test/a.extra.test.js", "import { test } from 'node:test';\ntest('extra', () => {});\n")
+        code, out = self.check(keep=[*KEEP_FILES, "test/a.extra.test.js"], command=REPORT_COMMAND + " test/a.extra.test.js")
+        self.assertEqual(code, 1)
+        self.assertIn("対応する AC が無いテスト「extra」", out)
+
+    def test_check_refuses_a_requirement_row_that_names_its_criterion_after_other_text(self):
+        self.repo.write("plan.md", plan_text([("AC-001", "規則"), ("AC-002", "非影響")], rows=["| R-1 | 対応は後で決める (参考: AC-001) |"]))
+        code, out = self.check()
+        self.assertEqual(code, 1)
+        self.assertIn("要求の表の R-1 の行が、対応する AC でも", out)
+
+    def test_check_accepts_a_requirement_row_whose_criteria_are_in_backticks(self):
+        self.repo.write("plan.md", plan_text([("AC-001", "規則"), ("AC-002", "非影響")], rows=["| R-1 | `AC-001`, `AC-002` |"]))
+        code, out = self.check()
+        self.assertEqual(code, 0, out)
+
+
+    def test_check_refuses_a_skipped_test(self):
+        self.repo.write("test/a.rule.test.js", RULE_TEST.replace("test('f returns 1', ", "test('f returns 1', { skip: true }, "))
+        code, out = self.check()
+        self.assertEqual(code, 1)
+        self.assertIn("missing: AC-001", out)
+
+    def test_check_refuses_a_non_impact_test_that_cannot_load_before_the_change_even_when_it_passes_with_the_trial_implementation(self):
+        patch = self.spike_patch()
+        self.repo.write("test/harness/new.js", self.NEW_HARNESS)
+        self.repo.write("test/a.keep.test.js", "import './harness/new.js';\n" + KEEP_TEST)
+        code, out = run("check", str(self.root), stdin=check_spec(REPORT_COMMAND, RULE_FILES, [*KEEP_FILES, "test/harness/new.js"], TESTS, spike=patch))
+        self.assertEqual(code, 1)
+        self.assertIn("missing: AC-002", out)
+
+
+    def test_check_refuses_a_rule_with_a_passing_test_and_a_test_that_cannot_load_when_the_working_tree_holds_the_implementation(self):
+        self.write_implementation_in_tree()
+        self.write_rule_test_on_a_module_that_head_lacks()
+        self.repo.write("test/a.keep.test.js", KEEP_TEST + self.VACUOUS_TEST)
+        tests = [*TESTS, ("AC-001", "test/a.keep.test.js", "g is a function")]
+        code, out = self.check(keep=[*KEEP_FILES, "test/harness/new.js"], tests=tests)
+        self.assertEqual(code, 1)
+        self.assertIn("kind: AC-001 は規則の基準だが、今の tree で mixed だった", out)
+        self.assertTrue((self.root / "src/one.js").exists())
+
+    IMPL_FILE_COMMAND = REPORT_COMMAND + " test/impl.test.js"
+
+    def test_worktree_accepts_a_new_implementation_test_file_given_with_the_acceptance_tests_when_its_tests_are_mapped(self):
+        self.impl_plan()
+        self.implement_in_the_working_tree()
+        code, out = self.check(keep=[*KEEP_FILES, "test/impl.test.js"], command=self.IMPL_FILE_COMMAND, worktree=True, guard_command=self.IMPL_COMMAND, impl_tests=[(self.IMPL_RISK, "test/impl.test.js", "f is exactly 1")])
+        self.assertEqual(code, 0, out)
+
+    def test_worktree_refuses_a_new_implementation_test_file_given_with_the_acceptance_tests_when_a_test_has_no_mapping(self):
+        self.impl_plan()
+        self.repo.write("test/impl.test.js", self.IMPL_TEST + "test('f is a number', () => assert.equal(typeof f(), 'number'));\n")
+        self.implement_in_the_working_tree()
+        code, out = self.check(keep=[*KEEP_FILES, "test/impl.test.js"], command=self.IMPL_FILE_COMMAND, worktree=True, guard_command=self.IMPL_COMMAND, impl_tests=[(self.IMPL_RISK, "test/impl.test.js", "f is exactly 1")])
+        self.assertEqual(code, 1)
+        self.assertIn("対応する AC が無いテスト「f is a number」", out)
+
+    def test_spike_accepts_an_implementation_test_written_in_a_new_acceptance_test_file(self):
+        self.impl_plan()
+        (self.root / "test/impl.test.js").unlink()
+        patch = self.spike_patch()
+        self.repo.write("test/a.rule.test.js", RULE_TEST + "test('f is exactly 1', () => assert.equal(f(), 1));\n")
+        code, out = self.check(spike=patch, impl_tests=[(self.IMPL_RISK, "test/a.rule.test.js", "f is exactly 1")])
+        self.assertEqual(code, 0, out)
+        self.assertNotIn("対応する AC が無い", out)
+
+
 RSPEC_HARNESS = "require_relative '../../../lib/a'\n"
 RSPEC_RULE = "require 'rspec'\nrequire_relative 'harness/app'\nRSpec.describe 'f' do\n  it 'returns 1' do\n    expect(F.call).to eq(1)\n  end\nend\n"
 RSPEC_KEEP = "require 'rspec'\nrequire_relative 'harness/app'\nRSpec.describe 'g' do\n  it 'keeps its text' do\n    expect(G.call).to eq('kept')\n  end\nend\n"
@@ -1167,6 +1303,18 @@ class ReportTest(unittest.TestCase):
     def test_node_junit_matches_absolute_file(self):
         report = '<testsuites><testcase name="f returns 1" classname="test" file="/tmp/x/repo/test/a.rule.test.js"><failure/></testcase></testsuites>'
         self.assertEqual(self.mapped(report, "test/a.rule.test.js", "f returns 1"), {"AC-001": ["fail"]})
+
+    def test_a_test_reported_with_its_file_is_at_that_path(self):
+        relative = check_done.parse_report('<testsuites><testcase name="extra" classname="suite" file="test/a.extra.test.js"/></testsuites>')[0]
+        absolute = check_done.parse_report('<testsuites><testcase name="extra" classname="test" file="/repo/test/a.extra.test.js"/></testsuites>')[0]
+        self.assertTrue(check_done.at_path(relative, ["test/a.extra.test.js"]))
+        self.assertTrue(check_done.at_path(absolute, ["test/a.extra.test.js"]))
+
+    def test_a_suite_named_like_a_new_helper_is_not_at_the_path_of_the_helper(self):
+        entry = check_done.parse_report('<testsuites><testcase name="starts" classname="app" file="test/old.test.js"/></testsuites>')[0]
+        self.assertTrue(check_done.in_files(entry, ["test/harness/app.js"]))
+        self.assertFalse(check_done.at_path(entry, ["test/harness/app.js"]))
+
 
     def test_unmatched_test_is_missing(self):
         report = '<testsuites><testcase name="other" file="test/a.rule.test.js"/></testsuites>'

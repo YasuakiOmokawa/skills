@@ -27,6 +27,7 @@ API key、access token、passwordはこの領域へ保存しない。
 - PoC、プロトタイプ、Design Docの受け渡しは、出力先直下の案件ディレクトリ（`<案件slug>/`）にある `poc.md` のパスで行う。`poc.md` の見出し（問い、星取表、結論、PR、申し送り、Prototype）と `design-doc.md` は後続skillが読むmachine contract。
 - 固定見出し、ID、列、状態値は、skill外のconsumerが実際に読む場合だけmachine contractとする。
 - `define-done` が計画に書く 4 節の見出し、`- R-n:` と `- AC-NNN:` の行、`[規則]`・`[非影響]` の印、`(出典: ...)`、`- AC IDs:`、`- Gate:`、要求の表の `| R-n | ... |` の行は、`check_done.py check` が受け入れテストを確かめる前に読むmachine contract。
+- `define-done` の文書は、書くときの規則と `check_done.py` の呼び方 (渡す JSON、exit code、退避) を持つ。規則のそばに「`check` が拒む」と添えるのはよいが、`check_done.py` が確かめることの一覧は文書に写さない。何をどう確かめるかは、script と `scripts/test_check_done.py` のテスト名が持つ。
 - `check-pr` の検査結果ブロック (マーカー、`検査した commit` の行、表の列、判定の値) は、CIが読むmachine contract。
 - 外部状態の変更と破壊的操作は、正確な対象と変更内容が依頼で承認された場合だけ行う。例外として、`build-poc` と `build-prototype` の起動は、検証用ブランチのpushと、元のブランチをbaseとするdraft PRの作成の承認を含む。`define-done` の起動は、repo の test command と開発の手順がローカルで起動するもの (DB、コンテナ、アプリのサーバ) の起動・停止とテスト用の DB への migration の承認と、試作の実装を書く一時的な worktree と repo の外の patch file の作成の承認を含む (commit と push は含まない)。PRのURLは後続skillが読む。依頼が外部状態の変更を禁じる場合は行わない。
 
