@@ -5,6 +5,14 @@ All notable changes to omokawa-skills will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v22.0.0 - 2026-11-22
+
+### Changed
+
+- **`enforce-conventions` 4.0.0 (BREAKING):** 保護するパスを廃止した。依頼が変えないと名指したファイルと、`Define-Done-Seal:` か `Define-Done-Supersedes:` の trailer を持つ凍結の commit のファイルを、仕組みを置く場所の選定から外さない。型やシグネチャを変えるときは、これらのファイルの参照も作業ツリー内の他の参照と同じく直す。特定のファイルを保護して選定の対象から外すことは、このスキルの責務ではないため。禁止の「文書を変えない」は残した。
+- **eval:** 凍結の commit のファイルを変えないことを測っていた case 05 (`05-holdout-sealed-test-blocks-shape`) と、`outcomes.md` の対応する assertion 5 件を削除した。残る 12 case の grader に、保護するパスを前提にするものは無い。残る 12 case を with arm で 3 run ずつ回した ($12.6、11 分)。3.0.0 の全 case の run (2026-11-10) と名前の変わらない grader で比べ、2 run 以上下がったものは無い。1 run の差は 01 `tests-pass-reported` と 10 `report-sites-read` (どちらも 3/3→2/3)。case 13 は `field-set-not-frozen` と `reports-kept-in-doc` が 2/3 で、比べられる旧版の記録がこのマシンに無い。
+- **GLOSSARY:** 「凍結」の項から、enforce-conventions が過去の凍結の commit のファイルを保護するという記述を外した。
+
 ## v21.1.0 - 2026-11-21
 
 ### Changed

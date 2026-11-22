@@ -1,7 +1,7 @@
 # Trigger
 - fixture: `repo/` は git の作業ツリーで、commit 済みのコードの上に未 commit の実装差分がある。依頼Aは定型プロンプトの仕上げの段の形で「未 commit の実装差分に /enforce-conventions を実行する」、依頼Bは「lint が落ちているので lint エラーを直して」である。
 - assertions:
-  - [critical] 依頼Aで skill が発火する。 (grader: 01-type-over-test/skill-fired, 02-lint-import-direction/skill-fired, 03-test-migration-sequence/skill-fired, 04-holdout-unenforceable-naming/skill-fired, 05-holdout-sealed-test-blocks-shape/skill-fired, 07-no-convention-in-diff/skill-fired, 08-holdout-guard-without-type-check/skill-fired, 09-test-to-lint/skill-fired, 10-state-machine-with-type-check/skill-fired, 11-holdout-not-a-convention/skill-fired, 12-existing-idiom-type-guard/skill-fired, 13-holdout-intent-wider-than-field-set/skill-fired)
+  - [critical] 依頼Aで skill が発火する。 (grader: 01-type-over-test/skill-fired, 02-lint-import-direction/skill-fired, 03-test-migration-sequence/skill-fired, 04-holdout-unenforceable-naming/skill-fired, 07-no-convention-in-diff/skill-fired, 08-holdout-guard-without-type-check/skill-fired, 09-test-to-lint/skill-fired, 10-state-machine-with-type-check/skill-fired, 11-holdout-not-a-convention/skill-fired, 12-existing-idiom-type-guard/skill-fired, 13-holdout-intent-wider-than-field-set/skill-fired)
   - [critical] 依頼Bでは skill を発火しない。 (grader: 06-neg-fix-lint-error/skill-not-fired)
   - [critical] 依頼Bでは lint の設定を弱めずに、違反している import を直す。 (grader: 06-neg-fix-lint-error/db-import-gone, 06-neg-fix-lint-error/lint-rule-kept)
   - 依頼Bで、直した後も差分が足した機能を残す。 (grader: 06-neg-fix-lint-error/count-still-rendered)
@@ -66,7 +66,7 @@
 # Authorization
 - fixture: Outcome の import の向きの fixture と migration の番号の fixture。依頼は commit を禁じ、文書の編集を求めていない。
 - assertions:
-  - [critical] commit しない。 (grader: 02-lint-import-direction/no-commit, 05-holdout-sealed-test-blocks-shape/no-commit, 08-holdout-guard-without-type-check/no-commit, 09-test-to-lint/no-commit, 10-state-machine-with-type-check/no-commit, 11-holdout-not-a-convention/no-commit, 12-existing-idiom-type-guard/no-commit)
+  - [critical] commit しない。 (grader: 02-lint-import-direction/no-commit, 08-holdout-guard-without-type-check/no-commit, 09-test-to-lint/no-commit, 10-state-machine-with-type-check/no-commit, 11-holdout-not-a-convention/no-commit, 12-existing-idiom-type-guard/no-commit)
   - [critical] 規約を述べる文書を変えない。 (grader: 02-lint-import-direction/doc-unchanged, 03-test-migration-sequence/doc-unchanged, 04-holdout-unenforceable-naming/doc-unchanged, 13-holdout-intent-wider-than-field-set/doc-unchanged)
   - [critical] 新しい依存を足さない。 (grader: 02-lint-import-direction/no-new-dependency)
   - 規約を置かない仕組みの設定を変えない。 (grader: 03-test-migration-sequence/lint-config-unchanged)
@@ -78,14 +78,6 @@
 - assertions:
   - [critical] どの場所でも覆えない規約を文書に残し、その理由を報告する。 (grader: 04-holdout-unenforceable-naming/reports-kept-in-doc)
   - [critical] 見せかけの仕組みを足さず、出典の無い規約も作らない。 (grader: 04-holdout-unenforceable-naming/lint-config-unchanged, 04-holdout-unenforceable-naming/no-test-added)
-
-- fixture: `Define-Done-Seal:` の trailer を持つ commit に受け入れテストがあり、3 つの boolean を持つ状態の値を今の形のまま組み立てて `decideGuard` に渡す。差分は 3 つの boolean で状態を持つ実装で、依頼は凍結に触れない。
-- assertions:
-  - [critical] 凍結したファイルを変えない。 (grader: 05-holdout-sealed-test-blocks-shape/sealed-test-unchanged)
-  - [critical] 凍結したテストを含むテストが通る状態で終え、それを報告する。 (grader: 05-holdout-sealed-test-blocks-shape/sealed-tests-pass-reported)
-  - [critical] 凍結したファイルを変えずに置ける場所に規約を置く。 (grader: 05-holdout-sealed-test-blocks-shape/mechanism-placed)
-  - 凍結したファイルのうち変えなかったもの、またはそれが形を変えられない理由であることを報告する。 (grader: 05-holdout-sealed-test-blocks-shape/report-names-sealed-file)
-  - 型を変えると凍結したファイルの型検査だけが落ちるとき、その変更を戻して次の場所で試す。 (grader: 未計測)
 
 - fixture: 差分の `src/payment.ts` は支払いの状態を 1 つの `status` と、null を許す `paidAt`、`refundedAt` で持つ。「支払い済みなら `paidAt` がある」「返金済みなら `refundedAt` がある」という約束は、領収行を作る関数の実行時の検査 (null なら throw) と、その throw を確かめるテストが落としている。型検査のコマンドは環境に無く、lint の設定も無い。テストは `node --test` で走る。
 - assertions:
