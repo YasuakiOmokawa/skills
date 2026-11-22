@@ -5,6 +5,27 @@ All notable changes to omokawa-skills will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v22.1.0 - 2026-11-22
+
+### Changed
+
+- **`define-done` 6.2.0 (文書と script の持ち分):** `acceptance-tests.md` の「`check` が確かめること」の節 (script の動きを 7 項目で写していた) を、「`check` の結果」(exit code と退避) に縮めた。文書は書くときの規則と `check_done.py` の呼び方 (渡す JSON、exit code、退避) を持ち、何をどう確かめるかは script と `scripts/test_check_done.py` のテスト名が持つ。写しと script が 5 か所で食い違っていたため (落ちる、退避が残る、読み込めないテスト、新しいファイル、要求の表。下の行で直した)。写しの側の書き間違い 1 件 (「4 節の外が変わっていない」の検査は、patch を `spike` に渡したときだけ働く) は、節ごと消えた。消した文のうち規則に当たるものは `requirements.md`、`acceptance-criteria.md`、`acceptance-tests.md` の規則の行にすでにあり、行き先の無い機構の文 (skip されたテスト、実行されなかった非影響のテスト) は unit test の名前に移した。`GLOSSARY.md` の Contracts に、この持ち分を 1 行足した。
+- **`check_done.py check` (落ちずに理由を返す):** `spike` を渡し、対応に挙げたテスト名が報告と合わないとき、`KeyError` で落ちずに理由を出して exit 1 を返す。
+- **`check_done.py check` (退避を必ず戻す):** 退避の後に `test_command` が時間内に終わらないと、`command: N 秒で終わらなかった` を出して exit 1 を返し、退避を戻す。退避の後の中断 (Ctrl-C など) は、退避を戻してから伝える。直す前はどちらも退避を stash に残したまま落ちた。
+- **`check_done.py check` (拒む入力が増える: 読み込めないテスト):** `[規則]` の基準に複数のテストを対応させ、変更前の tree で 1 つが通り 1 つが読み込めないとき、拒む (直す前は落ちたものと数えた)。1 つが落ち 1 つが読み込めないときは、今までどおり落ちたものと数える。
+- **`check_done.py check` (拒む入力が増える: 新しいファイルの対応の無いテスト):** `files` に渡した新しいファイルのどれかに、AC にも実装のテストにも対応しないテストがあれば拒む。直す前は、対応に 1 つも挙げていない新しいファイルを見ていなかった。対応の無い新しいファイルは、報告の file の path で照合する (helper のファイル名と同じ名前の suite を誤って拒まないため)。
+- **`check_done.py check` (拒む計画が増える: 要求の表):** 要求の表の行は、AC-ID か `未検証:`・`範囲外:`・`不足情報:` で始まらなければ拒む (backtick と `*` は読み飛ばす)。直す前は、行のどこかに AC-ID があれば通した。
+- **`check_done.py check` (試作の run の実装のテスト):** 試作の実装を当てた run も、HEAD の run と同じく `guard_command` の実装のテストを対応のあるテストに数える。直す前は、新しい受け入れテストのファイルに実装のテストを書くと、試作の run だけが「対応する AC が無いテスト」と拒んだ。
+
+- **eval:** `check_done.py` の unit test は 17 件を足して 127 件 (10 件は直す前の script で落ちる。残る 7 件は、変わらないことの番)。case と grader は変えていない (grader は消した節の文言を参照していない)。全 42 case を with arm で 3 run ずつ回した ($95.0、71 分。6.1.0 は $91.4、69 分)。6.1.0 から 2 run 以上下がった grader は無い。1 run の差は、下がったものが 1 個 (38 `shared-state-restored` 3/3 → 2/3)、上がったものが 6 個 (01 `envvar-covered` と 08 `permission-branch` が 1/3 → 2/3、24 `existing-interface-used`、31 `question-shape`、32 `next-step-prompted`、32 `no-question` が 2/3 → 3/3)。38 の 1 run は grader の取りこぼしで、trace では、書いたテストファイルの 7 つのテストすべてが `t.after(resetRateLimits)` で計数を戻している (regex は `resetRateLimits(` の呼び出しの形だけを見る。grader は直していない)。通過率は 0.967 → 0.978。
+- **eval (新しい検査が当たった回数):** 126 run の trace で、Bash の結果に出た `check` の理由の行を数えた。今回足した拒否 (読み込めないテストの混在、新しいファイルの対応の無いテスト、要求の表の行の先頭、時間切れ) が出た run は 0。出た拒否は前からあるものだけである。直して同じ run で通ったものが 4 件 (29 の 1 run が `guard_command` の不足、47 の 2 run が `files` の不足と `## Requirements` の重複、50 の 1 run が非影響の基準の `mixed`)、Gate が ready でない計画を渡して拒まれ、そのまま Gate の停止として返したものが 3 run (15 の 2 run、21 の 1 run)。50 の `mixed` は、非影響の基準のテスト名が別の基準のテスト名の末尾と一致したためと trace から読んだ (今回の差分はこの経路を変えていないが、直す前の script で再現はしていない)。
+- **eval (turn と費用):** 1 run の turn の平均は 15.90 → 16.58 (case ごとの平均で 27 case が増え、11 case が減った)。費用は +$3.6 (+4%)。126 run のうち 56 run が `check_done.py` の source を Read で読んでいた (Read は計 107 回。56 run とも `acceptance-tests.md` を先に読んでいる。49 run は script を最初に流す前に読み、3 run は流した後に読み、4 run は script を 1 度も流していない)。source を読んだ run のある 27 case は turn が平均 +1.19、無い 15 case は -0.24 だった。6.1.0 の trace は残っておらず、6.1.0 で source を読んだ run の数は測れていない。節を縮めたことが原因かは未検証である。
+- **eval (翻訳の質):** 変異の題材 8 つを採点した。23、24、26、29 は 6.1.0 と同じく 3 run とも全テストが有効で、変種と変異をすべて落とした。30 は 3 run とも採点でき (6.1.0 は 2 run)、すべて落とした。25 はテストを書いた run が 2/3 → 3/3 で、全テストが有効な run は 2/3 のまま (6.1.0 は書いた 2 run とも有効。今回は書いた 3 run のうち 1 run が、採点用の 2 つ目の実装で落ちるテスト「an admin's invitation cannot demote the owner」を 1 件書いた)。27 は全テストが有効な run が 3/3 → 2/3 で、1 run が資料の決めていない期待を 2 件書き、変種 1 個と変異 4 個を残した。28 は 6.1.0 と同じく 3 run とも Gate で止まった。
+- **eval (測っていないもの):** chain 2 case は回していない。今回足した拒否は eval では 1 度も起きておらず、根拠は unit test だけである。
+- **残る制限:** 対応の無い新しいファイルは報告の file の path だけで照合するので、file を testDir からの相対で出す Playwright と、classname を dotted で出す報告では、そのファイルの対応の無いテストを拾えない。`[非影響]` の基準のテスト名が別のテスト名の末尾と一致すると、両方を数えて `mixed` で拒む (前からの挙動。case 50 の 1 run で起きた)。残ったリスクの表の `既存のテスト:` の行に path を 2 つ書くと、HEAD に無い方を黙って読み飛ばす挙動は変えていない (書式は 1 行に 1 path で、2 つ書いたときの扱いはどこにも決めが無い)。
+- **移行:** `[規則]` の基準に、変更前の tree で通るテストと読み込めないテストを一緒に対応させていた計画、新しい helper か新しいテストファイルに対応の無いテストを置いていた入力、要求の表の行を AC-ID 以外の語で始めていた計画は、直すまで拒まれる。過去の出力の要求の表 270 行に、AC-ID が先頭に無い行は無かった。
+- **ルーティンから外れた点:** `outcomes.md` の assertion を先に書いていない (結果の契約は変えていない)。skill の文と script は、grader 名と `outcomes.md` を読んだ本人が書いた。case 50 を 1 run だけ試し流しした ($0.70)。利用者が承認した全 suite の外である。
+
 ## v22.0.0 - 2026-11-22
 
 ### Changed
